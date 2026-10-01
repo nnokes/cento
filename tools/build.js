@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 "use strict";
-// Bundles each [v8] wrapper (code/*.v8.js) together with the code/lib modules
-// it requires into one self-contained file: patchers/<name>.bundle.js, next to
+// Bundles each [v8] wrapper (code/*.v8.js) together with the modules it
+// requires (code/lib: the engine, no Max APIs; code/max: Max-only helpers
+// such as file reading) into one self-contained file: patchers/<name>.bundle.js, next to
 // the patches that load it (Max always searches a patch's own folder).
 //
 // Why bundle: frozen Max for Live devices and built apps don't reliably find
@@ -19,6 +20,7 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
 const CODE = path.join(ROOT, "code");
 const LIB = path.join(CODE, "lib");
+const MAX = path.join(CODE, "max");
 const OUT = path.join(ROOT, "patchers");
 const REQUIRE = /\brequire\(\s*(["'])([^"']+)\1\s*\)/g;
 
@@ -31,9 +33,9 @@ function requiredNames(source) {
 // Depth-first, so every module is listed after the modules it depends on.
 function collect(name, from, seen, modules) {
   if (seen.has(name)) return;
-  const file = path.join(LIB, name + ".js");
-  if (!fs.existsSync(file)) {
-    throw new Error(`${from}: cannot resolve require("${name}"); expected code/lib/${name}.js`);
+  const file = [LIB, MAX].map((dir) => path.join(dir, name + ".js")).find((f) => fs.existsSync(f));
+  if (!file) {
+    throw new Error(`${from}: cannot resolve require("${name}"); expected code/lib/${name}.js or code/max/${name}.js`);
   }
   seen.add(name);
   const source = fs.readFileSync(file, "utf8");
@@ -55,7 +57,7 @@ function bundle(wrapperFile) {
   out.push(`  var factories = {};`);
   for (const { name, source: moduleSource } of modules) {
     out.push(``);
-    out.push(`  // ---- code/lib/${name}.js`);
+    out.push(`  // ---- ${name}.js`);
     out.push(`  factories[${JSON.stringify(name)}] = function (exports, module, require) {`);
     out.push(moduleSource.trimEnd());
     out.push(`  };`);

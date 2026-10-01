@@ -9,7 +9,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "NODE_PATH=code/lib node --test tests/*.test.js",
+    "test": "NODE_PATH=code/lib:code/max node --test tests/*.test.js",
     "build": "node tools/build.js",
     "build:watch": "node tools/build.js --watch",
     "build:check": "node tools/build.js --check",

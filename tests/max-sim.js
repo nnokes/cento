@@ -12,9 +12,33 @@ const ROOT = path.resolve(__dirname, "..");
 
 // Max calls a script's global functions by message name, except functions
 // marked with .local = 1.
-const MAX_GLOBALS = new Set(["outlet", "post", "error", "LiveAPI", "console"]);
+const MAX_GLOBALS = new Set(["outlet", "post", "error", "LiveAPI", "File", "console"]);
 
-function loadBundle(name, { LiveAPI } = {}) {
+// Stand-in for Max's File object (read access only), backed by Node's fs.
+// Like Max's, readbytes returns at most the count asked for.
+class FsFile {
+  constructor(filePath) {
+    this.position = 0;
+    try {
+      this.data = fs.readFileSync(filePath);
+      this.isopen = true;
+      this.eof = this.data.length;
+    } catch {
+      this.isopen = false;
+      this.eof = 0;
+    }
+  }
+  readbytes(count) {
+    const chunk = Array.from(this.data.subarray(this.position, this.position + count));
+    this.position += chunk.length;
+    return chunk;
+  }
+  close() {
+    this.isopen = false;
+  }
+}
+
+function loadBundle(name, { LiveAPI, File = FsFile } = {}) {
   const file = path.join(ROOT, "patchers", name + ".bundle.js");
   const sent = [];
   const context = {
@@ -22,6 +46,7 @@ function loadBundle(name, { LiveAPI } = {}) {
     post: () => {},
     error: () => {},
     LiveAPI,
+    File,
     console,
   };
   vm.createContext(context);

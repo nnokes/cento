@@ -4,7 +4,7 @@
 var __emi_require = (function () {
   var factories = {};
 
-  // ---- code/lib/emi-pattern.js
+  // ---- emi-pattern.js
   factories["emi-pattern"] = function (exports, module, require) {
 "use strict";
 // Hard-coded 4-voice test phrase for the M0 playback and clip-writing spikes.
@@ -48,7 +48,7 @@ exports.PPQ = PPQ;
 exports.testChorale = testChorale;
   };
 
-  // ---- code/lib/emi-live.js
+  // ---- emi-live.js
   factories["emi-live"] = function (exports, module, require) {
 "use strict";
 // Pure helpers for writing scores into Ableton Live clips. Nothing here calls
@@ -121,6 +121,619 @@ exports.liveValue = liveValue;
 exports.liveText = liveText;
   };
 
+  // ---- emi-smf.js
+  factories["emi-smf"] = function (exports, module, require) {
+"use strict";
+// Standard MIDI File reader and writer. Works on plain byte arrays
+// (Uint8Array or arrays of numbers 0-255), so the same code runs in Node and
+// in [v8], where Max's File object supplies the bytes.
+//
+// parse(bytes) -> {
+//   format, ppq,
+//   tracks: [{ name, notes: [{ on, pitch, dur, channel, vel }] }],   // channel 1-16
+//   tempos: [{ tick, usPerQuarter }],
+//   timeSignatures: [{ tick, num, den }],
+//   keySignatures: [{ tick, sf, minor }],
+//   warnings: [string]
+// }
+//
+// write({ ppq, tempoBpm, meter, keySignature, tracks: [{ name, channel, notes }] })
+//   -> Uint8Array, a type-1 file: track 0 holds tempo, meter and key; one track
+//      per entry in `tracks`.
+
+// ---------------------------------------------------------------- reading
+
+function reader(bytes) {
+  let pos = 0;
+  const r = {
+    get pos() {
+      return pos;
+    },
+    set pos(value) {
+      pos = value;
+    },
+    eof: () => pos >= bytes.length,
+    u8() {
+      if (pos >= bytes.length) throw new Error("unexpected end of file");
+      return bytes[pos++] & 0xff;
+    },
+    u16() {
+      return (r.u8() << 8) | r.u8();
+    },
+    u32() {
+      return ((r.u8() << 24) | (r.u8() << 16) | (r.u8() << 8) | r.u8()) >>> 0;
+    },
+    text(length) {
+      let s = "";
+      for (let i = 0; i < length; i++) s += String.fromCharCode(r.u8());
+      return s;
+    },
+    // Variable-length quantity: 7 bits per byte, high bit set on all but the last.
+    vlq() {
+      let value = 0;
+      for (let i = 0; i < 4; i++) {
+        const b = r.u8();
+        value = (value << 7) | (b & 0x7f);
+        if (!(b & 0x80)) return value;
+      }
+      throw new Error("variable-length number longer than 4 bytes at byte " + pos);
+    },
+  };
+  return r;
+}
+
+function parse(bytes) {
+  const r = reader(bytes);
+  if (r.text(4) !== "MThd") throw new Error("not a MIDI file (no MThd header)");
+  const headerLength = r.u32();
+  const format = r.u16();
+  const trackCount = r.u16();
+  const division = r.u16();
+  r.pos += headerLength - 6;
+  if (division & 0x8000) throw new Error("SMPTE time division is not supported");
+  if (format > 1) throw new Error("MIDI file format " + format + " is not supported");
+
+  const result = {
+    format,
+    ppq: division,
+    tracks: [],
+    tempos: [],
+    timeSignatures: [],
+    keySignatures: [],
+    warnings: [],
+  };
+
+  while (result.tracks.length < trackCount && !r.eof()) {
+    const id = r.text(4);
+    const length = r.u32();
+    const end = r.pos + length;
+    if (id === "MTrk") result.tracks.push(parseTrack(r, end, result, result.tracks.length));
+    r.pos = end; // skip unknown chunks, and any bytes a track didn't use
+  }
+  if (result.tracks.length < trackCount) {
+    result.warnings.push(`header says ${trackCount} tracks, found ${result.tracks.length}`);
+  }
+  return result;
+}
+
+function parseTrack(r, end, result, index) {
+  const track = { name: "", notes: [] };
+  const open = new Map(); // "channel:pitch" -> [{ on, vel }] (first in, first out)
+  let tick = 0;
+  let status = 0;
+
+  const noteOff = (channel, pitch) => {
+    const stack = open.get(channel + ":" + pitch);
+    if (!stack || stack.length === 0) {
+      result.warnings.push(`track ${index}: note-off without note-on (pitch ${pitch}, tick ${tick})`);
+      return;
+    }
+    const start = stack.shift();
+    track.notes.push({ on: start.on, pitch, dur: tick - start.on, channel, vel: start.vel });
+  };
+
+  while (r.pos < end) {
+    tick += r.vlq();
+    let byte = r.u8();
+    if (byte < 0x80) {
+      // Running status: reuse the previous status byte; this byte is data.
+      if (!status) throw new Error(`track ${index}: data byte without a status byte`);
+      r.pos -= 1;
+      byte = status;
+    }
+
+    if (byte === 0xff) {
+      const type = r.u8();
+      const length = r.vlq();
+      const dataStart = r.pos;
+      if (type === 0x03 && !track.name) track.name = r.text(length);
+      else if (type === 0x51 && length === 3) {
+        result.tempos.push({ tick, usPerQuarter: (r.u8() << 16) | (r.u8() << 8) | r.u8() });
+      } else if (type === 0x58 && length >= 2) {
+        result.timeSignatures.push({ tick, num: r.u8(), den: 2 ** r.u8() });
+      } else if (type === 0x59 && length === 2) {
+        const sf = r.u8();
+        result.keySignatures.push({ tick, sf: sf > 127 ? sf - 256 : sf, minor: r.u8() === 1 });
+      } else if (type === 0x2f) {
+        break;
+      }
+      r.pos = dataStart + length;
+      continue;
+    }
+    if (byte === 0xf0 || byte === 0xf7) {
+      r.pos += r.vlq(); // system exclusive: skip
+      continue;
+    }
+
+    status = byte;
+    const kind = byte & 0xf0;
+    const channel = (byte & 0x0f) + 1;
+    if (kind === 0x80) {
+      const pitch = r.u8();
+      r.u8();
+      noteOff(channel, pitch);
+    } else if (kind === 0x90) {
+      const pitch = r.u8();
+      const vel = r.u8();
+      if (vel === 0) noteOff(channel, pitch);
+      else {
+        const key = channel + ":" + pitch;
+        if (!open.has(key)) open.set(key, []);
+        open.get(key).push({ on: tick, vel });
+      }
+    } else if (kind === 0xc0 || kind === 0xd0) {
+      r.u8(); // program change, channel pressure
+    } else {
+      r.u8(); // aftertouch, controller, pitch bend
+      r.u8();
+    }
+  }
+
+  // Notes still sounding at the end of the track end there.
+  for (const [key, stack] of open) {
+    for (const start of stack) {
+      const [channel, pitch] = key.split(":").map(Number);
+      result.warnings.push(`track ${index}: note without note-off (pitch ${pitch}, tick ${start.on})`);
+      track.notes.push({ on: start.on, pitch, dur: Math.max(1, tick - start.on), channel, vel: start.vel });
+    }
+  }
+  track.notes.sort((a, b) => a.on - b.on || a.pitch - b.pitch);
+  return track;
+}
+
+// ---------------------------------------------------------------- writing
+
+function vlqBytes(value) {
+  const out = [value & 0x7f];
+  value >>>= 7;
+  while (value > 0) {
+    out.unshift((value & 0x7f) | 0x80);
+    value >>>= 7;
+  }
+  return out;
+}
+
+function u32Bytes(value) {
+  return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff];
+}
+
+function textBytes(text) {
+  return Array.from(text, (c) => c.charCodeAt(0) & 0x7f);
+}
+
+// events: [{ tick, bytes }] in any order; returns an MTrk chunk.
+function trackChunk(events) {
+  const sorted = events
+    .map((event, i) => ({ ...event, i }))
+    .sort((a, b) => a.tick - b.tick || (a.order || 0) - (b.order || 0) || a.i - b.i);
+  const data = [];
+  let last = 0;
+  for (const event of sorted) {
+    data.push(...vlqBytes(event.tick - last), ...event.bytes);
+    last = event.tick;
+  }
+  data.push(0x00, 0xff, 0x2f, 0x00);
+  return [...textBytes("MTrk"), ...u32Bytes(data.length), ...data];
+}
+
+function meta(type, payload) {
+  return [0xff, type, ...vlqBytes(payload.length), ...payload];
+}
+
+function write({ ppq, tempoBpm = 100, meter = [4, 4], keySignature = null, tracks }) {
+  const conductor = [
+    { tick: 0, bytes: meta(0x58, [meter[0], Math.round(Math.log2(meter[1])), 24, 8]) },
+    { tick: 0, bytes: meta(0x51, [...u32Bytes(Math.round(60000000 / tempoBpm))].slice(1)) },
+  ];
+  if (keySignature) {
+    conductor.push({ tick: 0, bytes: meta(0x59, [keySignature.sf & 0xff, keySignature.minor ? 1 : 0]) });
+  }
+
+  const chunks = [trackChunk(conductor)];
+  for (const track of tracks) {
+    const status = (track.channel - 1) & 0x0f;
+    const events = [];
+    if (track.name) events.push({ tick: 0, order: -1, bytes: meta(0x03, textBytes(track.name)) });
+    for (const note of track.notes) {
+      // At the same tick, note-offs (order 0) come before note-ons (order 1).
+      events.push({ tick: note.on, order: 1, bytes: [0x90 | status, note.pitch, note.vel] });
+      events.push({ tick: note.on + note.dur, order: 0, bytes: [0x80 | status, note.pitch, 0] });
+    }
+    chunks.push(trackChunk(events));
+  }
+
+  const header = [...textBytes("MThd"), ...u32Bytes(6), 0, 1, (chunks.length >> 8) & 0xff, chunks.length & 0xff, (ppq >> 8) & 0xff, ppq & 0xff];
+  const out = header.concat(...chunks);
+  return Uint8Array.from(out);
+}
+
+exports.parse = parse;
+exports.write = write;
+  };
+
+  // ---- emi-key.js
+  factories["emi-key"] = function (exports, module, require) {
+"use strict";
+// Keys: names, key signatures, estimating a key from notes, and the
+// transposition that brings a work to C major or A minor (the common key EMI
+// analyzes in).
+//
+// A key is { tonic: pitch class 0-11, mode: "major" | "minor" }.
+
+const PC_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+const LETTER_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
+// Krumhansl-Kessler key profiles (Krumhansl 1990).
+const MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
+const MINOR_PROFILE = [6.33, 2.68, 3.52, 5.38, 2.6, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
+
+const mod12 = (n) => ((n % 12) + 12) % 12;
+
+// "A", "F#", "B-" (music21's flat), "Bb", "Eb", "C##" -> pitch class.
+function tonicFromName(name) {
+  const match = /^([A-Ga-g])([#sb-]*)$/.exec(String(name).trim());
+  if (!match) throw new Error("not a note name: " + name);
+  let pc = LETTER_PC[match[1].toUpperCase()];
+  for (const c of match[2]) pc += c === "#" || c === "s" ? 1 : -1;
+  return mod12(pc);
+}
+
+function keyName(key) {
+  return PC_NAMES[key.tonic] + " " + key.mode;
+}
+
+// MIDI key signature (sf = sharps, negative for flats) -> key.
+function fromKeySignature({ sf, minor }) {
+  const major = mod12(sf * 7);
+  return { tonic: minor ? mod12(major + 9) : major, mode: minor ? "minor" : "major" };
+}
+
+// Key -> MIDI key signature, using the spelling with the fewest accidentals.
+function toKeySignature(key) {
+  const major = key.mode === "minor" ? mod12(key.tonic + 3) : key.tonic;
+  let best = null;
+  for (let sf = -7; sf <= 7; sf++) {
+    if (mod12(sf * 7) === major && (best === null || Math.abs(sf) < Math.abs(best))) best = sf;
+  }
+  return { sf: best, minor: key.mode === "minor" };
+}
+
+function correlation(a, b) {
+  const mean = (xs) => xs.reduce((s, x) => s + x, 0) / xs.length;
+  const ma = mean(a);
+  const mb = mean(b);
+  let num = 0;
+  let da = 0;
+  let db = 0;
+  for (let i = 0; i < a.length; i++) {
+    num += (a[i] - ma) * (b[i] - mb);
+    da += (a[i] - ma) ** 2;
+    db += (b[i] - mb) ** 2;
+  }
+  return da && db ? num / Math.sqrt(da * db) : 0;
+}
+
+// Krumhansl-Schmuckler key finding: correlate the duration-weighted
+// pitch-class histogram with each of the 24 rotated profiles.
+// events: [[ontime, pitch, duration, ...]]
+function estimate(events) {
+  const histogram = new Array(12).fill(0);
+  for (const [, pitch, duration] of events) histogram[mod12(pitch)] += duration;
+  let best = null;
+  for (const [mode, profile] of [["major", MAJOR_PROFILE], ["minor", MINOR_PROFILE]]) {
+    for (let tonic = 0; tonic < 12; tonic++) {
+      const rotated = profile.map((_, pc) => profile[mod12(pc - tonic)]);
+      const score = correlation(histogram, rotated);
+      if (!best || score > best.score) best = { tonic, mode, score };
+    }
+  }
+  return { tonic: best.tonic, mode: best.mode, confidence: best.score };
+}
+
+// Semitones that move the key to C major or A minor by the shorter way:
+// -6 to +5, so a voice never moves more than a tritone.
+function transpositionToCommon(key) {
+  const target = key.mode === "minor" ? 9 : 0;
+  const up = mod12(target - key.tonic);
+  return up >= 6 ? up - 12 : up;
+}
+
+exports.PC_NAMES = PC_NAMES;
+exports.tonicFromName = tonicFromName;
+exports.keyName = keyName;
+exports.fromKeySignature = fromKeySignature;
+exports.toKeySignature = toKeySignature;
+exports.estimate = estimate;
+exports.transpositionToCommon = transpositionToCommon;
+  };
+
+  // ---- emi-ingest.js
+  factories["emi-ingest"] = function (exports, module, require) {
+"use strict";
+// Corpus ingest: a parsed MIDI file (plus the JSON sidecar written by
+// tools/export-chorales.py, when there is one) becomes a *work*, the engine's
+// representation of one piece:
+//
+// {
+//   id, title, source,
+//   ppq: 960, meter: [num, den], tempoBpm,
+//   key: { tonic, mode, from },   // from: "sidecar" | "key signature" | "estimate"
+//   transposedBy,                 // semitones applied since reading the file
+//   voices, voiceNames,
+//   padTicks,                     // silence before a pickup (time 0 is a barline)
+//   fermatas: [tick],             // phrase ends
+//   lengthTicks,                  // whole bars
+//   events: [[ontime, pitch, duration, voice, velocity]],   // Cope's field order
+//   warnings: [string]
+// }
+
+const keys = require("emi-key");
+const smf = require("emi-smf");
+
+const PPQ = 960;
+const SATB = ["Soprano", "Alto", "Tenor", "Bass"];
+
+const byTime = (a, b) => a[0] - b[0] || a[3] - b[3] || a[1] - b[1];
+
+function barTicks(meter) {
+  return (meter[0] * PPQ * 4) / meter[1];
+}
+
+// The notes of each voice: the sidecar's voice tracks if given; otherwise
+// every track that has notes; a single track using several channels (a type-0
+// file) is split by channel.
+function voiceNotes(midi, sidecar) {
+  const listed = sidecar && sidecar.midi && sidecar.midi.voiceTracks;
+  if (listed) {
+    return listed.map((index) => {
+      if (!midi.tracks[index]) throw new Error(`sidecar lists track ${index}, but the file has ${midi.tracks.length}`);
+      return { name: midi.tracks[index].name, notes: midi.tracks[index].notes };
+    });
+  }
+  const withNotes = midi.tracks.filter((track) => track.notes.length);
+  if (withNotes.length === 1) {
+    const channels = [...new Set(withNotes[0].notes.map((n) => n.channel))].sort((a, b) => a - b);
+    if (channels.length > 1) {
+      return channels.map((c) => ({ name: "", notes: withNotes[0].notes.filter((n) => n.channel === c) }));
+    }
+  }
+  return withNotes.map((track) => ({ name: track.name, notes: track.notes }));
+}
+
+function fromMidi(midi, { id = "untitled", sidecar = null } = {}) {
+  const warnings = [...midi.warnings];
+
+  const scale = PPQ / midi.ppq;
+  let rounded = 0;
+  const ticks = (t) => {
+    const exact = t * scale;
+    if (exact !== Math.round(exact)) rounded++;
+    return Math.round(exact);
+  };
+
+  const voices = voiceNotes(midi, sidecar);
+  if (!voices.length) throw new Error("no notes in this MIDI file");
+  const events = [];
+  voices.forEach((voice, v) => {
+    for (const note of voice.notes) {
+      const on = ticks(note.on);
+      const end = ticks(note.on + note.dur);
+      events.push([on, note.pitch, Math.max(1, end - on), v + 1, note.vel]);
+    }
+  });
+  events.sort(byTime);
+  if (rounded) warnings.push(`${rounded} times rounded converting ${midi.ppq} to ${PPQ} ticks per quarter`);
+
+  let meter = [4, 4];
+  if (sidecar && sidecar.meter) meter = sidecar.meter.split("/").map(Number);
+  else if (midi.timeSignatures.length) meter = [midi.timeSignatures[0].num, midi.timeSignatures[0].den];
+  if (new Set(midi.timeSignatures.map((ts) => ts.num + "/" + ts.den)).size > 1) {
+    warnings.push("the meter changes; using " + meter.join("/"));
+  }
+
+  let key;
+  if (sidecar && sidecar.key) {
+    key = { tonic: keys.tonicFromName(sidecar.key.tonic), mode: sidecar.key.mode, from: "sidecar" };
+  } else if (midi.keySignatures.length) {
+    key = { ...keys.fromKeySignature(midi.keySignatures[0]), from: "key signature" };
+  } else {
+    const estimate = keys.estimate(events);
+    key = { tonic: estimate.tonic, mode: estimate.mode, from: "estimate" };
+  }
+
+  const quarters = (q) => Math.round(q * PPQ);
+  const lastEnd = Math.max(...events.map(([on, , duration]) => on + duration));
+  const bar = barTicks(meter);
+  return {
+    id,
+    title: (sidecar && sidecar.title) || null,
+    source: (sidecar && sidecar.source) || "MIDI file",
+    ppq: PPQ,
+    meter,
+    tempoBpm: midi.tempos.length ? Math.round(6000000000 / midi.tempos[0].usPerQuarter) / 100 : 100,
+    key,
+    transposedBy: 0,
+    voices: voices.length,
+    voiceNames: voices.map((voice, i) =>
+      (sidecar && sidecar.parts && sidecar.parts[i]) || voice.name || (voices.length === 4 ? SATB[i] : "Voice " + (i + 1)),
+    ),
+    padTicks: sidecar && sidecar.padQuarters ? quarters(sidecar.padQuarters) : 0,
+    fermatas: sidecar && sidecar.fermatasQuarters ? sidecar.fermatasQuarters.map(quarters) : [],
+    lengthTicks: Math.ceil(lastEnd / bar) * bar,
+    events,
+    warnings,
+  };
+}
+
+// A copy of the work moved by `semitones`; transposedBy keeps the running total.
+function transpose(work, semitones) {
+  return {
+    ...work,
+    key: { ...work.key, tonic: (((work.key.tonic + semitones) % 12) + 12) % 12 },
+    transposedBy: work.transposedBy + semitones,
+    events: work.events.map(([on, pitch, duration, voice, velocity]) => [on, pitch + semitones, duration, voice, velocity]),
+  };
+}
+
+// In C major or A minor, by the shorter way.
+function normalize(work) {
+  return transpose(work, keys.transpositionToCommon(work.key));
+}
+
+// Back in the key it was read in.
+function original(work) {
+  return transpose(work, -work.transposedBy);
+}
+
+// Moves note starts and ends to the nearest step (a 16th by default). Returns
+// the new work and how many events moved.
+function quantize(work, stepsPerBeat = 4) {
+  const step = work.ppq / stepsPerBeat;
+  let moved = 0;
+  const events = work.events.map(([on, pitch, duration, voice, velocity]) => {
+    const start = Math.round(on / step) * step;
+    const end = Math.max(start + step, Math.round((on + duration) / step) * step);
+    if (start !== on || end !== on + duration) moved++;
+    return [start, pitch, end - start, voice, velocity];
+  });
+  events.sort(byTime);
+  return { work: { ...work, events }, moved };
+}
+
+function toMidi(work) {
+  return smf.write({
+    ppq: work.ppq,
+    tempoBpm: work.tempoBpm,
+    meter: work.meter,
+    keySignature: keys.toKeySignature(work.key),
+    tracks: work.voiceNames.map((name, v) => ({
+      name,
+      channel: v + 1,
+      notes: work.events
+        .filter((e) => e[3] === v + 1)
+        .map(([on, pitch, dur, , vel]) => ({ on, pitch, dur, vel })),
+    })),
+  });
+}
+
+// One line for a status display, e.g.
+// "bwv347 A major -> C major (+3) 4/4 18 bars 6 phrases"
+function describe(work) {
+  const bars = work.lengthTicks / barTicks(work.meter);
+  const read = original(work).key;
+  const parts = [work.id, keys.keyName(read)];
+  if (work.transposedBy) {
+    parts.push("->", keys.keyName(work.key), "(" + (work.transposedBy > 0 ? "+" : "") + work.transposedBy + ")");
+  }
+  parts.push(work.meter.join("/"), bars + " bars", work.fermatas.length + " phrases");
+  return parts.join(" ");
+}
+
+exports.PPQ = PPQ;
+exports.fromMidi = fromMidi;
+exports.transpose = transpose;
+exports.normalize = normalize;
+exports.original = original;
+exports.quantize = quantize;
+exports.toMidi = toMidi;
+exports.describe = describe;
+exports.barTicks = barTicks;
+  };
+
+  // ---- emi-load.js
+  factories["emi-load"] = function (exports, module, require) {
+"use strict";
+// Max-only: reads a corpus MIDI file and its JSON sidecar with Max's File
+// object and returns a work (see emi-ingest). Used by the [v8] wrappers in
+// both products. Tests replace File with a stand-in backed by Node's fs.
+
+const smf = require("emi-smf");
+const ingest = require("emi-ingest");
+
+// Paths come from [opendialog], in Max's form ("Macintosh HD:/path/to/x.mid") or
+// as plain absolute paths. Only the end of the path is touched here.
+function fileName(path) {
+  return String(path).split(/[/\\]/).pop();
+}
+
+function workId(path) {
+  return fileName(path).replace(/\.midi?$/i, "");
+}
+
+function sidecarPath(path) {
+  return String(path).replace(/\.midi?$/i, "") + ".json";
+}
+
+// All bytes of a file, as numbers 0-255. Reads in chunks: File.readbytes
+// returns at most the count asked for.
+function readBytes(path) {
+  const file = new File(path, "read");
+  if (!file.isopen) throw new Error("can't open " + fileName(path));
+  const bytes = [];
+  try {
+    const size = file.eof;
+    while (file.position < size) {
+      const chunk = file.readbytes(Math.min(1024, size - file.position));
+      if (!chunk || chunk.length === 0) break;
+      for (let i = 0; i < chunk.length; i++) bytes.push(chunk[i] & 0xff);
+    }
+  } finally {
+    file.close();
+  }
+  return bytes;
+}
+
+function exists(path) {
+  const file = new File(path, "read");
+  const open = file.isopen;
+  if (open) file.close();
+  return open;
+}
+
+// The sidecar is plain ASCII JSON (json.dumps escapes everything else).
+function readSidecar(path) {
+  if (!exists(path)) return null;
+  return JSON.parse(String.fromCharCode(...readBytes(path)));
+}
+
+// path -> work, in the key it was written in.
+function loadWork(path) {
+  const midi = smf.parse(readBytes(path));
+  const sidecar = readSidecar(sidecarPath(path));
+  return ingest.fromMidi(midi, { id: workId(path), sidecar });
+}
+
+// mode "c": in C major / A minor (the default); "original": as written.
+function inKey(work, mode) {
+  return mode === "original" ? ingest.original(work) : ingest.normalize(work);
+}
+
+exports.workId = workId;
+exports.sidecarPath = sidecarPath;
+exports.loadWork = loadWork;
+exports.inKey = inKey;
+  };
+
   var cache = {};
   function load(name) {
     if (!Object.prototype.hasOwnProperty.call(cache, name)) {
@@ -137,16 +750,19 @@ __emi_require.local = 1;
 
 // ---- code/emi.clips.v8.js
 // [v8] wrapper that writes scores into Live clips through the Live API.
-// Live version only. Glue only: the logic is in code/lib. Patches load
-// patchers/emi.clips.bundle.js.
+// Live version only. Glue only: the logic is in code/lib and code/max. Patches
+// load patchers/emi.clips.bundle.js.
 //
 // The Live API is only used in response to a message (a click), never in the
 // script's top-level code: the Live API isn't available while a device is
 // still loading.
 //
-// Messages:  testclip -> write the test phrase: one clip per voice into the
-//                       Soprano/Alto/Tenor/Bass tracks if all four exist,
-//                       otherwise all voices into one clip on this track
+// Messages:  loadmidi <path>       -> read a chorale (+ its .json sidecar)
+//            key c | key original  -> write it in C major / A minor (default) or as written
+//            writeclips            -> write the loaded chorale
+//            testclip              -> write the hard-coded test phrase
+// Both write one clip per voice into the Soprano/Alto/Tenor/Bass tracks if all
+// four exist, otherwise all voices into one clip on this track.
 // Outlet 0:  status <text...> | error <text...>
 
 autowatch = 1;
@@ -155,26 +771,56 @@ outlets = 1;
 
 const patterns = __emi_require("emi-pattern");
 const live = __emi_require("emi-live");
+const loader = __emi_require("emi-load");
+
+let loaded = null;
+let keyMode = "c";
+
+function loadmidi(path) {
+  try {
+    loaded = loader.loadWork(path);
+    outlet(0, "status", "clips:", "loaded", loaded.id);
+  } catch (e) {
+    outlet(0, "error", e.message);
+  }
+}
+
+function key(mode) {
+  if (mode === "c" || mode === "original") keyMode = mode;
+}
+
+function writeclips() {
+  if (!loaded) {
+    outlet(0, "error", "load", "a", "chorale", "first");
+    return;
+  }
+  const work = loader.inKey(loaded, keyMode);
+  writeScore(work, work.id + (work.transposedBy ? " in C" : ""));
+}
 
 function testclip() {
+  const score = patterns.testChorale();
+  writeScore(score, "EMI " + score.name);
+}
+
+function writeScore(score, name) {
   try {
-    const score = patterns.testChorale();
     const voices = live.toLiveNotes(score);
     const length = live.clipLengthBeats(score);
-    const name = "EMI " + score.name;
-    const tracks = live.findVoiceTracks(trackNames());
+    const tracks = voices.length === 4 ? live.findVoiceTracks(trackNames()) : null;
     if (tracks) {
       tracks.forEach((track, voice) => writeClip("live_set tracks " + track, voices[voice], length, name));
-      outlet(0, "status", "test", "clip", "written", "to", "4", "voice", "tracks");
+      outlet(0, "status", "wrote", ...name.split(" "), "to", "4", "voice", "tracks");
     } else {
       const ownTrack = liveApi("this_device canonical_parent").unquotedpath;
       writeClip(ownTrack, voices.flat(), length, name);
-      outlet(0, "status", "test", "clip", "written", "to", "this", "track");
+      outlet(0, "status", "wrote", ...name.split(" "), "to", "this", "track");
     }
   } catch (e) {
     outlet(0, "error", e.message);
   }
 }
+writeScore.local = 1;
 
 function liveApi(path) {
   return new LiveAPI(path);

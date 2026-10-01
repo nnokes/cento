@@ -742,7 +742,8 @@ ml_midi/
 ├── code/
 │   ├── emi.ingest.v8.js   emi.analyze.v8.js   emi.compose.v8.js
 │   │   emi.clips.v8.js   … (glue only)
-│   └── lib/               emi-smf.js  emi-model.js  emi-quantize.js  emi-key.js
+│   ├── max/               Max-only helpers, e.g. emi-load.js (reads files with File)
+│   └── lib/               emi-smf.js  emi-ingest.js  emi-key.js  emi-queue.js
 │                          emi-segment.js  emi-tension.js  emi-speac.js
 │                          emi-signatures.js  emi-lexicon.js  emi-compose.js
 │                          emi-rng.js  emily-assoc.js
@@ -955,15 +956,17 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M0 done; M1 next.** Spikes (a)–(c) passed in both the Max
-version and Live; the freeze test (d) is deferred to M11. Results and the
-lessons learned are in [docs/M0-spikes.md](docs/M0-spikes.md).
+**Current status: M1 code done, waiting on the Max/Live checks.** M0 passed
+([results](docs/M0-spikes.md)); the freeze test is deferred to M11. M1's
+engine side (MIDI reader/writer, keys, ingest) is verified, including a
+round trip of 20 chorales; the Max and Live checks are in
+[docs/M1-checklist.md](docs/M1-checklist.md).
 
 | # | Milestone | Done when |
 |---|-----------|-----------|
 | **M0** | **Setup, both shells, four spikes**: repo as a Max package, README, LICENSE, `.gitignore`, CI, bundler, corpus export script; `ml_midi.maxpat` and `emi.brain.amxd`, each loading the same `emi.engine` through its adapter | (a) The same `emi-hello` module gives the same result in `node --test` **and in both shells**. (b) `[v8]` in an M4L device writes a test clip through the Live API. (c) A grid player plays a hard-coded 4-voice phrase into 4 Live tracks in sync, and through MIDI ports or 4 `[vst~]` instruments in the Max version. (d) A **frozen** device works with `patchers/` off the search path *(deferred to M11)*. |
-| **M1** | **Ingest round-trip**: SMF in → events → SMF out, plus a minimal piano roll | 20 chorales round-trip with identical notes; key normalization verified by ear |
-| **M2** | **Naive recombination** (whole piece): beat groupings, `L0` voice-hooking, the different-source rule, a fixed length, ending on a cadence | 32-beat chorales with no broken voices at seams; heard in the Max version, and the exported `.mid` plays in Live |
+| **M1** | **Ingest round-trip**: MIDI reader/writer, ingest with sidecars (pickup padding, fermatas, key), transposition to C major / A minor; load and play a chorale in both products, and write it as Live clips. *(The piano roll moved to M2, where it can show where each beat came from; Live's clip view covers M1.)* | 20 chorales round-trip with identical notes; loaded chorales play in C and in their own key in both products |
+| **M2** | **Naive recombination** (whole piece): beat groupings, `L0` voice-hooking, the different-source rule, a fixed length, ending on a cadence; the piano roll view (`emi.view`) colored by source chorale | 32-beat chorales with no broken voices at seams; heard in the Max version, and the exported `.mid` plays in Live |
 | **M3** | **Form**: templates, phrase lengths, cadence slots, backtracking, match-level relaxation | Output keeps the template's phrase structure; the dead-end rate is under 5% |
 | **M4** | **Both products, offline**: shared `live.*` panels; Max adapter (`.mid` export, `[seq]` audition, `[pattrstorage]` presets); Live adapter (`emi.brain` + `emi.voice`, clip writing) | **Max**: Compose → hear it through `[vst~]` and save the `.mid`. **Live**: Compose writes S/A/T/B clips to tracks found by name. In both, the same seed gives the same notes, and settings survive a reload. |
 | **M5** | **Both products, streaming**: phrase-by-phrase composition, grid player, endless or N-phrase pieces | **Max**: its own play, stop and tempo controls. **Live**: follows Live's transport. In both, parameter changes are heard from the next phrase, with no dropped or stuck notes at 60–160 BPM, including stop/start and tempo changes. |

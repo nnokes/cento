@@ -4,7 +4,7 @@
 var __emi_require = (function () {
   var factories = {};
 
-  // ---- code/lib/emi-rng.js
+  // ---- emi-rng.js
   factories["emi-rng"] = function (exports, module, require) {
 "use strict";
 // Seeded pseudo-random numbers (mulberry32). The same seed gives the same
@@ -39,7 +39,7 @@ function create(seed) {
 exports.create = create;
   };
 
-  // ---- code/lib/emi-version.js
+  // ---- emi-version.js
   factories["emi-version"] = function (exports, module, require) {
 "use strict";
 // Engine version, reported by "hello" in both products. Keep in step with
@@ -48,7 +48,7 @@ exports.create = create;
 exports.VERSION = "0.0.0";
   };
 
-  // ---- code/lib/emi-hello.js
+  // ---- emi-hello.js
   factories["emi-hello"] = function (exports, module, require) {
 "use strict";
 // M0 spike: proves the same code gives the same answer in Node, in the Max

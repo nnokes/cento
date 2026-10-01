@@ -8,6 +8,36 @@ const build = require("../tools/build");
 const { hello } = require("emi-hello");
 const queue = require("emi-queue");
 const patterns = require("emi-pattern");
+const smf = require("emi-smf");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+
+// A tiny chorale in A major with a sidecar, written to a temp folder, as
+// tools/export-chorales.py would write it.
+function writeChorale() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "emi-"));
+  const chords = [[76, 73, 69, 57], [74, 71, 68, 52], [73, 69, 64, 57]];
+  const tracks = ["Soprano", "Alto", "Tenor", "Bass"].map((name, v) => ({
+    name,
+    channel: 1,
+    notes: chords.map((chord, i) => ({ on: (3 + i) * 960, pitch: chord[v], dur: 960, vel: 90 })),
+  }));
+  const midiPath = path.join(dir, "bwv000.mid");
+  fs.writeFileSync(midiPath, smf.write({ ppq: 960, meter: [4, 4], keySignature: { sf: 3, minor: false }, tracks }));
+  fs.writeFileSync(
+    path.join(dir, "bwv000.json"),
+    JSON.stringify({
+      meter: "4/4",
+      key: { tonic: "A", mode: "major" },
+      parts: ["Soprano", "Alto", "Tenor", "Bass"],
+      midi: { ppq: 960, voiceTracks: [1, 2, 3, 4] },
+      padQuarters: 3,
+      fermatasQuarters: [5],
+    }),
+  );
+  return midiPath;
+}
 
 test("bundles in patchers/ are up to date with code/", () => {
   assert.deepEqual(build.check(), []);
@@ -15,8 +45,8 @@ test("bundles in patchers/ are up to date with code/", () => {
 
 test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
-  assert.deepEqual(loadBundle("emi.player").handlers(), ["clear", "pattern"]);
-  assert.deepEqual(loadBundle("emi.clips", { LiveAPI: class {} }).handlers(), ["testclip"]);
+  assert.deepEqual(loadBundle("emi.player").handlers(), ["clear", "key", "loadmidi", "pattern"]);
+  assert.deepEqual(loadBundle("emi.clips", { LiveAPI: class {} }).handlers(), ["key", "loadmidi", "testclip", "writeclips"]);
 });
 
 // Convention: one inlet and one outlet per wrapper. If a script fails to load,
@@ -48,7 +78,26 @@ test("player: 'pattern' clears the coll, then stores every step in order", () =>
     toColl.slice(1),
     steps.map(({ step, events }) => ["store", step, ...events]),
   );
-  assert.deepEqual(status, [["status", "queued", "test-cadence", steps.length, "steps"]]);
+  assert.deepEqual(status, [["status", "test-cadence", "queued"]]);
+});
+
+test("player: 'loadmidi' reads a chorale and queues it in C; 'key original' requeues it", () => {
+  const bundle = loadBundle("emi.player");
+  const out = bundle.send("loadmidi", writeChorale());
+  const stores = out.filter(([, a, b]) => a === "coll" && b === "store");
+  assert.equal(stores.length, 4); // steps 12, 16, 20 (on/off) and 24 (offs)
+  assert.deepEqual(stores[0], [0, "coll", "store", 12, 1, 79, 90, 2, 76, 90, 3, 72, 90, 4, 60, 90]); // +3: A -> C
+  assert.deepEqual(out.at(-1), [0, "status", "bwv000", "A", "major", "->", "C", "major", "(+3)", "4/4", "2", "bars", "1", "phrases", "queued"]);
+
+  const original = bundle.send("key", "original");
+  assert.deepEqual(original.find(([, a, b]) => a === "coll" && b === "store"), [0, "coll", "store", 12, 1, 76, 90, 2, 73, 90, 3, 69, 90, 4, 57, 90]);
+  assert.equal(bundle.send("key", "sideways")[0][1], "error");
+});
+
+test("player: a missing file is an error, not a crash", () => {
+  const out = loadBundle("emi.player").send("loadmidi", path.join(os.tmpdir(), "no-such-file.mid"));
+  assert.deepEqual(out.map(([, selector]) => selector), ["error"]);
+  assert.match(String(out[0][2]), /can't open no-such-file\.mid/);
 });
 
 test("player: 'clear' empties the coll", () => {
@@ -142,4 +191,28 @@ test("clips: reports an error when the track has no empty slot", () => {
   const out = bundle.send("testclip");
   assert.deepEqual(out[0].slice(0, 2), [0, "error"]);
   assert.match(String(out[0][2]), /no empty clip slot/);
+});
+
+test("clips: 'writeclips' needs a loaded chorale", () => {
+  const live = fakeLive({ trackNames: ["EMI"] });
+  const out = loadBundle("emi.clips", live).send("writeclips");
+  assert.equal(out[0][1], "error");
+  assert.deepEqual(live.calls, []);
+});
+
+test("clips: 'loadmidi' then 'writeclips' writes the chorale in C into the voice tracks", () => {
+  const live = fakeLive({ trackNames: ["EMI", "Soprano", "Alto", "Tenor", "Bass"] });
+  const bundle = loadBundle("emi.clips", live);
+  bundle.send("loadmidi", writeChorale());
+  const out = bundle.send("writeclips");
+  assert.deepEqual(out.at(-1), [0, "status", "wrote", "bwv000", "in", "C", "to", "4", "voice", "tracks"]);
+  const names = live.calls.filter(([, name, property]) => name === "set" && property === "name").map((c) => c[3]);
+  assert.deepEqual(names, ["bwv000 in C", "bwv000 in C", "bwv000 in C", "bwv000 in C"]);
+  const bass = live.calls.filter(([, name]) => name === "add_new_notes")[3][2].notes;
+  assert.deepEqual(Array.from(bass, (n) => n.pitch), [60, 55, 60]); // A major bass, moved to C
+
+  bundle.send("key", "original");
+  bundle.send("writeclips");
+  const lastName = live.calls.filter(([, name, property]) => name === "set" && property === "name").at(-1)[3];
+  assert.equal(lastName, "bwv000");
 });

@@ -13,10 +13,11 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M0 done.** The engine skeleton, both shells and the tooling work in
-Max and in Live ([results](docs/M0-spikes.md)). Next is M1: reading the
-chorale corpus into the engine. The full plan and milestones are in
-[PLAN.md](PLAN.md).
+**Status: M1, reading the corpus.** M0 is done: the engine skeleton, both
+shells and the tooling work in Max and in Live ([results](docs/M0-spikes.md)).
+M1 reads chorale MIDI files, moves them to C major, and plays them in both
+products ([checklist](docs/M1-checklist.md)). The full plan and milestones are
+in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
 
@@ -89,6 +90,7 @@ patchers/     everything Max loads, in one folder:
               generated *.bundle.js scripts (npm run build; committed)
 code/         [v8] wrappers (*.v8.js): glue between Max messages and the engine
 code/lib/     the engine: plain JavaScript, no Max APIs, tested in Node
+code/max/     Max-only helpers used by the wrappers (e.g. reading files)
 tests/        node --test, including the bundles in a simulated [v8] context
 tools/        build, path check, git hook, chorale export
 docs/         milestone checklists
