@@ -297,6 +297,12 @@
 					"outlettype": [
 						""
 					],
+					"textfile": {
+						"filename": "emi.clips.bundle.js",
+						"flags": 0,
+						"embed": 0,
+						"autowatch": 1
+					},
 					"patching_rect": [
 						520.0,
 						300.0,

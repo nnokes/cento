@@ -140,10 +140,9 @@ __emi_require.local = 1;
 // Live version only. Glue only: the logic is in code/lib. Patches load
 // javascript/emi.clips.bundle.js.
 //
-// The Live API is only used in response to a message (a click), never while
-// the device is loading. [v8] runs its script after the patch has loaded, so a
-// load-time message like a "ready" from [live.thisdevice] would arrive before
-// the script exists.
+// The Live API is only used in response to a message (a click), never in the
+// script's top-level code: the Live API isn't available while a device is
+// still loading.
 //
 // Messages:  testclip -> write the test phrase: one clip per voice into the
 //                       Soprano/Alto/Tenor/Bass tracks if all four exist,

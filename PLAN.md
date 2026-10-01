@@ -233,13 +233,14 @@ ml_midi.maxpat  (Max version)                 emi.brain.amxd  (Live version)
   `param <key> <value>`, `cancel`. Every output starts with a selector
   (`status <text>`, `progress <0..1>`, `done <dict>`, `error <text>`, or a
   destination such as `coll …`), and the patch sorts them with `[route]`.
-  *Learned in M0:* `[v8]` runs its script **after** the patch has loaded, so
-  when Max connects the cords the object only has its default single inlet and
-  outlet; a cord to a second outlet is deleted. For the same reason, **never
-  send a `[v8]` a message at load time** (from `[loadbang]` or
-  `[live.thisdevice]`): the script's functions don't exist yet. When a script
-  needs to initialise, it should schedule that itself from its top-level code
-  (a `Task` with a short delay). `tests/patches.test.js` enforces the cord rules.
+  *Learned in M0:* in Max 9, a `[v8]` box must also carry a `textfile` entry
+  naming its script (`{"filename": "…bundle.js", "embed": 0}`). Without it,
+  `[v8]` starts with an empty embedded script: no error on load, then
+  `no function bang`, and only its default single inlet and outlet, so Max
+  deletes cords to any other outlet. Max writes `textfile` itself when you
+  create the box by hand; it only matters for generated patches.
+  One inlet and one outlet per wrapper keeps cords safe even if a script fails
+  to load. `tests/patches.test.js` checks both rules.
 - **Never schedule notes from JS.** JS writes events ahead of time (a whole
   piece, or the next phrase), and a Max-native player locked to the transport
   sends them out (§4.7).
@@ -990,7 +991,7 @@ voice on its own track. The `music21` corpus has all of them, and
 | **Live's bundled Max is 8.x** (no `[v8]`) | Check *About Max* in M0; use Live 12.2.1+ or point Live at Max 9. State the requirement when sharing the devices. |
 | **Frozen device can't find `require()`d modules** | Max only ever loads single-file bundles from `javascript/`; the M0 freeze spike proves it before any real code depends on it. |
 | **Live API threading and timing** | Use the Live API only from `[v8]` message handlers after the device is running (never at load, never from the scheduler). |
-| **`[v8]` loads its script after the patch** (found in M0) | One inlet and one outlet per wrapper; no messages to `[v8]` at load time; `tests/patches.test.js` checks cords. |
+| **Generated `[v8]` boxes load no script** (found in M0: missing `textfile`) | Every generated `[v8]` box carries `textfile`; one inlet and one outlet per wrapper; `tests/patches.test.js` checks both. |
 | **SPEAC thresholds** | Make every constant a parameter stored in the database settings; compare against Cope's published examples (golden tests). |
 
 ---

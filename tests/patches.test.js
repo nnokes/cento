@@ -9,15 +9,17 @@ const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
 
-// .maxpat files are JSON. An .amxd is a short binary header ("ampf", the
-// device type, "meta", then "ptch" and a length) followed by the same JSON.
+// .maxpat files are JSON. An .amxd starts with three chunks: "ampf" (device
+// type), "meta", and "ptch". Inside "ptch", an "mx@c" header gives the size of
+// the patcher JSON that follows (then "\n\0" and a "dlst" file list).
 function readPatcher(file) {
   const data = fs.readFileSync(file);
   if (file.endsWith(".amxd")) {
     assert.equal(data.toString("latin1", 0, 4), "ampf", `${file}: not an .amxd`);
     assert.equal(data.toString("latin1", 24, 28), "ptch", `${file}: unexpected .amxd layout`);
-    const size = data.readUInt32LE(28);
-    return JSON.parse(data.toString("utf8", 32, 32 + size).replace(/\0+$/, "")).patcher;
+    assert.equal(data.toString("latin1", 32, 36), "mx@c", `${file}: no mx@c header in ptch`);
+    const jsonEnd = 32 + data.readUInt32BE(44); // the size counts from the mx@c header
+    return JSON.parse(data.toString("utf8", 48, jsonEnd).replace(/\n?\0+$/, "")).patcher;
   }
   return JSON.parse(data.toString("utf8")).patcher;
 }
@@ -55,8 +57,7 @@ for (const file of files) {
         }
         if (outlet >= src.numoutlets) problems.push(`${where}: ${label(src)} has no outlet ${outlet}`);
         if (inlet >= dst.numinlets) problems.push(`${where}: ${label(dst)} has no inlet ${inlet}`);
-        // [v8] runs its script after the patch loads, so only inlet 0 and
-        // outlet 0 exist when Max connects the cords.
+        // Wrappers have one inlet and one outlet (see PLAN.md, section 2).
         if (firstWord(src) === "v8" && outlet > 0) problems.push(`${where}: cord from ${label(src)} outlet ${outlet}`);
         if (firstWord(dst) === "v8" && inlet > 0) problems.push(`${where}: cord into ${label(dst)} inlet ${inlet}`);
         // Only an unnamed [receive] has an inlet.
@@ -66,12 +67,18 @@ for (const file of files) {
         }
       }
 
-      // Every [v8] loads a bundle that exists (never code/ directly).
+      // Every [v8] loads a bundle that exists (never code/ directly). Max 9
+      // also needs the box's "textfile" entry to name that file; without it,
+      // [v8] starts with an empty embedded script ("no function bang").
       for (const box of boxes.values()) {
         if (firstWord(box) !== "v8") continue;
         const script = box.text.split(/\s+/)[1];
         if (!/\.bundle\.js$/.test(script || "")) problems.push(`${where}: ${label(box)} should load a .bundle.js`);
         else if (!fs.existsSync(path.join(ROOT, "javascript", script))) problems.push(`${where}: javascript/${script} is missing`);
+        const textfile = box.textfile || {};
+        if (textfile.filename !== script || textfile.embed !== 0) {
+          problems.push(`${where}: ${label(box)} needs textfile {filename: "${script}", embed: 0}`);
+        }
       }
 
       for (const kind of ["inlet", "outlet"]) {

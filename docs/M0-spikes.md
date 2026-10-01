@@ -12,9 +12,10 @@ your Mac.
 - The clip writer was tested against a fake Live set (track lookup by name,
   first empty slot, the "no empty slot" error).
 - Every patch is valid JSON, and every patch cord connects to an inlet or
-  outlet that exists. `tests/patches.test.js` also checks the two rules found
-  on first open: cords only to and from inlet 0 and outlet 0 of a `[v8]`, and no
-  cords into a named `[receive]`.
+  outlet that exists. `tests/patches.test.js` also checks the rules found on
+  first open: every `[v8]` box names its script in a `textfile` entry, cords
+  only to and from inlet 0 and outlet 0 of a `[v8]`, and no cords into a named
+  `[receive]`.
 - `tools/export-chorales.py` exported 20 chorales: all at 960 ticks per
   quarter, pickups padded to a barline, and all 10,342 note events on the
   16th-note grid.

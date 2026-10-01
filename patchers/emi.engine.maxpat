@@ -94,6 +94,12 @@
 					"outlettype": [
 						""
 					],
+					"textfile": {
+						"filename": "emi.hello.bundle.js",
+						"flags": 0,
+						"embed": 0,
+						"autowatch": 1
+					},
 					"patching_rect": [
 						20.0,
 						150.0,
@@ -130,6 +136,12 @@
 					"outlettype": [
 						""
 					],
+					"textfile": {
+						"filename": "emi.player.bundle.js",
+						"flags": 0,
+						"embed": 0,
+						"autowatch": 1
+					},
 					"patching_rect": [
 						420.0,
 						150.0,

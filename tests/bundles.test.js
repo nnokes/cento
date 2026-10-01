@@ -19,9 +19,9 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.clips", { LiveAPI: class {} }).handlers(), ["testclip"]);
 });
 
-// [v8] runs its script after the patch has loaded, so Max connects the cords
-// while the object still has its default single inlet and outlet. Cords to any
-// other inlet or outlet get deleted ("patchcord outlet out of range").
+// Convention: one inlet and one outlet per wrapper. If a script fails to load,
+// [v8] keeps its default single inlet and outlet and Max deletes any other
+// cords ("patchcord outlet out of range"), which is what happened in M0.
 test("every bundle has exactly one inlet and one outlet", () => {
   for (const name of ["emi.hello", "emi.player", "emi.clips"]) {
     const { context } = loadBundle(name);

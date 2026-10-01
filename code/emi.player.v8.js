@@ -4,9 +4,9 @@
 // JS never plays notes itself: it writes the queue, and the Max-native grid
 // player reads one step per 16th note on the transport.
 //
-// Like every wrapper, this has ONE inlet and ONE outlet: [v8] runs the script
-// after the patch has loaded, so cords to a second outlet would be deleted.
-// Messages carry a selector instead, and the patch routes them with [route].
+// Like every wrapper, this has one inlet and one outlet. Output messages carry
+// a selector, and the patch routes them with [route]. (If a script ever fails
+// to load, [v8] keeps one inlet and one outlet, so no cords are lost.)
 //
 // Messages:  pattern -> queue the hard-coded 4-voice test phrase
 //            clear   -> empty the queue
