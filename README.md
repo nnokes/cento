@@ -13,11 +13,11 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M1, reading the corpus.** M0 is done: the engine skeleton, both
-shells and the tooling work in Max and in Live ([results](docs/M0-spikes.md)).
-M1 reads chorale MIDI files, moves them to C major, and plays them in both
-products ([checklist](docs/M1-checklist.md)). The full plan and milestones are
-in [PLAN.md](PLAN.md).
+**Status: M1 done.** Both products load Bach chorales, play them in C major or
+their own key, and (in Live) write them as clips
+([M0 results](docs/M0-spikes.md), [M1 results](docs/M1-checklist.md)). Next is
+M2: the first recombined chorales. The full plan and milestones are in
+[PLAN.md](PLAN.md).
 
 ## Two products, one engine
 

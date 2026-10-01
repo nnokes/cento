@@ -1,5 +1,16 @@
 # M1 checklist: reading the corpus
 
+## Result: M1 passed (macOS, Max 9, Live 12)
+
+| Check | Max version | Live version |
+|---|---|---|
+| **load chorale**: `File` reads the `.mid` and `.json` in `[v8]`; the file dialog's path works | ✅ | ✅ |
+| Plays in C, and a minor third lower with **original key** | ✅ | ✅ |
+| **writeclips** writes the chorale as clips on the voice tracks | n/a | ✅ |
+| 20 chorales: MIDI → work → MIDI → work with identical notes | ✅ (`tests/corpus.test.js`) | |
+
+The checklist below is kept as a record and for re-testing.
+
 M1 reads chorale MIDI files into the engine, moves them to C major (or
 A minor), and plays them back in both products. Live can also write them as
 clips.

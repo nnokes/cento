@@ -956,11 +956,10 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M1 code done, waiting on the Max/Live checks.** M0 passed
-([results](docs/M0-spikes.md)); the freeze test is deferred to M11. M1's
-engine side (MIDI reader/writer, keys, ingest) is verified, including a
-round trip of 20 chorales; the Max and Live checks are in
-[docs/M1-checklist.md](docs/M1-checklist.md).
+**Current status: M1 done; M2 next.** M0 passed ([results](docs/M0-spikes.md));
+its freeze test is deferred to M11. M1 passed in both products
+([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
+and write as Live clips, and 20 chorales round-trip with identical notes.
 
 | # | Milestone | Done when |
 |---|-----------|-----------|
