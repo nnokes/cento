@@ -153,11 +153,11 @@ Emily's memory. Taste Emily learns in one product carries over to the other.
 
 ### Shipping the Max version
 
-- **As a Max project**: anyone with Max 9 opens `ml_midi.maxproj`.
-- **As a macOS app**: Max can build a project into a standalone application
-  that runs **without Max installed**. Include the starter database and the
-  bundled `dist/` scripts (the same `require()` caution applies as for frozen
-  devices, §5.4). To share the app beyond your own Mac, it needs code signing
+- **As a Max package**: anyone with Max 9 links the repo into
+  `~/Documents/Max 9/Packages/` and opens `patchers/ml_midi.maxpat`.
+- **As a macOS app**: Max can build a patch into a standalone application
+  that runs **without Max installed**. Include the starter database; the
+  scripts are already single-file bundles (§5.4). To share the app beyond your own Mac, it needs code signing
   and notarization; otherwise macOS Gatekeeper will block it.
 - **Sound**: `[vst~]` hosts AU or VST3 instruments directly in the patch (one
   per voice). Alternatively, send to hardware, or to Live, Logic and other apps
@@ -340,6 +340,12 @@ in the file so every output can be reproduced.
     major only).
 - **Output**: `dict emi.corpus` and a per-work report (key, meter, voices,
   warnings).
+- **Corpus files as exported** (`tools/export-chorales.py`): type-1 MIDI at
+  960 ticks per quarter, track 0 for tempo and meter, tracks 1–4 for S/A/T/B,
+  all on channel 1, so voices are identified by **track**, not channel.
+  Pickups are padded so time 0 is always a barline. A JSON sidecar per file
+  carries the fermatas (phrase ends), the padding, the key and the source.
+  In the first 20 chorales, every note is on the 16th-note grid.
 
 ### 4.2 `emi.analyze/segment`
 
@@ -544,18 +550,22 @@ The engine has three ways out. All three share the score format and provenance.
 The grid player is a Max-native step sequencer in `[p grid-player]`, locked to
 the transport:
 
-- **Clock**: `[metro 16n @quantize 16n]` runs on the transport (Live's
-  transport inside M4L). On each tick, `[transport]` gives the current position,
-  and the player converts it to a **step index** (one step per 16th note).
-- **Queue**: a named `[dict]` (`emi.queue`) keyed by step index. Each entry lists
-  note-ons and note-offs as `[voice, pitch, velocity]`, with velocity 0 for
-  note-off.
+- **Clock**: `[metro 16n @quantize 16n @active 1]` runs only while the
+  transport plays (Live's transport inside M4L). A counter turns its ticks
+  into a **step index** (one step per 16th note), and `stop` rewinds it to 0.
+  *As built in M0*, playback therefore always starts at step 0. M5 reads the
+  transport position instead, so playback can start mid-song aligned to the bar.
+- **Queue**: a `[coll ---emi.queue]` keyed by step index. Each entry is a flat
+  list of `voice pitch velocity` triples, note-offs first, with velocity 0 for
+  note-off. (`[coll]` was chosen over `[dict]` because an int in, list out
+  lookup is the simplest reliable read on the scheduler thread.)
   - JS writes into the queue ahead of time, and the player only reads from it.
   - Note-offs are explicit events rather than `[makenote]` durations, so a tempo
     change mid-note doesn't break anything.
-- **Output**: one outlet per voice. The host adapter connects these to
-  `[vst~]` or `[noteout]` (Max version), or to `[send emi.voice.N]` (Live
-  version, §5).
+- **Output**: `voice <n> <pitch> <velocity>` from the engine's outlet, through
+  one `[flush]` per voice so `stop` can release sounding notes. The host
+  adapter routes these to `[vst~]` or `[noteout]` (Max version), or to
+  `[send emi.voice.N]` (Live version, §5).
 - The player also sends the current grouping index to `emi.view` for
   highlighting, and `need next` back to `emi.compose`.
 - **Resolution**: the chorales are quantized to 16ths, so a 16th grid is exact.
@@ -665,7 +675,7 @@ there's no porting step at the end. These are the things to handle:
 |---------|------|
 | **Max version inside Live** | `[v8]` needs Max 9. Recent Live 12 releases bundle Max 9 (12.2.1 onward, according to Ableton's release notes); earlier 12.x releases bundled Max 8.6. **To check yours**, open any device in the Max editor and choose *Max → About Max*. If it shows 8.x, either update Live or point Live at your own Max 9 installation (*Settings → File & Folder → Max Application*). Anyone you share the devices with needs the same. |
 | **Live edition** | Live Suite, or Standard plus the Max for Live add-on. |
-| **Freezing and `require()`** | Frozen devices are known to break when one JS file `require()`s another: Max can miss the nested dependency, and the error only shows when the editor is open. The fix: keep `code/lib` modular for development and tests, but **ship one bundled file per wrapper**. `npm run build` (esbuild) produces self-contained `dist/*.v8.js` files, and the devices reference those. The M0 spike checks this: freeze the device, move it to another folder, and load it in a fresh set with the editor closed. |
+| **Freezing and `require()`** | Frozen devices are known to break when one JS file `require()`s another: Max can miss the nested dependency, and the error only shows when the editor is open. The fix: keep `code/lib` modular for development and tests, but **load only bundles in Max**. `npm run build` (`tools/build.js`, no dependencies) produces one self-contained `javascript/*.bundle.js` per wrapper, and every patch references those, during development too. Max never runs `require()` at all. The M0 spike checks this: freeze the device, hide the package, and load it in a fresh set with the editor closed. |
 | **Starter database** | Freeze a prebuilt `bach-chorales.json` into `emi.brain`, so the device makes music straight away with no setup. User databases and Emily's memory still live in `~/Documents/ml_midi/`. |
 | **Analysis inside Live** | Analysis runs in chunks (`Task`) with a progress bar. Live's audio isn't affected, but Max device UIs are sluggish while it runs, and the engine can't compose the next phrase, so **don't analyze while performing**. 20 chorales should take seconds; a few hundred works, perhaps a minute. Node stays a development tool for bulk runs and tests. |
 | **Per-set state** | Numeric controls are `live.*` parameters, so they are saved with the set and as device presets (`.adv`). Non-numeric state, such as which database file is loaded, needs a short spike: either store it with the set, or fall back to "last used database" in the user folder. |
@@ -696,17 +706,18 @@ go through `emi.brain`. This is a stretch item (M12).
 
 ## 6. Repository layout
 
-The layout follows Max Project conventions, so that a `.maxproj` at the root
-puts all of these folders on the search path.
+The repository is itself a **Max package**: a symlink in
+`~/Documents/Max 9/Packages/` puts `patchers/` and `javascript/` on the search
+path for standalone Max *and* for Max for Live. (A `.maxproj` was dropped:
+packages are simpler, and Max Projects can reorganize folders on their own.)
 
 ```
 ml_midi/
-├── ml_midi.maxproj
-├── PLAN.md
+├── README.md  PLAN.md  LICENSE  .gitignore  package.json
 ├── patchers/            ml_midi.maxpat (Max version), emi.host.max.maxpat,
 │                        emi.host.live.maxpat, emi.engine.maxpat,
 │                        emi.ingest.maxpat, … emily.feedback.maxpat, panels/*.maxpat
-├── devices/             emi.brain.amxd, emi.voice.amxd (Live version)
+├── devices/             emi.brain.amxd, emi.voice.amxd (Live version; frozen/ is ignored)
 ├── code/
 │   ├── emi.ingest.v8.js   emi.analyze.v8.js   emi.compose.v8.js
 │   │   emi.clips.v8.js   … (glue only)
@@ -714,16 +725,16 @@ ml_midi/
 │                          emi-segment.js  emi-tension.js  emi-speac.js
 │                          emi-signatures.js  emi-lexicon.js  emi-compose.js
 │                          emi-rng.js  emily-assoc.js
-├── data/
-│   ├── starter/         bach-chorales.json: the prebuilt starter database (§6.1)
-│   └── fixtures/        tiny test inputs: hand-made MIDI files, Cope's book examples
-├── dist/                generated, git-ignored: one bundled file per v8 wrapper
-├── tests/               node --test  (golden tests against Cope's book examples)
-├── tools/               node CLI: analyze-corpus, compose-batch, build (esbuild);
-│                        export-chorales.py (music21, run once)
-├── .github/workflows/   CI: node --test on every push
-├── README.md  LICENSE  .gitignore
-└── package.json         dev-only: test + build scripts, no runtime deps
+├── javascript/          GENERATED and committed: one bundle per wrapper, loaded by
+│                        the patches (committed so a fresh clone works in Max)
+├── data/starter/        bach-chorales.json: the prebuilt starter database (§6.1)
+├── tests/               node --test, incl. bundles in a simulated [v8] context;
+│                        fixtures/ for tiny inputs (Cope's book examples)
+├── tools/               build.js (bundler), check-paths.js, hooks/pre-commit,
+│                        export-chorales.py (music21, run once); later
+│                        analyze-corpus, compose-batch
+├── docs/                milestone checklists (M0-spikes.md)
+└── .github/workflows/   CI: tests, bundle freshness, path check on every push
 
 ~/Documents/ml_midi/     working data, OUTSIDE the repo (shared by both products)
 ├── corpus/              your source .mid files
@@ -736,20 +747,19 @@ Working data lives **outside the repository**, so personal material (your
 corpus files, your output, Emily's taste) can't be committed by accident. The
 repository holds only code, patches, tests, and the starter database.
 
-**Module sharing between Max and Node.** `[v8]` `require()` follows CommonJS 1.0:
-export by assigning to `exports.foo` and **don't** reassign `module.exports`.
-Max finds modules **by bare name on the search path**. Give every module a
-unique prefixed name (`emi-tension`) and require it by that bare name, so the
-same line works in both environments. In Node, set
-`NODE_PATH=code/lib node --test tests/` so bare names resolve there too.
-Confirm this works in M0 before writing anything else. For shipping, `npm run build`
-bundles each wrapper together with its modules into one file in `dist/`, which
-is what the frozen devices load (§5.4).
+**Module sharing between Max and Node.** Modules use CommonJS: export by
+assigning to `exports.foo`, and require other modules by a **bare, prefixed
+name** (`require("emi-tension")`). In Node, `NODE_PATH=code/lib` resolves those
+names (`npm test` sets it). In Max, `tools/build.js` resolves them at build
+time and inlines the modules, so each `javascript/*.bundle.js` is
+self-contained. Run `npm run build:watch` while Max is open: `autowatch`
+reloads a bundle as soon as it's rebuilt. CI fails if a committed bundle
+doesn't match `code/`.
 
 **Minimal wrapper shape**
 
 ```js
-// code/emi.compose.v8.js — glue only
+// code/emi.compose.v8.js — glue only (Max loads javascript/emi.compose.bundle.js)
 autowatch = 1;
 inlets = 1;
 outlets = 2;                                  // 0: results   1: status
@@ -797,10 +807,10 @@ function run() {
   variable or from a file in `~/Documents/ml_midi/`, never from the repository.
 - **No personal paths.** Max sometimes saves absolute paths in patchers (for
   example `/Users/<you>/…` in file references or `[vst~]` plugin state). A
-  small check (`git grep -n "/Users/"`, run in CI and as a pre-commit hook)
+  small check (`tools/check-paths.js`, run in CI and as a pre-commit hook)
   catches them.
-- **`.gitignore`** covers: `dist/`, `node_modules/`, `.DS_Store`, any
-  `*-frozen.amxd`, built `.app` bundles, and local Max preference files.
+- **`.gitignore`** covers: `node_modules/`, `.DS_Store`, `devices/frozen/`,
+  built `.app` bundles, and stray `.mid` files (outside `tests/fixtures/`).
   Commit **unfrozen** devices; frozen ones and the built app go into **GitHub
   Releases** if you ever publish them.
 - **CI is free for public repos.** Because the core is plain JavaScript, a
@@ -926,9 +936,13 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
+**Current status: M0.** The code, tests, tooling, patches and devices are in
+the repo, and the parts that can run without Max are verified. The Max and Live
+checks are in [docs/M0-spikes.md](docs/M0-spikes.md).
+
 | # | Milestone | Done when |
 |---|-----------|-----------|
-| **M0** | **Setup, both shells, four spikes**: Max project, repo layout, README, LICENSE, `.gitignore`, CI running Node tests, corpus export script; empty `ml_midi.maxpat` and `emi.brain.amxd`, each loading the same `emi.engine` through its adapter | (a) The same `emi-hello` module gives the same result in `[v8]`, in `node --test`, **and in both shells**. (b) `[v8]` in an M4L device writes a 1-bar clip through the Live API. (c) A grid player plays a hard-coded 4-voice pattern into 4 Live tracks in sync, and into 4 `[vst~]` instruments in the Max version. (d) A **frozen** device using a bundled `dist/` script loads in a fresh set from another folder with the editor closed, and *About Max* shows 9.x. |
+| **M0** | **Setup, both shells, four spikes**: repo as a Max package, README, LICENSE, `.gitignore`, CI, bundler, corpus export script; `ml_midi.maxpat` and `emi.brain.amxd`, each loading the same `emi.engine` through its adapter | (a) The same `emi-hello` module gives the same result in `node --test` **and in both shells**. (b) `[v8]` in an M4L device writes a test clip through the Live API. (c) A grid player plays a hard-coded 4-voice phrase into 4 Live tracks in sync, and through MIDI ports or 4 `[vst~]` instruments in the Max version. (d) A **frozen** device loads in a fresh set with the package hidden and the editor closed, and *About Max* shows 9.x. |
 | **M1** | **Ingest round-trip**: SMF in → events → SMF out, plus a minimal piano roll | 20 chorales round-trip with identical notes; key normalization verified by ear |
 | **M2** | **Naive recombination** (whole piece): beat groupings, `L0` voice-hooking, the different-source rule, a fixed length, ending on a cadence | 32-beat chorales with no broken voices at seams; heard in the Max version, and the exported `.mid` plays in Live |
 | **M3** | **Form**: templates, phrase lengths, cadence slots, backtracking, match-level relaxation | Output keeps the template's phrase structure; the dead-end rate is under 5% |
@@ -965,7 +979,7 @@ voice on its own track. The `music21` corpus has all of them, and
 | **Something private or unlicensed ends up in the public repo** (corpus files, personal paths, an API key, copied reference code) | Working data lives outside the repo; `.gitignore`; path check in CI and a pre-commit hook; corpus rebuilt by script; implement from published descriptions (§6.1). |
 | **The two products drift apart** (a feature lands in one only) | All logic in `emi.engine`; adapters stay thin; shared `live.*` panels; parity rule from M4; one parity checklist used for every milestone. |
 | **Live's bundled Max is 8.x** (no `[v8]`) | Check *About Max* in M0; use Live 12.2.1+ or point Live at Max 9. State the requirement when sharing the devices. |
-| **Frozen device can't find `require()`d modules** | Ship bundled single-file scripts from `dist/`; the M0 freeze spike proves it before any real code depends on it. |
+| **Frozen device can't find `require()`d modules** | Max only ever loads single-file bundles from `javascript/`; the M0 freeze spike proves it before any real code depends on it. |
 | **Live API threading and timing** | Create Live API objects only after `[live.thisdevice]`; call them from `[v8]` (main thread), never from the scheduler. |
 | **SPEAC thresholds** | Make every constant a parameter stored in the database settings; compare against Cope's published examples (golden tests). |
 

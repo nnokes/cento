@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Node (dev tooling only; there are no runtime dependencies)
+node_modules/
+
+# Python (tools/export-chorales.py)
+__pycache__/
+.venv/
+
+# Frozen devices and built apps go to GitHub Releases, not the repo.
+# Save frozen copies into devices/frozen/.
+devices/frozen/
+*.app/
+build/
+
+# Working data lives in ~/Documents/ml_midi, outside the repo. These catch
+# corpus files or output copied in here by accident.
+*.mid
+*.midi
+!tests/fixtures/**/*.mid

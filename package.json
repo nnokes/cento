@@ -1,0 +1,19 @@
+{
+  "name": "ml_midi",
+  "version": "0.0.0",
+  "private": true,
+  "description": "An EMI / Emily Howell-style recombinant composer for Max and Max for Live",
+  "license": "MIT",
+  "repository": "github:nnokes/ml_midi",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "NODE_PATH=code/lib node --test tests/*.test.js",
+    "build": "node tools/build.js",
+    "build:watch": "node tools/build.js --watch",
+    "build:check": "node tools/build.js --check",
+    "check:paths": "node tools/check-paths.js",
+    "hooks": "git config core.hooksPath tools/hooks"
+  }
+}
