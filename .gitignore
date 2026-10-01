@@ -9,8 +9,9 @@ __pycache__/
 .venv/
 
 # Frozen devices and built apps go to GitHub Releases, not the repo.
-# Save frozen copies into devices/frozen/.
-devices/frozen/
+# Save frozen copies into frozen/ (outside patchers/, so Max never confuses
+# them with the unfrozen devices).
+frozen/
 *.app/
 build/
 

@@ -1,5 +1,5 @@
 "use strict";
-// Tests the bundled scripts in javascript/, loaded the way [v8] loads them.
+// Tests the bundled scripts in patchers/, loaded the way [v8] loads them.
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
@@ -9,7 +9,7 @@ const { hello } = require("emi-hello");
 const queue = require("emi-queue");
 const patterns = require("emi-pattern");
 
-test("bundles in javascript/ are up to date with code/", () => {
+test("bundles in patchers/ are up to date with code/", () => {
   assert.deepEqual(build.check(), []);
 });
 

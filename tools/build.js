@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 "use strict";
 // Bundles each [v8] wrapper (code/*.v8.js) together with the code/lib modules
-// it requires into one self-contained file: javascript/<name>.bundle.js.
+// it requires into one self-contained file: patchers/<name>.bundle.js, next to
+// the patches that load it (Max always searches a patch's own folder).
 //
 // Why bundle: frozen Max for Live devices and built apps don't reliably find
 // files that a script loads with require(). A bundle has no runtime requires,
@@ -10,7 +11,7 @@
 //
 //   node tools/build.js           build once
 //   node tools/build.js --watch   rebuild whenever code/ changes
-//   node tools/build.js --check   exit 1 if javascript/ is out of date (CI)
+//   node tools/build.js --check   exit 1 if the bundles are out of date (CI)
 
 const fs = require("fs");
 const path = require("path");
@@ -18,7 +19,7 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
 const CODE = path.join(ROOT, "code");
 const LIB = path.join(CODE, "lib");
-const OUT = path.join(ROOT, "javascript");
+const OUT = path.join(ROOT, "patchers");
 const REQUIRE = /\brequire\(\s*(["'])([^"']+)\1\s*\)/g;
 
 const relative = (file) => path.relative(ROOT, file).split(path.sep).join("/");
@@ -80,7 +81,7 @@ function bundle(wrapperFile) {
   return out.join("\n");
 }
 
-// Returns { "javascript/<name>.bundle.js": contents } for every wrapper.
+// Returns { "patchers/<name>.bundle.js": contents } for every wrapper.
 function buildAll() {
   const outputs = {};
   const wrappers = fs

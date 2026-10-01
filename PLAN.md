@@ -153,8 +153,8 @@ Emily's memory. Taste Emily learns in one product carries over to the other.
 
 ### Shipping the Max version
 
-- **As a Max package**: anyone with Max 9 links the repo into
-  `~/Documents/Max 9/Packages/` and opens `patchers/ml_midi.maxpat`.
+- **As a patch**: anyone with Max 9 clones the repo and opens
+  `patchers/ml_midi.maxpat`. No search-path setup is needed.
 - **As a macOS app**: Max can build a patch into a standalone application
   that runs **without Max installed**. Include the starter database; the
   scripts are already single-file bundles (§5.4). To share the app beyond your own Mac, it needs code signing
@@ -685,7 +685,7 @@ there's no porting step at the end. These are the things to handle:
 |---------|------|
 | **Max version inside Live** | `[v8]` needs Max 9. Recent Live 12 releases bundle Max 9 (12.2.1 onward, according to Ableton's release notes); earlier 12.x releases bundled Max 8.6. **To check yours**, open any device in the Max editor and choose *Max → About Max*. If it shows 8.x, either update Live or point Live at your own Max 9 installation (*Settings → File & Folder → Max Application*). Anyone you share the devices with needs the same. |
 | **Live edition** | Live Suite, or Standard plus the Max for Live add-on. |
-| **Freezing and `require()`** | Frozen devices are known to break when one JS file `require()`s another: Max can miss the nested dependency, and the error only shows when the editor is open. The fix: keep `code/lib` modular for development and tests, but **load only bundles in Max**. `npm run build` (`tools/build.js`, no dependencies) produces one self-contained `javascript/*.bundle.js` per wrapper, and every patch references those, during development too. Max never runs `require()` at all. The M0 spike checks this: freeze the device, hide the package, and load it in a fresh set with the editor closed. |
+| **Freezing and `require()`** | Frozen devices are known to break when one JS file `require()`s another: Max can miss the nested dependency, and the error only shows when the editor is open. The fix: keep `code/lib` modular for development and tests, but **load only bundles in Max**. `npm run build` (`tools/build.js`, no dependencies) produces one self-contained `patchers/*.bundle.js` per wrapper, and every patch references those, during development too. Max never runs `require()` at all. The M0 spike checks this: freeze the device, copy it to a folder with no project files, and load it in a fresh set with the editor closed. |
 | **Starter database** | Freeze a prebuilt `bach-chorales.json` into `emi.brain`, so the device makes music straight away with no setup. User databases and Emily's memory still live in `~/Documents/ml_midi/`. |
 | **Analysis inside Live** | Analysis runs in chunks (`Task`) with a progress bar. Live's audio isn't affected, but Max device UIs are sluggish while it runs, and the engine can't compose the next phrase, so **don't analyze while performing**. 20 chorales should take seconds; a few hundred works, perhaps a minute. Node stays a development tool for bulk runs and tests. |
 | **Per-set state** | Numeric controls are `live.*` parameters, so they are saved with the set and as device presets (`.adv`). Non-numeric state, such as which database file is loaded, needs a short spike: either store it with the set, or fall back to "last used database" in the user folder. |
@@ -716,18 +716,22 @@ go through `emi.brain`. This is a stretch item (M12).
 
 ## 6. Repository layout
 
-The repository is itself a **Max package**: a symlink in
-`~/Documents/Max 9/Packages/` puts `patchers/` and `javascript/` on the search
-path for standalone Max *and* for Max for Live. (A `.maxproj` was dropped:
-packages are simpler, and Max Projects can reorganize folders on their own.)
+**Everything Max loads is in one folder, `patchers/`**: patches, devices and
+the generated script bundles. Max always searches the folder of the patch or
+device it opens, so a fresh clone works with no setup. *Learned in M0:* with
+the bundles in a sibling `javascript/` folder, Max reported `can't find file`.
+(A `.maxproj` was dropped too: Max Projects can reorganize folders on their
+own. Linking the repo into `~/Documents/Max 9/Packages/` remains an option for
+using these abstractions from other patches.)
 
 ```
 ml_midi/
 ├── README.md  PLAN.md  LICENSE  .gitignore  package.json
-├── patchers/            ml_midi.maxpat (Max version), emi.host.max.maxpat,
-│                        emi.host.live.maxpat, emi.engine.maxpat,
-│                        emi.ingest.maxpat, … emily.feedback.maxpat, panels/*.maxpat
-├── devices/             emi.brain.amxd, emi.voice.amxd (Live version; frozen/ is ignored)
+├── patchers/            EVERYTHING MAX LOADS: ml_midi.maxpat (Max version),
+│                        emi.brain.amxd + emi.voice.amxd (Live version),
+│                        emi.host.max/live, emi.engine, emi.ingest, …
+│                        emily.feedback, panels, and the generated
+│                        *.bundle.js scripts (committed, so a clone just works)
 ├── code/
 │   ├── emi.ingest.v8.js   emi.analyze.v8.js   emi.compose.v8.js
 │   │   emi.clips.v8.js   … (glue only)
@@ -735,8 +739,6 @@ ml_midi/
 │                          emi-segment.js  emi-tension.js  emi-speac.js
 │                          emi-signatures.js  emi-lexicon.js  emi-compose.js
 │                          emi-rng.js  emily-assoc.js
-├── javascript/          GENERATED and committed: one bundle per wrapper, loaded by
-│                        the patches (committed so a fresh clone works in Max)
 ├── data/starter/        bach-chorales.json: the prebuilt starter database (§6.1)
 ├── tests/               node --test, incl. bundles in a simulated [v8] context;
 │                        fixtures/ for tiny inputs (Cope's book examples)
@@ -761,7 +763,7 @@ repository holds only code, patches, tests, and the starter database.
 assigning to `exports.foo`, and require other modules by a **bare, prefixed
 name** (`require("emi-tension")`). In Node, `NODE_PATH=code/lib` resolves those
 names (`npm test` sets it). In Max, `tools/build.js` resolves them at build
-time and inlines the modules, so each `javascript/*.bundle.js` is
+time and inlines the modules, so each `patchers/*.bundle.js` is
 self-contained. Run `npm run build:watch` while Max is open: `autowatch`
 reloads a bundle as soon as it's rebuilt. CI fails if a committed bundle
 doesn't match `code/`.
@@ -769,7 +771,7 @@ doesn't match `code/`.
 **Minimal wrapper shape**
 
 ```js
-// code/emi.compose.v8.js — glue only (Max loads javascript/emi.compose.bundle.js)
+// code/emi.compose.v8.js — glue only (Max loads patchers/emi.compose.bundle.js)
 autowatch = 1;
 inlets = 1;
 outlets = 1;                     // one outlet; outputs carry a selector
@@ -819,7 +821,7 @@ function run() {
   example `/Users/<you>/…` in file references or `[vst~]` plugin state). A
   small check (`tools/check-paths.js`, run in CI and as a pre-commit hook)
   catches them.
-- **`.gitignore`** covers: `node_modules/`, `.DS_Store`, `devices/frozen/`,
+- **`.gitignore`** covers: `node_modules/`, `.DS_Store`, `frozen/`,
   built `.app` bundles, and stray `.mid` files (outside `tests/fixtures/`).
   Commit **unfrozen** devices; frozen ones and the built app go into **GitHub
   Releases** if you ever publish them.
@@ -989,7 +991,7 @@ voice on its own track. The `music21` corpus has all of them, and
 | **Something private or unlicensed ends up in the public repo** (corpus files, personal paths, an API key, copied reference code) | Working data lives outside the repo; `.gitignore`; path check in CI and a pre-commit hook; corpus rebuilt by script; implement from published descriptions (§6.1). |
 | **The two products drift apart** (a feature lands in one only) | All logic in `emi.engine`; adapters stay thin; shared `live.*` panels; parity rule from M4; one parity checklist used for every milestone. |
 | **Live's bundled Max is 8.x** (no `[v8]`) | Check *About Max* in M0; use Live 12.2.1+ or point Live at Max 9. State the requirement when sharing the devices. |
-| **Frozen device can't find `require()`d modules** | Max only ever loads single-file bundles from `javascript/`; the M0 freeze spike proves it before any real code depends on it. |
+| **Frozen device can't find `require()`d modules** | Max only ever loads single-file bundles from `patchers/`; the M0 freeze spike proves it before any real code depends on it. |
 | **Live API threading and timing** | Use the Live API only from `[v8]` message handlers after the device is running (never at load, never from the scheduler). |
 | **Generated `[v8]` boxes load no script** (found in M0: missing `textfile`) | Every generated `[v8]` box carries `textfile`; one inlet and one outlet per wrapper; `tests/patches.test.js` checks both. |
 | **SPEAC thresholds** | Make every constant a parameter stored in the database settings; compare against Cope's published examples (golden tests). |

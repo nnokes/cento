@@ -1,5 +1,5 @@
 // [v8] wrapper that fills the grid player's queue ahead of playback. Glue
-// only: the logic is in code/lib. Patches load javascript/emi.player.bundle.js.
+// only: the logic is in code/lib. Patches load patchers/emi.player.bundle.js.
 //
 // JS never plays notes itself: it writes the queue, and the Max-native grid
 // player reads one step per 16th note on the transport.

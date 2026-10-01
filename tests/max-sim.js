@@ -15,7 +15,7 @@ const ROOT = path.resolve(__dirname, "..");
 const MAX_GLOBALS = new Set(["outlet", "post", "error", "LiveAPI", "console"]);
 
 function loadBundle(name, { LiveAPI } = {}) {
-  const file = path.join(ROOT, "javascript", name + ".bundle.js");
+  const file = path.join(ROOT, "patchers", name + ".bundle.js");
   const sent = [];
   const context = {
     outlet: (index, ...atoms) => sent.push([index, ...atoms.flat()]),

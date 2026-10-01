@@ -32,10 +32,11 @@ function* patchers(patcher, where) {
   }
 }
 
-const files = [
-  ...fs.readdirSync(path.join(ROOT, "patchers")).filter((f) => f.endsWith(".maxpat")).map((f) => path.join("patchers", f)),
-  ...fs.readdirSync(path.join(ROOT, "devices")).filter((f) => f.endsWith(".amxd")).map((f) => path.join("devices", f)),
-];
+// Everything Max loads lives in patchers/: patches, devices and bundles.
+const files = fs
+  .readdirSync(path.join(ROOT, "patchers"))
+  .filter((f) => f.endsWith(".maxpat") || f.endsWith(".amxd"))
+  .map((f) => path.join("patchers", f));
 
 const firstWord = (box) => (box.text || "").split(/\s+/)[0];
 
@@ -74,7 +75,7 @@ for (const file of files) {
         if (firstWord(box) !== "v8") continue;
         const script = box.text.split(/\s+/)[1];
         if (!/\.bundle\.js$/.test(script || "")) problems.push(`${where}: ${label(box)} should load a .bundle.js`);
-        else if (!fs.existsSync(path.join(ROOT, "javascript", script))) problems.push(`${where}: javascript/${script} is missing`);
+        else if (!fs.existsSync(path.join(ROOT, "patchers", script))) problems.push(`${where}: patchers/${script} is missing`);
         const textfile = box.textfile || {};
         if (textfile.filename !== script || textfile.embed !== 0) {
           problems.push(`${where}: ${label(box)} needs textfile {filename: "${script}", embed: 0}`);

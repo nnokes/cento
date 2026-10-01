@@ -23,7 +23,7 @@ tooling are in place. The Max and Live checks are listed in
 | | Open this | Plays through |
 |---|---|---|
 | **Max version** | `patchers/ml_midi.maxpat` | A MIDI port (AU DLS Synth, IAC to any app) or `[vst~]` instruments |
-| **Live version** | `devices/emi.brain.amxd` on one track, `devices/emi.voice.amxd` on each voice track | Live's tracks and instruments |
+| **Live version** | `patchers/emi.brain.amxd` on one track, `patchers/emi.voice.amxd` on each voice track | Live's tracks and instruments |
 
 Both versions load the same `emi.engine` abstraction. Everything that differs
 between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
@@ -43,9 +43,6 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 git clone https://github.com/nnokes/ml_midi.git ~/Code/ml_midi
 cd ~/Code/ml_midi
 
-# Make the repo a Max package, so Max and Live find the patches and scripts
-ln -s "$PWD" "$HOME/Documents/Max 9/Packages/ml_midi"
-
 npm test          # engine tests
 npm run hooks     # pre-commit check: no personal paths, bundles up to date
 
@@ -54,17 +51,20 @@ python3 -m venv .venv && .venv/bin/pip install music21
 .venv/bin/python tools/export-chorales.py
 ```
 
-Restart Max and Live after creating the symlink.
+Everything Max loads (patches, devices and the generated script bundles) is
+in `patchers/`. Max always searches a patch's own folder, so no search-path
+setup is needed: open `patchers/ml_midi.maxpat`, or drag the devices from
+`patchers/` into Live.
 
 ## Repository layout
 
 ```
-patchers/     Max patches: ml_midi.maxpat (Max version), emi.brain.maxpat (Live
-              device content), emi.engine, emi.host.max, emi.host.live, emi.voice
-devices/      Max for Live devices (unfrozen; frozen copies go to devices/frozen/)
+patchers/     everything Max loads, in one folder:
+              ml_midi.maxpat (Max version), emi.brain.amxd + emi.voice.amxd
+              (Live version), emi.engine, emi.host.max, emi.host.live, and the
+              generated *.bundle.js scripts (npm run build; committed)
 code/         [v8] wrappers (*.v8.js): glue between Max messages and the engine
 code/lib/     the engine: plain JavaScript, no Max APIs, tested in Node
-javascript/   generated bundles that the patches load (npm run build; committed)
 tests/        node --test, including the bundles in a simulated [v8] context
 tools/        build, path check, git hook, chorale export
 docs/         milestone checklists
@@ -78,7 +78,7 @@ memory) lives in `~/Documents/ml_midi/`, outside the repository.
 - Edit the engine in `code/lib/` and the wrappers in `code/`. Keep
   `npm run build:watch` running while Max is open: the `[v8]` objects reload
   their bundles automatically.
-- Never edit `javascript/*.bundle.js` by hand. CI fails if the bundles don't
+- Never edit `patchers/*.bundle.js` by hand. CI fails if the bundles don't
   match `code/`.
 - Patches always load the bundles, never `code/` directly, so what you test in
   Max is exactly what gets frozen into a device.

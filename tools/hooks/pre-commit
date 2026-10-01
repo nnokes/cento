@@ -1,4 +1,4 @@
 #!/bin/sh
 # Installed with "npm run hooks". Blocks a commit that contains personal paths
-# or bundles in javascript/ that don't match the sources in code/.
+# or bundles in patchers/ that don't match the sources in code/.
 npm run --silent check:paths && npm run --silent build:check

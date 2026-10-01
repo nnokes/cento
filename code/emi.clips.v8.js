@@ -1,6 +1,6 @@
 // [v8] wrapper that writes scores into Live clips through the Live API.
 // Live version only. Glue only: the logic is in code/lib. Patches load
-// javascript/emi.clips.bundle.js.
+// patchers/emi.clips.bundle.js.
 //
 // The Live API is only used in response to a message (a click), never in the
 // script's top-level code: the Live API isn't available while a device is
