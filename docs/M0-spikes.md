@@ -29,24 +29,26 @@ reply.
 
 ## 0. One-time setup
 
-1. **Clone the repository into Max's Packages folder.** That folder is on
-   the search path for standalone Max *and* for Live, which is how a device
-   finds its patches and scripts.
-   ```sh
-   git clone https://github.com/nnokes/ml_midi.git "$HOME/Documents/Max 9/Packages/ml_midi"
-   ```
-   Then restart Max and Live.
-2. **What M0 taught us about finding files:**
-   - Standalone Max searches the folder of the patch it opens, so the Max
-     version would work from any folder.
+1. **Clone the repository** anywhere (GitHub Desktop's `~/Documents/GitHub`
+   is fine).
+2. **Put `patchers/` on Live's search path** (once; the Max version doesn't
+   need this):
+   - In Live, drop a *Max MIDI Effect* on a track and click *Edit*.
+   - Choose *Options → File Preferences*, click **+**, then *Choose* and
+     select the repo's `patchers` folder.
+   - Restart Live. To check: type `emi.engine` into an object box in a device
+     editor. A solid box with one inlet and one outlet means it worked.
+
+   **What M0 taught us about finding files:**
+   - Standalone Max searches the folder of the patch it opens.
    - A Max for Live device is a project. It finds files in its project and on
      the search path, **not** other files in its own folder (`bpatcher: error
      loading patcher emi.brain.maxpat`).
    - Max doesn't follow symbolic links, so linking a clone into Packages
-     doesn't work.
-   - The alternative to cloning into Packages is adding `patchers/` to the
-     search path in *Options → File Preferences*, from a device editor inside
-     Live.
+     doesn't work. Cloning straight into `~/Documents/Max 9/Packages/` is the
+     other option that does.
+   - `a project without a name is like a day without sunshine. fatal.` appears
+     even for a fresh, unsaved device. It is harmless.
 3. **Node** (for tests and building the bundles): install Node 20 or later
    (`brew install node`), then in the repo run:
    ```sh

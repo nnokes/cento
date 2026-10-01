@@ -39,14 +39,12 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 
 ## Setup (macOS)
 
-Clone the repo **into Max's Packages folder**. Live finds the devices'
-patches and scripts through the Max search path, and the Packages folder is
-on it. (Max doesn't follow symbolic links, so a link to a clone elsewhere
-doesn't work.)
+Clone the repo wherever you like (GitHub Desktop's `~/Documents/GitHub` is
+fine):
 
 ```sh
-git clone https://github.com/nnokes/ml_midi.git "$HOME/Documents/Max 9/Packages/ml_midi"
-cd "$HOME/Documents/Max 9/Packages/ml_midi"
+git clone https://github.com/nnokes/ml_midi.git
+cd ml_midi
 
 npm test          # engine tests
 npm run hooks     # pre-commit check: no personal paths, bundles up to date
@@ -56,14 +54,21 @@ python3 -m venv .venv && .venv/bin/pip install music21
 .venv/bin/python tools/export-chorales.py
 ```
 
-Restart Max and Live after cloning. Everything Max loads (patches, devices and
-the generated script bundles) is in `patchers/`.
+Everything Max loads (patches, devices and the generated script bundles) is
+in `patchers/`.
 
-- **Max version:** open `patchers/ml_midi.maxpat`.
-- **Live version:** in Live's browser, add the repo folder under *Places*, then
-  drag `patchers/emi.brain.amxd` and `patchers/emi.voice.amxd` onto tracks.
+- **Max version:** open `patchers/ml_midi.maxpat`. Nothing else to set up.
+- **Live version:** Live's Max needs `patchers/` on its search path, once:
+  1. In Live, drop a *Max MIDI Effect* on a track and click *Edit*.
+  2. In that editor, choose *Options → File Preferences*, click **+**, then
+     *Choose* and select the repo's `patchers` folder.
+  3. Restart Live. In Live's browser, add the repo folder under *Places*, then
+     drag `patchers/emi.brain.amxd` and `patchers/emi.voice.amxd` onto tracks.
 
-How Max finds files, and why the repo lives in Packages:
+  To check the search path, type `emi.engine` into an object box in any
+  device editor: a solid box means Live can see the files.
+
+How Max finds files (learned the hard way in M0):
 
 - Standalone Max searches the folder of the patch it opens, plus the search
   path.
@@ -72,9 +77,8 @@ How Max finds files, and why the repo lives in Packages:
 - `~/Documents/Max 9/Packages/` is on the search path for Max and for Live.
 - Max doesn't follow symbolic links (or Finder aliases).
 
-If you'd rather keep the clone elsewhere, add its `patchers/` folder to the
-search path instead, in *Options → File Preferences*. Do this from a device's
-Max editor inside Live, so Live's Max gets the setting.
+The alternative to the File Preferences step is to clone the repo directly
+into `~/Documents/Max 9/Packages/` (a real folder, not a link).
 
 ## Repository layout
 
