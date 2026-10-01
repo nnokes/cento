@@ -11,10 +11,12 @@ running in `[v8]`.
 | Question | Decision |
 |----------|----------|
 | Max version | **Max 9**, so `[v8]` (modern JS) is available everywhere |
+| Live version and OS | **Live 12, macOS**. Clip writing uses the Live 11+ note API; the standalone harness uses the IAC Driver |
 | First style | **Bach chorales**: about 20 in 4/4, major mode, one voice per track |
 | Workflow | **Both**: offline (compose a whole piece, then listen and edit) and **live** (compose phrase by phrase ahead of the playhead) |
-| Output | **MIDI**, into **Ableton Live**, with the engine packaged as **Max for Live** devices (§5) |
-| Emily scope | Options are explained in §7. The recommended scope (taste + memory and drift) is assumed until you confirm |
+| Output | **MIDI**, into **Ableton Live** |
+| End state | **Max for Live devices only** (§5.4). Standalone Max is used only as a development harness and is never shipped |
+| Emily scope | **Tier 1 (taste) + Tier 2 (memory and drift)** as the core; **Tier 3a** (phrase table) later; **3b** (LLM) optional (§7) |
 
 ---
 
@@ -79,18 +81,19 @@ There are four reasons for this split:
    a JSON file that Max loads.
 4. `.maxpat` files are JSON and diff poorly, while `.js` files diff well.
 
-### Two hosts, one engine
+### One engine; Max for Live is the product
 
 All of the logic sits in a single host-agnostic abstraction, **`emi.engine`**,
-which never touches MIDI ports or Live. Two thin shells wrap it:
+which never touches MIDI ports or Live. The **Max for Live devices are the
+product**. A standalone shell exists only to make development faster:
 
 | Shell | Used for | MIDI out | Transport |
 |-------|----------|----------|-----------|
-| `emi.main.maxpat` (standalone Max) | Development, corpus analysis, debugging views | `[noteout]` to a virtual port (IAC on macOS, loopMIDI on Windows), then into Live tracks filtered by channel 1–4 | Max's own transport, or synced to Live |
-| `emi.brain.amxd` + `emi.voice.amxd` (Max for Live) | Composing and performing inside Live | Live tracks directly (§5) | Live's transport |
+| `emi.brain.amxd` + `emi.voice.amxd` (Max for Live) | **The product**: corpus import, analysis, composing, performing and Emily, all inside Live | Live tracks directly (§5) | Live's transport |
+| `emi.main.maxpat` (standalone Max) | **Development harness only**: quick reloads, a big debug view, no Live session needed. It can be retired at any time | `[noteout]` to the macOS IAC Driver, then into Live tracks filtered by channel 1–4 | Max's own transport |
 
-Develop and debug in standalone Max, where iterating is faster, then drop the
-same `emi.engine` into the devices.
+Because the engine is the same abstraction in both places, nothing is "ported"
+to Max for Live at the end. The devices work from M4 onward.
 
 ### Data flow
 
@@ -244,6 +247,11 @@ in the file so every output can be reproduced.
   - If you want a no-code fallback, `[detonate]` can import a MIDI file and dump
     its events. Treat that as a stopgap, because the JS parser is what lets you
     test ingest outside Max.
+- **Importing inside the device (M4L)**: you can drop `.mid` files or a folder
+  onto the device (`[live.drop]`), or use **Import from Live**. That option reads
+  clips from the Live set through the Live API (`get_notes_extended`) and treats
+  **one scene as one work**, with one track per voice. You can then audition,
+  trim and fix any corpus piece in Live before it is analyzed.
 - **Normalize**
   - **Quantize** to a grid (a 16th by default), plus a "fix micro-overlaps" pass;
     Cope's code has `fix-triplets` for the same reason.
@@ -486,7 +494,7 @@ the transport:
 
 ## 5. Ableton Live and Max for Live
 
-### Device layout in a Live set
+### 5.1 Device layout in a Live set
 
 ```
 Live set
@@ -513,7 +521,7 @@ Live set
   generates on its own track. Create a second track with *MIDI From* set to the
   voice track (Post FX), arm it, and record there.
 
-### Clip writing (Live API, from `[v8]`)
+### 5.2 Clip writing (Live API, from `[v8]`)
 
 ```js
 // emi.clips.v8.js (sketch): write one voice into the first empty slot of a track
@@ -543,7 +551,7 @@ function writeVoice(trackIndex, notes, lengthBeats, clipName) {
 - **Signal the source**: name and color each clip with its seed, so a clip can
   be traced back to its provenance file.
 
-### Max for Live gotchas to design around
+### 5.3 Max for Live gotchas to design around
 
 - **All devices in a Live set share one Max instance.** Named `[send]`,
   `[receive]`, `[dict]` and `[v8]` globals are visible across devices. That is
@@ -562,6 +570,43 @@ function writeVoice(trackIndex, notes, lengthBeats, clipName) {
 - **Tempo and meter come from Live.** Read them with `[live.observer]` on
   `live_set tempo`, `signature_numerator` and `signature_denominator`, and
   refuse to play when Live's meter differs from the database's meter.
+
+### 5.4 Shipping as Max for Live only
+
+**This is feasible.** Everything the engine uses works inside a device: `[v8]`,
+`[dict]`, file I/O, `Task`, `[v8ui]`, the transport, the Live API, and Node for
+Max (needed only for Emily Tier 3b). Because the engine is host-agnostic from
+day one, there's no porting step at the end. These are the things to handle:
+
+| Concern | Plan |
+|---------|------|
+| **Max version inside Live** | `[v8]` needs Max 9. Recent Live 12 releases bundle Max 9 (12.2.1 onward, according to Ableton's release notes); earlier 12.x releases bundled Max 8.6. **To check yours**, open any device in the Max editor and choose *Max → About Max*. If it shows 8.x, either update Live or point Live at your own Max 9 installation (*Settings → File & Folder → Max Application*). Anyone you share the devices with needs the same. |
+| **Live edition** | Live Suite, or Standard plus the Max for Live add-on. |
+| **Freezing and `require()`** | Frozen devices are known to break when one JS file `require()`s another: Max can miss the nested dependency, and the error only shows when the editor is open. The fix: keep `code/lib` modular for development and tests, but **ship one bundled file per wrapper**. `npm run build` (esbuild) produces self-contained `dist/*.v8.js` files, and the devices reference those. The M0 spike checks this: freeze the device, move it to another folder, and load it in a fresh set with the editor closed. |
+| **Starter database** | Freeze a prebuilt `bach-chorales.json` into `emi.brain`, so the device makes music straight away with no setup. User databases and Emily's memory still live in `~/Documents/ml_midi/`. |
+| **Analysis inside Live** | Analysis runs in chunks (`Task`) with a progress bar. Live's audio isn't affected, but Max device UIs are sluggish while it runs, and the engine can't compose the next phrase, so **don't analyze while performing**. 20 chorales should take seconds; a few hundred works, perhaps a minute. Node stays a development tool for bulk runs and tests. |
+| **Per-set state** | Numeric controls are `live.*` parameters, so they are saved with the set and as device presets (`.adv`). Non-numeric state, such as which database file is loaded, needs a short spike: either store it with the set, or fall back to "last used database" in the user folder. |
+| **Distribution** | Freeze both devices. Put them in a folder, or build a **Live Pack** with a demo set (five tracks, devices already in place). |
+
+What doesn't change: Live's instruments, mixer and effects do the sound, and
+the devices only produce MIDI. That's the natural division of labor in Max for
+Live, so nothing from the standalone patch is lost.
+
+### 5.5 Optional: a Live 12 MIDI Tool
+
+Live 12 added **MIDI Generators and Transformations** to the clip view, and Max
+for Live can build them with `[live.miditool.in]` / `[live.miditool.out]`. A
+small extra device could reuse `emi.engine`:
+
+- **EMI Generate**: fills the selected clip with a chorale that fits the clip's
+  length, with all voices in one clip (one instrument).
+- **EMI Continue**: continues whatever is in the clip from its last beat, in
+  style. This is an offline version of the Alice-style continuation.
+
+It would use the database that `emi.brain` already loaded (through the shared
+global `emi.db` dict), or the frozen starter database if no brain is present.
+MIDI Tools work on one clip at a time, so separate instruments per voice still
+go through `emi.brain`. This is a stretch item (M12).
 
 ---
 
@@ -589,9 +634,10 @@ ml_midi/
 │   ├── db/              analyzed databases (.json)
 │   ├── out/             generated .mid + provenance .json
 │   └── emily/           weight snapshots
+├── dist/                generated: one bundled file per v8 wrapper (what devices freeze)
 ├── tests/               node --test  (golden tests against Cope's book examples)
-├── tools/               node CLI: analyze-corpus, compose-batch
-└── package.json         dev-only: test scripts, no runtime deps
+├── tools/               node CLI: analyze-corpus, compose-batch, build (esbuild)
+└── package.json         dev-only: test + build scripts, no runtime deps
 ```
 
 **Module sharing between Max and Node.** `[v8]` `require()` follows CommonJS 1.0:
@@ -600,7 +646,9 @@ Max finds modules **by bare name on the search path**. Give every module a
 unique prefixed name (`emi-tension`) and require it by that bare name, so the
 same line works in both environments. In Node, set
 `NODE_PATH=code/lib node --test tests/` so bare names resolve there too.
-Confirm this works in M0 before writing anything else.
+Confirm this works in M0 before writing anything else. For shipping, `npm run build`
+bundles each wrapper together with its modules into one file in `dist/`, which
+is what the frozen devices load (§5.4).
 
 **Minimal wrapper shape**
 
@@ -726,12 +774,12 @@ is a signature found in 9 works."
 - **Composing without a corpus.** Even in Tier 2, everything starts from
   analyzed music.
 
-### Recommendation
+### Chosen scope
 
 - **Core**: Tier 1 + Tier 2 (milestones M9 and M10).
 - **Later**: Tier 3a once the parameter set has settled. Tier 3b is optional.
 - **Separate feature**: Alice-style continuation (play a phrase on a MIDI
-  keyboard and it continues in style) belongs to live mode, not Emily (M11).
+  keyboard and it continues in style) belongs to live mode, not Emily (M12).
 
 ---
 
@@ -744,7 +792,7 @@ milestones raise the quality without changing the plumbing.
 
 | # | Milestone | Done when |
 |---|-----------|-----------|
-| **M0** | **Setup and three spikes**: Max project, repo layout, Node tests, corpus | (a) The same `emi-hello` module gives the same result in `[v8]` and in `node --test`. (b) `[v8]` in an M4L device writes a 1-bar clip through the Live API. (c) A grid player plays a hard-coded 4-voice pattern into 4 Live tracks, in sync. |
+| **M0** | **Setup and four spikes**: Max project, repo layout, Node tests, corpus | (a) The same `emi-hello` module gives the same result in `[v8]` and in `node --test`. (b) `[v8]` in an M4L device writes a 1-bar clip through the Live API. (c) A grid player plays a hard-coded 4-voice pattern into 4 Live tracks, in sync. (d) A **frozen** device using a bundled `dist/` script loads in a fresh set from another folder with the editor closed, and *About Max* shows 9.x. |
 | **M1** | **Ingest round-trip**: SMF in → events → SMF out, plus a minimal piano roll | 20 chorales round-trip with identical notes; key normalization verified by ear |
 | **M2** | **Naive recombination** (whole piece): beat groupings, `L0` voice-hooking, the different-source rule, a fixed length, ending on a cadence | 32-beat chorales with no broken voices at seams; the exported `.mid` plays in Live |
 | **M3** | **Form**: templates, phrase lengths, cadence slots, backtracking, match-level relaxation | Output keeps the template's phrase structure; the dead-end rate is under 5% |
@@ -755,7 +803,8 @@ milestones raise the quality without changing the plumbing.
 | **M8** | **Hardening**: provenance view, plagiarism guards, parallel-5ths report, minor mode, 3/4 | A blind A/B listening test against real chorales; quotation metrics under threshold |
 | **M9** | **Emily Tier 1, taste**: rating buttons (mappable), association weights, temperature | After about 10 rating sessions, output measurably shifts toward the liked features |
 | **M10** | **Emily Tier 2, memory and drift**: accept-to-database, variation operators, mix and novelty, snapshots | Accepted variants appear in later output; a rollback restores an earlier taste exactly |
-| **M11** | **Stretch**: Emily Tier 3 (text), Alice-style continuation from a MIDI keyboard, a second style | — |
+| **M11** | **Ship as M4L only**: frozen `emi.brain` + `emi.voice`, frozen starter database, presets, demo set or Live Pack; retire the standalone harness if it's no longer useful | On a clean user account: install, open the demo set and press Play. Music comes out with no other setup |
+| **M12** | **Stretch**: Emily Tier 3a (text), Live 12 MIDI Tool (§5.5), Alice-style continuation from a MIDI keyboard, a second style | — |
 
 **First corpus**: about 20 Bach chorales in 4/4, major mode, with each
 voice on its own track. The `music21` corpus has all of them; a one-time
@@ -777,6 +826,8 @@ domain, but check the license of whichever **encoding** you use.
 | **Streaming runs dry** (the next phrase isn't ready in time) | Keep at least one phrase of lookahead; fall back to repeating the cadence pattern; log every fallback. |
 | **Stuck notes** on stop, tempo change or device edits | Explicit note-off events; send a panic on transport stop and when the device is removed; track sounding notes per voice. |
 | **Shared Max namespace in Live** (two brains, or clashing names) | Use the `---` prefix for everything device-internal. Only the `emi.voice.N` sends are global. |
+| **Live's bundled Max is 8.x** (no `[v8]`) | Check *About Max* in M0; use Live 12.2.1+ or point Live at Max 9. State the requirement when sharing the devices. |
+| **Frozen device can't find `require()`d modules** | Ship bundled single-file scripts from `dist/`; the M0 freeze spike proves it before any real code depends on it. |
 | **Live API threading and timing** | Create Live API objects only after `[live.thisdevice]`; call them from `[v8]` (main thread), never from the scheduler. |
 | **SPEAC thresholds** | Make every constant a parameter stored in the database settings; compare against Cope's published examples (golden tests). |
 
@@ -784,11 +835,9 @@ domain, but check the license of whichever **encoding** you use.
 
 ## 10. Open questions
 
-1. **Emily scope**: confirm Tier 1 + Tier 2 as the core (§7). For Tier 3,
-   choose 3a (phrase table), 3b (LLM), or neither.
-2. **Live version**: 11 or later? Clip writing uses the Live 11 note API.
-3. **macOS or Windows?** This only matters for the virtual MIDI port the
-   standalone shell uses (IAC vs. loopMIDI).
+1. **Just for you, or shared?** If you plan to share the devices, M11 includes
+   a Live Pack, a stated Live/Max version requirement and a clean-machine test.
+   If they're only for you, M11 shrinks to freezing the devices plus a demo set.
 
 ---
 
