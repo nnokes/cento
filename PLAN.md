@@ -1,0 +1,585 @@
+# ml_midi — an EMI / Emily Howell–style composer in Max + [v8]
+
+This is a working plan for a recombinant composition system in the style of
+David Cope's **Experiments in Musical Intelligence (EMI)**, with an **Emily
+Howell**–style interactive layer added later. It is built in Max, with MIDI in
+and out, one sub-patch per component, and the algorithms written in JavaScript
+running in `[v8]`.
+
+---
+
+## 1. What we are rebuilding
+
+### EMI in one paragraph
+
+EMI takes a **database of several works in one style** (Cope's first test case
+was the Bach chorales). It transposes them to a common key, cuts them into small
+**groupings** (beats or measures), and records three things for each grouping:
+its **structural function** (SPEAC), the **notes each voice moves to next** (its
+"destination"), and whether it contains a **signature**, meaning a pattern that
+recurs across several works and marks the composer's style. It then writes a new
+piece by taking the structure of one existing work and **replacing each grouping
+with a different grouping from a different work** that has the same function
+and connects smoothly to its neighbors. Signatures are kept intact and placed
+where they usually occur, such as just before cadences.
+
+### The core mechanisms, ranked by how much they matter
+
+| # | Mechanism | What it does | Without it you get |
+|---|-----------|--------------|--------------------|
+| 1 | **Voice-hooking (destination matching)** | The next grouping must start on the exact notes the current grouping's voices moved to in the original piece (Hofstadter's name for this is "voice-hooking"). | Broken voice-leading at every seam. |
+| 2 | **Different-source rule** | Consecutive groupings must come from different source works. | Long quotations of one piece. |
+| 3 | **Cadence and form template** | Phrase lengths, cadence locations and the ending are taken from a real work. | Music that wanders and never ends properly. |
+| 4 | **SPEAC labeling** | Each grouping is labeled Statement, Preparation, Extension, Antecedent or Consequent from its tension profile. A replacement must have the same label. | Locally smooth music with no sense of direction. |
+| 5 | **Signatures** | Cross-work patterns are preserved whole and placed where they usually occur. | Generic-sounding results that lack the composer's fingerprints. |
+| 6 | **Hierarchical SPEAC (ATN)** | SPEAC is applied again at measure and phrase level, so the form is coherent at every scale. | Good phrases that don't add up to a piece. |
+
+Mechanisms 1–3 alone already produce convincing chorales. That is the first
+real milestone (M2), and it should be reached quickly.
+
+### Emily Howell, the second program
+
+Emily Howell uses **EMI's output as its database** and works **interactively**.
+Cope accepts or rejects what it produces, and that feedback shapes later output
+through **association networks** (weighted links between musical elements and
+the responses they got). Accepted music goes back into the database, so over
+time the style moves away from its sources. We reproduce this as a feedback and
+memory layer on top of the EMI engine (see §6).
+
+---
+
+## 2. Architecture
+
+### Guiding principle: a pure JS core inside a thin Max shell
+
+- **`code/lib/*`** holds plain JavaScript with **no Max APIs**: parsing, analysis
+  and composition. It runs unchanged in `[v8]` and in Node, so the hard parts
+  can be unit-tested and run from the command line.
+- **`code/*.v8.js`** holds thin `[v8]` wrappers. Their only jobs are messages,
+  inlets and outlets, `Dict` I/O and status reporting.
+- **Patchers** hold wiring, UI and real-time I/O only, with no logic.
+
+There are four reasons for this split:
+
+1. `[v8]` runs in Max's main (low-priority) thread, so heavy analysis there
+   blocks the UI, and timing-critical playback must not be scheduled from JS.
+2. Debugging recombination logic is much easier with tests than with print
+   statements in the Max window.
+3. Offline batch analysis of a large corpus can run in Node and simply produce
+   a JSON file that Max loads.
+4. `.maxpat` files are JSON and diff poorly, while `.js` files diff well.
+
+### Data flow
+
+```
+ data/corpus/*.mid
+        │
+ ┌──────▼───────┐   dict emi.corpus   ┌──────────────┐   dict emi.db  (+ data/db/*.json)
+ │  emi.ingest  │────────────────────▶│  emi.analyze │──────────────────┐
+ └──────────────┘                     │  segment     │                  │
+                                      │  tension     │                  │
+                                      │  SPEAC       │                  │
+                                      │  signatures  │                  │
+                                      │  lexicon     │                  │
+                                      └──────────────┘                  │
+ ┌──────────────┐  params                                               │
+ │  emi.ui      │──────────────────────┐                                │
+ └──────────────┘                      ▼                                ▼
+                               ┌───────────────┐   dict emi.score   ┌─────────────┐
+ ┌──────────────┐  weights     │  emi.compose  │───────────────────▶│ emi.render  │──▶ noteout / .mid / Live clip
+ │emily.feedback│─────────────▶│  (recombine)  │                    └─────────────┘
+ └──────▲───────┘              └───────────────┘                           │
+        │                                                                  │
+        └───────────── ratings on regions of the rendered piece ◀──────────┘
+```
+
+### Max patch layout
+
+Each major component is an **abstraction**, meaning its own `.maxpat` file.
+This is your "sub-patch per component" approach, with two advantages over
+embedded `[p]` patchers: each file can be opened, versioned and reused on its
+own, and UI panels can be shown via `[bpatcher]`. Inside each abstraction, use
+`[p ...]` freely to keep things readable.
+
+```
+emi.main.maxpat                 top level: only module boxes, cables, UI panels
+├── [emi.ingest]                folder/drop → parse → normalize → dict emi.corpus
+│     ├── [p file-list]         [dropfile] / [folder] / [opendialog fold]
+│     ├── [v8 emi.ingest.v8.js]
+│     └── [p report]            per-work summary: key, meter, voices, warnings
+├── [emi.analyze]               dict emi.corpus → dict emi.db  (+ save JSON)
+│     ├── [v8 emi.analyze.v8.js]
+│     └── [p progress]          chunked-job progress bar
+├── [emi.compose]               dict emi.db + params (+ emily weights) → dict emi.score
+│     └── [v8 emi.compose.v8.js]
+├── [emi.render]                dict emi.score → MIDI
+│     ├── [p export]            write .mid + provenance .json
+│     ├── [p player]            [seq] / [detonate] playback, transport-locked
+│     └── [p midi-out]          per-voice channels → [noteout] / [vst~]
+├── [emi.view]   (bpatcher)     piano roll colored by source work, SPEAC lane, seams
+└── [emily.feedback] (bpatcher) rate selection 👍/👎, temperature, accept-to-database
+```
+
+**Conventions**
+
+- **Shared data goes through named `[dict]`s**: `emi.corpus`, `emi.db`,
+  `emi.score`, `emi.params`, `emily.weights`. Use `[send]`/`[receive]` only for
+  control messages, under one prefix such as `emi.ctl.*`.
+- **Every `[v8]` wrapper uses the same message protocol.** Inputs are verbs:
+  `load <dict>`, `run`, `param <key> <value>`, `cancel`. Outputs go out the right
+  outlet as `status <text>`, `progress <0..1>`, `done <dict>` or `error <text>`.
+  This keeps all the wrappers interchangeable from the patch's point of view.
+- **Never schedule notes from JS.** JS builds the complete score, and Max's
+  scheduler plays it. The simplest dependable path is to write a `.mid` file and
+  `read` it into `[seq]`, or to load events into `[detonate]`.
+
+---
+
+## 3. Data model
+
+Times are integer **ticks at 960 per quarter note** (this divides evenly by 2,
+3, 4, 5, 6 and 8, so triplets are exact). Cope's Lisp examples use 1000 per
+beat; add a converter for comparing results against his book examples.
+
+**Event.** This uses Cope's own field order, so his published examples can be
+pasted in directly:
+
+```js
+[ontime, pitch, duration, channel, velocity]     // e.g. [0, 60, 960, 1, 90]
+```
+
+**Work**
+
+```js
+{ id: "bwv253", title: "...", meter: [4, 4], key: { tonic: 0, mode: "major" },
+  transposedBy: -7, voices: 4, events: [/* Event[] in C / A minor */],
+  phrases: [/* tick ranges, from fermatas or cadence detection */] }
+```
+
+**Grouping (one lexicon entry)**
+
+```js
+{
+  id: "bwv253:12",              // work + grouping index
+  work: "bwv253",
+  start: 11520, length: 960,    // ticks
+  beatInBar: 1,                 // 1-based metric position
+  events: [/* relative to start */],
+  entry: [48, 55, 64, 72],      // first sounding pitch per voice (bass → soprano)
+  destination: [50, 55, 65, 71],// entry of the NEXT grouping in the original work
+  heldIn:  [false, false, true, false],   // voice tied in from previous grouping
+  heldOut: [false, false, false, false],  // voice ties into next grouping
+  tension: 0.78,
+  speac: { beat: "A", bar: "P", phrase: "S" },
+  cadence: null | "authentic" | "half" | "final",
+  phrasePos: 0.85,              // 0..1 position within its phrase
+  signature: null | "sig:17"
+}
+```
+
+**Lexicon**: groupings are indexed by a hashed `entry` key, so finding
+"everything that starts on these notes" is a single lookup. There is one index
+per **match level**:
+
+| Level | Key | Use |
+|-------|-----|-----|
+| `L0 exact` | exact pitches per voice | Cope-faithful, strongest voice-leading, sparse |
+| `L1 pc+bass` | pitch class per voice + exact bass | default fallback |
+| `L2 pcset+bass` | pitch-class set + bass pitch class | looser, needs octave adjustment of upper voices |
+| `L3 harmony` | chord root + quality | last resort, needs voice-leading repair |
+
+**Signature**
+
+```js
+{ id: "sig:17", voice: "soprano", intervals: [-1, -2, 2, ...], rhythm: [...] | null,
+  occurrences: [{ work, start, phrasePos, beatsToCadence }], spanGroupings: 3 }
+```
+
+**Template (form)**: one per work, a list of slots:
+
+```js
+[{ beatInBar, speac: {beat, bar, phrase}, cadence, phraseIndex, signatureSlot? }, ...]
+```
+
+**Database file** (`data/db/<style>.json`): `{ version, settings, works, groupings,
+lexicon: {L0, L1, L2, L3}, signatures, templates }`. Record the analysis settings
+in the file so every output can be reproduced.
+
+---
+
+## 4. Module plans
+
+### 4.1 `emi.ingest`: corpus to normalized events
+
+- **SMF parser in JS** (`lib/smf.js`, about 200 lines). Read bytes with Max's
+  `File` object in the wrapper and with `fs` in Node, then pass them to the same
+  parser. Handle SMF type 0 and 1, running status, note-on with velocity 0 as
+  note-off, and tempo, time-signature and key-signature meta events.
+  - If you want a no-code fallback, `[detonate]` can import a MIDI file and dump
+    its events. Treat that as a stopgap, because the JS parser is what lets you
+    test ingest outside Max.
+- **Normalize**
+  - **Quantize** to a grid (a 16th by default), plus a "fix micro-overlaps" pass;
+    Cope's code has `fix-triplets` for the same reason.
+  - **Separate voices.** For chorales, use one track or channel per voice. For
+    other music this is hard; see §8 Risks.
+  - **Key-normalize**: take the key from key-signature meta events if they exist,
+    otherwise use Krumhansl–Schmuckler key finding. Then transpose to C major or
+    A minor and store the offset.
+  - **Filter**: keep only works in the target meter and mode (to start, 4/4
+    major only).
+- **Output**: `dict emi.corpus` and a per-work report (key, meter, voices,
+  warnings).
+
+### 4.2 `emi.analyze/segment`
+
+- Groupings are **one beat** long by default (Cope's choice for chorales). This
+  is configurable to a half bar or a full bar.
+- **Notes that cross a grouping boundary** (ties and suspensions) are split.
+  Each piece is flagged with `heldIn`/`heldOut`, and the pitch must match across
+  the seam during recombination. Suspensions are central to the Bach style, so
+  handle this properly from the start.
+- Mark **phrase boundaries** from fermatas if the source has them, otherwise
+  from cadence detection (strong-beat arrival, long duration, a V→I or V→vi bass
+  pattern).
+
+### 4.3 `emi.analyze/tension` and SPEAC
+
+The numbers below come from Cope's own SPEAC code (*Computer Models of Musical
+Creativity*, ch. 7), as ported to Python in
+[GolzitskyNikolay/SPEAC-analysis](https://github.com/GolzitskyNikolay/SPEAC-analysis).
+That repo has no license, so read it and re-implement; don't copy it. Treat all
+of these values as starting points that can be adjusted.
+
+**Tension of a grouping = vertical + metric + duration + approach**
+
+- **Vertical**: measure each pitch's interval above the bass (octave
+  duplicates removed; the weights repeat every octave), look up each weight and
+  **add them up**. If a beat contains several verticals (because notes enter at
+  different times), use the **lowest** sum. For example, a bass with a 12th and
+  a 17th above it scores .1 + .2 = .3.
+
+  | Interval | P1 | m2 | M2 | m3 | M3 | P4 | TT | P5 | m6 | M6 | m7 | M7 |
+  |---|---|---|---|---|---|---|---|---|---|---|---|---|
+  | Weight | 0 | 1.0 | .8 | .225 | .2 | .55 | .65 | .1 | .275 | .25 | .7 | .9 |
+
+- **Metric**: `(beatNumber × 0.1) / k[meter][beat]`. In 4/4, k = `[2, 2, 6, 2]`,
+  which gives beats 1–4 the values .05, .1, .05 and .2. The upbeat carries the
+  most tension. Cope's table also has rows for 2, 3, 6 and 9 beats per bar.
+- **Duration**: `0.1 × (dur / 4 beats) + 0.1 × vertical`.
+- **Approach**: the root-motion interval from the previous chord, scored with the
+  same interval table. This needs a simple root finder; Cope ranks intervals by
+  root strength, with the 5th strongest and then the 4th.
+
+**Label assignment** (Cope's `develop-speac`). For each grouping's tension `w`,
+compare it with the previous and next values `w₋₁` and `w₊₁` and with the
+average, maximum and minimum of its context. "≈" means within 0.2. Check the
+rules in this order and use the first one that applies:
+
+1. If `w ≈ w₋₁`, label it **E** (extension).
+2. If `w ≈ w₊₁`, label it **P** (preparation). If the previous label was P,
+   use E instead.
+3. If `w ≈ avg`, label it **S** (statement). If the previous label was S, use E
+   instead.
+4. If `w ≈ max`, label it **A** (antecedent). If the previous label was A, use E
+   instead.
+5. If the previous label was A and `w ≈ min`, label it **C** (consequent).
+6. Otherwise label it **S**, or E if the previous label was S.
+
+**Hierarchy**: run the same procedure on bar-level and then phrase-level
+averages. Each grouping then carries labels for three levels: beat, bar and
+phrase.
+
+**Succession sanity checks**, taken from Cope's definitions:
+
+- P usually comes before S or A.
+- E can follow anything.
+- A expects a C, either directly or after one or more E's.
+- C must be preceded by an A, possibly with E's in between.
+
+During composition, use these checks as soft constraints when an exact label
+match is impossible.
+
+### 4.4 `emi.analyze/signatures`
+
+These defaults also come from Cope's code (`pattern-match`):
+
+- Work on **interval sequences per voice**. Rhythm is ignored by default and can
+  be turned on as an option.
+- **Pattern size** is 12 notes. Expose 4–16 in the UI.
+- **Amount off** is 1 semitone: a single interval may differ from the pattern by
+  at most this much.
+- **Intervals off** is 2: at most this many intervals may differ at all.
+- **Threshold**: a pattern must occur more than 2 times.
+- **Signatures vs. unifications**: a pattern that recurs in **at least N
+  different works** is a *signature* (it marks the style). A pattern that
+  recurs only within one work is a *unification* (a motive). Keep both, because
+  unifications are useful later for internal coherence.
+- **Implementation**: do a first pass with exact n-gram hashing, which is fast.
+  Then do the fuzzy pass only against the candidates it finds, comparing
+  interval by interval. A full fuzzy all-pairs search is O(n²) per pattern size.
+  It's fine in Node, but in `[v8]` it must be **chunked with a `Task`** (process
+  N windows per tick and report `progress`).
+- For each occurrence, store **where it happens**: `phrasePos`, `beatsToCadence`
+  and `beatInBar`. Placement in §4.6 depends on this.
+
+### 4.5 `emi.analyze/lexicon` and templates
+
+- Build the four match-level indexes from §3.
+- **Templates**: each work's slot sequence with its SPEAC labels, cadences,
+  phrase lengths and the locations of its signatures.
+- **Database statistics** for the UI: how many candidates are available per key,
+  and which entries have **no exits**, meaning dead ends.
+
+### 4.6 `emi.compose`: the recombination engine (a simplified ATN)
+
+```
+1. Pick a TEMPLATE (a source work's form, or a user-defined slot list).
+2. PLACE SIGNATURES: for slots whose phrasePos and beatsToCadence match a
+   signature's usual locations, pin a signature occurrence (from a work other
+   than the template's).
+3. FILL the remaining slots left to right, with depth-limited backtracking.
+   A candidate g for slot i (after previous grouping p) must satisfy:
+     • voice-hook:   key(g.entry) == key(p.destination)     at the current match level
+     • ties:         held voices continue on the same pitch
+     • metre:        g.beatInBar == slot.beatInBar
+     • function:     g.speac.beat == slot.speac.beat         (relax to the grammar)
+     • cadence:      slot.cadence ⇒ g.cadence of the same type
+     • source:       g.work != p.work                        (Cope's different-source rule)
+     • lookahead:    if slot i+1 is pinned, g.destination must hook into it
+   Choose among the candidates with weighted randomness (Emily weights, §6).
+4. DEAD END: backtrack, then relax the match level (L0→L1→L2→L3), then the
+   SPEAC rule, and finally the different-source rule. Record each relaxation
+   in the provenance.
+5. POST-PROCESS: transpose to the output key, merge split ties, check ranges,
+   count parallel 5ths and octaves at the seams (seams are the only places
+   new errors can appear).
+6. GUARDS: the longest run from one work and the longest n-gram shared with any
+   source must stay under their thresholds. If not, regenerate with the next seed.
+```
+
+```js
+// code/lib/emi-compose.js — core of step 3 (sketch)
+function fill(slots, i, prev, out, ctx) {
+  if (i === slots.length) return true;
+  const slot = slots[i];
+  const cands = slot.pinned ? [slot.pinned] : candidates(prev, slot, ctx);
+  for (const g of ctx.choose(cands)) {            // weighted shuffle, seeded RNG
+    out[i] = g;
+    if (fill(slots, i + 1, g, out, ctx)) return true;
+    if (--ctx.budget <= 0) return false;          // bounded search
+  }
+  return false;
+}
+```
+
+- **Seeded RNG** (mulberry32 or similar): every output records `seed + params +
+  db version`, so any piece can be regenerated exactly.
+- **Provenance**: for every grouping in the output, record which work and which
+  grouping it came from, and every rule that was relaxed. This drives the
+  colored view and Emily's learning.
+
+### 4.7 `emi.render`
+
+- `lib/smf.js` also **writes** SMF type 1 files: one track per voice, a tempo
+  map, and a text meta event holding the seed and parameters. Files go to
+  `data/out/<timestamp>-<seed>.mid`, alongside a `.json` provenance file.
+- **Playback**: `[seq]` reads the written file. This is the simplest option and
+  the timing is reliable. Later, a `[detonate]`-based player can follow along and
+  send the current grouping index to `emi.view` for highlighting.
+- **Outputs**: one MIDI channel per voice, sent to `[noteout]` (an IAC or
+  virtual port to a DAW) or to `[vst~]` inside Max.
+- **Stretch goal**: a Max for Live device that writes the score directly into a
+  Live clip through the Live API.
+
+### 4.8 `emi.view` (UI)
+
+- A piano roll in `[v8ui]` (or `[jsui]`), with **notes colored by source work**,
+  a **SPEAC lane** under the roll, and **seam markers** that flag relaxed rules.
+- **Click to inspect a grouping**: its source, tension, labels and the
+  alternative candidates that were available at that point. This is the main
+  debugging tool and later the selection tool for Emily's ratings.
+
+---
+
+## 5. Repository layout
+
+The layout follows Max Project conventions, so that a `.maxproj` at the root
+puts all of these folders on the search path.
+
+```
+ml_midi/
+├── ml_midi.maxproj
+├── PLAN.md
+├── patchers/            emi.main.maxpat, emi.ingest.maxpat, … emily.feedback.maxpat
+├── code/
+│   ├── emi.ingest.v8.js   emi.analyze.v8.js   emi.compose.v8.js   … (glue only)
+│   └── lib/               emi-smf.js  emi-model.js  emi-quantize.js  emi-key.js
+│                          emi-segment.js  emi-tension.js  emi-speac.js
+│                          emi-signatures.js  emi-lexicon.js  emi-compose.js
+│                          emi-rng.js  emily-assoc.js
+├── data/
+│   ├── corpus/          source .mid (start: ~20 Bach chorales, 4/4, major)
+│   ├── db/              analyzed databases (.json)
+│   ├── out/             generated .mid + provenance .json
+│   └── emily/           weight snapshots
+├── tests/               node --test  (golden tests against Cope's book examples)
+├── tools/               node CLI: analyze-corpus, compose-batch
+└── package.json         dev-only: test scripts, no runtime deps
+```
+
+**Module sharing between Max and Node.** `[v8]` `require()` follows CommonJS 1.0:
+export by assigning to `exports.foo` and **don't** reassign `module.exports`.
+Max finds modules **by bare name on the search path**. Give every module a
+unique prefixed name (`emi-tension`) and require it by that bare name, so the
+same line works in both environments. In Node, set
+`NODE_PATH=code/lib node --test tests/` so bare names resolve there too.
+Confirm this works in M0 before writing anything else.
+
+**Minimal wrapper shape**
+
+```js
+// code/emi.compose.v8.js — glue only
+autowatch = 1;
+inlets = 1;
+outlets = 2;                                  // 0: results   1: status
+
+const compose = require("emi-compose");
+const params = { seed: 1, matchLevel: 0, template: null, temperature: 1 };
+let db = null;
+
+function load(dictName) {
+  db = JSON.parse(new Dict(dictName).stringify());
+  outlet(1, "status", "groupings", db.groupings.length);
+}
+
+function param(key, value) { params[key] = value; }
+
+function run() {
+  if (!db) { outlet(1, "error", "no database loaded"); return; }
+  const score = compose.run(db, params);
+  new Dict("emi.score").parse(JSON.stringify(score));
+  outlet(1, "done", "emi.score");
+}
+```
+
+---
+
+## 6. Emily layer: feedback, memory and drift
+
+1. **Ratings.** In `emi.view`, select a region (or the whole piece) and rate it
+   👍 or 👎 (or 1–5). The provenance tells us exactly which groupings,
+   transitions, signatures and template produced that region.
+2. **Association network** (`lib/emily-assoc.js`). This is a sparse map of
+   weights keyed by **features**, not just individual groupings, so feedback
+   generalizes to material that hasn't been rated:
+   - `g:<grouping>` for a specific grouping, and `t:<a>><b>` for a specific
+     transition between two groupings
+   - `w:<work>` for preference toward a source work
+   - `f:speac:A>C`, `f:tension:high`, `f:leap:>5`, `f:susp:4-3`, `f:density:16ths`,
+     and other musical features
+   - `tpl:<work>` for templates and `sig:<id>` for signatures
+3. **Learning rule**: for each feature present in a rated region,
+   `w ← w + lr · r`. Between sessions, every weight decays toward 0 with
+   `w ← (1 − λ) · w`, so early opinions don't harden.
+4. **Selection**: in `emi.compose`, `P(candidate) ∝ exp((base + Σ w_features) / T)`.
+   **T ("temperature" or "adventurousness")** is a user control.
+5. **Memory and drift**: an accepted piece is analyzed and **added to Emily's
+   database** tagged `gen: n`, as Emily did with EMI's output. A **mix** control
+   sets how much the original corpus counts compared with Emily's own past
+   output. Snapshot `data/emily/*.json` after each session so a change in taste
+   can be rolled back.
+6. **Stretch: conversation.** A small keyword table maps phrases to parameters,
+   for example "more tension" raises the A-slot weight and "less Bach-like"
+   lowers the `w:` weights of the original corpus. An LLM could replace the
+   keyword table later.
+7. **Stretch: Alice-style continuation.** Play a phrase on a MIDI keyboard. The
+   system segments it live, finds hooks in the lexicon and continues it in style.
+
+---
+
+## 7. Milestones
+
+Each milestone produces something you can listen to and ends with a written
+acceptance check.
+
+| # | Milestone | Done when |
+|---|-----------|-----------|
+| **M0** | **Setup and spikes**: Max project, repo layout, Node tests, a `require()` spike in `[v8]`, corpus chosen | The same `emi-hello` module returns the same result in `[v8]` and in `node --test` |
+| **M1** | **Ingest round-trip**: SMF in → events → SMF out, plus a minimal piano roll | 20 chorales round-trip with identical notes; key normalization verified by ear |
+| **M2** | **Naive recombination**: beat groupings, `L0` voice-hooking, the different-source rule, a fixed length, end on a cadence | 32-beat chorales with no broken voices at seams, played in Max |
+| **M3** | **Form**: templates, phrase lengths, cadence slots, backtracking, match-level relaxation | Output keeps the template's phrase structure; the dead-end rate is under 5% |
+| **M4** | **Tension and SPEAC**: three-level labels, label-matched recombination, SPEAC lane in the view | Golden tests reproduce Cope's book examples within tolerance |
+| **M5** | **Signatures**: detection UI, pinning, lookahead hooking | Known Bach cadential formulas show up as signatures and appear in output at cadences |
+| **M6** | **Hardening**: provenance view, plagiarism guards, parallel-5ths report, minor mode, 3/4, export | A blind A/B listening test against real chorales; quotation metrics under threshold |
+| **M7** | **Emily**: ratings, association network, temperature, accepting output into the database, snapshots | After about 10 rating sessions, output measurably shifts toward the liked features |
+| **M8** | **Stretch**: live continuation, text commands, Max for Live clip writer, a second style corpus | — |
+
+**Suggested first corpus**: about 20 Bach chorales in 4/4, major mode, with each
+voice on its own track. The `music21` corpus has all of them; a one-time
+`music21` script can export them to per-part MIDI. These pieces are public
+domain, but check the license of whichever **encoding** you use.
+
+---
+
+## 8. Risks and decisions
+
+| Risk | Mitigation |
+|------|------------|
+| **Voice separation** in piano music (e.g., Chopin mazurkas, which are much harder than chorales) | Start with corpora that have separate voices. Later options are melody/bass/inner-texture voicing, or Cope's "texture-hooking" (matching texture and rhythm instead of exact voices). |
+| **Lexicon too sparse** (few or no candidates, long quotes) | More works; match-level relaxation; statistics showing dead-end entries; keep the corpus homogeneous in meter and mode. |
+| **Too literal** (sounds like Bach chorale #N) | Different-source rule, run-length guard, n-gram quote guard, variety in template choice. |
+| **Modulation** | v1 only works with groupings that happen to modulate in their source. v2 adds key-area labels to templates and transposes groupings locally. |
+| **UI freezes in `[v8]`** | Chunked `Task` jobs with progress; heavy analysis offline in Node; only the fast composition step runs live. |
+| **Timing jitter** | Never schedule playback from JS; render to `[seq]`/`[detonate]`. |
+| **`[v8]` availability** | `[v8]` requires **Max 9**. Max 8 only has the older ES5 `[js]`, which would rule out modern syntax in the shared core. |
+| **SPEAC thresholds** | Make every constant a parameter stored in the database settings; compare against Cope's published examples (golden tests). |
+
+---
+
+## 9. Open questions
+
+1. **Max version**: is it Max 9? `[v8]` requires it.
+2. **First style**: Bach chorales as suggested, or something else? If the target
+   is piano music, the voice-separation work moves up into M1.
+3. **Workflow**: offline composition (generate a piece, then listen), live
+   generative playback, or both?
+4. **Output destination**: Max instruments, a DAW over virtual MIDI, Live via Max
+   for Live, or notation (MusicXML export)?
+5. **Emily scope**: ratings and drift only, or also text and conversation input?
+
+---
+
+## 10. References
+
+**Books**
+
+- Cope, D. *Computers and Musical Style* (1991). Introduces EMI, signatures and
+  pattern matching.
+- Cope, D. *Experiments in Musical Intelligence* (1996).
+- Cope, D. *The Algorithmic Composer* (2000). Includes **SARA**, a simplified
+  EMI with Lisp source code. This is the closest blueprint for this project.
+- Cope, D. *Virtual Music: Computer Synthesis of Musical Style* (2001). Includes
+  Hofstadter's essay explaining voice-hooking and texture-hooking.
+- Cope, D. *Computer Models of Musical Creativity* (2005). Covers SPEAC,
+  association networks and the background to Emily Howell.
+- Cope, D. *Hidden Structure: Music Analysis Using Computers* (2008).
+
+**Code and papers**
+
+- Python port of Cope's SPEAC and pattern-matching Lisp:
+  https://github.com/GolzitskyNikolay/SPEAC-analysis (no license; read only).
+- Cope's patent on recombinant composition: US7696426B2,
+  https://patents.google.com/patent/US7696426
+- Maxwell & Eigenfeldt, *The MusicDB: A Music Database Query System for
+  Recombinance-based Composition in Max/MSP* (ICMC 2008). Prior art done in Max.
+- da Silva, *David Cope and Experiments in Musical Intelligence*. An overview of
+  SPEAC and recombinance.
+- Fernández & Vico, *AI Methods in Algorithmic Composition: A Comprehensive
+  Survey* (2013), https://arxiv.org/abs/1402.0585
+
+**Max documentation**
+
+- `[v8]` reference: https://docs.cycling74.com/reference/v8
+- `require()` in Max JS: https://docs.cycling74.com/api/latest/max8/vignettes/jsrequire
+- Max 9.0.1 release notes ("v8 require: improved Common JS module support").
