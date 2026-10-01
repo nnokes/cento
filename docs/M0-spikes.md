@@ -33,8 +33,14 @@ reply.
    ```sh
    git clone https://github.com/nnokes/ml_midi.git ~/Code/ml_midi
    ```
-2. **Nothing to configure in Max.** Everything Max loads is in `patchers/`,
-   and Max always searches the folder of the patch or device it opens.
+2. **Max version: nothing to configure.** Everything Max loads is in
+   `patchers/`, and Max searches the folder of the patch it opens.
+   **Live version: link the repo as a Max package.** Live does *not* search a
+   device's own folder (found in M0: `bpatcher: error loading patcher
+   emi.brain.maxpat`). From the repo folder, run this and then restart Live:
+   ```sh
+   ln -s "$PWD" "$HOME/Documents/Max 9/Packages/ml_midi"
+   ```
 3. **Node** (for tests and building the bundles): install Node 20 or later
    (`brew install node`), then in the repo run:
    ```sh

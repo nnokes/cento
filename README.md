@@ -52,9 +52,16 @@ python3 -m venv .venv && .venv/bin/pip install music21
 ```
 
 Everything Max loads (patches, devices and the generated script bundles) is
-in `patchers/`. Max always searches a patch's own folder, so no search-path
-setup is needed: open `patchers/ml_midi.maxpat`, or drag the devices from
-`patchers/` into Live.
+in `patchers/`.
+
+- **Max version:** no setup. Max searches the folder of the patch it opens,
+  so just open `patchers/ml_midi.maxpat`.
+- **Live version:** Live doesn't search a device's own folder, so link the repo
+  into the Packages folder (the one where packages such as bach live), then
+  restart Live:
+  ```sh
+  ln -s "$PWD" "$HOME/Documents/Max 9/Packages/ml_midi"
+  ```
 
 ## Repository layout
 
