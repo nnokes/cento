@@ -11,11 +11,11 @@ running in `[v8]`.
 | Question | Decision |
 |----------|----------|
 | Max version | **Max 9**, so `[v8]` (modern JS) is available everywhere |
-| Live version and OS | **Live 12, macOS**. Clip writing uses the Live 11+ note API; the standalone harness uses the IAC Driver |
+| Live version and OS | **Live 12, macOS**. Clip writing uses the Live 11+ note API; the Max version reaches other apps through the IAC Driver |
 | First style | **Bach chorales**: about 20 in 4/4, major mode, one voice per track |
 | Workflow | **Both**: offline (compose a whole piece, then listen and edit) and **live** (compose phrase by phrase ahead of the playhead) |
 | Output | **MIDI**, into **Ableton Live** |
-| End state | **Max for Live devices only** (§5.4). Standalone Max is used only as a development harness and is never shipped |
+| End state | **Two products from one engine**: a **Max version** (patch or macOS app) and a **Max for Live version** (devices). Both are first-class and built in parallel from M0 (§2) |
 | Emily scope | **Tier 1 (taste) + Tier 2 (memory and drift)** as the core; **Tier 3a** (phrase table) later; **3b** (LLM) optional (§7) |
 
 ---
@@ -81,19 +81,86 @@ There are four reasons for this split:
    a JSON file that Max loads.
 4. `.maxpat` files are JSON and diff poorly, while `.js` files diff well.
 
-### One engine; Max for Live is the product
+### One engine, two products
 
-All of the logic sits in a single host-agnostic abstraction, **`emi.engine`**,
-which never touches MIDI ports or Live. The **Max for Live devices are the
-product**. A standalone shell exists only to make development faster:
+There are **two deliverables**, and both are first-class:
 
-| Shell | Used for | MIDI out | Transport |
-|-------|----------|----------|-----------|
-| `emi.brain.amxd` + `emi.voice.amxd` (Max for Live) | **The product**: corpus import, analysis, composing, performing and Emily, all inside Live | Live tracks directly (§5) | Live's transport |
-| `emi.main.maxpat` (standalone Max) | **Development harness only**: quick reloads, a big debug view, no Live session needed. It can be retired at any time | `[noteout]` to the macOS IAC Driver, then into Live tracks filtered by channel 1–4 | Max's own transport |
+- **ml_midi for Max**: a standalone Max patch (optionally built into a macOS
+  app).
+- **ml_midi for Live**: Max for Live devices.
 
-Because the engine is the same abstraction in both places, nothing is "ported"
-to Max for Live at the end. The devices work from M4 onward.
+Both are built from the same host-agnostic abstraction, **`emi.engine`**. The
+engine never touches MIDI ports, transports or Live. Everything that differs
+between the two hosts is confined to one thin **host adapter** per product:
+
+| Concern | `emi.host.max` (Max version) | `emi.host.live` (M4L version) |
+|---------|------------------------------|-------------------------------|
+| **Startup** | `[loadbang]` | `[live.thisdevice]` |
+| **MIDI out** | Per voice: a `[vst~]` instrument hosted in Max (AU/VST3, fed with `midievent` messages), or `[noteout]` on channels 1–4 to hardware or to another app via the IAC Driver | `[send emi.voice.N]` → `emi.voice` devices, or the brain's own `[midiout]` (§5) |
+| **MIDI in** (continuation, keyboard rating) | `[notein]` / `[ctlin]` from any port | the track's MIDI input (`[midiin]`) |
+| **Transport, tempo, meter** | Max's global `[transport]` with its own play/stop, tempo and meter controls | Live's transport; meter read with `[live.observer]` |
+| **Offline result** | `.mid` file, auditioned with `[seq]`; drag it into any DAW | Clips written into the voice tracks (Live API), plus the `.mid` file |
+| **Corpus import** | `[dropfile]` / folder | `[live.drop]` / folder / **Import from Live** (one scene = one work) |
+| **Saving settings** | `[pattrstorage]` presets (JSON) | `live.*` parameters saved with the set; `.adv` presets |
+| **Instruments** | Hosted in Max (`[vst~]`) or external | Live's tracks |
+
+Both versions share **`~/Documents/ml_midi/`** for databases, output and
+Emily's memory. Taste Emily learns in one product carries over to the other.
+
+### Why not "Max first, port later" or "M4L first, open in Max"?
+
+- **Max first, port at the end**: the Live-specific parts (Live API, Live's
+  transport, sending to tracks) would be designed last. If one of them needs
+  something from the engine, the engine changes late, which is the most
+  expensive point to change it.
+- **M4L first, open in Max**: Max can open and host `.amxd` devices. But the
+  Live API, Live's transport and track MIDI routing don't exist outside Live,
+  so every one of them needs a fallback anyway. That fallback layer *is* the
+  Max adapter, just hidden inside a device instead of designed on purpose. The
+  Max version would also inherit device constraints it doesn't need, such as
+  the 169 px device strip.
+- **The chosen approach is "designed to port" taken to its conclusion**: both
+  shells exist from M0, so there is never a port step. Day-to-day development
+  happens in the Max version, which is faster to iterate. The Live version is
+  checked at every milestone.
+
+### Rules that keep the two versions in step
+
+1. **Nothing host-specific inside `emi.engine`.** The engine talks only through
+   its inlets and outlets and the shared dicts. If a feature needs the host
+   (transport position, Live clips, ports), it goes through the adapter's
+   interface.
+2. **The adapter interface is a short list of messages:**
+   - Engine → adapter: `voice <n> <pitch> <velocity>`, `score-ready <dict>`,
+     `status …`.
+   - Adapter → engine: `play` / `stop`, `tempo <bpm>`, `meter <n> <d>`,
+     `import <dict>`.
+
+   The step clock (`[metro 16n @quantize 16n]` on the global `[transport]`)
+   lives in the engine, because it behaves the same in both hosts: inside Live,
+   Max's transport *is* Live's transport. The difference is who drives it. The
+   Max adapter has its own play, stop and tempo controls; the Live adapter just
+   follows Live.
+3. **UI panels are shared `[bpatcher]`s built with `live.*` objects.** These
+   work in plain Max as well, and they work with `[pattrstorage]`. Each panel is
+   designed at **device height (169 px)**. The Live device shows the panels
+   side by side in its strip; the Max version shows the same panels in a larger
+   window, plus the full-size debug view.
+4. **Parity check at each milestone.** From M4 onward, a milestone is done only
+   when its feature works in **both** products, or when the gap is written into
+   the feature table above as intentional.
+
+### Shipping the Max version
+
+- **As a Max project**: anyone with Max 9 opens `ml_midi.maxproj`.
+- **As a macOS app**: Max can build a project into a standalone application
+  that runs **without Max installed**. Include the starter database and the
+  bundled `dist/` scripts (the same `require()` caution applies as for frozen
+  devices, §5.4). To share the app beyond your own Mac, it needs code signing
+  and notarization; otherwise macOS Gatekeeper will block it.
+- **Sound**: `[vst~]` hosts AU or VST3 instruments directly in the patch (one
+  per voice). Alternatively, send to hardware, or to Live, Logic and other apps
+  over the IAC Driver.
 
 ### Data flow
 
@@ -128,8 +195,17 @@ own, and UI panels can be shown via `[bpatcher]`. Inside each abstraction, use
 `[p ...]` freely to keep things readable.
 
 ```
-emi.main.maxpat  /  emi.brain.amxd     host shell: I/O, transport, UI panels only
-└── [emi.engine]                       host-agnostic: everything below
+ml_midi.maxpat  (Max version)                 emi.brain.amxd  (Live version)
+├── [emi.host.max]                            ├── [emi.host.live]
+│     ├── [p transport]   play/stop/tempo     │     ├── [p live-sync]    live.observer: tempo, meter
+│     ├── [p midi-out]    noteout ch 1–4      │     ├── [p voices]       send emi.voice.N / midiout
+│     ├── [p midi-in]     notein / ctlin      │     ├── [p clip-writer]  v8 emi.clips.v8.js
+│     ├── [p instruments] vst~ ×4 (optional)  │     ├── [p import-live]  scene → corpus
+│     ├── [p presets]     pattrstorage        │     └── [p layout]       panels in the device strip
+│     └── [p layout]      panels + big view   │
+└── [emi.engine]  ◀──── same file ────────▶   └── [emi.engine]
+
+[emi.engine]                                  host-agnostic: everything below
     ├── [emi.ingest]                   folder/drop → parse → normalize → dict emi.corpus
     │     ├── [p file-list]            [dropfile] / [folder] / [opendialog fold]
     │     ├── [v8 emi.ingest.v8.js]
@@ -141,8 +217,7 @@ emi.main.maxpat  /  emi.brain.amxd     host shell: I/O, transport, UI panels onl
     │     └── [v8 emi.compose.v8.js]   whole-piece mode and phrase-streaming mode
     ├── [emi.render]                   dict emi.score → events (no ports here)
     │     ├── [p export]               write .mid + provenance .json
-    │     ├── [p clip-writer]          [v8 emi.clips.v8.js] → Live clips (M4L only)
-    │     └── [p grid-player]          transport-locked step player → per-voice event outlets
+    │     └── [p grid-player]          transport-locked step player → voice events
     ├── [emi.view]   (bpatcher)        piano roll colored by source work, SPEAC lane, seams
     └── [emily.feedback] (bpatcher)    👍/👎 selection or last phrase, temperature, accept
 ```
@@ -446,7 +521,7 @@ The engine has three ways out. All three share the score format and provenance.
   tempo map, and a text meta event holding the seed and parameters. Files go to
   `data/out/<timestamp>-<seed>.mid`, alongside a `.json` provenance file.
 - You can drag the file into Live, or `read` it into `[seq]` for quick
-  auditioning in standalone Max.
+  auditioning in the Max version.
 
 **2. Live clips (offline, M4L only)**
 
@@ -470,8 +545,9 @@ the transport:
   - JS writes into the queue ahead of time, and the player only reads from it.
   - Note-offs are explicit events rather than `[makenote]` durations, so a tempo
     change mid-note doesn't break anything.
-- **Output**: one outlet per voice. The host shell connects these to
-  `[noteout]` (standalone) or to `[send emi.voice.N]` (M4L, §5).
+- **Output**: one outlet per voice. The host adapter connects these to
+  `[vst~]` or `[noteout]` (Max version), or to `[send emi.voice.N]` (Live
+  version, §5).
 - The player also sends the current grouping index to `emi.view` for
   highlighting, and `need next` back to `emi.compose`.
 - **Resolution**: the chorales are quantized to 16ths, so a 16th grid is exact.
@@ -571,12 +647,12 @@ function writeVoice(trackIndex, notes, lengthBeats, clipName) {
   `live_set tempo`, `signature_numerator` and `signature_denominator`, and
   refuse to play when Live's meter differs from the database's meter.
 
-### 5.4 Shipping as Max for Live only
+### 5.4 Shipping the Max for Live version
 
-**This is feasible.** Everything the engine uses works inside a device: `[v8]`,
-`[dict]`, file I/O, `Task`, `[v8ui]`, the transport, the Live API, and Node for
-Max (needed only for Emily Tier 3b). Because the engine is host-agnostic from
-day one, there's no porting step at the end. These are the things to handle:
+Everything the engine uses works inside a device: `[v8]`, `[dict]`, file I/O,
+`Task`, `[v8ui]`, the transport, the Live API, and Node for Max (needed only for
+Emily Tier 3b). Because the Live adapter is built alongside the Max one from M0,
+there's no porting step at the end. These are the things to handle:
 
 | Concern | Plan |
 |---------|------|
@@ -588,9 +664,10 @@ day one, there's no porting step at the end. These are the things to handle:
 | **Per-set state** | Numeric controls are `live.*` parameters, so they are saved with the set and as device presets (`.adv`). Non-numeric state, such as which database file is loaded, needs a short spike: either store it with the set, or fall back to "last used database" in the user folder. |
 | **Distribution** | Freeze both devices. Put them in a folder, or build a **Live Pack** with a demo set (five tracks, devices already in place). |
 
-What doesn't change: Live's instruments, mixer and effects do the sound, and
-the devices only produce MIDI. That's the natural division of labor in Max for
-Live, so nothing from the standalone patch is lost.
+In the Live version, Live's instruments, mixer and effects make the sound, and
+the devices only produce MIDI. The Max version hosts its own instruments
+(`[vst~]`) instead. That is the only real difference in what each product
+contains.
 
 ### 5.5 Optional: a Live 12 MIDI Tool
 
@@ -619,9 +696,10 @@ puts all of these folders on the search path.
 ml_midi/
 ├── ml_midi.maxproj
 ├── PLAN.md
-├── patchers/            emi.main.maxpat (standalone shell), emi.engine.maxpat,
-│                        emi.ingest.maxpat, … emily.feedback.maxpat
-├── devices/             emi.brain.amxd, emi.voice.amxd (Max for Live)
+├── patchers/            ml_midi.maxpat (Max version), emi.host.max.maxpat,
+│                        emi.host.live.maxpat, emi.engine.maxpat,
+│                        emi.ingest.maxpat, … emily.feedback.maxpat, panels/*.maxpat
+├── devices/             emi.brain.amxd, emi.voice.amxd (Live version)
 ├── code/
 │   ├── emi.ingest.v8.js   emi.analyze.v8.js   emi.compose.v8.js
 │   │   emi.clips.v8.js   … (glue only)
@@ -786,24 +864,27 @@ is a signature found in 9 works."
 ## 8. Milestones
 
 Each milestone produces something you can listen to and ends with a written
-acceptance check. Live integration (M4–M5) deliberately comes **before** SPEAC
-and signatures. That way you're making music in Live early, and the later
+acceptance check. Both hosts (M4–M5) deliberately come **before** SPEAC and
+signatures. That way you're making music in both products early, and the later
 milestones raise the quality without changing the plumbing.
+
+**From M4 onward, every milestone must pass in both products** (the parity rule
+in §2). Work day to day in the Max version, then confirm the result in Live.
 
 | # | Milestone | Done when |
 |---|-----------|-----------|
-| **M0** | **Setup and four spikes**: Max project, repo layout, Node tests, corpus | (a) The same `emi-hello` module gives the same result in `[v8]` and in `node --test`. (b) `[v8]` in an M4L device writes a 1-bar clip through the Live API. (c) A grid player plays a hard-coded 4-voice pattern into 4 Live tracks, in sync. (d) A **frozen** device using a bundled `dist/` script loads in a fresh set from another folder with the editor closed, and *About Max* shows 9.x. |
+| **M0** | **Setup, both shells, four spikes**: Max project, repo layout, Node tests, corpus; empty `ml_midi.maxpat` and `emi.brain.amxd`, each loading the same `emi.engine` through its adapter | (a) The same `emi-hello` module gives the same result in `[v8]`, in `node --test`, **and in both shells**. (b) `[v8]` in an M4L device writes a 1-bar clip through the Live API. (c) A grid player plays a hard-coded 4-voice pattern into 4 Live tracks in sync, and into 4 `[vst~]` instruments in the Max version. (d) A **frozen** device using a bundled `dist/` script loads in a fresh set from another folder with the editor closed, and *About Max* shows 9.x. |
 | **M1** | **Ingest round-trip**: SMF in → events → SMF out, plus a minimal piano roll | 20 chorales round-trip with identical notes; key normalization verified by ear |
-| **M2** | **Naive recombination** (whole piece): beat groupings, `L0` voice-hooking, the different-source rule, a fixed length, ending on a cadence | 32-beat chorales with no broken voices at seams; the exported `.mid` plays in Live |
+| **M2** | **Naive recombination** (whole piece): beat groupings, `L0` voice-hooking, the different-source rule, a fixed length, ending on a cadence | 32-beat chorales with no broken voices at seams; heard in the Max version, and the exported `.mid` plays in Live |
 | **M3** | **Form**: templates, phrase lengths, cadence slots, backtracking, match-level relaxation | Output keeps the template's phrase structure; the dead-end rate is under 5% |
-| **M4** | **Into Live, offline**: `emi.brain` + `emi.voice` devices | **Compose** writes S/A/T/B clips to tracks found by name; controls are `live.*` parameters saved with the set |
-| **M5** | **Into Live, streaming**: phrase-by-phrase composition, grid player, endless or N-phrase pieces | Parameter changes are heard from the next phrase; no dropped or stuck notes at 60–160 BPM, including stop/start and tempo changes |
+| **M4** | **Both products, offline**: shared `live.*` panels; Max adapter (`.mid` export, `[seq]` audition, `[pattrstorage]` presets); Live adapter (`emi.brain` + `emi.voice`, clip writing) | **Max**: Compose → hear it through `[vst~]` and save the `.mid`. **Live**: Compose writes S/A/T/B clips to tracks found by name. In both, the same seed gives the same notes, and settings survive a reload. |
+| **M5** | **Both products, streaming**: phrase-by-phrase composition, grid player, endless or N-phrase pieces | **Max**: its own play, stop and tempo controls. **Live**: follows Live's transport. In both, parameter changes are heard from the next phrase, with no dropped or stuck notes at 60–160 BPM, including stop/start and tempo changes. |
 | **M6** | **Tension and SPEAC**: three-level labels, label-matched recombination, SPEAC lane in the view | Golden tests reproduce Cope's book examples within tolerance |
 | **M7** | **Signatures**: detection UI, pinning, lookahead hooking (also used in streaming) | Known Bach cadential formulas show up as signatures and appear in output at cadences |
 | **M8** | **Hardening**: provenance view, plagiarism guards, parallel-5ths report, minor mode, 3/4 | A blind A/B listening test against real chorales; quotation metrics under threshold |
 | **M9** | **Emily Tier 1, taste**: rating buttons (mappable), association weights, temperature | After about 10 rating sessions, output measurably shifts toward the liked features |
 | **M10** | **Emily Tier 2, memory and drift**: accept-to-database, variation operators, mix and novelty, snapshots | Accepted variants appear in later output; a rollback restores an earlier taste exactly |
-| **M11** | **Ship as M4L only**: frozen `emi.brain` + `emi.voice`, frozen starter database, presets, demo set or Live Pack; retire the standalone harness if it's no longer useful | On a clean user account: install, open the demo set and press Play. Music comes out with no other setup |
+| **M11** | **Ship both**: **Max version** as a Max project and a macOS app (with starter database and bundled scripts); **Live version** as frozen `emi.brain` + `emi.voice` with the starter database, presets, and a demo set or Live Pack | On a clean user account, each product works out of the box. The app opens and plays through `[vst~]`; the demo set opens and plays when you press Play. A shared parity checklist passes in both. |
 | **M12** | **Stretch**: Emily Tier 3a (text), Live 12 MIDI Tool (§5.5), Alice-style continuation from a MIDI keyboard, a second style | — |
 
 **First corpus**: about 20 Bach chorales in 4/4, major mode, with each
@@ -826,6 +907,7 @@ domain, but check the license of whichever **encoding** you use.
 | **Streaming runs dry** (the next phrase isn't ready in time) | Keep at least one phrase of lookahead; fall back to repeating the cadence pattern; log every fallback. |
 | **Stuck notes** on stop, tempo change or device edits | Explicit note-off events; send a panic on transport stop and when the device is removed; track sounding notes per voice. |
 | **Shared Max namespace in Live** (two brains, or clashing names) | Use the `---` prefix for everything device-internal. Only the `emi.voice.N` sends are global. |
+| **The two products drift apart** (a feature lands in one only) | All logic in `emi.engine`; adapters stay thin; shared `live.*` panels; parity rule from M4; one parity checklist used for every milestone. |
 | **Live's bundled Max is 8.x** (no `[v8]`) | Check *About Max* in M0; use Live 12.2.1+ or point Live at Max 9. State the requirement when sharing the devices. |
 | **Frozen device can't find `require()`d modules** | Ship bundled single-file scripts from `dist/`; the M0 freeze spike proves it before any real code depends on it. |
 | **Live API threading and timing** | Create Live API objects only after `[live.thisdevice]`; call them from `[v8]` (main thread), never from the scheduler. |
@@ -835,9 +917,10 @@ domain, but check the license of whichever **encoding** you use.
 
 ## 10. Open questions
 
-1. **Just for you, or shared?** If you plan to share the devices, M11 includes
-   a Live Pack, a stated Live/Max version requirement and a clean-machine test.
-   If they're only for you, M11 shrinks to freezing the devices plus a demo set.
+1. **Just for you, or shared?** Sharing adds code signing and notarization for
+   the macOS app, a Live Pack, a stated Live/Max version requirement, and
+   clean-machine tests for both products. If they're only for you, M11 shrinks
+   to building the app, freezing the devices and making a demo set.
 
 ---
 
