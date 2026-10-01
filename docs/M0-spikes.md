@@ -153,15 +153,24 @@ notes, report it. The fix is to store empty steps in the queue.
 
 ## (d) A frozen device works on its own
 
-1. [ ] Open `emi.brain.amxd` in the editor and click **Freeze**. Use *Save
-       As* to save it into `frozen/` at the top of the repo. That folder is
-       git-ignored; frozen devices go into GitHub Releases.
-2. [ ] Copy the frozen device somewhere with none of the project files next
-       to it, for example the Desktop. Restart Live and open a new set. Drag
-       in the copy from the Desktop, **without** opening the editor.
-3. [ ] **hello**, **pattern** and **testclip** still work. You can check the
-       status line on the device. Since nothing else is in its folder, it
-       can only be running on what the freeze embedded.
+*Freezing* packs everything a device uses (its patches and scripts) into the
+`.amxd` file itself, so it runs without the repo or any search-path setup.
+That's how the Live version will ship (M11). It's tested now because frozen
+devices are known to miss JavaScript files loaded with `require()`, which is
+why every script is a single bundle.
+
+1. [ ] Open `emi.brain.amxd` in the editor and click **Freeze** (the snowflake
+       in the editor's toolbar). Use *File → Save As* to save it into
+       `frozen/` at the top of the repo. That folder is git-ignored; frozen
+       devices go into GitHub Releases. Do the same for `emi.voice.amxd`.
+2. [ ] **Take `patchers/` off the search path**, so the frozen devices can't
+       quietly load the originals. In a device editor, open *Options → File
+       Preferences* and remove (or untick) the `patchers` entry. Restart Live.
+       Check: an object box with `emi.engine` should now be dashed.
+3. [ ] Open a new set, set up the five tracks again, and drag in the
+       **frozen** devices from `frozen/`. Don't open the editor.
+4. [ ] **hello**, **pattern** with Play, and **testclip** still work.
+5. Put the `patchers` entry back in File Preferences and restart Live.
 
 ---
 
