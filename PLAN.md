@@ -955,9 +955,9 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M0.** The code, tests, tooling, patches and devices are in
-the repo, and the parts that can run without Max are verified. The Max and Live
-checks are in [docs/M0-spikes.md](docs/M0-spikes.md).
+**Current status: M0 done; M1 next.** Spikes (a)–(c) passed in both the Max
+version and Live; the freeze test (d) is deferred to M11. Results and the
+lessons learned are in [docs/M0-spikes.md](docs/M0-spikes.md).
 
 | # | Milestone | Done when |
 |---|-----------|-----------|

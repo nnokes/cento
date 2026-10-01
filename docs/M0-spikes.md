@@ -1,5 +1,24 @@
 # M0 checklist: the four spikes
 
+## Result: M0 passed (macOS, Max 9, Live 12)
+
+| Spike | Max version | Live version |
+|---|---|---|
+| (a) `hello` prints `627 2 527 981`, same as `npm test` | ✅ | ✅ |
+| (b) `testclip` writes one 2-bar clip per voice track | n/a | ✅ |
+| (c) `pattern` + Play: in sync, clean stop, no hanging notes | ✅ (AU DLS Synth) | ✅ |
+| (d) frozen device works on its own | n/a | deferred to M11 |
+
+Fixed along the way (details in PLAN.md and the commit history):
+
+- Generated `[v8]` boxes need a `textfile` entry naming their script.
+- `[receive]` with a name typed in has no inlet.
+- Standalone Max searches the opened patch's folder; a Max for Live device
+  doesn't search its own folder, and Max ignores symbolic links. Live needs
+  `patchers/` added in *Options → File Preferences*.
+
+The checklist below is kept as a record and for re-testing.
+
 M0 proves the architecture before any real music code depends on it. Some of
 it was verified when the code was written; the rest needs Max and Live on
 your Mac.

@@ -13,9 +13,9 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M0, setup and spikes.** The engine skeleton, both shells and the
-tooling are in place. The Max and Live checks are listed in
-[docs/M0-spikes.md](docs/M0-spikes.md). The full plan and milestones are in
+**Status: M0 done.** The engine skeleton, both shells and the tooling work in
+Max and in Live ([results](docs/M0-spikes.md)). Next is M1: reading the
+chorale corpus into the engine. The full plan and milestones are in
 [PLAN.md](PLAN.md).
 
 ## Two products, one engine
