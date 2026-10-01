@@ -153,6 +153,9 @@ notes, report it. The fix is to store empty steps in the queue.
 
 ## (d) A frozen device works on its own
 
+**Deferred to M11** (shipping), where frozen devices are needed. Until then
+the devices run unfrozen from `patchers/`. The steps below are kept for M11.
+
 *Freezing* packs everything a device uses (its patches and scripts) into the
 `.amxd` file itself, so it runs without the repo or any search-path setup.
 That's how the Live version will ship (M11). It's tested now because frozen
