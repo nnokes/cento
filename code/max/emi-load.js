@@ -1,7 +1,9 @@
 "use strict";
-// Max-only: reads a corpus MIDI file and its JSON sidecar with Max's File
-// object and returns a work (see emi-ingest). Used by the [v8] wrappers in
-// both products. Tests replace File with a stand-in backed by Node's fs.
+// Max-only file access: reads a corpus MIDI file and its JSON sidecar with
+// Max's File object and returns a work (see emi-ingest), lists the MIDI files
+// in a folder with Max's Folder object, and writes MIDI files. Used by the
+// [v8] wrappers in both products. Tests replace File and Folder with
+// stand-ins backed by Node's fs.
 
 const smf = require("emi-smf");
 const ingest = require("emi-ingest");
@@ -59,12 +61,60 @@ function loadWork(path) {
   return ingest.fromMidi(midi, { id: workId(path), sidecar });
 }
 
+// The .mid files in a folder, as full paths, sorted by name.
+function listMidi(folderPath) {
+  const folder = new Folder(folderPath);
+  const names = [];
+  try {
+    folder.reset();
+    while (!folder.end) {
+      if (/\.midi?$/i.test(String(folder.filename))) names.push(String(folder.filename));
+      folder.next();
+    }
+  } finally {
+    folder.close();
+  }
+  const base = String(folderPath).replace(/[/\\]+$/, "");
+  return names.sort().map((name) => base + "/" + name);
+}
+
+// Every chorale in a folder, as works. Files that can't be read are skipped and
+// reported in `skipped`.
+function loadFolder(folderPath) {
+  const works = [];
+  const skipped = [];
+  for (const path of listMidi(folderPath)) {
+    try {
+      works.push(loadWork(path));
+    } catch (e) {
+      skipped.push(fileName(path) + ": " + e.message);
+    }
+  }
+  return { works, skipped };
+}
+
+function writeBytes(path, bytes) {
+  const file = new File(path, "write", "Midi");
+  if (!file.isopen) throw new Error("can't write " + fileName(path));
+  try {
+    const list = Array.from(bytes);
+    for (let i = 0; i < list.length; i += 1024) file.writebytes(list.slice(i, i + 1024));
+    file.eof = file.position; // cut off the rest if the file was longer before
+  } finally {
+    file.close();
+  }
+}
+
 // mode "c": in C major / A minor (the default); "original": as written.
 function inKey(work, mode) {
   return mode === "original" ? ingest.original(work) : ingest.normalize(work);
 }
 
 exports.workId = workId;
+exports.fileName = fileName;
+exports.listMidi = listMidi;
+exports.loadFolder = loadFolder;
+exports.writeBytes = writeBytes;
 exports.sidecarPath = sidecarPath;
 exports.loadWork = loadWork;
 exports.inKey = inKey;

@@ -200,7 +200,7 @@ ml_midi.maxpat  (Max version)                 emi.brain.amxd  (Live version)
 ├── [emi.host.max]                            ├── [emi.host.live]
 │     ├── [p transport]   play/stop/tempo     │     ├── [p live-sync]    live.observer: tempo, meter
 │     ├── [p midi-out]    noteout ch 1–4      │     ├── [p voices]       send emi.voice.N / midiout
-│     ├── [p midi-in]     notein / ctlin      │     ├── [p clip-writer]  v8 emi.clips.v8.js
+│     ├── [p midi-in]     notein / ctlin      │     ├── [p clip-writer]  emi-clips.js (Live API)
 │     ├── [p instruments] vst~ ×4 (optional)  │     ├── [p import-live]  scene → corpus
 │     ├── [p presets]     pattrstorage        │     └── [p layout]       panels in the device strip
 │     └── [p layout]      panels + big view   │
@@ -222,6 +222,13 @@ ml_midi.maxpat  (Max version)                 emi.brain.amxd  (Live version)
     ├── [emi.view]   (bpatcher)        piano roll colored by source work, SPEAC lane, seams
     └── [emily.feedback] (bpatcher)    👍/👎 selection or last phrase, temperature, accept
 ```
+
+*As built in M2:* one `[v8 emi.core]` script in `emi.engine` does the work of
+`emi.ingest`, `emi.compose` and `emi.render` for now (load, compose, export,
+clip writing), with the logic in `code/lib` and `code/max`. It splits into
+the separate abstractions above when a stage needs its own progress or
+cancelling (analysis in M6, streaming in M5). The piano roll is `emi.view`, a
+`[v8ui]` that the hosts show next to their panels.
 
 **Conventions**
 
@@ -354,7 +361,9 @@ in the file so every output can be reproduced.
   all on channel 1, so voices are identified by **track**, not channel.
   Pickups are padded so time 0 is always a barline. A JSON sidecar per file
   carries the fermatas (phrase ends), the padding, the key and the source.
-  In the first 20 chorales, every note is on the 16th-note grid.
+  Of the 142 major-key chorales in 4/4, two (`bwv36.4-2`, `bwv432`) have four
+  notes each off the 16th-note grid (32nds); the player moves them to the
+  nearest 16th. Composing uses the notes as written.
 
 ### 4.2 `emi.analyze/segment`
 
@@ -548,9 +557,9 @@ The engine has three ways out. All three share the score format and provenance.
 
 **2. Live clips (offline, M4L only)**
 
-- `[v8 emi.clips.v8.js]` uses the Live API to create a clip in each voice track
-  and fill it with `add_new_notes` (start times and durations in beats). The
-  details are in §5.
+- `code/max/emi-clips.js` (called by the engine's `[v8]` script) uses the Live
+  API to create a clip in each voice track and fill it with `add_new_notes`
+  (start times and durations in beats). The details are in §5.
 - This is the main offline workflow: compose, listen, edit the notes in Live,
   then rate and accept.
 
@@ -592,6 +601,10 @@ the transport:
   debugging tool and later the selection tool for Emily's ratings.
 - In M4L, show a compact version in the device (`[v8ui]` fits in the device
   strip), and open the full view in a floating window (`[pcontrol]` / `open`).
+- *As built in M2:* the roll shows the current score (a chorale, colored by
+  voice, or a composed piece, colored by source chorale), with bar lines and a
+  bright line at each seam where the source changes. Clicking, the SPEAC lane
+  and the floating window come later.
 
 ---
 
@@ -627,7 +640,8 @@ Live set
 ### 5.2 Clip writing (Live API, from `[v8]`)
 
 ```js
-// emi.clips.v8.js (sketch): write one voice into the first empty slot of a track
+// code/max/emi-clips.js (sketch; the repo has the full version): write one
+// voice into the first empty slot of a track
 function writeVoice(trackIndex, notes, lengthBeats, clipName) {
   const track = new LiveAPI("live_set tracks " + trackIndex);
   const slotCount = track.getcount("clip_slots");
@@ -740,9 +754,10 @@ ml_midi/
 │                        emily.feedback, panels, and the generated
 │                        *.bundle.js scripts (committed, so a clone just works)
 ├── code/
-│   ├── emi.ingest.v8.js   emi.analyze.v8.js   emi.compose.v8.js
-│   │   emi.clips.v8.js   … (glue only)
-│   ├── max/               Max-only helpers, e.g. emi-load.js (reads files with File)
+│   ├── emi.core.v8.js     the engine's [v8] script (glue only)
+│   │   emi.view.v8ui.js   the piano roll; more wrappers as stages split (§2)
+│   ├── max/               Max-only helpers: emi-load.js (files, with File and
+│   │                      Folder), emi-clips.js (Live clips, with LiveAPI)
 │   └── lib/               emi-smf.js  emi-ingest.js  emi-key.js  emi-queue.js
 │                          emi-segment.js  emi-tension.js  emi-speac.js
 │                          emi-signatures.js  emi-lexicon.js  emi-compose.js
@@ -753,7 +768,7 @@ ml_midi/
 ├── tools/               build.js (bundler), check-paths.js, hooks/pre-commit,
 │                        export-chorales.py (music21, run once); later
 │                        analyze-corpus, compose-batch
-├── docs/                milestone checklists (M0-spikes.md)
+├── docs/                milestone checklists (M0-spikes.md, M1-…, M2-…)
 └── .github/workflows/   CI: tests, bundle freshness, path check on every push
 
 ~/Documents/ml_midi/     working data, OUTSIDE the repo (shared by both products)
@@ -956,10 +971,14 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M1 done; M2 next.** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M2 code done; waiting on the Max and Live checks
+([checklist](docs/M2-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
+M2 composes 32-beat chorales from the full corpus (all 142 major-key
+chorales in 4/4) for every seed tried, with every rule checked by
+`tests/corpus.test.js`.
 
 | # | Milestone | Done when |
 |---|-----------|-----------|

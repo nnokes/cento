@@ -13,11 +13,13 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M1 done.** Both products load Bach chorales, play them in C major or
-their own key, and (in Live) write them as clips
-([M0 results](docs/M0-spikes.md), [M1 results](docs/M1-checklist.md)). Next is
-M2: the first recombined chorales. The full plan and milestones are in
-[PLAN.md](PLAN.md).
+**Status: M2 code done; waiting on the Max and Live checks
+([M2 checklist](docs/M2-checklist.md)).** Both products load Bach chorales,
+play them in C major or their own key, and (in Live) write them as clips
+([M0 results](docs/M0-spikes.md), [M1 results](docs/M1-checklist.md)). M2
+composes new chorales by recombining beats from the whole corpus, shows them
+in a piano roll colored by source chorale, and exports them as MIDI files.
+The full plan and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
 
@@ -47,7 +49,8 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **The repo** (your clone) | wherever you cloned it, e.g. `~/Documents/GitHub/ml_midi` | Run every command below from this folder |
 | **Python for music21** | `<repo>/.venv/` | Made by `python3 -m venv .venv`. About 300 MB, git-ignored, delete it to uninstall |
 | **Chorale corpus** | `~/Documents/ml_midi/corpus/` | Written by `tools/export-chorales.py`; outside the repo |
-| **Later: databases, output, Emily's memory** | `~/Documents/ml_midi/db/`, `out/`, `emily/` | Outside the repo |
+| **Exported pieces** | `~/Documents/ml_midi/out/` | Where to save with **export midi**; outside the repo |
+| **Later: databases, Emily's memory** | `~/Documents/ml_midi/db/`, `emily/` | Outside the repo |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
 
 `~` is your home folder, `/Users/<your name>`. `<repo>` is the folder you
@@ -65,8 +68,8 @@ cd ml_midi                  # <repo>: all commands below run from here
 npm test                    # engine tests
 npm run hooks               # pre-commit check: no personal paths, bundles up to date
 
-# Chorale corpus: installs music21 into <repo>/.venv, then writes the
-# chorales to ~/Documents/ml_midi/corpus/
+# Chorale corpus: installs music21 into <repo>/.venv, then writes all 142
+# major-key chorales in 4/4 to ~/Documents/ml_midi/corpus/
 python3 -m venv .venv
 .venv/bin/pip install music21
 .venv/bin/python tools/export-chorales.py
@@ -106,11 +109,13 @@ into `~/Documents/Max 9/Packages/` (a real folder, not a link).
 ```
 patchers/     everything Max loads, in one folder:
               ml_midi.maxpat (Max version), emi.brain.amxd + emi.voice.amxd
-              (Live version), emi.engine, emi.host.max, emi.host.live, and the
-              generated *.bundle.js scripts (npm run build; committed)
-code/         [v8] wrappers (*.v8.js): glue between Max messages and the engine
+              (Live version), emi.engine, emi.host.max, emi.host.live,
+              emi.view (piano roll), and the generated *.bundle.js scripts
+              (npm run build; committed)
+code/         [v8] wrappers: glue between Max messages and the engine
+              (emi.core.v8.js), and the piano roll (emi.view.v8ui.js)
 code/lib/     the engine: plain JavaScript, no Max APIs, tested in Node
-code/max/     Max-only helpers used by the wrappers (e.g. reading files)
+code/max/     Max-only helpers used by the wrappers (files, Live clips)
 tests/        node --test, including the bundles in a simulated [v8] context
 tools/        build, path check, git hook, chorale export
 docs/         milestone checklists

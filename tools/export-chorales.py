@@ -18,8 +18,9 @@ Paths:
 Run from the repo folder:
   python3 -m venv .venv
   .venv/bin/pip install music21
-  .venv/bin/python tools/export-chorales.py                  # 20 chorales, 4/4, major
-  .venv/bin/python tools/export-chorales.py --count 50 --meter 3/4 --mode minor
+  .venv/bin/python tools/export-chorales.py                  # all 4/4 major (142)
+  .venv/bin/python tools/export-chorales.py --count 20       # just the first 20
+  .venv/bin/python tools/export-chorales.py --meter 3/4 --mode minor
 """
 
 import argparse
@@ -93,7 +94,7 @@ def write_midi(score, pad_quarters, path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="output folder (default: %(default)s)")
-    parser.add_argument("--count", type=int, default=20, help="how many chorales to export (default: %(default)s)")
+    parser.add_argument("--count", type=int, default=None, help="export at most this many (default: every match)")
     parser.add_argument("--meter", default="4/4", help="keep only this meter (default: %(default)s)")
     parser.add_argument("--mode", default="major", choices=["major", "minor", "any"], help="(default: %(default)s)")
     args = parser.parse_args()
@@ -105,7 +106,7 @@ def main():
     written = 0
     # Riemenschneider order. Some numbers repeat a chorale, hence "seen".
     for source in chorales.Iterator(returnType="filename"):
-        if written >= args.count:
+        if args.count is not None and written >= args.count:
             break
         if source in seen:
             continue
@@ -130,7 +131,7 @@ def main():
               f"padded {info['padQuarters']:g}, {len(info['fermatasQuarters'])} fermatas")
 
     print(f"wrote {written} chorales to {args.out}")
-    if written < args.count:
+    if args.count is not None and written < args.count:
         print(f"only {written} chorales matched --meter {args.meter} --mode {args.mode}", file=sys.stderr)
 
 

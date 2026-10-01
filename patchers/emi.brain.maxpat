@@ -12,8 +12,8 @@
 		"rect": [
 			50.0,
 			50.0,
-			640.0,
-			420.0
+			900.0,
+			460.0
 		],
 		"openinpresentation": 1,
 		"default_fontsize": 12.0,
@@ -67,6 +67,40 @@
 			},
 			{
 				"box": {
+					"maxclass": "bpatcher",
+					"name": "emi.view.maxpat",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": [],
+					"offset": [
+						0.0,
+						0.0
+					],
+					"viewvisibility": 1,
+					"bgmode": 0,
+					"border": 0,
+					"clickthrough": 0,
+					"enablehscroll": 0,
+					"enablevscroll": 0,
+					"lockeddragscroll": 0,
+					"patching_rect": [
+						428.0,
+						20.0,
+						360.0,
+						169.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						408.0,
+						0.0,
+						360.0,
+						169.0
+					],
+					"id": "obj-2"
+				}
+			},
+			{
+				"box": {
 					"maxclass": "newobj",
 					"text": "emi.engine",
 					"numinlets": 1,
@@ -80,7 +114,26 @@
 						90.0,
 						22.0
 					],
-					"id": "obj-2"
+					"id": "obj-3"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "route view",
+					"numinlets": 2,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						428.0,
+						229.0,
+						75.0,
+						22.0
+					],
+					"id": "obj-4"
 				}
 			},
 			{
@@ -96,7 +149,7 @@
 						480.0,
 						34.0
 					],
-					"id": "obj-3"
+					"id": "obj-5"
 				}
 			}
 		],
@@ -108,7 +161,7 @@
 						0
 					],
 					"destination": [
-						"obj-2",
+						"obj-3",
 						0
 					]
 				}
@@ -116,11 +169,35 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-2",
+						"obj-3",
 						0
 					],
 					"destination": [
 						"obj-1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-3",
+						0
+					],
+					"destination": [
+						"obj-4",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						0
+					],
+					"destination": [
+						"obj-2",
 						0
 					]
 				}

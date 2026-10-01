@@ -12,20 +12,29 @@ const ROOT = path.resolve(__dirname, "..");
 
 // Max calls a script's global functions by message name, except functions
 // marked with .local = 1.
-const MAX_GLOBALS = new Set(["outlet", "post", "error", "LiveAPI", "File", "console"]);
+const MAX_GLOBALS = new Set(["outlet", "post", "error", "LiveAPI", "File", "Folder", "mgraphics", "box", "console"]);
 
-// Stand-in for Max's File object (read access only), backed by Node's fs.
-// Like Max's, readbytes returns at most the count asked for.
+// Stand-in for Max's File object, backed by Node's fs. Like Max's, readbytes
+// returns at most the count asked for; a file opened for "write" is written to
+// disk on close, up to eof.
 class FsFile {
-  constructor(filePath) {
+  constructor(filePath, access = "read") {
+    this.path = filePath;
+    this.access = access;
     this.position = 0;
+    if (access === "write") {
+      this.data = Buffer.alloc(0);
+      this.eof = 0;
+      this.isopen = true;
+      return;
+    }
     try {
       this.data = fs.readFileSync(filePath);
-      this.isopen = true;
       this.eof = this.data.length;
+      this.isopen = true;
     } catch {
-      this.isopen = false;
       this.eof = 0;
+      this.isopen = false;
     }
   }
   readbytes(count) {
@@ -33,12 +42,55 @@ class FsFile {
     this.position += chunk.length;
     return chunk;
   }
+  writebytes(bytes) {
+    this.data = Buffer.concat([this.data.subarray(0, this.position), Buffer.from(bytes)]);
+    this.position = this.data.length;
+    this.eof = Math.max(this.eof, this.position);
+  }
   close() {
+    if (this.isopen && this.access === "write") fs.writeFileSync(this.path, this.data.subarray(0, this.eof));
     this.isopen = false;
   }
 }
 
-function loadBundle(name, { LiveAPI, File = FsFile } = {}) {
+// Stand-in for Max's Folder object: lists the files in a folder.
+class FsFolder {
+  constructor(folderPath) {
+    this.names = fs.readdirSync(folderPath);
+    this.index = 0;
+  }
+  reset() {
+    this.index = 0;
+  }
+  get end() {
+    return this.index >= this.names.length;
+  }
+  get filename() {
+    return this.names[this.index];
+  }
+  next() {
+    this.index++;
+  }
+  close() {}
+}
+
+// Stand-in for [v8ui]'s mgraphics: records every drawing call.
+function recordingGraphics(width = 360, height = 169) {
+  const calls = [];
+  const target = { size: [width, height], calls };
+  return new Proxy(target, {
+    get(obj, prop) {
+      if (prop in obj) return obj[prop];
+      return (...args) => calls.push([prop, ...args]);
+    },
+    set(obj, prop, value) {
+      obj[prop] = value;
+      return true;
+    },
+  });
+}
+
+function loadBundle(name, { LiveAPI, File = FsFile, Folder = FsFolder, mgraphics = recordingGraphics() } = {}) {
   const file = path.join(ROOT, "patchers", name + ".bundle.js");
   const sent = [];
   const context = {
@@ -47,6 +99,8 @@ function loadBundle(name, { LiveAPI, File = FsFile } = {}) {
     error: () => {},
     LiveAPI,
     File,
+    Folder,
+    mgraphics,
     console,
   };
   vm.createContext(context);

@@ -48,7 +48,7 @@
 			{
 				"box": {
 					"maxclass": "inlet",
-					"comment": "from host adapter: hello [seed], pattern, clear, play, stop",
+					"comment": "from host adapter: play, stop, hello [seed], and everything emi.core handles",
 					"index": 1,
 					"numinlets": 0,
 					"numoutlets": 1,
@@ -130,14 +130,14 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "v8 emi.player.bundle.js",
+					"text": "v8 emi.core.bundle.js",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
 						""
 					],
 					"textfile": {
-						"filename": "emi.player.bundle.js",
+						"filename": "emi.core.bundle.js",
 						"flags": 0,
 						"embed": 0,
 						"autowatch": 1
@@ -145,7 +145,7 @@
 					"patching_rect": [
 						420.0,
 						150.0,
-						175.0,
+						161.0,
 						22.0
 					],
 					"id": "obj-6"
@@ -154,14 +154,15 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "pattern, clear",
+					"text": "loadmidi, key, corpus, beats, compose, exportmidi, writeclips, testclip, pattern, clear",
 					"numinlets": 1,
 					"numoutlets": 0,
+					"linecount": 2,
 					"patching_rect": [
 						590.0,
 						150.0,
-						100.0,
-						20.0
+						330.0,
+						34.0
 					],
 					"id": "obj-7"
 				}
@@ -1238,7 +1239,7 @@
 			{
 				"box": {
 					"maxclass": "outlet",
-					"comment": "to host adapter: voice <n> <pitch> <velocity> | status ... | error ...",
+					"comment": "to host and view: voice <n> <pitch> <velocity> | status ... | error ... | view ...",
 					"index": 1,
 					"numinlets": 1,
 					"numoutlets": 0,

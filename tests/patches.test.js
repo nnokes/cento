@@ -68,6 +68,14 @@ for (const file of files) {
         }
       }
 
+      // Every [v8ui] names an existing bundle in its textfile entry.
+      for (const box of boxes.values()) {
+        if (box.maxclass !== "v8ui") continue;
+        const script = (box.textfile || {}).filename;
+        if (!/\.bundle\.js$/.test(script || "") || box.textfile.embed !== 0) problems.push(`${where}: [v8ui] needs textfile {filename: "<name>.bundle.js", embed: 0}`);
+        else if (!fs.existsSync(path.join(ROOT, "patchers", script))) problems.push(`${where}: patchers/${script} is missing`);
+      }
+
       // Every [v8] loads a bundle that exists (never code/ directly). Max 9
       // also needs the box's "textfile" entry to name that file; without it,
       // [v8] starts with an empty embedded script ("no function bang").

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 "use strict";
-// Bundles each [v8] wrapper (code/*.v8.js) together with the modules it
+// Bundles each [v8] / [v8ui] wrapper (code/*.v8.js, code/*.v8ui.js) together with the modules it
 // requires (code/lib: the engine, no Max APIs; code/max: Max-only helpers
 // such as file reading) into one self-contained file: patchers/<name>.bundle.js, next to
 // the patches that load it (Max always searches a patch's own folder).
@@ -88,10 +88,10 @@ function buildAll() {
   const outputs = {};
   const wrappers = fs
     .readdirSync(CODE)
-    .filter((file) => file.endsWith(".v8.js"))
+    .filter((file) => /\.v8(ui)?\.js$/.test(file))
     .sort();
   for (const file of wrappers) {
-    const name = file.slice(0, -".v8.js".length) + ".bundle.js";
+    const name = file.replace(/\.v8(ui)?\.js$/, ".bundle.js");
     outputs[relative(path.join(OUT, name))] = bundle(path.join(CODE, file));
   }
   return outputs;
