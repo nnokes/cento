@@ -29,18 +29,24 @@ reply.
 
 ## 0. One-time setup
 
-1. **Clone the repository** anywhere, for example:
+1. **Clone the repository into Max's Packages folder.** That folder is on
+   the search path for standalone Max *and* for Live, which is how a device
+   finds its patches and scripts.
    ```sh
-   git clone https://github.com/nnokes/ml_midi.git ~/Code/ml_midi
+   git clone https://github.com/nnokes/ml_midi.git "$HOME/Documents/Max 9/Packages/ml_midi"
    ```
-2. **Max version: nothing to configure.** Everything Max loads is in
-   `patchers/`, and Max searches the folder of the patch it opens.
-   **Live version: link the repo as a Max package.** Live does *not* search a
-   device's own folder (found in M0: `bpatcher: error loading patcher
-   emi.brain.maxpat`). From the repo folder, run this and then restart Live:
-   ```sh
-   ln -s "$PWD" "$HOME/Documents/Max 9/Packages/ml_midi"
-   ```
+   Then restart Max and Live.
+2. **What M0 taught us about finding files:**
+   - Standalone Max searches the folder of the patch it opens, so the Max
+     version would work from any folder.
+   - A Max for Live device is a project. It finds files in its project and on
+     the search path, **not** other files in its own folder (`bpatcher: error
+     loading patcher emi.brain.maxpat`).
+   - Max doesn't follow symbolic links, so linking a clone into Packages
+     doesn't work.
+   - The alternative to cloning into Packages is adding `patchers/` to the
+     search path in *Options → File Preferences*, from a device editor inside
+     Live.
 3. **Node** (for tests and building the bundles): install Node 20 or later
    (`brew install node`), then in the repo run:
    ```sh

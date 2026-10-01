@@ -39,9 +39,14 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 
 ## Setup (macOS)
 
+Clone the repo **into Max's Packages folder**. Live finds the devices'
+patches and scripts through the Max search path, and the Packages folder is
+on it. (Max doesn't follow symbolic links, so a link to a clone elsewhere
+doesn't work.)
+
 ```sh
-git clone https://github.com/nnokes/ml_midi.git ~/Code/ml_midi
-cd ~/Code/ml_midi
+git clone https://github.com/nnokes/ml_midi.git "$HOME/Documents/Max 9/Packages/ml_midi"
+cd "$HOME/Documents/Max 9/Packages/ml_midi"
 
 npm test          # engine tests
 npm run hooks     # pre-commit check: no personal paths, bundles up to date
@@ -51,17 +56,25 @@ python3 -m venv .venv && .venv/bin/pip install music21
 .venv/bin/python tools/export-chorales.py
 ```
 
-Everything Max loads (patches, devices and the generated script bundles) is
-in `patchers/`.
+Restart Max and Live after cloning. Everything Max loads (patches, devices and
+the generated script bundles) is in `patchers/`.
 
-- **Max version:** no setup. Max searches the folder of the patch it opens,
-  so just open `patchers/ml_midi.maxpat`.
-- **Live version:** Live doesn't search a device's own folder, so link the repo
-  into the Packages folder (the one where packages such as bach live), then
-  restart Live:
-  ```sh
-  ln -s "$PWD" "$HOME/Documents/Max 9/Packages/ml_midi"
-  ```
+- **Max version:** open `patchers/ml_midi.maxpat`.
+- **Live version:** in Live's browser, add the repo folder under *Places*, then
+  drag `patchers/emi.brain.amxd` and `patchers/emi.voice.amxd` onto tracks.
+
+How Max finds files, and why the repo lives in Packages:
+
+- Standalone Max searches the folder of the patch it opens, plus the search
+  path.
+- A Max for Live device is a *project*: it finds files that belong to its
+  project, plus the search path, but **not** other files in its own folder.
+- `~/Documents/Max 9/Packages/` is on the search path for Max and for Live.
+- Max doesn't follow symbolic links (or Finder aliases).
+
+If you'd rather keep the clone elsewhere, add its `patchers/` folder to the
+search path instead, in *Options → File Preferences*. Do this from a device's
+Max editor inside Live, so Live's Max gets the setting.
 
 ## Repository layout
 

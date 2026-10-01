@@ -720,11 +720,13 @@ go through `emi.brain`. This is a stretch item (M12).
 the generated script bundles. Max always searches the folder of the patch or
 device it opens, so a fresh clone works with no setup. *Learned in M0:* with
 the bundles in a sibling `javascript/` folder, Max reported `can't find file`.
-For the **Live version during development**, the repo must also be linked
-into `~/Documents/Max 9/Packages/`: *learned in M0*, an unfrozen device in Live
-doesn't search its own folder (`bpatcher: error loading patcher
-emi.brain.maxpat`). Frozen devices don't need the link, because freezing embeds
-everything. (A `.maxproj` was dropped: Max Projects can reorganize folders on
+For the **Live version during development**, the repo is cloned **into**
+`~/Documents/Max 9/Packages/`, which is on the search path for Max and Live.
+*Learned in M0:* a Max for Live device is a project; it finds files in its
+project and on the search path, not other files in its own folder (`bpatcher:
+error loading patcher emi.brain.maxpat`). Max doesn't follow symbolic links,
+so linking a clone into Packages doesn't work either. Frozen devices need
+none of this, because freezing embeds everything. (A `.maxproj` was dropped: Max Projects can reorganize folders on
 their own.)
 
 ```
