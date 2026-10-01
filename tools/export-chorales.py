@@ -9,10 +9,15 @@ For each chorale that passes the filter, this writes:
   <name>.json  what MIDI can't carry: fermatas (phrase ends), the padding,
                the key, the meter and where the chorale came from
 
-The output goes to ~/Documents/ml_midi/corpus/, outside the repository: the
-music is public domain, but these encodings aren't ours to redistribute.
+Paths:
+  output:   ~/Documents/ml_midi/corpus/  (i.e. $HOME/Documents/ml_midi/corpus/),
+            outside the repository: the music is public domain, but these
+            encodings aren't ours to redistribute. Change it with --out.
+  music21:  installed into <repo>/.venv by the commands below (git-ignored).
 
-  python3 -m venv .venv && .venv/bin/pip install music21
+Run from the repo folder:
+  python3 -m venv .venv
+  .venv/bin/pip install music21
   .venv/bin/python tools/export-chorales.py                  # 20 chorales, 4/4, major
   .venv/bin/python tools/export-chorales.py --count 50 --meter 3/4 --mode minor
 """
@@ -93,7 +98,9 @@ def main():
     parser.add_argument("--mode", default="major", choices=["major", "minor", "any"], help="(default: %(default)s)")
     args = parser.parse_args()
 
+    args.out = args.out.expanduser().resolve()
     args.out.mkdir(parents=True, exist_ok=True)
+    print(f"Exporting to {args.out}")
     seen = set()
     written = 0
     # Riemenschneider order. Some numbers repeat a chorale, hence "seen".

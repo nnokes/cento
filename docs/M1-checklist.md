@@ -31,13 +31,18 @@ clips.
 ## 0. Get the corpus and the new code
 
 1. Pull the latest code in GitHub Desktop.
-2. Export the corpus once, from the repo folder:
+2. Export the corpus once. In Terminal, go to the repo folder first: type
+   `cd ` (with a space), drag the repo folder from Finder into the window,
+   and press Return. Then:
    ```sh
-   python3 -m venv .venv && .venv/bin/pip install music21
+   python3 -m venv .venv                    # creates <repo>/.venv (git-ignored)
+   .venv/bin/pip install music21            # installs into <repo>/.venv only, ~300 MB
    .venv/bin/python tools/export-chorales.py
    ```
-   This writes 20 chorales (`.mid` + `.json`) to
-   `~/Documents/ml_midi/corpus/`.
+   The script prints its output folder first and its file count last. It
+   writes 20 chorales (`.mid` + `.json`) to `~/Documents/ml_midi/corpus/`,
+   which is `/Users/<your name>/Documents/ml_midi/corpus/`. In Finder, use
+   *Go → Go to Folder…* and paste `~/Documents/ml_midi/corpus`.
 3. Optional: `npm test` now also runs the four corpus tests against your
    corpus. All should pass, none skipped.
 

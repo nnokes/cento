@@ -40,20 +40,40 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 
 ## Setup (macOS)
 
+### Where things live
+
+| What | Where | Notes |
+|---|---|---|
+| **The repo** (your clone) | wherever you cloned it, e.g. `~/Documents/GitHub/ml_midi` | Run every command below from this folder |
+| **Python for music21** | `<repo>/.venv/` | Made by `python3 -m venv .venv`. About 300 MB, git-ignored, delete it to uninstall |
+| **Chorale corpus** | `~/Documents/ml_midi/corpus/` | Written by `tools/export-chorales.py`; outside the repo |
+| **Later: databases, output, Emily's memory** | `~/Documents/ml_midi/db/`, `out/`, `emily/` | Outside the repo |
+| **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
+
+`~` is your home folder, `/Users/<your name>`. `<repo>` is the folder you
+cloned into.
+
+### Commands
+
 Clone the repo wherever you like (GitHub Desktop's `~/Documents/GitHub` is
-fine):
+fine), then run everything from inside it:
 
 ```sh
 git clone https://github.com/nnokes/ml_midi.git
-cd ml_midi
+cd ml_midi                  # <repo>: all commands below run from here
 
-npm test          # engine tests
-npm run hooks     # pre-commit check: no personal paths, bundles up to date
+npm test                    # engine tests
+npm run hooks               # pre-commit check: no personal paths, bundles up to date
 
-# Source corpus -> ~/Documents/ml_midi/corpus (outside the repo)
-python3 -m venv .venv && .venv/bin/pip install music21
+# Chorale corpus: installs music21 into <repo>/.venv, then writes the
+# chorales to ~/Documents/ml_midi/corpus/
+python3 -m venv .venv
+.venv/bin/pip install music21
 .venv/bin/python tools/export-chorales.py
 ```
+
+Tip: in Terminal, type `cd ` (with a space), then drag the repo folder from
+Finder into the window to paste its exact path.
 
 Everything Max loads (patches, devices and the generated script bundles) is
 in `patchers/`.
