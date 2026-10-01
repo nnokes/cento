@@ -16,17 +16,17 @@ test("bundles in javascript/ are up to date with code/", () => {
 test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.player").handlers(), ["clear", "pattern"]);
-  assert.deepEqual(loadBundle("emi.clips", { LiveAPI: class {} }).handlers(), ["ready", "testclip"]);
+  assert.deepEqual(loadBundle("emi.clips", { LiveAPI: class {} }).handlers(), ["testclip"]);
 });
 
-test("each bundle declares its inlets and outlets", () => {
-  const counts = (name) => {
+// [v8] runs its script after the patch has loaded, so Max connects the cords
+// while the object still has its default single inlet and outlet. Cords to any
+// other inlet or outlet get deleted ("patchcord outlet out of range").
+test("every bundle has exactly one inlet and one outlet", () => {
+  for (const name of ["emi.hello", "emi.player", "emi.clips"]) {
     const { context } = loadBundle(name);
-    return [context.inlets, context.outlets, context.autowatch];
-  };
-  assert.deepEqual(counts("emi.hello"), [1, 1, 1]);
-  assert.deepEqual(counts("emi.player"), [1, 2, 1]);
-  assert.deepEqual(counts("emi.clips"), [1, 1, 1]);
+    assert.deepEqual([context.inlets, context.outlets, context.autowatch], [1, 1, 1], name);
+  }
 });
 
 test("hello: the bundle prints the same values as the Node module", () => {
@@ -38,8 +38,9 @@ test("hello: the bundle prints the same values as the Node module", () => {
 
 test("player: 'pattern' clears the coll, then stores every step in order", () => {
   const out = loadBundle("emi.player").send("pattern");
-  const toColl = out.filter(([index]) => index === 0).map(([, ...atoms]) => atoms);
-  const status = out.filter(([index]) => index === 1).map(([, ...atoms]) => atoms);
+  assert.ok(out.every(([index]) => index === 0));
+  const toColl = out.filter(([, selector]) => selector === "coll").map(([, , ...atoms]) => atoms);
+  const status = out.filter(([, selector]) => selector !== "coll").map(([, ...atoms]) => atoms);
 
   const steps = queue.toSteps(patterns.testChorale());
   assert.deepEqual(toColl[0], ["clear"]);
@@ -52,8 +53,8 @@ test("player: 'pattern' clears the coll, then stores every step in order", () =>
 
 test("player: 'clear' empties the coll", () => {
   assert.deepEqual(loadBundle("emi.player").send("clear"), [
-    [0, "clear"],
-    [1, "status", "queue", "cleared"],
+    [0, "coll", "clear"],
+    [0, "status", "queue", "cleared"],
   ]);
 });
 
@@ -89,17 +90,21 @@ function fakeLive({ trackNames, ownTrack = 0, slotsPerTrack = 4, filled = [] }) 
   return { LiveAPI, calls };
 }
 
-test("clips: refuses to touch the Live API before 'ready'", () => {
-  const live = fakeLive({ trackNames: ["EMI"] });
-  const out = loadBundle("emi.clips", live).send("testclip");
-  assert.equal(out[0][1], "error");
-  assert.deepEqual(live.calls, []);
+test("clips: loading the script doesn't touch the Live API", () => {
+  let constructed = 0;
+  loadBundle("emi.clips", {
+    LiveAPI: class {
+      constructor() {
+        constructed++;
+      }
+    },
+  });
+  assert.equal(constructed, 0);
 });
 
 test("clips: writes one 2-bar clip per voice into the S/A/T/B tracks", () => {
   const live = fakeLive({ trackNames: ["EMI", "Soprano", "Alto", "Tenor", "Bass"], filled: ["2:0"] });
   const bundle = loadBundle("emi.clips", live);
-  bundle.send("ready");
   const out = bundle.send("testclip");
   assert.equal(out[0][1], "status");
 
@@ -124,7 +129,6 @@ test("clips: writes one 2-bar clip per voice into the S/A/T/B tracks", () => {
 test("clips: without voice tracks, writes all voices into this track", () => {
   const live = fakeLive({ trackNames: ["Drums", "EMI"], ownTrack: 1 });
   const bundle = loadBundle("emi.clips", live);
-  bundle.send("ready");
   bundle.send("testclip");
   const notes = live.calls.filter(([, name]) => name === "add_new_notes");
   assert.equal(notes.length, 1);
@@ -135,7 +139,6 @@ test("clips: without voice tracks, writes all voices into this track", () => {
 test("clips: reports an error when the track has no empty slot", () => {
   const live = fakeLive({ trackNames: ["EMI"], slotsPerTrack: 1, filled: ["0:0"] });
   const bundle = loadBundle("emi.clips", live);
-  bundle.send("ready");
   const out = bundle.send("testclip");
   assert.deepEqual(out[0].slice(0, 2), [0, "error"]);
   assert.match(String(out[0][2]), /no empty clip slot/);

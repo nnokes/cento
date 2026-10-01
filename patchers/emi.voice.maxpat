@@ -172,7 +172,7 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "receive emi.voice.1",
+					"text": "receive",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -181,10 +181,25 @@
 					"patching_rect": [
 						20.0,
 						215.0,
-						147.0,
+						55.0,
 						22.0
 					],
 					"id": "obj-7"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "comment",
+					"text": "no name typed in: only an unnamed [receive] has an inlet for set",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						90.0,
+						215.0,
+						300.0,
+						20.0
+					],
+					"id": "obj-8"
 				}
 			},
 			{
@@ -203,7 +218,7 @@
 						75.0,
 						22.0
 					],
-					"id": "obj-8"
+					"id": "obj-9"
 				}
 			},
 			{
@@ -221,7 +236,7 @@
 						50.0,
 						22.0
 					],
-					"id": "obj-9"
+					"id": "obj-10"
 				}
 			},
 			{
@@ -237,7 +252,7 @@
 						55.0,
 						22.0
 					],
-					"id": "obj-10"
+					"id": "obj-11"
 				}
 			},
 			{
@@ -253,7 +268,7 @@
 						330.0,
 						34.0
 					],
-					"id": "obj-11"
+					"id": "obj-12"
 				}
 			}
 		],
@@ -313,19 +328,7 @@
 						0
 					],
 					"destination": [
-						"obj-8",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-8",
-						0
-					],
-					"destination": [
-						"obj-10",
+						"obj-9",
 						0
 					]
 				}
@@ -337,7 +340,19 @@
 						0
 					],
 					"destination": [
+						"obj-11",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-10",
+						0
+					],
+					"destination": [
+						"obj-11",
 						0
 					]
 				}

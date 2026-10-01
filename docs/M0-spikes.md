@@ -7,12 +7,14 @@ your Mac.
 **Already verified (and re-checked by CI on every push):**
 
 - The engine modules and the three bundled `[v8]` scripts pass `npm test`
-  (21 tests). The bundles are also loaded in a simulated `[v8]` context with
+  (30 tests). The bundles are also loaded in a simulated `[v8]` context with
   no `require()`, which proves they are self-contained.
 - The clip writer was tested against a fake Live set (track lookup by name,
   first empty slot, the "no empty slot" error).
 - Every patch is valid JSON, and every patch cord connects to an inlet or
-  outlet that exists.
+  outlet that exists. `tests/patches.test.js` also checks the two rules found
+  on first open: cords only to and from inlet 0 and outlet 0 of a `[v8]`, and no
+  cords into a named `[receive]`.
 - `tools/export-chorales.py` exported 20 chorales: all at 960 ticks per
   quarter, pickups padded to a barline, and all 10,342 note events on the
   16th-note grid.

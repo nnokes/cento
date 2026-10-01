@@ -32,7 +32,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.engine: host-agnostic. Talks only through this inlet/outlet; the host adapter (emi.host.max or emi.host.live) owns ports, transport and UI.",
+					"text": "emi.engine: host-agnostic. Talks only through this inlet/outlet; the host adapter (emi.host.max or emi.host.live) owns ports, transport and UI. Every [v8] has one inlet and one outlet (its script runs after the patch loads).",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -126,9 +126,8 @@
 					"maxclass": "newobj",
 					"text": "v8 emi.player.bundle.js",
 					"numinlets": 1,
-					"numoutlets": 2,
+					"numoutlets": 1,
 					"outlettype": [
-						"",
 						""
 					],
 					"patching_rect": [
@@ -158,6 +157,40 @@
 			{
 				"box": {
 					"maxclass": "newobj",
+					"text": "route coll",
+					"numinlets": 2,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						420.0,
+						185.0,
+						70.0,
+						22.0
+					],
+					"id": "obj-8"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "comment",
+					"text": "coll ... -> the queue; status/error pass through",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						500.0,
+						185.0,
+						300.0,
+						20.0
+					],
+					"id": "obj-9"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
 					"text": "coll ---emi.queue",
 					"numinlets": 1,
 					"numoutlets": 4,
@@ -169,11 +202,11 @@
 					],
 					"patching_rect": [
 						420.0,
-						195.0,
+						220.0,
 						133.0,
 						22.0
 					],
-					"id": "obj-8"
+					"id": "obj-10"
 				}
 			},
 			{
@@ -184,11 +217,11 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						560.0,
-						195.0,
+						220.0,
 						330.0,
 						20.0
 					],
-					"id": "obj-9"
+					"id": "obj-11"
 				}
 			},
 			{
@@ -1187,7 +1220,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-10"
+					"id": "obj-12"
 				}
 			},
 			{
@@ -1203,7 +1236,7 @@
 						30.0,
 						30.0
 					],
-					"id": "obj-11"
+					"id": "obj-13"
 				}
 			}
 		],
@@ -1271,11 +1304,23 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-8",
+						0
+					],
+					"destination": [
+						"obj-10",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-3",
 						1
 					],
 					"destination": [
-						"obj-10",
+						"obj-12",
 						0
 					]
 				}
@@ -1287,7 +1332,7 @@
 						2
 					],
 					"destination": [
-						"obj-10",
+						"obj-12",
 						1
 					]
 				}
@@ -1299,7 +1344,7 @@
 						0
 					],
 					"destination": [
-						"obj-11",
+						"obj-13",
 						0
 					]
 				}
@@ -1307,11 +1352,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-6",
+						"obj-8",
 						1
 					],
 					"destination": [
-						"obj-11",
+						"obj-13",
 						0
 					]
 				}
@@ -1319,11 +1364,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-10",
+						"obj-12",
 						0
 					],
 					"destination": [
-						"obj-11",
+						"obj-13",
 						0
 					]
 				}

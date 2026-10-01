@@ -228,10 +228,18 @@ ml_midi.maxpat  (Max version)                 emi.brain.amxd  (Live version)
 - **Shared data goes through named `[dict]`s**: `emi.corpus`, `emi.db`,
   `emi.score`, `emi.params`, `emily.weights`. Use `[send]`/`[receive]` only for
   control messages, under one prefix such as `emi.ctl.*`.
-- **Every `[v8]` wrapper uses the same message protocol.** Inputs are verbs:
-  `load <dict>`, `run`, `param <key> <value>`, `cancel`. Outputs go out the right
-  outlet as `status <text>`, `progress <0..1>`, `done <dict>` or `error <text>`.
-  This keeps all the wrappers interchangeable from the patch's point of view.
+- **Every `[v8]` wrapper has one inlet and one outlet**, and uses the same
+  message protocol. Inputs are verbs: `load <dict>`, `run`,
+  `param <key> <value>`, `cancel`. Every output starts with a selector
+  (`status <text>`, `progress <0..1>`, `done <dict>`, `error <text>`, or a
+  destination such as `coll …`), and the patch sorts them with `[route]`.
+  *Learned in M0:* `[v8]` runs its script **after** the patch has loaded, so
+  when Max connects the cords the object only has its default single inlet and
+  outlet; a cord to a second outlet is deleted. For the same reason, **never
+  send a `[v8]` a message at load time** (from `[loadbang]` or
+  `[live.thisdevice]`): the script's functions don't exist yet. When a script
+  needs to initialise, it should schedule that itself from its top-level code
+  (a `Task` with a short delay). `tests/patches.test.js` enforces the cord rules.
 - **Never schedule notes from JS.** JS writes events ahead of time (a whole
   piece, or the next phrase), and a Max-native player locked to the transport
   sends them out (§4.7).
@@ -639,9 +647,10 @@ function writeVoice(trackIndex, notes, lengthBeats, clipName) {
   `Tenor`, `Bass`, configurable) instead of by index, so moving tracks around
   doesn't break anything.
 - **Requirement**: the `add_new_notes` note API needs **Live 11 or later**.
-- **When to call the Live API**: only after `[live.thisdevice]` has banged, and
-  never from the scheduler (high-priority) thread. `[v8]` runs on the main
-  thread, so calling from there is fine.
+- **When to call the Live API**: only in response to a message once the device
+  is running (a click, or a request from the engine), never in a script's
+  top-level code and never from the scheduler (high-priority) thread. `[v8]`
+  runs on the main thread, so calling from a `[v8]` message handler is fine.
 - **Signal the source**: name and color each clip with its seed, so a clip can
   be traced back to its provenance file.
 
@@ -762,7 +771,7 @@ doesn't match `code/`.
 // code/emi.compose.v8.js — glue only (Max loads javascript/emi.compose.bundle.js)
 autowatch = 1;
 inlets = 1;
-outlets = 2;                                  // 0: results   1: status
+outlets = 1;                     // one outlet; outputs carry a selector
 
 const compose = require("emi-compose");
 const params = { seed: 1, matchLevel: 0, template: null, temperature: 1 };
@@ -770,16 +779,16 @@ let db = null;
 
 function load(dictName) {
   db = JSON.parse(new Dict(dictName).stringify());
-  outlet(1, "status", "groupings", db.groupings.length);
+  outlet(0, "status", "groupings", db.groupings.length);
 }
 
 function param(key, value) { params[key] = value; }
 
 function run() {
-  if (!db) { outlet(1, "error", "no database loaded"); return; }
+  if (!db) { outlet(0, "error", "no database loaded"); return; }
   const score = compose.run(db, params);
   new Dict("emi.score").parse(JSON.stringify(score));
-  outlet(1, "done", "emi.score");
+  outlet(0, "done", "emi.score");
 }
 ```
 
@@ -980,7 +989,8 @@ voice on its own track. The `music21` corpus has all of them, and
 | **The two products drift apart** (a feature lands in one only) | All logic in `emi.engine`; adapters stay thin; shared `live.*` panels; parity rule from M4; one parity checklist used for every milestone. |
 | **Live's bundled Max is 8.x** (no `[v8]`) | Check *About Max* in M0; use Live 12.2.1+ or point Live at Max 9. State the requirement when sharing the devices. |
 | **Frozen device can't find `require()`d modules** | Max only ever loads single-file bundles from `javascript/`; the M0 freeze spike proves it before any real code depends on it. |
-| **Live API threading and timing** | Create Live API objects only after `[live.thisdevice]`; call them from `[v8]` (main thread), never from the scheduler. |
+| **Live API threading and timing** | Use the Live API only from `[v8]` message handlers after the device is running (never at load, never from the scheduler). |
+| **`[v8]` loads its script after the patch** (found in M0) | One inlet and one outlet per wrapper; no messages to `[v8]` at load time; `tests/patches.test.js` checks cords. |
 | **SPEAC thresholds** | Make every constant a parameter stored in the database settings; compare against Cope's published examples (golden tests). |
 
 ---

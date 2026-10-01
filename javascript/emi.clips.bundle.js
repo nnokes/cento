@@ -140,11 +140,12 @@ __emi_require.local = 1;
 // Live version only. Glue only: the logic is in code/lib. Patches load
 // javascript/emi.clips.bundle.js.
 //
-// The Live API must not be used before the device has finished loading, so
-// [live.thisdevice] sends "ready" first.
+// The Live API is only used in response to a message (a click), never while
+// the device is loading. [v8] runs its script after the patch has loaded, so a
+// load-time message like a "ready" from [live.thisdevice] would arrive before
+// the script exists.
 //
-// Messages:  ready    -> allow Live API calls
-//            testclip -> write the test phrase: one clip per voice into the
+// Messages:  testclip -> write the test phrase: one clip per voice into the
 //                       Soprano/Alto/Tenor/Bass tracks if all four exist,
 //                       otherwise all voices into one clip on this track
 // Outlet 0:  status <text...> | error <text...>
@@ -156,18 +157,7 @@ outlets = 1;
 const patterns = __emi_require("emi-pattern");
 const live = __emi_require("emi-live");
 
-let isReady = false;
-
-function ready() {
-  isReady = true;
-  outlet(0, "status", "live", "api", "ready");
-}
-
 function testclip() {
-  if (!isReady) {
-    outlet(0, "error", "device", "not", "ready", "yet");
-    return;
-  }
   try {
     const score = patterns.testChorale();
     const voices = live.toLiveNotes(score);
