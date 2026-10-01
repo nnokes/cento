@@ -17,6 +17,7 @@ running in `[v8]`.
 | Output | **MIDI**, into **Ableton Live** |
 | End state | **Two products from one engine**: a **Max version** (patch or macOS app) and a **Max for Live version** (devices). Both are first-class and built in parallel from M0 (§2) |
 | Emily scope | **Tier 1 (taste) + Tier 2 (memory and drift)** as the core; **Tier 3a** (phrase table) later; **3b** (LLM) optional (§7) |
+| Audience | **Personal use for now**, so no signing, notarization or Live Pack yet. The **GitHub repo is public** from the start (§6.1) |
 
 ---
 
@@ -165,9 +166,9 @@ Emily's memory. Taste Emily learns in one product carries over to the other.
 ### Data flow
 
 ```
- data/corpus/*.mid
+ ~/Documents/ml_midi/corpus/*.mid
         │
- ┌──────▼───────┐   dict emi.corpus   ┌──────────────┐   dict emi.db  (+ data/db/*.json)
+ ┌──────▼───────┐   dict emi.corpus   ┌──────────────┐   dict emi.db  (+ db/*.json)
  │  emi.ingest  │────────────────────▶│  emi.analyze │──────────────────┐
  └──────────────┘                     │  segment     │                  │
                                       │  tension     │                  │
@@ -305,7 +306,7 @@ per **match level**:
 [{ beatInBar, speac: {beat, bar, phrase}, cadence, phraseIndex, signatureSlot? }, ...]
 ```
 
-**Database file** (`data/db/<style>.json`): `{ version, settings, works, groupings,
+**Database file** (`~/Documents/ml_midi/db/<style>.json`): `{ version, settings, works, groupings,
 lexicon: {L0, L1, L2, L3}, signatures, templates }`. Record the analysis settings
 in the file so every output can be reproduced.
 
@@ -482,6 +483,13 @@ function fill(slots, i, prev, out, ctx) {
 }
 ```
 
+- **Option: compose backward.** Cope's patent describes a *retrograde*
+  method: fill from the ending toward the beginning. Starting each phrase at its
+  cadence makes the hardest constraint (land on a good cadence) automatic, and
+  backtracking happens near the start of the phrase, where it's least audible.
+  This needs a second lexicon index, by `destination`, so you can ask "what can
+  come *before* this grouping?". Build it so `fill` can run in either direction
+  and compare the results by ear in M3.
 - **Seeded RNG** (mulberry32 or similar): every output records `seed + params +
   db version`, so any piece can be regenerated exactly.
 - **Provenance**: for every grouping in the output, record which work and which
@@ -519,7 +527,7 @@ The engine has three ways out. All three share the score format and provenance.
 
 - `lib/emi-smf.js` also **writes** SMF type 1 files: one track per voice, a
   tempo map, and a text meta event holding the seed and parameters. Files go to
-  `data/out/<timestamp>-<seed>.mid`, alongside a `.json` provenance file.
+  `~/Documents/ml_midi/out/<timestamp>-<seed>.mid`, alongside a `.json` provenance file.
 - You can drag the file into Live, or `read` it into `[seq]` for quick
   auditioning in the Max version.
 
@@ -640,9 +648,8 @@ function writeVoice(trackIndex, notes, lengthBeats, clipName) {
   rating buttons. Mapping 👍/👎 to a footswitch or pad works naturally this way.
 - **Data lives outside the device.** Freezing a device embeds its JS and
   abstractions, but the databases (`.json`) and Emily's memory are files that
-  change at runtime. Keep them in a user folder such as
-  `~/Documents/ml_midi/{db,out,emily}`, with a default database loaded on
-  startup and a **Load** button for others.
+  change at runtime. Keep them in `~/Documents/ml_midi/` (§6), with the
+  starter database loaded on startup and a **Load** button for others.
 - **Tempo and meter come from Live.** Read them with `[live.observer]` on
   `live_set tempo`, `signature_numerator` and `signature_denominator`, and
   refuse to play when Live's meter differs from the database's meter.
@@ -708,15 +715,26 @@ ml_midi/
 │                          emi-signatures.js  emi-lexicon.js  emi-compose.js
 │                          emi-rng.js  emily-assoc.js
 ├── data/
-│   ├── corpus/          source .mid (start: ~20 Bach chorales, 4/4, major)
-│   ├── db/              analyzed databases (.json)
-│   ├── out/             generated .mid + provenance .json
-│   └── emily/           weight snapshots
-├── dist/                generated: one bundled file per v8 wrapper (what devices freeze)
+│   ├── starter/         bach-chorales.json: the prebuilt starter database (§6.1)
+│   └── fixtures/        tiny test inputs: hand-made MIDI files, Cope's book examples
+├── dist/                generated, git-ignored: one bundled file per v8 wrapper
 ├── tests/               node --test  (golden tests against Cope's book examples)
-├── tools/               node CLI: analyze-corpus, compose-batch, build (esbuild)
+├── tools/               node CLI: analyze-corpus, compose-batch, build (esbuild);
+│                        export-chorales.py (music21, run once)
+├── .github/workflows/   CI: node --test on every push
+├── README.md  LICENSE  .gitignore
 └── package.json         dev-only: test + build scripts, no runtime deps
+
+~/Documents/ml_midi/     working data, OUTSIDE the repo (shared by both products)
+├── corpus/              your source .mid files
+├── db/                  analyzed databases (.json)
+├── out/                 generated .mid + provenance .json
+└── emily/               Emily's memory and weight snapshots
 ```
+
+Working data lives **outside the repository**, so personal material (your
+corpus files, your output, Emily's taste) can't be committed by accident. The
+repository holds only code, patches, tests, and the starter database.
 
 **Module sharing between Max and Node.** `[v8]` `require()` follows CommonJS 1.0:
 export by assigning to `exports.foo` and **don't** reassign `module.exports`.
@@ -754,6 +772,43 @@ function run() {
   outlet(1, "done", "emi.score");
 }
 ```
+
+---
+
+### 6.1 Working in a public repository
+
+- **License.** Add one in M0. **MIT** is the simple, permissive default and is
+  common for Max code. Choose **GPL-3.0** instead if you want modified versions
+  to stay open source.
+- **Corpus files.** The Bach chorales themselves are public domain, but a given
+  digital *encoding* (MIDI, MusicXML or kern file) may carry its own license.
+  Don't commit corpus files. Commit `tools/export-chorales.py`, which recreates
+  them from the `music21` corpus. Commit the **starter database** only after
+  checking that the source's terms allow redistribution; until then, the
+  script rebuilds it locally.
+- **Reference code.** The SPEAC Python port has **no license**: read it, but
+  don't copy from it. Cope's own Lisp code ships with his books and is under his
+  copyright. Implement from the published descriptions.
+- **Cope's patent.** US7696426B2 (recombinant composition) is listed on Google
+  Patents as *expired (fee related)*, so an open implementation is not blocked
+  by it. The README should say the project is independent, not affiliated with
+  David Cope, and cite his books.
+- **No secrets in the repo.** The Tier 3b API key comes from an environment
+  variable or from a file in `~/Documents/ml_midi/`, never from the repository.
+- **No personal paths.** Max sometimes saves absolute paths in patchers (for
+  example `/Users/<you>/…` in file references or `[vst~]` plugin state). A
+  small check (`git grep -n "/Users/"`, run in CI and as a pre-commit hook)
+  catches them.
+- **`.gitignore`** covers: `dist/`, `node_modules/`, `.DS_Store`, any
+  `*-frozen.amxd`, built `.app` bundles, and local Max preference files.
+  Commit **unfrozen** devices; frozen ones and the built app go into **GitHub
+  Releases** if you ever publish them.
+- **CI is free for public repos.** Because the core is plain JavaScript, a
+  GitHub Actions job can run `node --test` and the path check on every push.
+  This is the safety net for the shared engine that both products depend on.
+- **README**: what it is, a short demo (an audio clip or GIF), requirements
+  (Max 9; Live 12.2.1+ with the bundled Max 9, or Live pointed at Max 9), how to
+  build the starter database, and the project status (milestone table).
 
 ---
 
@@ -821,7 +876,7 @@ accept it.
 - **Mix**: how much the original corpus counts compared with Emily's own output.
   The corpus has a minimum share it can't drop below.
 - **Novelty**: how often Emily tries a variant.
-- **Snapshots and rollback**: one file per session in `data/emily/*.json`.
+- **Snapshots and rollback**: one file per session in `~/Documents/ml_midi/emily/`.
 
 **Risk**: a feedback loop can narrow the style until everything sounds like what
 you liked last week. Decay, the mix floor and the novelty quota guard against
@@ -873,7 +928,7 @@ in §2). Work day to day in the Max version, then confirm the result in Live.
 
 | # | Milestone | Done when |
 |---|-----------|-----------|
-| **M0** | **Setup, both shells, four spikes**: Max project, repo layout, Node tests, corpus; empty `ml_midi.maxpat` and `emi.brain.amxd`, each loading the same `emi.engine` through its adapter | (a) The same `emi-hello` module gives the same result in `[v8]`, in `node --test`, **and in both shells**. (b) `[v8]` in an M4L device writes a 1-bar clip through the Live API. (c) A grid player plays a hard-coded 4-voice pattern into 4 Live tracks in sync, and into 4 `[vst~]` instruments in the Max version. (d) A **frozen** device using a bundled `dist/` script loads in a fresh set from another folder with the editor closed, and *About Max* shows 9.x. |
+| **M0** | **Setup, both shells, four spikes**: Max project, repo layout, README, LICENSE, `.gitignore`, CI running Node tests, corpus export script; empty `ml_midi.maxpat` and `emi.brain.amxd`, each loading the same `emi.engine` through its adapter | (a) The same `emi-hello` module gives the same result in `[v8]`, in `node --test`, **and in both shells**. (b) `[v8]` in an M4L device writes a 1-bar clip through the Live API. (c) A grid player plays a hard-coded 4-voice pattern into 4 Live tracks in sync, and into 4 `[vst~]` instruments in the Max version. (d) A **frozen** device using a bundled `dist/` script loads in a fresh set from another folder with the editor closed, and *About Max* shows 9.x. |
 | **M1** | **Ingest round-trip**: SMF in → events → SMF out, plus a minimal piano roll | 20 chorales round-trip with identical notes; key normalization verified by ear |
 | **M2** | **Naive recombination** (whole piece): beat groupings, `L0` voice-hooking, the different-source rule, a fixed length, ending on a cadence | 32-beat chorales with no broken voices at seams; heard in the Max version, and the exported `.mid` plays in Live |
 | **M3** | **Form**: templates, phrase lengths, cadence slots, backtracking, match-level relaxation | Output keeps the template's phrase structure; the dead-end rate is under 5% |
@@ -884,13 +939,13 @@ in §2). Work day to day in the Max version, then confirm the result in Live.
 | **M8** | **Hardening**: provenance view, plagiarism guards, parallel-5ths report, minor mode, 3/4 | A blind A/B listening test against real chorales; quotation metrics under threshold |
 | **M9** | **Emily Tier 1, taste**: rating buttons (mappable), association weights, temperature | After about 10 rating sessions, output measurably shifts toward the liked features |
 | **M10** | **Emily Tier 2, memory and drift**: accept-to-database, variation operators, mix and novelty, snapshots | Accepted variants appear in later output; a rollback restores an earlier taste exactly |
-| **M11** | **Ship both**: **Max version** as a Max project and a macOS app (with starter database and bundled scripts); **Live version** as frozen `emi.brain` + `emi.voice` with the starter database, presets, and a demo set or Live Pack | On a clean user account, each product works out of the box. The app opens and plays through `[vst~]`; the demo set opens and plays when you press Play. A shared parity checklist passes in both. |
+| **M11** | **Ship both (for personal use)**: **Max version** as a Max project and an unsigned macOS app for your own Mac; **Live version** as frozen `emi.brain` + `emi.voice` with the starter database, presets and a demo set. Tag a release on GitHub. *Later, if you share them*: code signing and notarization, a Live Pack, and clean-machine tests. | The app opens and plays through `[vst~]`; the demo set plays when you press Play; the parity checklist passes in both; a fresh clone plus the README steps rebuilds everything. |
 | **M12** | **Stretch**: Emily Tier 3a (text), Live 12 MIDI Tool (§5.5), Alice-style continuation from a MIDI keyboard, a second style | — |
 
 **First corpus**: about 20 Bach chorales in 4/4, major mode, with each
-voice on its own track. The `music21` corpus has all of them; a one-time
-`music21` script can export them to per-part MIDI. These pieces are public
-domain, but check the license of whichever **encoding** you use.
+voice on its own track. The `music21` corpus has all of them, and
+`tools/export-chorales.py` exports them to per-part MIDI in
+`~/Documents/ml_midi/corpus/`. See §6.1 for licensing.
 
 ---
 
@@ -907,6 +962,7 @@ domain, but check the license of whichever **encoding** you use.
 | **Streaming runs dry** (the next phrase isn't ready in time) | Keep at least one phrase of lookahead; fall back to repeating the cadence pattern; log every fallback. |
 | **Stuck notes** on stop, tempo change or device edits | Explicit note-off events; send a panic on transport stop and when the device is removed; track sounding notes per voice. |
 | **Shared Max namespace in Live** (two brains, or clashing names) | Use the `---` prefix for everything device-internal. Only the `emi.voice.N` sends are global. |
+| **Something private or unlicensed ends up in the public repo** (corpus files, personal paths, an API key, copied reference code) | Working data lives outside the repo; `.gitignore`; path check in CI and a pre-commit hook; corpus rebuilt by script; implement from published descriptions (§6.1). |
 | **The two products drift apart** (a feature lands in one only) | All logic in `emi.engine`; adapters stay thin; shared `live.*` panels; parity rule from M4; one parity checklist used for every milestone. |
 | **Live's bundled Max is 8.x** (no `[v8]`) | Check *About Max* in M0; use Live 12.2.1+ or point Live at Max 9. State the requirement when sharing the devices. |
 | **Frozen device can't find `require()`d modules** | Ship bundled single-file scripts from `dist/`; the M0 freeze spike proves it before any real code depends on it. |
@@ -917,10 +973,8 @@ domain, but check the license of whichever **encoding** you use.
 
 ## 10. Open questions
 
-1. **Just for you, or shared?** Sharing adds code signing and notarization for
-   the macOS app, a Live Pack, a stated Live/Max version requirement, and
-   clean-machine tests for both products. If they're only for you, M11 shrinks
-   to building the app, freezing the devices and making a demo set.
+1. **License**: MIT (recommended) or GPL-3.0? This is needed for M0, since the
+   repo is public from the start.
 
 ---
 
