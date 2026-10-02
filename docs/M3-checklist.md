@@ -1,14 +1,16 @@
 # M3 checklist: form
 
-## Result: waiting on the Max and Live checks
+## Result: M3 passed (macOS, Max 9, Live 12)
 
 | Check | Max version | Live version |
 |---|---|---|
-| **compose** gives a piece in the form of a named chorale, the same as in Node | | |
-| The piano roll marks cadences; they line up with the template chorale's | | |
-| The piece sounds phrased: it cadences where its template does, and ends properly | | |
-| **form** off composes as in M2 | | |
+| **compose** gives a piece in the form of a named chorale, the same as in Node | ✅ | ✅ |
+| The piano roll marks cadences; they line up with the template chorale's | ✅ | ✅ |
+| The piece sounds phrased: it cadences where its template does, and ends properly | ✅ | ✅ (as clips) |
+| **form** off composes as in M2 | ✅ | n/a (Max only) |
 | 142 chorales, 100 seeds: every piece keeps its form; under 5% dead ends | ✅ (`tests/corpus.test.js`: 1) | |
+
+The checklist below is kept as a record and for re-testing.
 
 M2 chained beats with no plan, so its pieces wandered and cadenced anywhere.
 M3 gives every piece the **form of a real chorale** (its *template*):
