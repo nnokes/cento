@@ -64,19 +64,42 @@ certain to be a final cadence. That is what M3 (form) fixes.
 2. Export **all** the chorales. The 20 from M1 are too few: with exact
    voice-hooking, only about 1 seed in 7 finds a 32-beat piece in them.
    With all 142, every seed tried works. (M3 adds looser matching, which
-   helps small corpora.)
+   helps small corpora.) Step by step:
 
-   In Terminal, go to the repo folder first: type `cd ` (with a space), drag
-   the repo folder from Finder into the window, and press Return. Then:
-   ```sh
-   .venv/bin/python tools/export-chorales.py
-   ```
-   The script now exports every match by default (it used to stop at 20). It
-   takes about half a minute, rewrites your 20 chorales unchanged and adds 122
-   more. The last line should read
-   `wrote 142 chorales to /Users/<your name>/Documents/ml_midi/corpus`.
-3. Optional: `npm test` now runs the corpus tests on all 142. All should
-   pass, none skipped.
+   1. **Open Terminal**: press Cmd+Space, type `Terminal`, press Return.
+   2. **Go to the repo folder.** Type `cd` and a space (don't press Return
+      yet), then drag the repo folder (the one with `PLAN.md` and
+      `patchers` in it) from Finder into the Terminal window. Its path
+      appears after `cd `. Now press Return.
+   3. **Check you're in the right place**:
+      ```sh
+      ls .venv/bin/python
+      ```
+      It should print `.venv/bin/python`. If it says
+      `No such file or directory`, either step 2 picked the wrong folder,
+      or the `.venv` from M1 is gone; then recreate it (about 300 MB, a few
+      minutes):
+      ```sh
+      python3 -m venv .venv
+      .venv/bin/pip install music21
+      ```
+   4. **Export**:
+      ```sh
+      .venv/bin/python tools/export-chorales.py --count 200
+      ```
+      It takes about half a minute. The first line is
+      `Exporting to /Users/<your name>/Documents/ml_midi/corpus`, then one
+      numbered line per chorale, then
+      `wrote 142 chorales to …` and `only 142 chorales matched …`. That last
+      line is expected: there are only 142, and `--count 200` asks for all
+      of them. Your 20 chorales are rewritten unchanged; 122 are added.
+   5. **Check the files**: in Finder, *Go → Go to Folder…*, paste
+      `~/Documents/ml_midi/corpus` and press Return. You should see 284
+      files: a `.mid` and a `.json` for each chorale.
+
+   You can close Terminal afterwards; nothing needs to keep running.
+3. Optional, in the same Terminal window: `npm test` now runs the corpus
+   tests on all 142. All should pass, none skipped.
 
 ## 1. Max version (`patchers/ml_midi.maxpat`)
 
