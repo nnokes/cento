@@ -21,9 +21,8 @@ They show pieces in a piano roll colored by source chorale, export them as
 MIDI files, and (in Live) write them as clips ([M0](docs/M0-spikes.md),
 [M1](docs/M1-checklist.md), [M2](docs/M2-checklist.md),
 [M3](docs/M3-checklist.md), [M4](docs/M4-checklist.md) results). Both share
-one control panel and
-remember their settings, including the last corpus, between sessions. The
-full plan and milestones are in [PLAN.md](PLAN.md).
+one control panel and remember their settings, including the last corpus,
+between sessions. The full plan and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
 
