@@ -1,15 +1,20 @@
 # M4 checklist: both products, offline
 
-## Result: waiting on the Max and Live checks
+## Result: M4 passed (macOS, Max 9, Live 12)
 
 | Check | Max version | Live version |
 |---|---|---|
-| The new layout loads: host panel, shared panel and piano roll, with no red text | | |
-| Settings survive a reload | | |
-| The last corpus reloads by itself, and the seed's piece comes back with the same notes | | |
-| **clips on compose** writes S/A/T/B clips with every compose | n/a | |
-| Compose, hear it, export the `.mid` (as in M2 and M3) | | |
+| The new layout loads: host panel, shared panel and piano roll, with no red text | ✅ | ✅ |
+| Settings survive a reload | ✅ | ✅ |
+| The last corpus reloads by itself, and the seed's piece comes back with the same notes | ✅ | ✅ |
+| **clips on compose** writes S/A/T/B clips with every compose | n/a | ✅ |
+| Compose and hear it (export unchanged since M2) | ✅ | ✅ (as clips) |
 | Engine and patch tests | ✅ (`npm test`) | ✅ |
+
+The checklist below is kept as a record and for re-testing. The generated
+`live.numbox` and `live.text` objects, Live restoring parameters inside the
+device's panels, and the engine finding its own folder all work in Max 9 and
+Live 12.
 
 M4 makes the two products behave the same way offline, and remember their
 settings.
