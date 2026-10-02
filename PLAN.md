@@ -378,7 +378,10 @@ in the file so every output can be reproduced.
     otherwise use Krumhansl–Schmuckler key finding. Then transpose to C major or
     A minor and store the offset.
   - **Filter**: keep only works in the target meter and mode (to start, 4/4
-    major only).
+    major only). *As tested in M5:* the 153 minor chorales in 4/4 work as
+    well (`--mode minor`, into their own folder). They move to A minor, and
+    composed pieces are labelled A minor. Keep major and minor in separate
+    corpora; a mixed corpus is reported as such when it loads.
 - **Output**: `dict emi.corpus` and a per-work report (key, meter, voices,
   warnings).
 - **Corpus files as exported** (`tools/export-chorales.py`): type-1 MIDI at
@@ -578,6 +581,34 @@ Streaming mode composes **one phrase at a time, ahead of the playhead**:
 Filling one phrase takes milliseconds, so the low-priority thread is not a
 problem as long as there is one phrase of buffer.
 
+*As built in M5* (`code/lib/emi-stream.js`):
+
+- **Phrase templates.** Each chorale's form is split at its cadences: a
+  phrase runs from its first beat with new notes through its cadence and any
+  held or silent beats after it. The 142 major chorales give 979 phrases,
+  8 beats long on average.
+- **Choosing phrases.** A stream walks one chorale's phrases in order, then
+  another chorale's, chosen by the seed. Each phrase is filled like a whole
+  form, with the same relaxation steps. Its first beat hooks to the previous
+  phrase's last beat. If the next phrase's first beat doesn't follow on in
+  the bar, silent beats fill the gap and it starts like a phrase after a
+  rest. If no phrase can be filled, the stream takes a *breath*: one silent
+  beat, then a fresh phrase start. On the full corpus that's about 4% of
+  phrase joins, with no failures in 400 phrases. A stream uses each grouping
+  once, within its last 64 phrases.
+- **Ending.** A bounded stream's last phrase is a chorale's last phrase,
+  ending on its final chord. If none fits at that point, an ordinary phrase
+  is queued and the ending is tried again on the next phrase.
+- **The engine** queues two phrases at the start. It tells the player to
+  send `need` when the second one starts, and so on. The `need` message
+  crosses from the scheduler thread through `[deferlow]`. Phrase joins in
+  the queue keep note-offs before note-ons.
+- **Changes from the next phrase.** Each phrase is drawn from its own seed
+  and number, so streams are reproducible. Transpose and the phrase count
+  apply to phrases composed after the change, which are heard after the one
+  already queued. A new seed, **compose** or **next** starts a new stream at
+  the next bar.
+
 ### 4.7 `emi.render`
 
 The engine has three ways out. All three share the score format and provenance.
@@ -608,6 +639,15 @@ the transport:
   into a **step index** (one step per 16th note), and `stop` rewinds it to 0.
   *As built in M0*, playback therefore always starts at step 0. M5 reads the
   transport position instead, so playback can start mid-song aligned to the bar.
+  *As built in M5:* on every tick the player asks `[transport]` for bars,
+  beats and units and turns them into a step. When the transport starts (or
+  the engine sends `restart`, after a new piece is queued), the queue's step
+  0 is anchored to the next barline at or after the step. After a restart
+  while the transport runs on, it's the barline strictly after, so the new
+  queue is always written before it plays. A step that isn't the previous
+  step + 1 (Play, or a jump of the playhead) sends note-offs first and always
+  anchors at or after the step, because Live's play message can arrive after
+  the first tick. 4/4 only, for now: 16 steps a bar.
 - **Queue**: a `[coll ---emi.queue]` keyed by step index. Each entry is a flat
   list of `voice pitch velocity` triples, note-offs first, with velocity 0 for
   note-off. (`[coll]` was chosen over `[dict]` because an int in, list out
@@ -803,7 +843,7 @@ ml_midi/
 │   └── lib/               emi-smf.js  emi-ingest.js  emi-key.js  emi-queue.js
 │                          emi-segment.js  emi-tension.js  emi-speac.js
 │                          emi-signatures.js  emi-lexicon.js  emi-compose.js
-│                          emi-form.js  emi-rng.js  emily-assoc.js
+│                          emi-form.js  emi-stream.js  emi-rng.js  emily-assoc.js
 ├── data/starter/        bach-chorales.json: the prebuilt starter database (§6.1)
 ├── tests/               node --test, incl. bundles in a simulated [v8] context;
 │                        fixtures/ for tiny inputs (Cope's book examples)
@@ -1013,7 +1053,8 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M4 done; M5 next.** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M5 code done; waiting on the Max and Live checks
+([checklist](docs/M5-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
@@ -1028,7 +1069,9 @@ voice from the track's name, and the brain plays through them only with
 corpus (the same phrases, cadences on the same bass notes, the same rests and
 ending), and on the full corpus 1 seed in 100 is a dead end (the limit is 5).
 M4 passed in both products ([results](docs/M4-checklist.md)): one panel
-shared between the products, and settings that survive a reload. When a patch or set opens, the last corpus comes back and the
+shared between the products, and settings that survive a reload. M5 plays
+pieces from the next barline wherever Play starts, and streams pieces phrase
+by phrase, endlessly or ending on a final cadence after N phrases. When a patch or set opens, the last corpus comes back and the
 current seed's piece is composed again.
 
 | # | Milestone | Done when |

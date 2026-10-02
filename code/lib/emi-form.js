@@ -34,9 +34,12 @@ const RELAX = [
 
 // A template's slots, one per beat from its first sounding beat to its last:
 //   { rest: true }                                    a silent beat
-//   { beatInBar, cadence, bass, first, afterRest, last }
+//   { beatInBar, cadence, bass, first, afterRest, last, newNotes }
 // bass is the pitch class a cadence slot's chord must stand on (null
-// elsewhere, and everywhere when cadenceBass is false).
+// elsewhere, and everywhere when cadenceBass is false). newNotes is the
+// template's own beat's (0: a held chord); emi-stream splits phrases with it.
+// A slot may also be marked needsExit (emi-stream): its grouping must have
+// somewhere to go next.
 function slotsOf(db, template, { cadenceBass = true } = {}) {
   const slots = [];
   for (let k = 0; k < template.count; k++) {
@@ -53,6 +56,7 @@ function slotsOf(db, template, { cadenceBass = true } = {}) {
       first: k === 0,
       afterRest: k > 0 && g.restBefore,
       last: k === template.count - 1,
+      newNotes: g.newNotes,
     });
   }
   return slots;
@@ -106,6 +110,7 @@ function feasible(db, slots, next) {
     let any = false;
     for (let i = 0; i < n; i++) {
       if (!fits(db.groupings[i], slots[s])) continue;
+      if (slots[s].needsExit && !next[i].length) continue;
       if (later && (restBetween ? !laterAny : !next[i].some((j) => later[j]))) continue;
       row[i] = 1;
       any = true;
@@ -149,12 +154,16 @@ function voicesFit(db, g, shift) {
 }
 
 // Fills one template's slots. Returns the placed groupings, or null.
-function fill(db, slots, { random, level, budget, counters }) {
+//   prev: the grouping placed just before slot 0 ({ index, shift }), which
+//         slot 0 hooks to unless it is the first slot or follows a rest
+//   used: groupings already used (shared across a stream's phrases); the
+//         ones placed here are added to it
+function fill(db, slots, { random, level, budget, counters, prev = null, used = new Set() }) {
   const graphs = successors(db);
   const ok = feasible(db, slots, graphs[level]);
   const ok0 = level > 0 ? feasible(db, slots, graphs[0]) : ok;
   const at = slots.map((slot, s) => s).filter((s) => !slots[s].rest); // the slots to fill
-  if (!ok[at[0]].some((v, i) => v && db.groupings[i].opening)) return null; // can't be filled at all
+  if (!at.length || !ok[at[0]].some((v) => v)) return null; // can't be filled at all
 
   const shuffle = (list) => {
     const out = list.slice();
@@ -166,7 +175,6 @@ function fill(db, slots, { random, level, budget, counters }) {
   };
   const restStarts = db.groupings.map((g, i) => i).filter((i) => db.groupings[i].restBefore);
   const placed = [];
-  const used = new Set();
 
   // Hooks that keep every voice where its source had it come first: exact
   // hooks, then L1 hooks that move no voice (a tie becomes a repeated note or
@@ -174,15 +182,18 @@ function fill(db, slots, { random, level, budget, counters }) {
   // finished with exact hooks come first. Hooks that move voices come last.
   const candidates = (k) => {
     const s = at[k];
+    const slot = slots[s];
     const free = (i) => ok[s][i] && !used.has(i);
-    const prev = k > 0 ? placed[k - 1] : null;
-    if (!prev || at[k - 1] !== s - 1) {
+    let before = null; // the placed grouping this slot hooks to
+    if (k > 0) before = at[k - 1] === s - 1 ? placed[k - 1] : null;
+    else if (!slot.first && !slot.afterRest && s === 0) before = prev;
+    if (!before) {
       // The first slot, or the first after a rest: nothing to hook to.
-      const pool = (k === 0 ? db.openings : restStarts).filter(free);
+      const pool = (slot.first ? db.openings : restStarts).filter(free);
       return [...shuffle(pool.filter((i) => ok0[s][i])), ...shuffle(pool.filter((i) => !ok0[s][i]))].map((index) => ({ index, shift: null, level: 0 }));
     }
-    const from = db.groupings[prev.index];
-    const target = shiftedDestination(from, prev.shift);
+    const from = db.groupings[before.index];
+    const target = shiftedDestination(from, before.shift);
     const exact = (db.lexicon[lexicon.keyOf(target)] || []).filter((i) => free(i) && sourceOk(from, db.groupings[i]));
     const unmoved = []; // L1, no voice moved
     const moved = [];
@@ -264,3 +275,4 @@ exports.fits = fits;
 exports.feasible = feasible;
 exports.successors = successors;
 exports.templateBeats = templateBeats;
+exports.fill = fill;

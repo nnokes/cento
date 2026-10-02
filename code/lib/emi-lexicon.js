@@ -10,6 +10,7 @@
 //
 // db = {
 //   version, beatTicks, meter, matchLevels: ["L0", "L1"],
+//   mode: "major" | "minor" | "mixed"   (the works' modes; all in C major / A minor)
 //   works: [{ id, title, key, transposedBy, groupings }],
 //   groupings: [grouping],            // see emi-segment
 //   lexicon:  { L0 key: [grouping index] },
@@ -51,6 +52,7 @@ function build(works) {
     beatTicks: works[0].ppq,
     meter: works[0].meter,
     matchLevels: ["L0", "L1"],
+    mode: null,
     works: [],
     groupings: [],
     lexicon: {},
@@ -60,8 +62,10 @@ function build(works) {
     openings: [],
     finals: [],
   };
+  const modes = new Set();
   for (const work of works) {
     const inC = ingest.normalize(work);
+    modes.add(inC.key.mode);
     const groupings = segment(inC, db.beatTicks);
     db.works.push({ id: work.id, title: work.title, key: work.key, transposedBy: inC.transposedBy, groupings: groupings.length });
     if (groupings.length) db.templates.push({ work: work.id, start: db.groupings.length, count: groupings.length });
@@ -80,6 +84,7 @@ function build(works) {
       }
     }
   }
+  db.mode = modes.size === 1 ? [...modes][0] : "mixed";
   return db;
 }
 

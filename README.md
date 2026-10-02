@@ -13,7 +13,8 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M4 done.** Both products load Bach chorales,
+**Status: M5 code done; waiting on the Max and Live checks
+([M5 checklist](docs/M5-checklist.md)).** Both products load Bach chorales,
 play them in C major or their own key, and compose new chorales by
 recombining beats from the whole corpus. Since M3, each new piece takes the
 form of a chorale from the corpus: its phrases, its cadences and its ending.
@@ -22,7 +23,10 @@ MIDI files, and (in Live) write them as clips ([M0](docs/M0-spikes.md),
 [M1](docs/M1-checklist.md), [M2](docs/M2-checklist.md),
 [M3](docs/M3-checklist.md), [M4](docs/M4-checklist.md) results). Both share
 one control panel and remember their settings, including the last corpus,
-between sessions. The full plan and milestones are in [PLAN.md](PLAN.md).
+between sessions. Since M5, pieces start on the next barline wherever Play
+starts. Pieces can also stream phrase by phrase while they play, endlessly or
+ending after a set number of phrases. The full plan and milestones are in
+[PLAN.md](PLAN.md).
 
 ## Two products, one engine
 
@@ -52,6 +56,7 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **The repo** (your clone) | wherever you cloned it, e.g. `~/Documents/GitHub/ml_midi` | Run every command below from this folder |
 | **Python for music21** | `<repo>/.venv/` | Made by `python3 -m venv .venv`. About 300 MB, git-ignored, delete it to uninstall |
 | **Chorale corpus** | `~/Documents/ml_midi/corpus/` | Written by `tools/export-chorales.py`; outside the repo |
+| **Minor-key corpus** (optional) | `~/Documents/ml_midi/corpus-minor/` | Written with `--mode minor`; load it with **load corpus** instead |
 | **Exported pieces** | `~/Documents/ml_midi/out/` | Where to save with **export midi**; outside the repo |
 | **Later: databases, Emily's memory** | `~/Documents/ml_midi/db/`, `emily/` | Outside the repo |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
@@ -77,6 +82,9 @@ npm run hooks               # pre-commit check: no personal paths, bundles up to
 python3 -m venv .venv
 .venv/bin/pip install music21
 .venv/bin/python tools/export-chorales.py
+
+# Optional: the 153 minor-key chorales, as a corpus of their own
+.venv/bin/python tools/export-chorales.py --mode minor --out ~/Documents/ml_midi/corpus-minor
 ```
 
 Tip: in Terminal, type `cd ` (with a space), then drag the repo folder from

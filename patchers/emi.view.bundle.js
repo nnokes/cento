@@ -27,7 +27,8 @@ __emi_require.local = 1;
 // source changes (orange where voices were moved by octaves to join), and
 // small triangles along the top mark cadences (fermatas). The engine sends
 // one score as:
-//   clear <lengthTicks> <lowPitch> <highPitch> <barTicks>
+//   clear <endTick> <lowPitch> <highPitch> <barTicks> [startTick]
+//                                        (the ticks shown; a stream shows its last phrases)
 //   note <on> <dur> <pitch> <color>      (one per note)
 //   seam <tick> [level]                  (one per seam; level 1: octave moves)
 //   cadence <tick>                       (one per fermata)
@@ -51,8 +52,8 @@ const PALETTE = [
 let shown = null; // the score being drawn
 let incoming = null; // the score being received
 
-function clear(lengthTicks, low, high, barTicks) {
-  incoming = { lengthTicks, low, high, barTicks, notes: [], seams: [], cadences: [] };
+function clear(endTick, low, high, barTicks, startTick) {
+  incoming = { start: startTick || 0, end: endTick, low, high, barTicks, notes: [], seams: [], cadences: [] };
 }
 
 function note(on, dur, pitch, color) {
@@ -83,7 +84,7 @@ function paint() {
   g.set_source_rgba(0.12, 0.12, 0.13, 1);
   g.rectangle(0, 0, width, height);
   g.fill();
-  if (!shown || shown.lengthTicks <= 0) {
+  if (!shown || shown.end <= shown.start) {
     g.set_source_rgba(0.6, 0.6, 0.6, 1);
     g.select_font_face("Arial");
     g.set_font_size(11);
@@ -94,12 +95,12 @@ function paint() {
 
   const rows = shown.high - shown.low + 3; // one empty row above and below
   const rowHeight = height / rows;
-  const x = (tick) => (tick / shown.lengthTicks) * width;
+  const x = (tick) => ((tick - shown.start) / (shown.end - shown.start)) * width;
   const y = (pitch) => (shown.high + 1 - pitch) * rowHeight;
 
   g.set_line_width(1);
   g.set_source_rgba(1, 1, 1, 0.08);
-  for (let t = 0; t <= shown.lengthTicks; t += shown.barTicks) {
+  for (let t = Math.ceil(shown.start / shown.barTicks) * shown.barTicks; t <= shown.end; t += shown.barTicks) {
     g.move_to(Math.round(x(t)) + 0.5, 0);
     g.line_to(Math.round(x(t)) + 0.5, height);
   }

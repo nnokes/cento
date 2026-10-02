@@ -100,3 +100,14 @@ test("form: reports failure when no template is long enough", () => {
   assert.equal(result.ok, false);
   assert.deepEqual(result.stats.tried, []);
 });
+
+test("form: a corpus records its mode, and minor pieces are labelled A minor", () => {
+  const major = lexicon.build(same);
+  assert.equal(major.mode, "major");
+  assert.deepEqual(form.compose(major, { seed: 1, beats: 8 }).piece.key, { tonic: 0, mode: "major", from: "composed" });
+  // The same music, called A minor: it is already in A minor, so nothing moves.
+  const minor = lexicon.build(same.map((w) => ({ ...w, key: { tonic: 9, mode: "minor", from: "test" } })));
+  assert.equal(minor.mode, "minor");
+  assert.deepEqual(form.compose(minor, { seed: 1, beats: 8 }).piece.key, { tonic: 9, mode: "minor", from: "composed" });
+  assert.equal(lexicon.build([same[0], { ...same[1], key: { tonic: 9, mode: "minor", from: "test" } }]).mode, "mixed");
+});

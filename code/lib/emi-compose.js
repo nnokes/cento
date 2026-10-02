@@ -120,10 +120,12 @@ function compose(db, { seed = 1, beats = 32, maxBeats = beats + 16, budget = 500
 // next beat) back into one note. A tied note with nothing to join is cut at
 // the beat line, or starts there as a new note.
 //   placed: [{ index, beat, shift: [semitones per voice] | null, level: 0 | 1 }]
-function assemble(db, placed, { seed, source, form = null }) {
+// offsetTicks: where beat 0 falls; by default, the first grouping keeps its
+// place in the bar (a pickup on beat 4 starts three beats into bar 1).
+function assemble(db, placed, { seed, source, form = null, offsetTicks = null }) {
   const beat = db.beatTicks;
   const first = db.groupings[placed[0].index];
-  const offset = (first.beatInBar - 1) * beat; // keep the opening's place in the bar
+  const offset = offsetTicks !== null ? offsetTicks : (first.beatInBar - 1) * beat;
   const barTicks = (db.meter[0] * beat * 4) / db.meter[1];
   const events = [];
   let open = {}; // voice -> event still tied over from the previous beat
@@ -167,7 +169,7 @@ function assemble(db, placed, { seed, source, form = null }) {
     ppq: beat,
     meter: db.meter,
     tempoBpm: 100,
-    key: { tonic: 0, mode: "major", from: "composed" },
+    key: db.mode === "minor" ? { tonic: 9, mode: "minor", from: "composed" } : { tonic: 0, mode: "major", from: "composed" },
     transposedBy: 0,
     voices: 4,
     voiceNames: ["Soprano", "Alto", "Tenor", "Bass"],

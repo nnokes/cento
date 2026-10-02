@@ -188,17 +188,17 @@ test("live.* parameters: named, and unique within each product", () => {
     const longnames = params.map((p) => p.longname);
     assert.deepEqual([...new Set(longnames)], longnames, `${product}: duplicate parameter names`);
   }
-  assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Beats", "Form", "Original Key", "Seed"]);
+  assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Beats", "Form", "Original Key", "Phrases", "Seed", "Stream", "Transpose"]);
   assert.deepEqual(liveParameters("emi.host.live.maxpat").map((p) => p.longname).sort(), ["All Voices Here", "Clips On Compose", "Play Through Voices"]);
 });
 
 test("emi.panel: each saved control sends its message, and shows restored values without sending", () => {
   const p = patchFile("emi.panel.maxpat");
   const [outlet] = p.find("outlet");
-  const [settings] = p.find("route seed beats form key");
-  ["Seed", "Beats", "Form", "Original Key"].forEach((name, k) => {
+  const [settings] = p.find("route seed beats form key stream phrases transpose");
+  ["Seed", "Beats", "Form", "Original Key", "Stream", "Phrases", "Transpose"].forEach((name, k) => {
     const control = [...p.boxes.values()].find((b) => b.varname === name);
-    const message = { Seed: "seed", Beats: "beats", Form: "form", "Original Key": "key" }[name];
+    const message = { Seed: "seed", Beats: "beats", Form: "form", "Original Key": "key", Stream: "stream", Phrases: "phrases", Transpose: "transpose" }[name];
     const [[pre]] = p.from(control.id, 0);
     assert.equal(pre.text, `prepend ${message}`, name);
     assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id], `${name} goes to the engine`);
@@ -238,4 +238,56 @@ test("top patches: host panel, shared panel and piano roll, all wired to one eng
   const brain = patchFile("emi.brain.maxpat");
   const right = Math.max(...[...brain.boxes.values()].filter((b) => b.presentation_rect).map((b) => b.presentation_rect[0] + b.presentation_rect[2]));
   assert.equal(device.devicewidth, right);
+});
+
+// ---------------------------------------------------------------- M5: the player and streaming
+
+// The [p grid-player] subpatcher inside emi.engine, with the same helpers.
+function playerPatch() {
+  const engine = readPatcher(path.join(ROOT, "patchers", "emi.engine.maxpat"));
+  const player = engine.boxes.map(({ box }) => box).find((b) => b.text === "p grid-player").patcher;
+  const boxes = new Map(player.boxes.map(({ box }) => [box.id, box]));
+  const find = (text) => [...boxes.values()].filter((b) => (b.text || b.maxclass) === text);
+  const from = (id, outlet) =>
+    player.lines.filter(({ patchline: l }) => l.source[0] === id && (outlet === undefined || l.source[1] === outlet))
+      .map(({ patchline: l }) => [boxes.get(l.destination[0]), l.destination[1]]);
+  return { boxes, find, from };
+}
+
+test("grid player: the step comes from the transport's position, and the queue starts on a barline", () => {
+  const p = playerPatch();
+  const [metro] = p.find("metro 16n @quantize 16n @active 1");
+  assert.deepEqual(p.from(metro.id).map(([b]) => b.text), ["transport"]);
+  const [transport] = p.find("transport");
+  assert.deepEqual(p.from(transport.id).map(([b, inlet]) => [b.text, inlet]).sort(), [["pack 0 0 0.", 0], ["pack 0 0 0.", 1], ["pack 0 0 0.", 2]]);
+  assert.equal(p.find("expr (($i1 + 15) / 16) * 16").length, 1, "the origin rounds up to a barline");
+  // Every way in that changes where the queue starts also sends note-offs.
+  const [flushAll] = p.find("t b").filter((b) => p.from(b.id).filter(([to]) => to.text === "flush").length === 4);
+  assert.ok(flushAll, "one [t b] reaches all four [flush]es");
+  // A jump also resets the lead, so Play from bar 1 starts at bar 1 even after a restart.
+  const [sel] = p.find("sel 1");
+  const targets = p.from(sel.id, 0).map(([b]) => b);
+  assert.ok(targets.some((b) => b.id === flushAll.id), "a jump sends note-offs");
+  const lead = p.find("+ 0")[0];
+  assert.ok(targets.some((b) => b.maxclass === "message" && b.text === "0" && p.from(b.id).some(([to, inlet]) => to.id === lead.id && inlet === 1)), "a jump sets lead 0");
+  for (const comment of ["stop (bang): note-offs for sounding notes", "restart (bang): note-offs; the queue starts again at the bar after this one"]) {
+    const [inlet] = [...p.boxes.values()].filter((b) => b.maxclass === "inlet" && b.comment === comment);
+    const [[trigger]] = p.from(inlet.id);
+    assert.ok(p.from(trigger.id).some(([to]) => to.id === flushAll.id), comment);
+  }
+});
+
+test("emi.engine: the core feeds the queue and the player, and 'need' comes back on the main thread", () => {
+  const p = patchFile("emi.engine.maxpat");
+  const [core] = p.find("v8 emi.core.bundle.js");
+  const [route] = p.find("route coll restart streamat");
+  assert.deepEqual(p.from(core.id).map(([b]) => b.text), ["route coll restart streamat"]);
+  const [player] = p.find("p grid-player");
+  assert.deepEqual(p.from(route.id, 1).map(([b, inlet]) => [b.text, inlet]), [["p grid-player", 2]]);
+  assert.deepEqual(p.from(route.id, 2).map(([b, inlet]) => [b.text, inlet]), [["p grid-player", 3]]);
+  const [[defer]] = p.from(player.id, 1);
+  assert.equal(defer.text, "deferlow");
+  const [[need]] = p.from(defer.id);
+  assert.equal(need.text, "need");
+  assert.deepEqual(p.from(need.id).map(([b]) => b.id), [core.id]);
 });

@@ -19,7 +19,7 @@ const tempDir = () => fs.mkdtempSync(path.join(os.tmpdir(), "emi-"));
 
 // Writes a chorale as tools/export-chorales.py would: <id>.mid + <id>.json.
 // chords: [[soprano, alto, tenor, bass, beats]], starting with a pickup on beat 4.
-function writeChorale(dir, id, chords, { keySignature = { sf: 0, minor: false }, key = { tonic: "C", mode: "major" } } = {}) {
+function writeChorale(dir, id, chords, { keySignature = { sf: 0, minor: false }, key = { tonic: "C", mode: "major" }, fermatas = null } = {}) {
   let t = 3 * Q;
   const tracks = ["Soprano", "Alto", "Tenor", "Bass"].map((name) => ({ name, channel: 1, notes: [] }));
   for (const [s, a, tn, b, beats] of chords) {
@@ -36,7 +36,7 @@ function writeChorale(dir, id, chords, { keySignature = { sf: 0, minor: false },
       parts: ["Soprano", "Alto", "Tenor", "Bass"],
       midi: { ppq: Q, voiceTracks: [1, 2, 3, 4] },
       padQuarters: 3,
-      fermatasQuarters: [t / Q - 2],
+      fermatasQuarters: fermatas || [t / Q - 2],
     }),
   );
   return midiPath;
@@ -102,8 +102,8 @@ test("bundles in patchers/ are up to date with code/", () => {
 test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
-    "autoclips", "beats", "clear", "compose", "corpus", "exportmidi", "form", "key", "loadmidi", "next",
-    "pattern", "remember", "seed", "startup", "testclip", "writeclips",
+    "autoclips", "beats", "clear", "compose", "corpus", "exportmidi", "form", "key", "loadmidi", "need", "next",
+    "pattern", "phrases", "remember", "seed", "startup", "stream", "testclip", "transpose", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), ["cadence", "clear", "done", "note", "onresize", "paint", "seam"]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
@@ -145,12 +145,14 @@ test("hello: the bundle prints the same values as the Node module", () => {
 
 test("core: 'pattern' queues every step, draws it, and reports", () => {
   const out = loadBundle("emi.core").send("pattern");
+  // The player first stops what's sounding and waits for the next bar.
+  assert.deepEqual(out.slice(0, 2), [[0, "restart"], [0, "streamat", 999999]]);
   const coll = select(out, "coll");
   const steps = queue.toSteps(patterns.testChorale());
   assert.deepEqual(coll[0], ["clear"]);
   assert.deepEqual(coll.slice(1), steps.map(({ step, events }) => ["store", step, ...events]));
   const view = select(out, "view");
-  assert.deepEqual(view[0], ["clear", 8 * Q, 48, 74, 4 * Q]);
+  assert.deepEqual(view[0], ["clear", 8 * Q, 48, 74, 4 * Q, 0]);
   assert.equal(view.filter(([kind]) => kind === "note").length, 28);
   assert.deepEqual(view.at(-1), ["done"]);
   assert.deepEqual(lastStatus(out), ["status", "test-cadence", "queued"]);
@@ -175,6 +177,8 @@ test("core: a missing file is an error, not a crash", () => {
 
 test("core: 'clear' empties the queue", () => {
   assert.deepEqual(loadBundle("emi.core").send("clear"), [
+    [0, "restart"],
+    [0, "streamat", 999999],
     [0, "coll", "clear"],
     [0, "status", "queue", "cleared"],
   ]);
@@ -189,7 +193,7 @@ test("core: 'compose' needs a corpus", () => {
 test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece in a chorale's form", () => {
   const core = loadBundle("emi.core");
   const loaded = core.send("corpus", writeCorpus());
-  assert.deepEqual(lastStatus(loaded).slice(0, 6), ["status", "corpus", 3, "chorales,", 33, "beats,"]);
+  assert.deepEqual(lastStatus(loaded).slice(0, 7), ["status", "corpus", 3, "chorales", "(major),", 33, "beats,"]);
 
   core.send("beats", 8);
   const out = core.send("compose", 3);
@@ -248,6 +252,120 @@ test("core: 'exportmidi' writes the current score as a MIDI file", () => {
   assert.ok(midi.tracks.slice(1).every((t) => t.notes.length > 0));
 });
 
+// ---------------------------------------------------------------- core: streams
+
+// Five chorales with two phrases each (cadences on beats 6 and 12), so a
+// stream has room to walk.
+function writeStreamCorpus() {
+  const dir = tempDir();
+  const [I, IV, V] = [[72, 67, 64, 48], [72, 69, 65, 53], [71, 67, 62, 55]];
+  const cycle = [I, IV, V, I, IV, V, I, IV, V].map((c) => [...c, 1]).concat([[...I, 2]]);
+  for (const id of ["a", "b", "c", "d", "e"]) writeChorale(dir, id, cycle, { fermatas: [6, 12] });
+  return dir;
+}
+
+// The queue as the player would end up with it: the last store per step.
+function queueOf(...outputs) {
+  const steps = new Map();
+  for (const out of outputs) {
+    for (const [kind, step, ...events] of select(out, "coll")) {
+      if (kind === "clear") steps.clear();
+      else steps.set(step, events);
+    }
+  }
+  return steps;
+}
+
+// Plays a queue step by step: every note-off must end a sounding note, no
+// note may start twice, and nothing may be left sounding at the end.
+function assertPlaysCleanly(steps) {
+  const sounding = new Set();
+  for (const step of [...steps.keys()].sort((a, b) => a - b)) {
+    const events = steps.get(step);
+    for (let i = 0; i < events.length; i += 3) {
+      const [voice, pitch, velocity] = events.slice(i, i + 3);
+      const note = voice + ":" + pitch;
+      if (velocity === 0) assert.ok(sounding.delete(note), `step ${step}: note-off for ${note}, which isn't sounding`);
+      else {
+        assert.ok(!sounding.has(note), `step ${step}: ${note} struck while still sounding`);
+        sounding.add(note);
+      }
+    }
+  }
+  assert.deepEqual([...sounding], [], "notes left sounding");
+}
+
+const thresholds = (out) => select(out, "streamat").map(([step]) => step);
+
+test("stream: compose queues two phrases; 'need' adds the next, until the last", () => {
+  const core = loadBundle("emi.core");
+  core.send("corpus", writeStreamCorpus());
+  core.send("stream", 1);
+  core.send("phrases", 3);
+  const start = core.send("compose", 4);
+  assert.deepEqual(start.filter(([, kind]) => kind !== "setting")[0], [0, "restart"], "the player starts the stream on the next bar");
+  assert.match(lastStatus(start).join(" "), /^status emi-4 stream: phrase 2 of 3 queued \([a-e] phrase 2\)$/);
+  const [first, second] = thresholds(start);
+  assert.ok(second > first, "'need' comes when the second phrase starts");
+
+  // Phrase 3 should end the stream. If no final phrase fits there, an
+  // ordinary one is queued and the ending is tried again next time.
+  const more = [];
+  do more.push(core.send("need"));
+  while (!lastStatus(more.at(-1)).includes("last)") && more.length < 6);
+  const status = lastStatus(more.at(-1)).join(" ");
+  assert.match(status, /^status emi-4 stream: phrase \d+ of 3 queued \(.*, the last\)$/);
+  assert.ok(Number(status.match(/phrase (\d+) of/)[1]) >= 3);
+  assert.deepEqual(thresholds(more.at(-1)), [999999], "nothing more to ask for");
+  assert.deepEqual(core.send("need"), [[0, "streamat", 999999]]);
+  assertPlaysCleanly(queueOf(start, ...more));
+  assert.ok(more.flatMap((out) => select(out, "coll")).every(([kind]) => kind === "store"), "appending never clears the queue");
+});
+
+test("stream: phrase joins keep note-offs before note-ons, endlessly", () => {
+  const core = loadBundle("emi.core");
+  core.send("corpus", writeStreamCorpus());
+  core.send("stream", 1);
+  core.send("phrases", 0);
+  const outputs = [core.send("compose", 2)];
+  for (let k = 0; k < 4; k++) outputs.push(core.send("need"));
+  assert.match(lastStatus(outputs.at(-1)).join(" "), /^status emi-2 stream: phrase 6 queued/);
+  assertPlaysCleanly(queueOf(...outputs));
+});
+
+test("stream: transpose is heard from the next phrase; whole pieces are requeued at once", () => {
+  const plain = loadBundle("emi.core");
+  const moved = loadBundle("emi.core");
+  for (const core of [plain, moved]) {
+    core.send("corpus", writeStreamCorpus());
+    core.send("stream", 1);
+    core.send("phrases", 0);
+    core.send("compose", 3);
+  }
+  assert.deepEqual(lastStatus(moved.send("transpose", 2)), ["status", "transpose", "+2", "from", "the", "next", "phrase"]);
+  const pitches = (out) => select(out, "coll").flatMap(([, , ...events]) => events.filter((_, i) => i % 3 === 1));
+  const a = pitches(plain.send("need"));
+  const b = pitches(moved.send("need"));
+  assert.deepEqual(b, a.map((p) => p + 2));
+
+  const whole = loadBundle("emi.core");
+  whole.send("corpus", writeCorpus());
+  whole.send("beats", 8);
+  const before = pitches(whole.send("compose", 3));
+  const after = whole.send("transpose", -1);
+  assert.deepEqual(after[0], [0, "restart"]);
+  assert.deepEqual(pitches(after), before.map((p) => p - 1));
+});
+
+test("stream: turning stream off stops asking for phrases", () => {
+  const core = loadBundle("emi.core");
+  core.send("corpus", writeStreamCorpus());
+  core.send("stream", 1);
+  core.send("compose", 1);
+  core.send("stream", 0);
+  assert.deepEqual(core.send("need"), [[0, "streamat", 999999]]);
+});
+
 // ---------------------------------------------------------------- core: settings
 
 // An engine whose patch is saved in `folder`, as [v8] sees it (this.patcher).
@@ -281,12 +399,14 @@ test("settings: the Max version restores every setting, reloads the corpus and c
   first.send("remember", "bpm", 120);
   first.send("remember", "output", 2);
   assert.deepEqual(settingsIn(folder), {
-    corpus: corpusDir, seed: 5, beats: 8, form: 0, key: 1, host: { bpm: [120], output: [2] },
+    corpus: corpusDir, seed: 5, beats: 8, form: 0, key: 1, stream: 0, phrases: 8, transpose: 0, host: { bpm: [120], output: [2] },
   });
 
   const second = engineIn(folder);
   const out = second.send("startup", "all");
-  assert.deepEqual(select(out, "setting"), [["seed", 5], ["beats", 8], ["form", 0], ["key", 1], ["bpm", 120], ["output", 2]]);
+  assert.deepEqual(select(out, "setting"), [
+    ["seed", 5], ["beats", 8], ["form", 0], ["key", 1], ["stream", 0], ["phrases", 8], ["transpose", 0], ["bpm", 120], ["output", 2],
+  ]);
   const status = lastStatus(out);
   assert.deepEqual([status[1], status[3]], ["emi-5:", "beats"], "composed seed 5 freely (form off)");
   assert.ok(select(out, "coll").length > 1, "and queued it");
@@ -383,6 +503,18 @@ test("core: 'writeclips' writes a composed piece; 'testclip' writes the test phr
 });
 
 // ---------------------------------------------------------------- view
+
+test("view: a start tick shows only the end of a long score (a stream's last phrases)", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics;
+  view.send("clear", 8 * Q, 60, 72, 4 * Q, 4 * Q); // ticks 4Q..8Q: the second bar
+  view.send("note", 4 * Q, 2 * Q, 60, 0);
+  view.send("done");
+  g.calls.length = 0;
+  view.send("paint");
+  const [, x, , w] = g.calls.filter(([name]) => name === "rectangle")[1];
+  assert.ok(Math.abs(x) < 1 && Math.abs(w - 179) < 1, "the note fills the left half");
+});
 
 test("view: draws one rectangle per note, plus bar lines and seams", () => {
   const view = loadBundle("emi.view");

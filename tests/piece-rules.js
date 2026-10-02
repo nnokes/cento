@@ -78,4 +78,37 @@ function checkForm(db, piece) {
   checkVoices(piece);
 }
 
-module.exports = { checkPiece, checkForm };
+// The rules a stream (M5) must keep: every phrase's groupings fit its
+// prepared slots and sit at their beats; phrases follow each other with no
+// overlap; voices join exactly wherever two beats touch, inside a phrase or
+// across a phrase boundary (after a gap or a breath, a phrase starts with a
+// grouping that followed a rest); the different-source rule; a final phrase
+// ends on a chorale's last chord.
+function checkStream(db, stream) {
+  const moved = (key, shift) => lexicon.parseKey(key).map((t, v) => t && t.pitch + (shift ? shift[v] : 0));
+  let prev = null; // { placed, beat }
+  let expectedStart = 0;
+  for (const phrase of stream.phrases) {
+    const where = `phrase ${phrase.number} (${phrase.work} #${phrase.index})`;
+    assert.equal(phrase.startBeat, expectedStart + (phrase.fallback ? 1 : 0), `${where}: starts where the last ended`);
+    assert.equal(phrase.endBeat - phrase.startBeat, phrase.slots.length, where);
+    for (const p of phrase.placed) {
+      const g = db.groupings[p.index];
+      const slot = phrase.slots[p.beat - phrase.startBeat];
+      assert.ok(slot && !slot.rest, `${where}: beat ${p.beat} has no slot`);
+      assert.ok(form.fits(g, slot), `${where}: ${g.id} doesn't fit beat ${p.beat}`);
+      if (prev && prev.beat === p.beat - 1) {
+        const before = db.groupings[prev.placed.index];
+        assert.deepEqual(moved(g.entryKey, p.shift), moved(before.destKey, prev.placed.shift), `${where}: voices don't join at beat ${p.beat}`);
+        if (g.work === before.work) assert.equal(g.newNotes, 0, `${where}: same source at beat ${p.beat}`);
+      } else if (prev) {
+        assert.ok(g.restBefore, `${where}: beat ${p.beat} follows silence but isn't a phrase start`);
+      }
+      prev = { placed: p, beat: p.beat };
+    }
+    if (phrase.final) assert.ok(db.groupings[phrase.placed[phrase.placed.length - 1].index].final, `${where}: doesn't end on a last chord`);
+    expectedStart = phrase.endBeat;
+  }
+}
+
+module.exports = { checkPiece, checkForm, checkStream };

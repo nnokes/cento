@@ -125,3 +125,29 @@ test("corpus: pieces keep their chorale's form; under 5% dead ends", { skip }, (
     assert.ok(deadEnds < 0.05 * seeds, `${deadEnds} dead ends in ${seeds} seeds`);
   }
 });
+
+// M5: streams of phrases, endless and with a final phrase. Every phrase keeps
+// the rules; a stream may take a breath (a silent beat) where no phrase can
+// join, but rarely.
+test("corpus: streams of 24 phrases keep the rules, with few breaths", { skip }, (t) => {
+  const streams = require("emi-stream");
+  const { checkStream } = require("./piece-rules");
+  const db = lexicon.build(files.map((file) => load(file).work));
+  let phrases = 0;
+  let breaths = 0;
+  for (const seed of [1, 2, 3]) {
+    const stream = streams.start({ seed });
+    for (let k = 1; k <= 24; k++) {
+      const { ok } = streams.next(db, stream, { last: k === 24 });
+      if (!ok) break;
+      phrases++;
+    }
+    checkStream(db, stream);
+    breaths += stream.fallbacks;
+  }
+  t.diagnostic(`${phrases} of 72 phrases composed, ${breaths} breaths`);
+  if (files.length >= 100) {
+    assert.equal(phrases, 72);
+    assert.ok(breaths <= 0.1 * phrases, `${breaths} breaths in ${phrases} phrases`);
+  }
+});

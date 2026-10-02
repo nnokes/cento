@@ -20,7 +20,7 @@ Run from the repo folder:
   .venv/bin/pip install music21
   .venv/bin/python tools/export-chorales.py                  # all 4/4 major (142)
   .venv/bin/python tools/export-chorales.py --count 20       # just the first 20
-  .venv/bin/python tools/export-chorales.py --meter 3/4 --mode minor
+  .venv/bin/python tools/export-chorales.py --mode minor --out ~/Documents/ml_midi/corpus-minor
 """
 
 import argparse
@@ -116,14 +116,27 @@ def main():
         except Exception as e:  # a few corpus files don't parse; skip them
             print(f"skip {source}: {e}", file=sys.stderr)
             continue
+        # Grace notes have no duration: in MIDI their note-off can come before
+        # their note-on, which leaves a note hanging. They're ornaments; drop them.
+        for note in list(score.recurse().notes):
+            if note.duration.isGrace:
+                note.activeSite.remove(note)
         info = describe(score, source)
         if info is None or info["meter"] != args.meter:
             continue
         if args.mode != "any" and info["key"]["mode"] != args.mode:
             continue
+        if any(part.recurse().getElementsByClass("Chord") for part in score.parts):
+            # The engine needs one note at a time in each voice.
+            print(f"skip {source}: a part has chords", file=sys.stderr)
+            continue
 
         name = Path(source).name
-        write_midi(score, info["padQuarters"], args.out / f"{name}.mid")
+        try:
+            write_midi(score, info["padQuarters"], args.out / f"{name}.mid")
+        except Exception as e:  # e.g. repeat marks music21 can't expand; skip it
+            print(f"skip {source}: {e}", file=sys.stderr)
+            continue
         (args.out / f"{name}.json").write_text(json.dumps(info, indent=2) + "\n")
         written += 1
         key = info["key"]
