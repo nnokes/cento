@@ -12,8 +12,8 @@
 		"rect": [
 			80.0,
 			80.0,
-			700.0,
-			420.0
+			760.0,
+			460.0
 		],
 		"openinpresentation": 1,
 		"default_fontsize": 12.0,
@@ -32,14 +32,15 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.voice: plays one voice from emi.brain on this track",
+					"text": "emi.voice: plays one voice from emi.brain on this track. The track's name picks the voice (Soprano, Alto, Tenor or Bass), the same rule clip writing uses.",
 					"numinlets": 1,
 					"numoutlets": 0,
+					"linecount": 2,
 					"patching_rect": [
 						20.0,
 						5.0,
-						420.0,
-						20.0
+						640.0,
+						34.0
 					],
 					"id": "obj-1"
 				}
@@ -53,7 +54,7 @@
 					"fontface": 1,
 					"patching_rect": [
 						20.0,
-						40.0,
+						50.0,
 						80.0,
 						20.0
 					],
@@ -80,7 +81,7 @@
 					],
 					"patching_rect": [
 						20.0,
-						70.0,
+						80.0,
 						119.0,
 						22.0
 					],
@@ -89,63 +90,36 @@
 			},
 			{
 				"box": {
-					"maxclass": "live.menu",
+					"maxclass": "newobj",
+					"text": "t b b",
 					"numinlets": 1,
-					"numoutlets": 3,
+					"numoutlets": 2,
 					"outlettype": [
-						"",
-						"",
-						"float"
+						"bang",
+						"bang"
 					],
-					"parameter_enable": 1,
-					"varname": "Voice",
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_enum": [
-								"Soprano",
-								"Alto",
-								"Tenor",
-								"Bass"
-							],
-							"parameter_initial": [
-								0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_longname": "Voice",
-							"parameter_mmax": 3,
-							"parameter_shortname": "Voice",
-							"parameter_type": 2
-						}
-					},
 					"patching_rect": [
 						20.0,
-						110.0,
-						100.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						6.0,
-						30.0,
-						100.0,
-						15.0
+						115.0,
+						50.0,
+						22.0
 					],
 					"id": "obj-4"
 				}
 			},
 			{
 				"box": {
-					"maxclass": "newobj",
-					"text": "+ 1",
+					"maxclass": "message",
+					"text": "property name",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
-						"int"
+						""
 					],
 					"patching_rect": [
-						20.0,
-						145.0,
-						40.0,
+						200.0,
+						150.0,
+						107.0,
 						22.0
 					],
 					"id": "obj-5"
@@ -153,20 +127,201 @@
 			},
 			{
 				"box": {
-					"maxclass": "newobj",
-					"text": "sprintf set emi.voice.%ld",
-					"numinlets": 1,
+					"maxclass": "message",
+					"text": "path this_device canonical_parent",
+					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
 						""
 					],
 					"patching_rect": [
 						20.0,
-						180.0,
-						189.0,
+						150.0,
+						247.0,
 						22.0
 					],
 					"id": "obj-6"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "live.path",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						20.0,
+						185.0,
+						77.0,
+						22.0
+					],
+					"id": "obj-7"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "live.observer",
+					"numinlets": 2,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						200.0,
+						220.0,
+						105.0,
+						22.0
+					],
+					"id": "obj-8"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "comment",
+					"text": "this track's name",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						320.0,
+						220.0,
+						120.0,
+						20.0
+					],
+					"id": "obj-9"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend trackname",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						200.0,
+						255.0,
+						120.0,
+						22.0
+					],
+					"id": "obj-10"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "v8 emi.voice.bundle.js",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"textfile": {
+						"filename": "emi.voice.bundle.js",
+						"flags": 0,
+						"embed": 0,
+						"autowatch": 1
+					},
+					"patching_rect": [
+						200.0,
+						290.0,
+						168.0,
+						22.0
+					],
+					"id": "obj-11"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "route show",
+					"numinlets": 2,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						200.0,
+						325.0,
+						75.0,
+						22.0
+					],
+					"id": "obj-12"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend set",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						330.0,
+						360.0,
+						91.0,
+						22.0
+					],
+					"id": "obj-13"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						330.0,
+						395.0,
+						100.0,
+						22.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						6.0,
+						30.0,
+						108.0,
+						20.0
+					],
+					"id": "obj-14"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "comment",
+					"text": "Plays the voice its track is named for: Soprano, Alto, Tenor or Bass.",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"linecount": 4,
+					"patching_rect": [
+						460.0,
+						395.0,
+						110.0,
+						62.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						6.0,
+						56.0,
+						108.0,
+						62.0
+					],
+					"id": "obj-15"
 				}
 			},
 			{
@@ -179,27 +334,28 @@
 						""
 					],
 					"patching_rect": [
-						20.0,
-						215.0,
+						200.0,
+						360.0,
 						55.0,
 						22.0
 					],
-					"id": "obj-7"
+					"id": "obj-16"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "no name typed in: only an unnamed [receive] has an inlet for set",
+					"text": "set emi.voice.N (only an unnamed [receive] has an inlet for set)",
 					"numinlets": 1,
 					"numoutlets": 0,
+					"linecount": 2,
 					"patching_rect": [
-						90.0,
-						215.0,
-						300.0,
-						20.0
+						20.0,
+						395.0,
+						170.0,
+						34.0
 					],
-					"id": "obj-8"
+					"id": "obj-17"
 				}
 			},
 			{
@@ -213,12 +369,12 @@
 						""
 					],
 					"patching_rect": [
-						20.0,
-						250.0,
+						200.0,
+						430.0,
 						75.0,
 						22.0
 					],
-					"id": "obj-9"
+					"id": "obj-18"
 				}
 			},
 			{
@@ -231,12 +387,12 @@
 						"int"
 					],
 					"patching_rect": [
-						200.0,
-						215.0,
+						330.0,
+						430.0,
 						50.0,
 						22.0
 					],
-					"id": "obj-10"
+					"id": "obj-19"
 				}
 			},
 			{
@@ -247,12 +403,12 @@
 					"numoutlets": 0,
 					"outlettype": [],
 					"patching_rect": [
-						100.0,
-						290.0,
+						260.0,
+						470.0,
 						55.0,
 						22.0
 					],
-					"id": "obj-11"
+					"id": "obj-20"
 				}
 			},
 			{
@@ -263,12 +419,12 @@
 					"numoutlets": 0,
 					"linecount": 2,
 					"patching_rect": [
-						200.0,
-						250.0,
+						390.0,
+						465.0,
 						330.0,
 						34.0
 					],
-					"id": "obj-12"
+					"id": "obj-21"
 				}
 			}
 		],
@@ -289,10 +445,22 @@
 				"patchline": {
 					"source": [
 						"obj-4",
-						0
+						1
 					],
 					"destination": [
 						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						0
+					],
+					"destination": [
+						"obj-6",
 						0
 					]
 				}
@@ -304,7 +472,7 @@
 						0
 					],
 					"destination": [
-						"obj-6",
+						"obj-8",
 						0
 					]
 				}
@@ -328,19 +496,19 @@
 						0
 					],
 					"destination": [
-						"obj-9",
-						0
+						"obj-8",
+						1
 					]
 				}
 			},
 			{
 				"patchline": {
 					"source": [
-						"obj-9",
+						"obj-8",
 						0
 					],
 					"destination": [
-						"obj-11",
+						"obj-10",
 						0
 					]
 				}
@@ -353,6 +521,90 @@
 					],
 					"destination": [
 						"obj-11",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-11",
+						0
+					],
+					"destination": [
+						"obj-12",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-12",
+						0
+					],
+					"destination": [
+						"obj-13",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-13",
+						0
+					],
+					"destination": [
+						"obj-14",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-12",
+						1
+					],
+					"destination": [
+						"obj-16",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-16",
+						0
+					],
+					"destination": [
+						"obj-18",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-18",
+						0
+					],
+					"destination": [
+						"obj-20",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-19",
+						0
+					],
+					"destination": [
+						"obj-20",
 						0
 					]
 				}

@@ -1,15 +1,16 @@
 # M2 checklist: the first recombined chorales
 
-## Result: Max version passed; waiting on the Live checks
+## Result: Max version passed; Live passed, with one bug to re-test
 
 | Check | Max version | Live version |
 |---|---|---|
-| **load corpus**: `Folder` lists the corpus in `[v8]`; the folder dialog's path works | ✅ | |
-| **compose** / **new** / seed box: the same seed gives the same piece as in Node | ✅ | |
-| The piano roll draws chorales (by voice) and composed pieces (by source, with seams) | ✅ | |
-| The composed piece plays: no broken voices at seams, ends on a cadence | ✅ | |
-| **export midi**: `File` writes a `.mid` (Max), which plays in Live | ✅ | |
-| **writeclips** writes a composed piece as clips | n/a | |
+| **load corpus**: `Folder` lists the corpus in `[v8]`; the folder dialog's path works | ✅ | ✅ |
+| **compose** / **new** / seed box: the same seed gives the same piece as in Node | ✅ | ✅ |
+| The piano roll draws chorales (by voice) and composed pieces (by source, with seams) | ✅ | ✅ |
+| The composed piece plays: no broken voices at seams, ends on a cadence | ✅ | ✅ |
+| **export midi**: `File` writes a `.mid` (Max), which plays in Live | ✅ | ✅ |
+| **writeclips** writes a composed piece as clips | n/a | ✅ |
+| Each voice plays on its own track (see section 3) | n/a | |
 | 142 chorales, 20 seeds: every piece keeps every rule | ✅ (`tests/corpus.test.js`) | |
 
 M2 composes new chorales by EMI's simplest method, *naive recombination*:
@@ -151,6 +152,46 @@ right.
        new track(s) an instrument and play: it should be the same piece.
 6. [ ] Click **export midi** in the device and save as `emi-1-live` in the
        same folder. The status line should read `exported emi-1-live.mid`.
+
+---
+
+## 3. Fixed after the Live checks: voices on the wrong tracks
+
+**What happened.** With clips playing, the soprano and bass were also heard
+on the tenor and alto tracks; bypassing the voice devices fixed it. Two things
+combined:
+
+- The brain's grid player plays the current piece through the voice devices
+  whenever Live's transport runs, so launching the clips played every note
+  twice: once from the clip, once from the brain.
+- Each voice device chose its voice from its own **Voice** menu. Where a menu
+  didn't match its track, the brain's copy of a voice went to the wrong track.
+
+**The fix.**
+
+- `emi.voice` has no menu any more. The **track's name** picks the voice
+  (Soprano, Alto, Tenor or Bass; S/A/T/B also work), the same rule
+  **writeclips** uses to find the tracks, and the device shows which voice it
+  plays.
+- `emi.brain` has a **Play through voices** toggle, off by default. Only with
+  it on do the brain's notes reach the voice devices while the transport runs.
+  Leave it off when you play clips.
+
+**Re-test:**
+
+1. [ ] Pull, then reopen the set. Each voice device shows its voice under
+       *EMI voice*: `Soprano`, `Alto`, `Tenor`, `Bass`.
+2. [ ] Rename the Tenor track to `Tenor 2`. Its device shows `no voice`.
+       Rename it back: `Tenor` again.
+3. [ ] Click **load corpus**, **compose** (seed 1) and **writeclips**. With
+       **Play through voices** off, launch the new `emi-1` clips. Each part
+       plays only on its own track (solo each track to check), the same as
+       with the voice devices bypassed.
+4. [ ] Stop the clips and Live. Turn **Play through voices** on and press
+       Live's Play from bar 1, with no clips playing. The brain plays the
+       current piece, and each voice is again on its own track.
+5. [ ] While it plays, turn **Play through voices** off. Everything goes
+       silent at once, with no hanging notes.
 
 ---
 

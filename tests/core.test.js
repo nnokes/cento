@@ -105,6 +105,11 @@ test("live: notes per voice in beats, clip length in whole bars", () => {
   assert.equal(live.clipLengthBeats({ ...score, meter: [3, 4], lengthTicks: 4 * 960 }), 6);
 });
 
+test("live: a track's name picks its voice (shared by clip writing and emi.voice)", () => {
+  assert.deepEqual(["Soprano", "alto", " TENOR ", "b"].map(live.voiceOfTrack), [1, 2, 3, 4]);
+  assert.deepEqual(["EMI", "1 MIDI", "", "Bass 2", "Sopranos"].map(live.voiceOfTrack), [0, 0, 0, 0, 0]);
+});
+
 test("live: voice tracks are found by name, only when unambiguous", () => {
   assert.deepEqual(live.findVoiceTracks(["EMI", "Soprano", "Alto", "Tenor", "Bass"]), [1, 2, 3, 4]);
   assert.deepEqual(live.findVoiceTracks(["b", "T", " a ", "S"]), [3, 2, 1, 0]);

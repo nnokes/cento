@@ -86,8 +86,11 @@ in `patchers/`.
   1. In Live, drop a *Max MIDI Effect* on a track and click *Edit*.
   2. In that editor, choose *Options → File Preferences*, click **+**, then
      *Choose* and select the repo's `patchers` folder.
-  3. Restart Live. In Live's browser, add the repo folder under *Places*, then
-     drag `patchers/emi.brain.amxd` and `patchers/emi.voice.amxd` onto tracks.
+  3. Restart Live. In Live's browser, add the repo folder under *Places*.
+     Drag `patchers/emi.brain.amxd` onto one MIDI track, and
+     `patchers/emi.voice.amxd` onto four MIDI tracks named **Soprano**,
+     **Alto**, **Tenor** and **Bass**. Each voice device plays the voice its
+     track is named for, and shows it.
 
   To check the search path, type `emi.engine` into an object box in any
   device editor: a solid box means Live can see the files.

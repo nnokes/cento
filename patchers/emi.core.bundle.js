@@ -1174,16 +1174,25 @@ function clipLengthBeats(score) {
   return Math.max(1, Math.ceil(beats / beatsPerBar)) * beatsPerBar;
 }
 
-// Finds the Soprano, Alto, Tenor and Bass tracks by name (case-insensitive;
-// "S", "A", "T" and "B" also match). Returns their four track indexes, or null
-// unless each voice matches exactly one track.
+// The voice a track plays, from its name: 1-4 for Soprano, Alto, Tenor and
+// Bass (case-insensitive; "S", "A", "T" and "B" also match), or 0 for none.
+// Clip writing and the emi.voice devices both use this rule, so a track's
+// clips and the notes its voice device receives always agree.
+function voiceOfTrack(name) {
+  const normalized = String(name).trim().toLowerCase();
+  return VOICE_TRACK_NAMES.findIndex((names) => names.includes(normalized)) + 1;
+}
+
+// Finds the Soprano, Alto, Tenor and Bass tracks by name (see voiceOfTrack).
+// Returns their four track indexes, or null unless each voice matches exactly
+// one track.
 function findVoiceTracks(trackNames) {
-  const normalized = trackNames.map((name) => String(name).trim().toLowerCase());
+  const voices = trackNames.map(voiceOfTrack);
   const found = [];
-  for (const names of VOICE_TRACK_NAMES) {
+  for (let voice = 1; voice <= VOICE_TRACK_NAMES.length; voice++) {
     const matches = [];
-    normalized.forEach((name, index) => {
-      if (names.includes(name)) matches.push(index);
+    voices.forEach((v, index) => {
+      if (v === voice) matches.push(index);
     });
     if (matches.length !== 1) return null;
     found.push(matches[0]);
@@ -1204,6 +1213,7 @@ function liveText(value) {
 
 exports.toLiveNotes = toLiveNotes;
 exports.clipLengthBeats = clipLengthBeats;
+exports.voiceOfTrack = voiceOfTrack;
 exports.findVoiceTracks = findVoiceTracks;
 exports.liveValue = liveValue;
 exports.liveText = liveText;

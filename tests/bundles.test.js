@@ -105,6 +105,7 @@ test("each bundle exposes exactly its documented messages", () => {
     "beats", "clear", "compose", "corpus", "exportmidi", "key", "loadmidi", "pattern", "testclip", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), ["clear", "done", "note", "onresize", "paint", "seam"]);
+  assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
 });
 
 // Convention: one inlet and one outlet per [v8] wrapper. If a script fails to
@@ -118,6 +119,18 @@ test("[v8] bundles have one inlet and one outlet; the view has no outlet", () =>
   assert.deepEqual(counts("emi.hello"), [1, 1, 1]);
   assert.deepEqual(counts("emi.core"), [1, 1, 1]);
   assert.deepEqual(counts("emi.view"), [1, 0, 1]);
+  assert.deepEqual(counts("emi.voice"), [1, 1, 1]);
+});
+
+// ---------------------------------------------------------------- voice: the track's name picks the voice
+
+test("voice: the track's name sets which emi.voice.N the device receives", () => {
+  const voice = loadBundle("emi.voice");
+  assert.deepEqual(voice.send("trackname", "Tenor"), [[0, "set", "emi.voice.3"], [0, "show", "Tenor"]]);
+  assert.deepEqual(voice.send("trackname", "s"), [[0, "set", "emi.voice.1"], [0, "show", "Soprano"]]);
+  // live.observer may send a name with spaces as several atoms, or quoted.
+  assert.deepEqual(voice.send("trackname", '"Bass"'), [[0, "set", "emi.voice.4"], [0, "show", "Bass"]]);
+  assert.deepEqual(voice.send("trackname", 1, "MIDI"), [[0, "set", "emi.voice.0"], [0, "show", "no", "voice"]]);
 });
 
 test("hello: the bundle prints the same values as the Node module", () => {

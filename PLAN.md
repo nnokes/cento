@@ -615,19 +615,25 @@ the transport:
 ```
 Live set
 ├── MIDI track "EMI"       [emi.brain.amxd]            engine + UI + grid player + clip writer
-├── MIDI track "Soprano"   [emi.voice.amxd  voice 1] → instrument
-├── MIDI track "Alto"      [emi.voice.amxd  voice 2] → instrument
-├── MIDI track "Tenor"     [emi.voice.amxd  voice 3] → instrument
-└── MIDI track "Bass"      [emi.voice.amxd  voice 4] → instrument
+├── MIDI track "Soprano"   [emi.voice.amxd] → instrument   the track's name picks the voice
+├── MIDI track "Alto"      [emi.voice.amxd] → instrument
+├── MIDI track "Tenor"     [emi.voice.amxd] → instrument
+└── MIDI track "Bass"      [emi.voice.amxd] → instrument
 ```
 
 - **`emi.brain`** is a MIDI effect device that contains `emi.engine`. Its panel
   has three sections: database (load and save), compose, and Emily.
   - **Offline**: a **Compose** button writes one clip per voice track.
-  - **Live**: a **Play** toggle starts the grid player, synced to Live's
-    transport.
+  - **Live**: the grid player follows Live's transport, and a **Play through
+    voices** toggle lets its notes through to the voice devices. It is off by
+    default, so playing written clips doesn't also send every note a second
+    time.
 - **`emi.voice`** is tiny. It contains `[receive emi.voice.N]` → `[midiformat]`
-  → `[midiout]`, plus a voice-number menu. In M4L, `[midiout]` is what sends
+  → `[midiout]`, where N comes from the **track's name** (Soprano, Alto, Tenor
+  or Bass; also S/A/T/B, any case). Clip writing finds tracks by the same rule,
+  so a track's clips and its live voice always agree. *Learned in M2:* the
+  first version had a Voice menu on each device instead; set wrong, it sent
+  the soprano and bass to the wrong tracks. In M4L, `[midiout]` is what sends
   MIDI into the track; `[noteout]` doesn't. Each voice gets its own instrument, mixer channel and
   effects.
 - **Simplest setup**: if you only want one track, `emi.brain` sends all four
