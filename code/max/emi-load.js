@@ -1,8 +1,8 @@
 "use strict";
 // Max-only file access: reads a corpus MIDI file and its JSON sidecar with
 // Max's File object and returns a work (see emi-ingest), lists the MIDI files
-// in a folder with Max's Folder object, and writes MIDI files. Used by the
-// [v8] wrappers in both products. Tests replace File and Folder with
+// in a folder with Max's Folder object, and writes MIDI and text files. Used
+// by the [v8] wrappers in both products. Tests replace File and Folder with
 // stand-ins backed by Node's fs.
 
 const smf = require("emi-smf");
@@ -48,10 +48,32 @@ function exists(path) {
   return open;
 }
 
+// Text files are UTF-8 (paths in the settings file may have accents).
+function utf8Bytes(text) {
+  const bytes = [];
+  const escaped = unescape(encodeURIComponent(text));
+  for (let i = 0; i < escaped.length; i++) bytes.push(escaped.charCodeAt(i));
+  return bytes;
+}
+
+function utf8Text(bytes) {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 4096) binary += String.fromCharCode(...bytes.slice(i, i + 4096));
+  return decodeURIComponent(escape(binary));
+}
+
+function readText(path) {
+  return utf8Text(readBytes(path));
+}
+
+function writeText(path, text) {
+  writeBytes(path, utf8Bytes(text), "TEXT");
+}
+
 // The sidecar is plain ASCII JSON (json.dumps escapes everything else).
 function readSidecar(path) {
   if (!exists(path)) return null;
-  return JSON.parse(String.fromCharCode(...readBytes(path)));
+  return JSON.parse(readText(path));
 }
 
 // path -> work, in the key it was written in.
@@ -93,8 +115,8 @@ function loadFolder(folderPath) {
   return { works, skipped };
 }
 
-function writeBytes(path, bytes) {
-  const file = new File(path, "write", "Midi");
+function writeBytes(path, bytes, type = "Midi") {
+  const file = new File(path, "write", type);
   if (!file.isopen) throw new Error("can't write " + fileName(path));
   try {
     const list = Array.from(bytes);
@@ -115,6 +137,9 @@ exports.fileName = fileName;
 exports.listMidi = listMidi;
 exports.loadFolder = loadFolder;
 exports.writeBytes = writeBytes;
+exports.readText = readText;
+exports.writeText = writeText;
+exports.exists = exists;
 exports.sidecarPath = sidecarPath;
 exports.loadWork = loadWork;
 exports.inKey = inKey;

@@ -20,3 +20,7 @@ build/
 *.mid
 *.midi
 !tests/fixtures/**/*.mid
+
+# Settings the patches remember between sessions (last corpus, seed, output
+# port...). Personal, and they hold absolute paths.
+patchers/ml_midi.settings.json

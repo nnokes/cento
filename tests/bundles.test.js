@@ -102,7 +102,8 @@ test("bundles in patchers/ are up to date with code/", () => {
 test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
-    "beats", "clear", "compose", "corpus", "exportmidi", "form", "key", "loadmidi", "pattern", "testclip", "writeclips",
+    "autoclips", "beats", "clear", "compose", "corpus", "exportmidi", "form", "key", "loadmidi", "next",
+    "pattern", "remember", "seed", "startup", "testclip", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), ["cadence", "clear", "done", "note", "onresize", "paint", "seam"]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
@@ -203,9 +204,23 @@ test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece i
   const colors = new Set(view.filter(([kind]) => kind === "note").map((n) => n[4]));
   assert.ok(colors.size >= 2, "notes colored by source");
 
-  // Same seed, same piece; no seed: the next one.
+  // Same seed, same piece; "compose" alone: the current seed; "next": one more.
   assert.deepEqual(core.send("compose", 3), out);
-  assert.deepEqual(lastStatus(core.send("compose")).slice(0, 2), ["status", "emi-4:"]);
+  assert.deepEqual(lastStatus(core.send("compose")).slice(0, 2), ["status", "emi-3:"]);
+  const next = core.send("next");
+  assert.deepEqual(select(next, "setting"), [["seed", 4]], "the seed box shows the new seed");
+  assert.deepEqual(lastStatus(next).slice(0, 2), ["status", "emi-4:"]);
+});
+
+test("core: 'seed' sets the seed, and composes once a corpus is loaded", () => {
+  const core = loadBundle("emi.core");
+  assert.deepEqual(core.send("seed", 7), [], "no corpus yet: just remembered");
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  assert.deepEqual(lastStatus(core.send("compose")).slice(0, 2), ["status", "emi-7:"]);
+  assert.deepEqual(lastStatus(core.send("seed", 9)).slice(0, 2), ["status", "emi-9:"]);
+  assert.deepEqual(core.send("key", 1), [], "0/1 from a toggle work too (quiet: no chorale is current)");
+  assert.equal(lastStatus(core.send("key", "sideways"))[0], "error");
 });
 
 test("core: 'form 0' composes freely, as in M2; 'form 1' goes back to forms", () => {
@@ -231,6 +246,77 @@ test("core: 'exportmidi' writes the current score as a MIDI file", () => {
   const midi = smf.parse(fs.readFileSync(target + ".mid"));
   assert.deepEqual(midi.tracks.slice(1).map((t) => t.name), ["Soprano", "Alto", "Tenor", "Bass"]);
   assert.ok(midi.tracks.slice(1).every((t) => t.notes.length > 0));
+});
+
+// ---------------------------------------------------------------- core: settings
+
+// An engine whose patch is saved in `folder`, as [v8] sees it (this.patcher).
+function engineIn(folder, options) {
+  const core = loadBundle("emi.core", options);
+  core.context.patcher = { filepath: path.join(folder, "emi.engine.maxpat"), parentpatcher: null };
+  return core;
+}
+const settingsIn = (folder) => JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.settings.json"), "utf8"));
+
+test("settings: nothing is saved before startup, or when the patch has no folder", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("seed", 5);
+  core.send("beats", 16);
+  assert.equal(fs.existsSync(path.join(folder, "ml_midi.settings.json")), false);
+  const unsaved = loadBundle("emi.core");
+  assert.equal(lastStatus(unsaved.send("startup", "all"))[0], "error");
+});
+
+test("settings: the Max version restores every setting, reloads the corpus and composes", () => {
+  const folder = tempDir();
+  const corpusDir = writeCorpus();
+  const first = engineIn(folder);
+  first.send("startup", "all"); // no settings yet
+  first.send("corpus", corpusDir);
+  first.send("seed", 5);
+  first.send("beats", 8);
+  first.send("form", 0);
+  first.send("key", "original");
+  first.send("remember", "bpm", 120);
+  first.send("remember", "output", 2);
+  assert.deepEqual(settingsIn(folder), {
+    corpus: corpusDir, seed: 5, beats: 8, form: 0, key: 1, host: { bpm: [120], output: [2] },
+  });
+
+  const second = engineIn(folder);
+  const out = second.send("startup", "all");
+  assert.deepEqual(select(out, "setting"), [["seed", 5], ["beats", 8], ["form", 0], ["key", 1], ["bpm", 120], ["output", 2]]);
+  const status = lastStatus(out);
+  assert.deepEqual([status[1], status[3]], ["emi-5:", "beats"], "composed seed 5 freely (form off)");
+  assert.ok(select(out, "coll").length > 1, "and queued it");
+});
+
+test("settings: the Live version keeps the set's values and only reloads the corpus", () => {
+  const folder = tempDir();
+  const first = engineIn(folder);
+  first.send("startup", "all");
+  first.send("corpus", writeCorpus());
+  first.send("seed", 5);
+  const saved = fs.readFileSync(path.join(folder, "ml_midi.settings.json"), "utf8");
+
+  const live = engineIn(folder, fakeLive({ trackNames: ["EMI", "Soprano", "Alto", "Tenor", "Bass"] }));
+  live.send("seed", 3); // the set's saved values arrive while the device loads...
+  live.send("beats", 8);
+  live.send("autoclips", 1);
+  assert.equal(fs.readFileSync(path.join(folder, "ml_midi.settings.json"), "utf8"), saved, "...and don't overwrite the file");
+  const out = live.send("startup", "corpus");
+  assert.deepEqual(select(out, "setting"), [], "controls keep the set's values");
+  assert.deepEqual(lastStatus(out).slice(0, 3), ["status", "emi-3:", "form"]);
+  assert.ok(!lastStatus(out).join(" ").includes("wrote"), "no clips written at startup");
+});
+
+test("settings: a corpus that has gone missing is reported, not fatal", () => {
+  const folder = tempDir();
+  fs.writeFileSync(path.join(folder, "ml_midi.settings.json"), JSON.stringify({ corpus: path.join(folder, "gone"), seed: 2 }));
+  const out = engineIn(folder).send("startup", "all");
+  assert.deepEqual(select(out, "setting")[0], ["seed", 2]);
+  assert.match(lastStatus(out).join(" "), /^error can't reload the last corpus \(gone\):/);
 });
 
 // ---------------------------------------------------------------- core: Live clips
@@ -268,6 +354,19 @@ test("core: 'writeclips' writes the loaded chorale in C, one clip per voice trac
   // Array.from: arrays made inside the simulated [v8] belong to another realm.
   const bass = live.calls.filter(([, name]) => name === "add_new_notes")[3][2].notes;
   assert.deepEqual(Array.from(bass, (n) => n.pitch), [60, 55, 60]);
+});
+
+test("core: with 'autoclips 1', every compose also writes clips", () => {
+  const live = fakeLive({ trackNames: ["EMI", "Soprano", "Alto", "Tenor", "Bass"] });
+  const core = loadBundle("emi.core", live);
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  core.send("autoclips", 1);
+  assert.match(lastStatus(core.send("compose", 3)).join(" "), /^status emi-3: .*; wrote emi-3 to 4 voice tracks$/);
+  assert.equal(live.calls.filter(([, name]) => name === "create_clip").length, 4);
+  core.send("autoclips", 0);
+  core.send("next");
+  assert.equal(live.calls.filter(([, name]) => name === "create_clip").length, 4, "off again: no more clips");
 });
 
 test("core: 'writeclips' writes a composed piece; 'testclip' writes the test phrase", () => {

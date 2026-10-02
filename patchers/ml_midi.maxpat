@@ -12,8 +12,8 @@
 		"rect": [
 			50.0,
 			50.0,
-			920.0,
-			460.0
+			968.0,
+			520.0
 		],
 		"openinpresentation": 1,
 		"default_fontsize": 12.0,
@@ -52,17 +52,53 @@
 					"patching_rect": [
 						20.0,
 						20.0,
-						520.0,
+						232.0,
 						169.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						520.0,
+						232.0,
 						169.0
 					],
 					"id": "obj-1"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "bpatcher",
+					"name": "emi.panel.maxpat",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"offset": [
+						0.0,
+						0.0
+					],
+					"viewvisibility": 1,
+					"bgmode": 0,
+					"border": 0,
+					"clickthrough": 0,
+					"enablehscroll": 0,
+					"enablevscroll": 0,
+					"lockeddragscroll": 0,
+					"patching_rect": [
+						260.0,
+						20.0,
+						300.0,
+						169.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						240.0,
+						0.0,
+						300.0,
+						169.0
+					],
+					"id": "obj-2"
 				}
 			},
 			{
@@ -84,19 +120,19 @@
 					"enablevscroll": 0,
 					"lockeddragscroll": 0,
 					"patching_rect": [
-						548.0,
+						568.0,
 						20.0,
 						360.0,
 						169.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						528.0,
+						548.0,
 						0.0,
 						360.0,
 						169.0
 					],
-					"id": "obj-2"
+					"id": "obj-3"
 				}
 			},
 			{
@@ -114,7 +150,7 @@
 						90.0,
 						22.0
 					],
-					"id": "obj-3"
+					"id": "obj-4"
 				}
 			},
 			{
@@ -128,18 +164,18 @@
 						""
 					],
 					"patching_rect": [
-						548.0,
+						568.0,
 						229.0,
 						75.0,
 						22.0
 					],
-					"id": "obj-4"
+					"id": "obj-5"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "Max version: the adapter panel above, wired both ways to the shared engine.",
+					"text": "Max version: the Max adapter and the shared panel above, wired both ways to the shared engine.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -149,7 +185,7 @@
 						480.0,
 						34.0
 					],
-					"id": "obj-5"
+					"id": "obj-6"
 				}
 			}
 		],
@@ -161,7 +197,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-4",
 						0
 					]
 				}
@@ -169,23 +205,23 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-3",
-						0
-					],
-					"destination": [
-						"obj-1",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-3",
+						"obj-2",
 						0
 					],
 					"destination": [
 						"obj-4",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						0
+					],
+					"destination": [
+						"obj-1",
 						0
 					]
 				}
@@ -198,6 +234,30 @@
 					],
 					"destination": [
 						"obj-2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-5",
+						0
+					],
+					"destination": [
+						"obj-3",
 						0
 					]
 				}

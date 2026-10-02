@@ -13,15 +13,17 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M3 done.** Both products load Bach chorales,
+**Status: M4 code done; waiting on the Max and Live checks
+([M4 checklist](docs/M4-checklist.md)).** Both products load Bach chorales,
 play them in C major or their own key, and compose new chorales by
 recombining beats from the whole corpus. Since M3, each new piece takes the
 form of a chorale from the corpus: its phrases, its cadences and its ending.
 They show pieces in a piano roll colored by source chorale, export them as
 MIDI files, and (in Live) write them as clips ([M0](docs/M0-spikes.md),
 [M1](docs/M1-checklist.md), [M2](docs/M2-checklist.md),
-[M3](docs/M3-checklist.md) results). The full plan and milestones are in
-[PLAN.md](PLAN.md).
+[M3](docs/M3-checklist.md) results). Both share one control panel and
+remember their settings, including the last corpus, between sessions. The
+full plan and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
 
@@ -54,6 +56,7 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **Exported pieces** | `~/Documents/ml_midi/out/` | Where to save with **export midi**; outside the repo |
 | **Later: databases, Emily's memory** | `~/Documents/ml_midi/db/`, `emily/` | Outside the repo |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
+| **Remembered settings** | `<repo>/patchers/ml_midi.settings.json` | Last corpus, seed and other settings; written by the patches, git-ignored. Delete it to start fresh |
 
 `~` is your home folder, `/Users/<your name>`. `<repo>` is the folder you
 cloned into.
@@ -115,8 +118,8 @@ into `~/Documents/Max 9/Packages/` (a real folder, not a link).
 patchers/     everything Max loads, in one folder:
               ml_midi.maxpat (Max version), emi.brain.amxd + emi.voice.amxd
               (Live version), emi.engine, emi.host.max, emi.host.live,
-              emi.view (piano roll), and the generated *.bundle.js scripts
-              (npm run build; committed)
+              emi.panel (the shared controls), emi.view (piano roll), and the
+              generated *.bundle.js scripts (npm run build; committed)
 code/         [v8] wrappers: glue between Max messages and the engine
               (emi.core.v8.js), and the piano roll (emi.view.v8ui.js)
 code/lib/     the engine: plain JavaScript, no Max APIs, tested in Node

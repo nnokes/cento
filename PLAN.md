@@ -102,7 +102,7 @@ between the two hosts is confined to one thin **host adapter** per product:
 | **Transport, tempo, meter** | Max's global `[transport]` with its own play/stop, tempo and meter controls | Live's transport; meter read with `[live.observer]` |
 | **Offline result** | `.mid` file, auditioned with `[seq]`; drag it into any DAW | Clips written into the voice tracks (Live API), plus the `.mid` file |
 | **Corpus import** | `[dropfile]` / folder | `[live.drop]` / folder / **Import from Live** (one scene = one work) |
-| **Saving settings** | `[pattrstorage]` presets (JSON) | `live.*` parameters saved with the set; `.adv` presets |
+| **Saving settings** | `[pattrstorage]` presets (JSON). *As built in M4:* one remembered state in `patchers/ml_midi.settings.json`, restored when the patch opens | `live.*` parameters saved with the set; `.adv` presets. *As built in M4:* plus the last corpus, from the same settings file |
 | **Instruments** | Hosted in Max (`[vst~]`) or external | Live's tracks |
 
 Both versions share **`~/Documents/ml_midi/`** for databases, output and
@@ -147,6 +147,18 @@ Emily's memory. Taste Emily learns in one product carries over to the other.
    designed at **device height (169 px)**. The Live device shows the panels
    side by side in its strip; the Max version shows the same panels in a larger
    window, plus the full-size debug view.
+   *As built in M4:* `emi.panel` (300 px) holds the composing controls and the
+   status line in both products. Seed, beats, form and original key are
+   `live.numbox` / `live.text` parameters. Each host adapter keeps only its
+   own controls: 232 px in Max (transport, output, `[vst~]`), 170 px in Live
+   (clips, voice routing). Both show the piano roll on the right; the device
+   is 846 px wide.
+   The engine keeps the settings file. It writes nothing until `startup` has
+   read the file, so values that controls send while a patch loads can't
+   overwrite it. `startup all` (Max) restores every setting; `startup corpus`
+   (Live) only reloads the last corpus, because Live restores the controls.
+   Both then compose the current seed, so the piece comes back with the same
+   notes.
 4. **Parity check at each milestone.** From M4 onward, a milestone is done only
    when its feature works in **both** products, or when the gap is written into
    the feature table above as intentional.
@@ -779,14 +791,15 @@ ml_midi/
 ├── README.md  PLAN.md  LICENSE  .gitignore  package.json
 ├── patchers/            EVERYTHING MAX LOADS: ml_midi.maxpat (Max version),
 │                        emi.brain.amxd + emi.voice.amxd (Live version),
-│                        emi.host.max/live, emi.engine, emi.ingest, …
+│                        emi.host.max/live, emi.panel, emi.engine, …
 │                        emily.feedback, panels, and the generated
 │                        *.bundle.js scripts (committed, so a clone just works)
 ├── code/
 │   ├── emi.core.v8.js     the engine's [v8] script (glue only)
 │   │   emi.view.v8ui.js   the piano roll; more wrappers as stages split (§2)
 │   ├── max/               Max-only helpers: emi-load.js (files, with File and
-│   │                      Folder), emi-clips.js (Live clips, with LiveAPI)
+│   │                      Folder), emi-clips.js (Live clips, with LiveAPI),
+│   │                      emi-settings.js (the settings file)
 │   └── lib/               emi-smf.js  emi-ingest.js  emi-key.js  emi-queue.js
 │                          emi-segment.js  emi-tension.js  emi-speac.js
 │                          emi-signatures.js  emi-lexicon.js  emi-compose.js
@@ -1000,7 +1013,8 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M3 done; M4 next.** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M4 code done; waiting on the Max and Live checks
+([checklist](docs/M4-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
@@ -1014,6 +1028,9 @@ voice from the track's name, and the brain plays through them only with
 ([results](docs/M3-checklist.md)): pieces take the form of a chorale from the
 corpus (the same phrases, cadences on the same bass notes, the same rests and
 ending), and on the full corpus 1 seed in 100 is a dead end (the limit is 5).
+M4 shares one panel between the products and makes settings survive a
+reload. When a patch or set opens, the last corpus comes back and the
+current seed's piece is composed again.
 
 | # | Milestone | Done when |
 |---|-----------|-----------|

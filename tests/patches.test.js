@@ -140,7 +140,7 @@ test("emi.voice: the track's name, not a stored menu, picks the voice", () => {
 
 test("emi.host.live: voices reach the voice devices only through the Play gate", () => {
   const p = patchFile("emi.host.live.maxpat");
-  const [route] = p.find("route voice status error");
+  const [route] = p.find("route voice");
   const voiceOut = p.from(route.id, 0);
   assert.equal(voiceOut.length, 1);
   const [[gate, inlet]] = voiceOut;
@@ -148,7 +148,7 @@ test("emi.host.live: voices reach the voice devices only through the Play gate",
   // The gate's control comes from the Play toggle (via [t i i]).
   const [[trigger]] = p.into(gate.id, 0);
   assert.equal(trigger.text, "t i i");
-  assert.deepEqual(p.into(trigger.id).map(([b]) => b.maxclass), ["toggle"]);
+  assert.deepEqual(p.into(trigger.id).map(([b]) => [b.maxclass, b.varname]), [["live.text", "Play Through Voices"]]);
   // Turning Play off stops the player (note-offs) before the gate closes:
   // [t i i] fires right to left, and its right outlet goes to [sel 0] -> stop.
   const [[sel]] = p.from(trigger.id, 1);
@@ -168,4 +168,74 @@ test("emi.host.live: voices reach the voice devices only through the Play gate",
   for (const text of ["send emi.voice.1", "send emi.voice.2", "send emi.voice.3", "send emi.voice.4", "midiformat"]) {
     assert.ok(p.find(text).every((b) => reached.has(b.id)), text);
   }
+});
+
+// ---------------------------------------------------------------- M4: shared panel and settings
+
+const liveParameters = (name) =>
+  [...patchFile(name).boxes.values()]
+    .filter((b) => b.maxclass.startsWith("live.") && b.parameter_enable)
+    .map((b) => ({ varname: b.varname, longname: b.saved_attribute_attributes.valueof.parameter_longname }));
+
+test("live.* parameters: named, and unique within each product", () => {
+  const products = {
+    "Max version": ["ml_midi.maxpat", "emi.host.max.maxpat", "emi.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat"],
+    "emi.brain": ["emi.brain.maxpat", "emi.host.live.maxpat", "emi.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat"],
+  };
+  for (const [product, names] of Object.entries(products)) {
+    const params = names.flatMap(liveParameters);
+    for (const { varname, longname } of params) assert.equal(varname, longname, `${product}: ${varname}`);
+    const longnames = params.map((p) => p.longname);
+    assert.deepEqual([...new Set(longnames)], longnames, `${product}: duplicate parameter names`);
+  }
+  assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Beats", "Form", "Original Key", "Seed"]);
+  assert.deepEqual(liveParameters("emi.host.live.maxpat").map((p) => p.longname).sort(), ["All Voices Here", "Clips On Compose", "Play Through Voices"]);
+});
+
+test("emi.panel: each saved control sends its message, and shows restored values without sending", () => {
+  const p = patchFile("emi.panel.maxpat");
+  const [outlet] = p.find("outlet");
+  const [settings] = p.find("route seed beats form key");
+  ["Seed", "Beats", "Form", "Original Key"].forEach((name, k) => {
+    const control = [...p.boxes.values()].find((b) => b.varname === name);
+    const message = { Seed: "seed", Beats: "beats", Form: "form", "Original Key": "key" }[name];
+    const [[pre]] = p.from(control.id, 0);
+    assert.equal(pre.text, `prepend ${message}`, name);
+    assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id], `${name} goes to the engine`);
+    const [[set]] = p.from(settings.id, k);
+    assert.equal(set.text, "prepend set", name);
+    assert.deepEqual(p.from(set.id).map(([b]) => b.id), [control.id], `setting ${message} reaches ${name}`);
+  });
+});
+
+test("startup: Max restores everything after loading; Live only reloads the corpus once the device is ready", () => {
+  const chain = (file, first, message) => {
+    const p = patchFile(file);
+    const starts = p.find(first).filter((b) => p.from(b.id, 0).some(([to]) => to.text === "deferlow"));
+    assert.equal(starts.length, 1, `${file}: one [${first}] starts the engine`);
+    const [[defer]] = p.from(starts[0].id, 0).filter(([b]) => b.text === "deferlow");
+    const [[msg]] = p.from(defer.id);
+    assert.equal(msg.text, message, file);
+    assert.deepEqual(p.from(msg.id).map(([b]) => b.maxclass), ["outlet"], file);
+  };
+  chain("emi.host.max.maxpat", "loadbang", "startup all");
+  chain("emi.host.live.maxpat", "live.thisdevice", "startup corpus");
+});
+
+test("top patches: host panel, shared panel and piano roll, all wired to one engine", () => {
+  for (const [file, host] of [["ml_midi.maxpat", "emi.host.max.maxpat"], ["emi.brain.maxpat", "emi.host.live.maxpat"]]) {
+    const p = patchFile(file);
+    const [engine] = p.find("emi.engine");
+    const bpatchers = [...p.boxes.values()].filter((b) => b.maxclass === "bpatcher").map((b) => b.name);
+    assert.deepEqual(bpatchers, [host, "emi.panel.maxpat", "emi.view.maxpat"], file);
+    const into = p.into(engine.id).map(([b]) => b.name).sort();
+    assert.deepEqual(into, [host, "emi.panel.maxpat"].sort(), `${file}: both panels talk to the engine`);
+    const from = p.from(engine.id).map(([b]) => b.name || b.text).sort();
+    assert.deepEqual(from, [host, "emi.panel.maxpat", "route view"].sort(), `${file}: the engine answers both`);
+  }
+  // The device is exactly as wide as its three panels.
+  const device = readPatcher(path.join(ROOT, "patchers", "emi.brain.amxd"));
+  const brain = patchFile("emi.brain.maxpat");
+  const right = Math.max(...[...brain.boxes.values()].filter((b) => b.presentation_rect).map((b) => b.presentation_rect[0] + b.presentation_rect[2]));
+  assert.equal(device.devicewidth, right);
 });
