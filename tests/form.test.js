@@ -60,6 +60,7 @@ test("form: a strict piece follows its template exactly, the same for the same s
   const result = form.compose(db, { seed: 3, beats: 8 });
   assert.equal(result.ok, true);
   assert.equal(result.piece.form.relaxed, 0);
+  assert.equal(result.piece.form.speac, 1, "a strict piece keeps every SPEAC label of its template");
   assert.deepEqual(result.stats.tried, [result.piece.form.template]);
   checkForm(db, result.piece);
   assert.ok(composer.summary(result.piece).sources >= 2);
@@ -85,7 +86,7 @@ test("form: when exact hooks run out, voices move by octaves and still join exac
   assert.equal(form.compose(db, { seed: 1, beats: 8, relax: 0 }).ok, false); // strict: impossible
   const { ok, piece, stats } = form.compose(db, { seed: 1, beats: 8 });
   assert.equal(ok, true);
-  assert.equal(stats.relaxed, 1);
+  assert.equal(form.RELAX[stats.relaxed].level, 1, "solved by octave moves (L1)");
   checkForm(db, piece);
   assert.ok(piece.provenance.some((p) => p.shift), "some voices moved");
   assert.ok(composer.summary(piece).relaxed > 0);
@@ -110,4 +111,15 @@ test("form: a corpus records its mode, and minor pieces are labelled A minor", (
   assert.equal(minor.mode, "minor");
   assert.deepEqual(form.compose(minor, { seed: 1, beats: 8 }).piece.key, { tonic: 9, mode: "minor", from: "composed" });
   assert.equal(lexicon.build([same[0], { ...same[1], key: { tonic: 9, mode: "minor", from: "test" } }]).mode, "mixed");
+});
+
+test("lexicon: every grouping carries its tension and its beat, bar and phrase labels (M6)", () => {
+  const db = lexicon.build(resting);
+  for (const g of db.groupings) {
+    assert.ok(g.tension > 0, g.id);
+    for (const level of ["beat", "bar", "phrase"]) assert.match(g.speac[level], /^[SPEAC]$/, `${g.id} ${level}`);
+  }
+  // Two phrases per work (cadences on beats 6 and 12): phrase labels change between them at most once.
+  const labels = db.groupings.filter((g) => g.work === "d").map((g) => g.speac.phrase);
+  assert.ok(new Set(labels).size <= 2);
 });

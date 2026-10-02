@@ -719,6 +719,383 @@ function segment(work, beatTicks = work.ppq) {
 exports.segment = segment;
   };
 
+  // ---- emi-tension.js
+  factories["emi-tension"] = function (exports, module, require) {
+"use strict";
+// M6: Cope's tension measure, the input to SPEAC (David Cope, Computer Models
+// of Musical Creativity, MIT Press 2006, ch. 7). Re-implemented from the
+// book's description; tests/speac.test.js checks it against the book's
+// published values.
+//
+// The tension of a beat is the sum of four parts:
+//   vertical  the chord's dissonance: every pitch class's interval above the
+//             bass (only its lowest octave counts), weighted (WEIGHTS) and
+//             summed. A beat with several chords (passing notes) takes the
+//             lowest sum.
+//   metric    the beat's place in the bar: (beat number x 0.1) / METRIC weight
+//   duration  0.1 x (the beat's length in whole notes) + 0.1 x vertical
+//   approach  how far the chord's root moved from the previous beat's root,
+//             weighted like an interval (0 for the first beat)
+//
+// Cope's code works in 32-bit floats and rounds in particular places;
+// copeWeights() follows it, so the book's numbers come out exactly.
+// Events in Cope's form: [ontime ms, pitch, duration ms, channel, velocity],
+// 1000 ms a quarter note.
+
+// Interval weights, by semitones mod 12 (unison/octave 0 ... major 7th .9).
+const WEIGHTS = [0, 1, 0.8, 0.225, 0.2, 0.55, 0.65, 0.1, 0.275, 0.25, 0.7, 0.9];
+const weight = (semitones) => WEIGHTS[((semitones % 12) + 12) % 12];
+
+// Metric weights per beat, by beats per bar.
+const METRIC = { 2: [2, 2], 3: [2, 2, 2], 4: [2, 2, 6, 2], 6: [2, 2, 2, 8, 4, 3], 9: [2, 2, 2, 8, 4, 3, 14, 8, 4] };
+
+// Root strength of each interval (mod 12), strongest first, and which of its
+// two notes is the root: the lower one ("low") or the upper one ("up").
+const ROOTS = [
+  [7, "low"], [5, "up"], [4, "low"], [8, "up"], [3, "low"], [9, "up"],
+  [2, "up"], [10, "low"], [1, "up"], [11, "low"], [0, "low"], [6, "up"],
+];
+
+const f32 = Math.fround;
+const mod12 = (n) => ((n % 12) + 12) % 12;
+
+// Round half to even, as Lisp and Python do.
+function roundEven(x) {
+  const r = Math.round(x);
+  return Math.abs(x % 1) === 0.5 && r % 2 !== 0 ? r - 1 : r;
+}
+
+const round2 = (x) => roundEven(x * 100) / 100;
+
+// The dissonance of one chord (a list of pitches).
+function vertical(pitches) {
+  const kept = [];
+  for (const p of [...pitches].sort((a, b) => a - b)) {
+    if (!kept.some((k) => mod12(k - p) === 0)) kept.push(p);
+  }
+  let sum = 0;
+  for (const p of kept.slice(1)) sum += weight(p - kept[0]);
+  return round2(sum);
+}
+
+// A beat made of several chords counts its least dissonant one.
+const beatVertical = (chords) => Math.min(...chords.map(vertical));
+
+function metric(beatInBar, beatsPerBar) {
+  const k = (METRIC[beatsPerBar] || METRIC[4])[beatInBar - 1];
+  return Number(((beatInBar * 0.1) / k).toPrecision(3));
+}
+
+// Metric tensions for `count` beats from beat `start` of the bar.
+function metricMap(start, count, beatsPerBar) {
+  const out = [];
+  for (let i = 0, beat = start; i < count; i++, beat = beat === beatsPerBar ? 1 : beat + 1) {
+    out.push(metric(beat, beatsPerBar));
+  }
+  return out;
+}
+
+// 0.1 x (length / a whole note) + 0.1 x vertical, rounded to hundredths.
+function duration(lengthMs, verticalTension) {
+  return f32(f32(0.01) * Math.round(lengthMs / 400 + verticalTension * 10 + 1e-9));
+}
+
+// Cope's root finder. `pitches`: the beat's distinct pitches, low to high.
+// It finds the strongest root interval among all the intervals in the chord,
+// then the first two notes forming it, scanning the chord's pairs in Cope's
+// order (including the joins between pairs, as his code does).
+function rootOf(pitches) {
+  if (pitches.length === 1) return pitches[0];
+  const intervals = new Set([0]);
+  for (let i = 0; i < pitches.length - 1; i++) {
+    for (let j = i; j < pitches.length; j++) intervals.add(mod12(pitches[j] - pitches[i]));
+  }
+  const [interval, which] = ROOTS.find(([iv]) => intervals.has(iv));
+  const pairs = [];
+  for (let i = 0; i < pitches.length - 1; i++) for (let j = i; j < pitches.length; j++) pairs.push(pitches[i], pitches[j]);
+  for (let k = 0; k < pairs.length - 1; k++) {
+    if (mod12(pairs[k + 1] - pairs[k]) === interval) {
+      const [low, high] = [pairs[k], pairs[k + 1]].sort((a, b) => a - b);
+      return which === "low" ? low : high;
+    }
+  }
+  return pitches[0];
+}
+
+// Root motion weights: 0 for the first beat, then the interval between roots.
+function approach(roots) {
+  return roots.map((root, i) => (i === 0 ? 0 : weight(Math.abs(root - roots[i - 1]))));
+}
+
+// ---- Cope's own beats (for checking against the book)
+
+// Splits events at every entrance and exit, and groups the resulting chords
+// into beats: a chord whose notes are held into the next one belongs with it.
+// Returns beats, each a list of chords, each a list of events (held ones
+// marked "*").
+function copeBeats(events) {
+  const lex = (a, b) => {
+    for (let i = 0; i < 5; i++) if (a[i] !== b[i]) return a[i] - b[i];
+    return 0;
+  };
+  // Cope's triplet fix: a note ending 1 ms before or after the next note in
+  // its channel is made to end exactly there.
+  let pending = [];
+  for (let channel = 1; channel <= 16; channel++) {
+    const notes = events.filter((e) => e[3] === channel).map((e) => e.slice(0, 5));
+    notes.forEach((e, i) => {
+      const next = notes[i + 1];
+      if (next && Math.abs(e[0] + e[2] - next[0]) === 1) e[2] -= e[0] + e[2] - next[0];
+    });
+    pending.push(...notes);
+  }
+  pending.sort(lex);
+
+  const chords = [];
+  while (pending.length) {
+    const start = pending[0][0];
+    const together = pending.filter((e) => e[0] === start);
+    const byChannel = together.map((e, i) => [e, i]).sort((a, b) => a[0][3] - b[0][3] || a[1] - b[1]).map(([e]) => e);
+    const next = pending.find((e) => e[0] !== start);
+    let until;
+    if (!chords.length) until = next ? next[0] : start + pending[0][2];
+    else {
+      const end = start + Math.min(...together.map((e) => e[2]));
+      until = !next ? end : Math.min(end, next[0]);
+    }
+    chords.push(byChannel.map((e) => (e[0] + e[2] > until ? [e[0], e[1], until - e[0], e[3], e[4], "*"] : e.slice())));
+    const rest = byChannel.map((e) => [until, e[1], e[2] - (until - e[0]), e[3], e[4]]).filter((e) => e[2] !== 0);
+    pending = pending.filter((e) => !together.includes(e)).concat(rest).sort(lex);
+  }
+
+  const beats = [];
+  chords.forEach((chord, i) => {
+    const held = i > 0 && chords[i - 1].some((e) => e.length === 6);
+    if (held) beats[beats.length - 1].push(chord);
+    else beats.push([chord]);
+  });
+  return beats;
+}
+
+// Cope's run-the-speac-weightings: one tension per beat of `events`.
+// startBeat: where the first beat falls in the bar; totalBeats: how many
+// metric beats to count (Cope lists the shorter of his beats and these).
+function copeWeights(events, startBeat, totalBeats, beatsPerBar) {
+  const beats = copeBeats(events);
+  const verticals = beats.map((beat) => beatVertical(beat.map((chord) => chord.map((e) => e[1]))));
+  const metrics = metricMap(startBeat, totalBeats, beatsPerBar);
+  const onsets = beats.map((beat) => beat[0][0][0]);
+  const lengths = onsets.length < 2 ? [0] : onsets.slice(1).map((t, i) => t - onsets[i]);
+  if (onsets.length >= 2) lengths.push(lengths[lengths.length - 1]);
+  const durations = lengths.map((length, i) => duration(length, verticals[i]));
+  const roots = beats.map((beat) => rootOf([...new Set(beat.flatMap((chord) => chord.map((e) => e[1])))].sort((a, b) => a - b)));
+  const approaches = approach(roots);
+  const n = Math.min(verticals.length, metrics.length, durations.length, approaches.length);
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(f32(f32(f32(f32(verticals[i]) + f32(metrics[i])) + f32(durations[i])) + f32(approaches[i])));
+  return out;
+}
+
+// ---- The engine's beats (emi-segment groupings)
+
+// Tension of each grouping of one work, in order. A grouping's chords are the
+// notes sounding at each moment a note starts within the beat.
+function tensionsOf(groupings, beatsPerBar, beatMs = 1000) {
+  let previousRoot = null;
+  return groupings.map((g) => {
+    const onsets = [...new Set(g.pieces.map((p) => p[0]))].sort((a, b) => a - b);
+    const chords = onsets.map((t) => g.pieces.filter((p) => p[0] <= t && t < p[0] + p[2]).map((p) => p[1]));
+    const v = beatVertical(chords);
+    const root = rootOf([...new Set(g.pieces.map((p) => p[1]))].sort((a, b) => a - b));
+    const a = previousRoot === null ? 0 : weight(Math.abs(root - previousRoot));
+    previousRoot = root;
+    const total = f32(f32(f32(f32(v) + f32(metric(g.beatInBar, beatsPerBar))) + duration(beatMs, v)) + f32(a));
+    return { tension: round2(total), vertical: v, root };
+  });
+}
+
+exports.WEIGHTS = WEIGHTS;
+exports.roundEven = roundEven;
+exports.round2 = round2;
+exports.vertical = vertical;
+exports.metric = metric;
+exports.metricMap = metricMap;
+exports.duration = duration;
+exports.rootOf = rootOf;
+exports.approach = approach;
+exports.copeBeats = copeBeats;
+exports.copeWeights = copeWeights;
+exports.tensionsOf = tensionsOf;
+  };
+
+  // ---- emi-speac.js
+  factories["emi-speac"] = function (exports, module, require) {
+"use strict";
+// M6: SPEAC labels (David Cope, Computer Models of Musical Creativity, ch. 7).
+// Every beat is labelled by its tension (emi-tension) compared with its
+// neighbours and its phrase:
+//   S statement    P preparation    E extension    A antecedent    C consequent
+//
+// Cope's rules, checked in this order for each tension w ("≈": within 0.2):
+//   w ≈ the previous one                -> E
+//   w ≈ the next one                    -> P (E if the previous label was P)
+//   w ≈ the average                     -> S (E if the previous label was S)
+//   w ≈ the largest                     -> A (E if the previous label was A)
+//   after an A, w ≈ the smallest        -> C
+//   otherwise                           -> S (E if the previous label was S)
+//
+// The labels apply at three levels for a chorale:
+//   beat    each beat among the beats of its phrase (Cope's foreground)
+//   bar     each bar (its beats' average) among the bars of its phrase
+//   phrase  each phrase (its beats' average) among the phrases of the work
+// Phrases end at cadences (fermatas), with the held or silent beats after
+// them, as in emi-stream.
+
+const tension = require("emi-tension");
+
+const f32 = Math.fround;
+
+function almost(a, b, allowance = 0.2) {
+  if (a === null || a === undefined || b === null || b === undefined) return false;
+  return Math.abs(f32(f32(a) - f32(b))) < allowance;
+}
+
+// Cope's develop-speac: one label per weight.
+function develop(weights, average, largest = Math.max(...weights), smallest = Math.min(...weights)) {
+  const labels = [];
+  let previous = null;
+  weights.forEach((w, i) => {
+    const before = i > 0 ? weights[i - 1] : null;
+    const after = i + 1 < weights.length ? weights[i + 1] : null;
+    let label;
+    if (almost(w, before)) {
+      label = "E";
+      previous = "E";
+    } else if (almost(w, after)) {
+      label = previous === "P" ? "E" : "P";
+      previous = label;
+    } else if (almost(w, average)) {
+      label = previous === "S" ? "E" : "S";
+      previous = "S";
+    } else if (almost(w, largest)) {
+      label = previous === "A" ? "E" : "A";
+      previous = label;
+    } else if (previous === "A" && almost(w, smallest)) {
+      label = "C";
+      previous = "C";
+    } else {
+      label = previous === "S" ? "E" : "S";
+      previous = "S";
+    }
+    labels.push(label);
+  });
+  return labels;
+}
+
+// Cope's average of a list of tensions, cut to hundredths (his published
+// averages are truncated, not rounded: 1.2253 is 1.22).
+function average(weights) {
+  let sum = 0;
+  for (const w of weights) sum += w;
+  return Math.floor((sum / weights.length) * 100 + 1e-9) / 100;
+}
+
+// Cope's do-speac-on-phrases for one phrase of his events: its labels and
+// its average tension.
+function copePhrase(events, beatsPerBar) {
+  const startBeat = (tension.roundEven(events[0][0] / 1000) % beatsPerBar) + 1;
+  const last = events[events.length - 1];
+  const beats = tension.roundEven((last[0] + last[2] - events[0][0]) / 1000);
+  const weights = tension.copeWeights(events, startBeat, beats, beatsPerBar);
+  const avg = average(weights);
+  return { labels: develop(weights, avg), average: avg, weights };
+}
+
+// Cope's four levels for a piece of his events, given its form: a list of
+// [letter, start ms] phrases (from his form analysis). Returns
+// { ursatz, background, middleground, foreground }, each a list of
+// { labels, average }: the foreground has one per phrase, the middleground
+// one per run of phrases with the same letter.
+function copeLevels(events, beatsPerBar, form) {
+  const foreground = [];
+  let rest = events.slice();
+  form.forEach(([, start], i) => {
+    const end = i + 1 < form.length ? form[i + 1][1] : Infinity;
+    foreground.push(copePhrase(rest.filter((e) => e[0] < end), beatsPerBar));
+    rest = rest.filter((e) => e[0] >= end);
+  });
+  const level = (weights) => {
+    const avg = average(weights);
+    return { labels: develop(weights, avg), average: avg };
+  };
+  const middleground = [];
+  for (let i = 0; i < form.length; ) {
+    let j = i;
+    while (j < form.length && form[j][0] === form[i][0]) j++;
+    middleground.push(level(foreground.slice(i, j).map((p) => p.average)));
+    i = j;
+  }
+  const background = level(middleground.map((m) => m.average));
+  const ursatz = level([background.average]);
+  return { ursatz: [ursatz], background: [background], middleground, foreground: foreground.map(({ labels, average: avg }) => ({ labels, average: avg })) };
+}
+
+// A work's groupings split into phrases (lists of indexes into `groupings`):
+// a phrase ends after a cadence beat and the held or silent beats after it.
+function phrasesOf(groupings) {
+  const phrases = [];
+  let current = [];
+  let afterCadence = false;
+  groupings.forEach((g, i) => {
+    if (afterCadence && g.newNotes > 0) {
+      phrases.push(current);
+      current = [];
+      afterCadence = false;
+    }
+    current.push(i);
+    if (g.cadence) afterCadence = true;
+  });
+  if (current.length) phrases.push(current);
+  return phrases;
+}
+
+// Tension and three-level labels for every grouping of one work (in C), in
+// order: [{ tension, beat, bar, phrase }].
+function analyze(groupings, beatsPerBar) {
+  const tensions = tension.tensionsOf(groupings, beatsPerBar).map((t) => t.tension);
+  const out = tensions.map((t) => ({ tension: t, beat: "S", bar: "S", phrase: "S" }));
+  const phrases = phrasesOf(groupings);
+  const phraseWeights = [];
+  for (const phrase of phrases) {
+    const weights = phrase.map((i) => tensions[i]);
+    develop(weights, average(weights)).forEach((label, k) => (out[phrase[k]].beat = label));
+
+    const bars = [];
+    for (const i of phrase) {
+      const bar = Math.floor(groupings[i].index / beatsPerBar);
+      if (!bars.length || bars[bars.length - 1].bar !== bar) bars.push({ bar, members: [] });
+      bars[bars.length - 1].members.push(i);
+    }
+    const barWeights = bars.map((b) => average(b.members.map((i) => tensions[i])));
+    develop(barWeights, average(barWeights)).forEach((label, k) => {
+      for (const i of bars[k].members) out[i].bar = label;
+    });
+    phraseWeights.push(average(weights));
+  }
+  develop(phraseWeights, average(phraseWeights)).forEach((label, k) => {
+    for (const i of phrases[k]) out[i].phrase = label;
+  });
+  return out;
+}
+
+exports.develop = develop;
+exports.average = average;
+exports.copePhrase = copePhrase;
+exports.copeLevels = copeLevels;
+exports.phrasesOf = phrasesOf;
+exports.analyze = analyze;
+  };
+
   // ---- emi-lexicon.js
   factories["emi-lexicon"] = function (exports, module, require) {
 "use strict";
@@ -735,7 +1112,8 @@ exports.segment = segment;
 //   version, beatTicks, meter, matchLevels: ["L0", "L1"],
 //   mode: "major" | "minor" | "mixed"   (the works' modes; all in C major / A minor)
 //   works: [{ id, title, key, transposedBy, groupings }],
-//   groupings: [grouping],            // see emi-segment
+//   groupings: [grouping],            // see emi-segment, plus (M6) tension and
+//                                     // speac: { beat, bar, phrase } labels (emi-speac)
 //   lexicon:  { L0 key: [grouping index] },
 //   lexicon1: { L1 key: [grouping index] },
 //   templates: [{ work, start, count }], // each work's groupings, in order: its form (emi-form)
@@ -746,6 +1124,7 @@ exports.segment = segment;
 
 const ingest = require("emi-ingest");
 const { segment } = require("emi-segment");
+const speac = require("emi-speac");
 
 // Keys are lists of voice tokens: "60" (a new note), "~60" (held over) or "r"
 // (silent), joined by ",". These parse and rebuild them.
@@ -790,6 +1169,11 @@ function build(works) {
     const inC = ingest.normalize(work);
     modes.add(inC.key.mode);
     const groupings = segment(inC, db.beatTicks);
+    const beatsPerBar = Math.round((db.meter[0] * 4) / db.meter[1]);
+    speac.analyze(groupings, beatsPerBar).forEach(({ tension, beat, bar, phrase }, k) => {
+      groupings[k].tension = tension;
+      groupings[k].speac = { beat, bar, phrase };
+    });
     db.works.push({ id: work.id, title: work.title, key: work.key, transposedBy: inC.transposedBy, groupings: groupings.length });
     if (groupings.length) db.templates.push({ work: work.id, start: db.groupings.length, count: groupings.length });
     for (const g of groupings) {
@@ -1098,15 +1482,23 @@ exports.summary = summary;
 //   - a cadence slot takes a cadence grouping on the same bass pitch class,
 //     and every other slot a non-cadence grouping, so the piece cadences where
 //     the template does and nowhere else;
+//   - each slot takes a grouping with the template beat's SPEAC label (M6,
+//     emi-speac): a preparation where the template prepares, an antecedent
+//     where it builds up, and so on;
 //   - metre, voice-hooking and the different-source rule as in M2.
 // The seed picks the template. If it can't be filled, the rules relax one
 // step at a time (RELAX below), and only then is the next template tried:
-//   0  strict: every hook exact (L0)
-//   1  L1 hooks too: a grouping's upper voices move by octaves so each starts
+//   0  strict: every hook exact (L0), every SPEAC label matched
+//   1  every hook exact; SPEAC labels preferred, not required (Cope's "soft
+//      constraint"): groupings with the template's label are tried first
+//   2  L1 hooks too: a grouping's upper voices move by octaves so each starts
 //      exactly where the previous beat's voice went (see emi-lexicon), as long
 //      as every voice stays in its range and no voices cross that didn't
 //      before; exact hooks still come first
-//   2  as 1, and a cadence may stand on any bass note
+//   3  as 2, and a cadence may stand on any bass note
+// On the full corpus about 95 pieces in 100 keep exact voice-leading
+// throughout, and 62% of beats keep their template beat's label (33% by
+// chance, without SPEAC).
 //
 // Before searching, a backward pass over the template finds, for every slot,
 // the groupings from which the rest of the template can still be filled. The
@@ -1117,20 +1509,22 @@ const lexicon = require("emi-lexicon");
 const { assemble } = require("emi-compose");
 
 const RELAX = [
-  { level: 0, cadenceBass: true },
-  { level: 1, cadenceBass: true },
-  { level: 1, cadenceBass: false },
+  { level: 0, speac: true, cadenceBass: true },
+  { level: 0, speac: "prefer", cadenceBass: true },
+  { level: 1, speac: "prefer", cadenceBass: true },
+  { level: 1, speac: "prefer", cadenceBass: false },
 ];
 
 // A template's slots, one per beat from its first sounding beat to its last:
 //   { rest: true }                                    a silent beat
-//   { beatInBar, cadence, bass, first, afterRest, last, newNotes }
+//   { beatInBar, cadence, bass, speac, first, afterRest, last, newNotes }
 // bass is the pitch class a cadence slot's chord must stand on (null
-// elsewhere, and everywhere when cadenceBass is false). newNotes is the
+// elsewhere, and everywhere when cadenceBass is false); speac is the beat
+// label a grouping must have (null when speac is false). newNotes is the
 // template's own beat's (0: a held chord); emi-stream splits phrases with it.
 // A slot may also be marked needsExit (emi-stream): its grouping must have
 // somewhere to go next.
-function slotsOf(db, template, { cadenceBass = true } = {}) {
+function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
   const slots = [];
   for (let k = 0; k < template.count; k++) {
     const g = db.groupings[template.start + k];
@@ -1143,6 +1537,8 @@ function slotsOf(db, template, { cadenceBass = true } = {}) {
       beatInBar: g.beatInBar,
       cadence: g.cadence,
       bass: cadenceBass && g.cadence && g.bass !== null ? g.bass % 12 : null,
+      speac: speac && g.speac ? g.speac.beat : null,
+      speacHard: speac !== "prefer",
       first: k === 0,
       afterRest: k > 0 && g.restBefore,
       last: k === template.count - 1,
@@ -1156,6 +1552,7 @@ function slotsOf(db, template, { cadenceBass = true } = {}) {
 function fits(g, slot) {
   if (g.beatInBar !== slot.beatInBar || g.cadence !== slot.cadence) return false;
   if (slot.bass !== null && (g.bass === null || g.bass % 12 !== slot.bass)) return false;
+  if (slot.speac && slot.speacHard !== false && (!g.speac || g.speac.beat !== slot.speac)) return false;
   if (slot.first && !g.opening) return false;
   if (slot.afterRest && !g.restBefore) return false;
   if (slot.last && !g.final) return false;
@@ -1280,7 +1677,7 @@ function fill(db, slots, { random, level, budget, counters, prev = null, used = 
     if (!before) {
       // The first slot, or the first after a rest: nothing to hook to.
       const pool = (slot.first ? db.openings : restStarts).filter(free);
-      return [...shuffle(pool.filter((i) => ok0[s][i])), ...shuffle(pool.filter((i) => !ok0[s][i]))].map((index) => ({ index, shift: null, level: 0 }));
+      return preferLabel([...shuffle(pool.filter((i) => ok0[s][i])), ...shuffle(pool.filter((i) => !ok0[s][i]))].map((index) => ({ index, shift: null, level: 0 })), s);
     }
     const from = db.groupings[before.index];
     const target = shiftedDestination(from, before.shift);
@@ -1301,14 +1698,32 @@ function fill(db, slots, { random, level, budget, counters, prev = null, used = 
       ...shuffle(list.filter((i) => ok0[s][i])).map(asIs(level)),
     ];
     const rest = (list, level) => shuffle(list.filter((i) => !ok0[s][i])).map(asIs(level));
-    return [...exactFirst(exact, 0), ...exactFirst(unmoved, 1), ...rest(exact, 0), ...rest(unmoved, 1), ...shuffle(moved)];
+    const all = [...exactFirst(exact, 0), ...exactFirst(unmoved, 1), ...rest(exact, 0), ...rest(unmoved, 1), ...shuffle(moved)];
+    return preferLabel(all, s);
   };
+
+  // With a preferred (not required) SPEAC label, the groupings that have it
+  // come first within each kind of hook (exact hooks still before L1 ones,
+  // and hooks that move voices last), so voice-leading stays as exact as
+  // without labels.
+  function preferLabel(list, s) {
+    const want = slots[s].speac;
+    if (!want || slots[s].speacHard !== false) return list;
+    const has = (c) => db.groupings[c.index].speac && db.groupings[c.index].speac.beat === want;
+    const out = [];
+    for (const level of [0, 1]) {
+      const group = list.filter((c) => c.level === level && !c.shift);
+      out.push(...group.filter(has), ...group.filter((c) => !has(c)));
+    }
+    const moved = list.filter((c) => c.shift);
+    return [...out, ...moved.filter(has), ...moved.filter((c) => !has(c))];
+  }
 
   const extend = (k) => {
     if (k === at.length) return true;
     if (++counters.steps > budget) return false;
     for (const c of candidates(k)) {
-      placed.push({ ...c, beat: at[k] });
+      placed.push({ ...c, beat: at[k], order: k });
       used.add(c.index);
       if (extend(k + 1)) return true;
       placed.pop();
@@ -1347,10 +1762,14 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
       const placed = fill(db, slots, { random, level: RELAX[step].level, budget: counters.steps + budget, counters });
       if (!placed) continue;
       const cadences = slots.filter((slot) => slot.cadence).length;
+      const matched = placed.filter((p) => {
+        const g = db.groupings[p.index];
+        return g.speac && g.speac.beat === db.groupings[template.start + p.order].speac.beat;
+      }).length;
       const piece = assemble(db, placed, {
         seed,
-        source: `EMI recombination (M3, form of ${template.work})`,
-        form: { template: template.work, phrases: cadences, beats: slots.length, rests: slots.length - placed.length, relaxed: step },
+        source: `EMI recombination (M6, form of ${template.work})`,
+        form: { template: template.work, phrases: cadences, beats: slots.length, rests: slots.length - placed.length, relaxed: step, speac: matched / placed.length },
       });
       return { ok: true, piece, stats: { tried, relaxed: step, steps: counters.steps, backtracks: counters.backtracks } };
     }
@@ -1863,8 +2282,8 @@ function choices(db, stream, random, last) {
 
 // The template's slots as this phrase needs them: silent beats for any gap,
 // how the first beat starts, and how the last one ends.
-function prepare(db, stream, choice, { last, cadenceBass }) {
-  const slots = choice.slots.map((slot) => (slot.rest ? slot : { ...slot, bass: cadenceBass ? slot.bass : null }));
+function prepare(db, stream, choice, { last, cadenceBass, speac }) {
+  const slots = choice.slots.map((slot) => (slot.rest ? slot : { ...slot, bass: cadenceBass ? slot.bass : null, speac: speac ? slot.speac : null, speacHard: speac !== "prefer" }));
   const gap = gapBefore(db, stream, slots[0].beatInBar);
   const canHook = stream.last !== null && !stream.endsInRest && db.groupings[stream.last.index].destKey !== null;
   slots[0] = {
@@ -1881,8 +2300,8 @@ function prepare(db, stream, choice, { last, cadenceBass }) {
 
 function place(db, stream, choice, { random, last, relax, budget, counters }) {
   for (let step = 0; step <= relax; step++) {
-    const { level, cadenceBass } = form.RELAX[step];
-    const slots = prepare(db, stream, choice, { last, cadenceBass });
+    const { level, cadenceBass, speac } = form.RELAX[step];
+    const slots = prepare(db, stream, choice, { last, cadenceBass, speac });
     const placed = form.fill(db, slots, {
       random,
       level,
@@ -1978,7 +2397,7 @@ __emi_require.local = 1;
 //   coll clear | coll store <step> <voice pitch velocity>...   -> [coll ---emi.queue]
 //   restart                    -> the player: notes off; the queue starts again at the next bar
 //   streamat <step>            -> the player: send "need" when this step is reached
-//   view clear|note|seam|cadence|done ...                       -> the piano roll
+//   view clear|note|seam|cadence|speac|done ...                 -> the piano roll
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
 //
@@ -2025,6 +2444,8 @@ const files = __emi_require("emi-load");
 const clips = __emi_require("emi-clips");
 const settingsFile = __emi_require("emi-settings");
 const streams = __emi_require("emi-stream");
+const { segment } = __emi_require("emi-segment");
+const speacLabels = __emi_require("emi-speac");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
@@ -2042,6 +2463,7 @@ let phrasesWanted = 8;
 let transposeBy = 0;
 let current = null; // { base (untransposed, or null for a stream), score, name, chorale }
 let flow = null; // the stream being queued: { state, steps, events, provenance, fermatas, name }
+let groupingsById = null; // { db, map }: the corpus's groupings by id, for the SPEAC lane
 let settingsPath = null; // known once startup has read the settings
 let remembered = {}; // the settings file's contents
 
@@ -2353,9 +2775,10 @@ function describePiece(piece) {
   if (!piece.form) return `${piece.id}: ${s.beats} beats from ${s.sources} chorales`;
   const phrases = piece.form.phrases + (piece.form.phrases === 1 ? " phrase" : " phrases");
   let text = `${piece.id}: form of ${piece.form.template}, ${phrases}, ${piece.form.beats} beats, ${s.sources} chorales`;
+  text += ", SPEAC " + Math.round(100 * piece.form.speac) + "%";
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
-  if (piece.form.relaxed === 2) relaxed.push("any cadence bass");
+  if (piece.form.relaxed === 3) relaxed.push("any cadence bass");
   if (relaxed.length) text += " (" + relaxed.join(", ") + ")";
   return text;
 }
@@ -2435,10 +2858,31 @@ function show(score, name, chorale) {
 }
 show.local = 1;
 
+// The SPEAC lane: one beat label per beat, as [tick, label]. A composed
+// piece shows the labels its beats bring from their chorales; a chorale (or
+// the test phrase) is analysed itself.
+function labelsFor(score) {
+  try {
+    if (score.provenance && db) {
+      if (!groupingsById || groupingsById.db !== db) groupingsById = { db, map: new Map(db.groupings.map((g) => [g.id, g])) };
+      return score.provenance
+        .map((p) => [p.tick, groupingsById.map.get(p.grouping)])
+        .filter(([, g]) => g && g.speac)
+        .map(([tick, g]) => [tick, g.speac.beat]);
+    }
+    const beatsPerBar = Math.round((score.meter[0] * 4) / score.meter[1]);
+    const groupings = segment({ ...score, id: score.id || "score", fermatas: score.fermatas || [] }, score.ppq);
+    return speacLabels.analyze(groupings, beatsPerBar).map((a, k) => [groupings[k].index * score.ppq, a.beat]);
+  } catch (e) {
+    return [];
+  }
+}
+labelsFor.local = 1;
+
 // Piano roll: notes colored by source chorale (composed pieces) or by voice;
 // seams where the source changes (level 1: voices moved by octaves); a mark
-// at each cadence (fermata). from/to: the ticks shown (a stream shows its
-// last few phrases).
+// at each cadence (fermata); the SPEAC lane. from/to: the ticks shown (a
+// stream shows its last few phrases).
 function draw(score, from = 0, to = score.lengthTicks) {
   const events = score.events.filter((e) => e[0] + e[2] > from && e[0] < to);
   const pitches = (events.length ? events : score.events).map((e) => e[1]);
@@ -2460,6 +2904,7 @@ function draw(score, from = 0, to = score.lengthTicks) {
     }
   }
   for (const tick of score.fermatas || []) if (tick >= from && tick < to) outlet(0, "view", "cadence", tick);
+  for (const [tick, label] of labelsFor(score)) if (tick >= from && tick < to) outlet(0, "view", "speac", tick, label);
   outlet(0, "view", "done");
 }
 draw.local = 1;

@@ -462,6 +462,31 @@ phrase.
 During composition, use these checks as soft constraints when an exact label
 match is impossible.
 
+*As built in M6* (`code/lib/emi-tension.js`, `code/lib/emi-speac.js`):
+
+- **Golden tests pass.** Cope's published analyses are reproduced exactly:
+  the book's eight-beat example at every step (beats, chord ratings, roots,
+  tensions, labels), and his analysis of Chopin's Mazurka Op. 33 No. 3 at
+  all four levels (`tests/speac.test.js`; the Chopin data is read from a
+  local clone of the reference repo, `EMI_SPEAC_REF`).
+- **Exactness** needs Cope's 32-bit float sums, his root finder (it scans
+  the chord's interval pairs in a particular order) and his beat grouping
+  (chords joined by held notes). Also, his phrase averages are *truncated*
+  to hundredths, not rounded.
+- **For chorales**, the engine's beats are emi-segment's groupings (one per
+  metric beat). A beat with passing notes counts its least dissonant chord,
+  as Cope's does, and its length is one beat. Phrases end at fermatas, as
+  in emi-stream. Three labels per beat: **beat** (among its phrase's beats,
+  Cope's foreground), **bar** (bar averages within the phrase) and
+  **phrase** (phrase averages within the chorale). On the 142 major
+  chorales: E 44%, S 21%, P 20%, A 12%, C 3% at beat level.
+- **Matching** (§4.6): a form's slot asks for its template beat's label.
+  Requiring every label exactly fills only 26 forms in 100. So the second
+  relaxation step *prefers* labels (they're tried first) while keeping
+  every hook exact. The result: 95 pieces in 100 with exact voice-leading
+  throughout, and 63% of beats keeping their template's label (33% by
+  chance; 47% vs 20% for P, A and C).
+
 ### 4.4 `emi.analyze/signatures`
 
 These defaults also come from Cope's code (`pattern-match`):
@@ -548,7 +573,9 @@ function fill(slots, i, prev, out, ctx) {
   ends.
 - *As built in M3:* the seed picks the template. On a dead end the rules relax
   in this order: exact hooks (L0), then octave moves (L1), then a cadence on
-  any bass note. Only then is another template tried. A piece records its
+  any bass note. *M6* puts SPEAC first: exact hooks with exact labels, then
+  exact hooks with labels preferred, then octave moves, then any cadence
+  bass. Only then is another template tried. A piece records its
   template, how far it relaxed, and each octave-moved beat in its provenance.
   On the full corpus, out of 100 seeds: 95 strict, 3 with octave moves, 2
   with any cadence bass; 1 dead end, which took another template.
@@ -1053,7 +1080,8 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M5 done; M6 next.** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M6 code done; waiting on the Max and Live checks
+([checklist](docs/M6-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
@@ -1071,7 +1099,10 @@ M4 passed in both products ([results](docs/M4-checklist.md)): one panel
 shared between the products, and settings that survive a reload. M5 passed
 in both products ([results](docs/M5-checklist.md)): pieces play from the
 next barline wherever Play starts, and stream phrase by phrase, endlessly or
-ending on a final cadence after N phrases. When a patch or set opens, the last corpus comes back and the
+ending on a final cadence after N phrases. M6 labels every beat with Cope's
+SPEAC functions (golden tests reproduce his published analyses exactly),
+matches beats by function when recombining, and shows a SPEAC lane in the
+piano roll. When a patch or set opens, the last corpus comes back and the
 current seed's piece is composed again.
 
 | # | Milestone | Done when |

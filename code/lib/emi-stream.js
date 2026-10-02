@@ -150,8 +150,8 @@ function choices(db, stream, random, last) {
 
 // The template's slots as this phrase needs them: silent beats for any gap,
 // how the first beat starts, and how the last one ends.
-function prepare(db, stream, choice, { last, cadenceBass }) {
-  const slots = choice.slots.map((slot) => (slot.rest ? slot : { ...slot, bass: cadenceBass ? slot.bass : null }));
+function prepare(db, stream, choice, { last, cadenceBass, speac }) {
+  const slots = choice.slots.map((slot) => (slot.rest ? slot : { ...slot, bass: cadenceBass ? slot.bass : null, speac: speac ? slot.speac : null, speacHard: speac !== "prefer" }));
   const gap = gapBefore(db, stream, slots[0].beatInBar);
   const canHook = stream.last !== null && !stream.endsInRest && db.groupings[stream.last.index].destKey !== null;
   slots[0] = {
@@ -168,8 +168,8 @@ function prepare(db, stream, choice, { last, cadenceBass }) {
 
 function place(db, stream, choice, { random, last, relax, budget, counters }) {
   for (let step = 0; step <= relax; step++) {
-    const { level, cadenceBass } = form.RELAX[step];
-    const slots = prepare(db, stream, choice, { last, cadenceBass });
+    const { level, cadenceBass, speac } = form.RELAX[step];
+    const slots = prepare(db, stream, choice, { last, cadenceBass, speac });
     const placed = form.fill(db, slots, {
       random,
       level,

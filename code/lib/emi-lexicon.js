@@ -12,7 +12,8 @@
 //   version, beatTicks, meter, matchLevels: ["L0", "L1"],
 //   mode: "major" | "minor" | "mixed"   (the works' modes; all in C major / A minor)
 //   works: [{ id, title, key, transposedBy, groupings }],
-//   groupings: [grouping],            // see emi-segment
+//   groupings: [grouping],            // see emi-segment, plus (M6) tension and
+//                                     // speac: { beat, bar, phrase } labels (emi-speac)
 //   lexicon:  { L0 key: [grouping index] },
 //   lexicon1: { L1 key: [grouping index] },
 //   templates: [{ work, start, count }], // each work's groupings, in order: its form (emi-form)
@@ -23,6 +24,7 @@
 
 const ingest = require("emi-ingest");
 const { segment } = require("emi-segment");
+const speac = require("emi-speac");
 
 // Keys are lists of voice tokens: "60" (a new note), "~60" (held over) or "r"
 // (silent), joined by ",". These parse and rebuild them.
@@ -67,6 +69,11 @@ function build(works) {
     const inC = ingest.normalize(work);
     modes.add(inC.key.mode);
     const groupings = segment(inC, db.beatTicks);
+    const beatsPerBar = Math.round((db.meter[0] * 4) / db.meter[1]);
+    speac.analyze(groupings, beatsPerBar).forEach(({ tension, beat, bar, phrase }, k) => {
+      groupings[k].tension = tension;
+      groupings[k].speac = { beat, bar, phrase };
+    });
     db.works.push({ id: work.id, title: work.title, key: work.key, transposedBy: inC.transposedBy, groupings: groupings.length });
     if (groupings.length) db.templates.push({ work: work.id, start: db.groupings.length, count: groupings.length });
     for (const g of groupings) {

@@ -13,7 +13,8 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M5 done.** Both products load Bach chorales,
+**Status: M6 code done; waiting on the Max and Live checks
+([M6 checklist](docs/M6-checklist.md)).** Both products load Bach chorales,
 play them in C major or their own key, and compose new chorales by
 recombining beats from the whole corpus. Since M3, each new piece takes the
 form of a chorale from the corpus: its phrases, its cadences and its ending.
@@ -25,8 +26,10 @@ MIDI files, and (in Live) write them as clips ([M0](docs/M0-spikes.md),
 one control panel and remember their settings, including the last corpus,
 between sessions. Since M5, pieces start on the next barline wherever Play
 starts. Pieces can also stream phrase by phrase while they play, endlessly or
-ending after a set number of phrases. The full plan and milestones are in
-[PLAN.md](PLAN.md).
+ending after a set number of phrases. Since M6, every beat carries Cope's
+SPEAC function (statement, preparation, extension, antecedent, consequent),
+recombination matches beats by function, and the piano roll shows a SPEAC
+lane. The full plan and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
 
@@ -148,6 +151,12 @@ memory) lives in `~/Documents/ml_midi/`, outside the repository.
   match `code/`.
 - Patches always load the bundles, never `code/` directly, so what you test in
   Max is exactly what gets frozen into a device.
+- Some tests need data that isn't in the repository, and skip without it:
+  - `EMI_CORPUS=<folder>` runs the corpus tests on that folder (by default
+    `~/Documents/ml_midi/corpus`);
+  - `EMI_SPEAC_REF=<folder>` runs the golden test against Cope's Chopin
+    analysis, given a clone of
+    [GolzitskyNikolay/SPEAC-analysis](https://github.com/GolzitskyNikolay/SPEAC-analysis).
 
 ## License
 

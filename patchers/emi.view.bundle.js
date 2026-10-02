@@ -25,13 +25,15 @@ __emi_require.local = 1;
 // Notes are colored by source chorale for composed pieces (by voice for a
 // single chorale); thin lines mark bars, bright lines mark seams, where the
 // source changes (orange where voices were moved by octaves to join), and
-// small triangles along the top mark cadences (fermatas). The engine sends
-// one score as:
+// small triangles along the top mark cadences (fermatas). A lane along the
+// bottom shows each beat's SPEAC label (M6): S statement, P preparation,
+// E extension, A antecedent, C consequent. The engine sends one score as:
 //   clear <endTick> <lowPitch> <highPitch> <barTicks> [startTick]
 //                                        (the ticks shown; a stream shows its last phrases)
 //   note <on> <dur> <pitch> <color>      (one per note)
 //   seam <tick> [level]                  (one per seam; level 1: octave moves)
 //   cadence <tick>                       (one per fermata)
+//   speac <tick> <label>                 (one per beat)
 //   done                                 (draw it)
 
 autowatch = 1;
@@ -43,6 +45,10 @@ mgraphics.relative_coords = 0;
 mgraphics.autofill = 0;
 
 // Twelve colors that stay apart on a dark background; they repeat after 12.
+// SPEAC lane colors: tension rising (P, A) warm, resolving (C) cool.
+const SPEAC_COLORS = { S: [0.55, 0.6, 0.7], P: [0.5, 0.8, 0.45], E: [0.35, 0.35, 0.38], A: [0.95, 0.5, 0.3], C: [0.4, 0.65, 0.95] };
+const LANE = 12; // px
+
 const PALETTE = [
   [0.95, 0.55, 0.35], [0.35, 0.7, 0.95], [0.6, 0.85, 0.4], [0.95, 0.8, 0.3],
   [0.75, 0.5, 0.95], [0.3, 0.85, 0.75], [0.95, 0.45, 0.6], [0.55, 0.6, 0.95],
@@ -53,7 +59,7 @@ let shown = null; // the score being drawn
 let incoming = null; // the score being received
 
 function clear(endTick, low, high, barTicks, startTick) {
-  incoming = { start: startTick || 0, end: endTick, low, high, barTicks, notes: [], seams: [], cadences: [] };
+  incoming = { start: startTick || 0, end: endTick, low, high, barTicks, notes: [], seams: [], cadences: [], labels: [] };
 }
 
 function note(on, dur, pitch, color) {
@@ -66,6 +72,10 @@ function seam(tick, level) {
 
 function cadence(tick) {
   if (incoming) incoming.cadences.push(tick);
+}
+
+function speac(tick, label) {
+  if (incoming) incoming.labels.push([tick, String(label)]);
 }
 
 function done() {
@@ -93,8 +103,9 @@ function paint() {
     return;
   }
 
+  const rollHeight = shown.labels.length ? height - LANE : height;
   const rows = shown.high - shown.low + 3; // one empty row above and below
-  const rowHeight = height / rows;
+  const rowHeight = rollHeight / rows;
   const x = (tick) => ((tick - shown.start) / (shown.end - shown.start)) * width;
   const y = (pitch) => (shown.high + 1 - pitch) * rowHeight;
 
@@ -102,7 +113,7 @@ function paint() {
   g.set_source_rgba(1, 1, 1, 0.08);
   for (let t = Math.ceil(shown.start / shown.barTicks) * shown.barTicks; t <= shown.end; t += shown.barTicks) {
     g.move_to(Math.round(x(t)) + 0.5, 0);
-    g.line_to(Math.round(x(t)) + 0.5, height);
+    g.line_to(Math.round(x(t)) + 0.5, rollHeight);
   }
   g.stroke();
 
@@ -119,9 +130,26 @@ function paint() {
     for (const [tick, l] of shown.seams) {
       if (l !== level) continue;
       g.move_to(Math.round(x(tick)) + 0.5, 0);
-      g.line_to(Math.round(x(tick)) + 0.5, height);
+      g.line_to(Math.round(x(tick)) + 0.5, rollHeight);
     }
     g.stroke();
+  }
+
+  // The SPEAC lane: a colored block per beat, with its letter when there's room.
+  const beat = shown.barTicks / 4;
+  const beatWidth = x(beat) - x(0);
+  g.select_font_face("Arial");
+  g.set_font_size(9);
+  for (const [tick, label] of shown.labels) {
+    const [r, gr, b] = SPEAC_COLORS[label] || SPEAC_COLORS.E;
+    g.set_source_rgba(r, gr, b, 0.9);
+    g.rectangle(x(tick), rollHeight + 1, Math.max(1, beatWidth - 1), LANE - 2);
+    g.fill();
+    if (beatWidth >= 9) {
+      g.set_source_rgba(0.08, 0.08, 0.09, 1);
+      g.move_to(x(tick) + beatWidth / 2 - 3, rollHeight + LANE - 3);
+      g.show_text(label);
+    }
   }
 
   g.set_source_rgba(1, 1, 1, 0.85);

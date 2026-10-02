@@ -105,7 +105,7 @@ test("each bundle exposes exactly its documented messages", () => {
     "autoclips", "beats", "clear", "compose", "corpus", "exportmidi", "form", "key", "loadmidi", "need", "next",
     "pattern", "phrases", "remember", "seed", "startup", "stream", "testclip", "transpose", "writeclips",
   ]);
-  assert.deepEqual(loadBundle("emi.view").handlers(), ["cadence", "clear", "done", "note", "onresize", "paint", "seam"]);
+  assert.deepEqual(loadBundle("emi.view").handlers(), ["cadence", "clear", "done", "note", "onresize", "paint", "seam", "speac"]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
 });
 
@@ -200,7 +200,7 @@ test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece i
   const status = lastStatus(out);
   // e.g. "emi-3: form of b, 1 phrase, 11 beats, 3 chorales"
   assert.deepEqual(status.slice(0, 3), ["status", "emi-3:", "form"]);
-  assert.match(status.join(" "), /^status emi-3: form of [abc], 1 phrase, 11 beats, [23] chorales$/);
+  assert.match(status.join(" "), /^status emi-3: form of [abc], 1 phrase, 11 beats, [23] chorales, SPEAC \d+%$/);
   assert.ok(select(out, "coll").length > 1);
   const view = select(out, "view");
   assert.ok(view.some(([kind]) => kind === "seam"), "seams between sources");
@@ -225,6 +225,20 @@ test("core: 'seed' sets the seed, and composes once a corpus is loaded", () => {
   assert.deepEqual(lastStatus(core.send("seed", 9)).slice(0, 2), ["status", "emi-9:"]);
   assert.deepEqual(core.send("key", 1), [], "0/1 from a toggle work too (quiet: no chorale is current)");
   assert.equal(lastStatus(core.send("key", "sideways"))[0], "error");
+});
+
+test("core: the SPEAC lane: a chorale's own labels, and a piece's labels from its sources", () => {
+  const core = loadBundle("emi.core");
+  const chorale = core.send("loadmidi", writeAMajorChorale());
+  const labels = select(chorale, "view").filter(([kind]) => kind === "speac");
+  assert.equal(labels.length, 3, "one per beat of the chorale (its three chords)");
+  for (const [, , label] of labels) assert.match(label, /^[SPEAC]$/);
+
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  const out = core.send("compose", 3);
+  const lane = select(out, "view").filter(([kind]) => kind === "speac");
+  assert.equal(lane.length, 11, "one per beat of the piece");
 });
 
 test("core: 'form 0' composes freely, as in M2; 'form 1' goes back to forms", () => {
@@ -503,6 +517,20 @@ test("core: 'writeclips' writes a composed piece; 'testclip' writes the test phr
 });
 
 // ---------------------------------------------------------------- view
+
+test("view: the SPEAC lane, one block per beat with its letter, under the notes", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics;
+  view.send("clear", 4 * Q, 60, 72, 4 * Q);
+  view.send("note", 0, Q, 60, 0);
+  for (const [k, label] of ["P", "E", "A", "C"].entries()) view.send("speac", k * Q, label);
+  view.send("done");
+  g.calls.length = 0;
+  view.send("paint");
+  assert.deepEqual(g.calls.filter(([name]) => name === "show_text").map(([, text]) => text), ["P", "E", "A", "C"]);
+  const [, , noteY, , noteHeight] = g.calls.filter(([name]) => name === "rectangle")[1];
+  assert.ok(noteY + noteHeight <= 169 - 12, "notes stay above the lane");
+});
 
 test("view: a start tick shows only the end of a long score (a stream's last phrases)", () => {
   const view = loadBundle("emi.view");

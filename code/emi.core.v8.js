@@ -16,7 +16,7 @@
 //   coll clear | coll store <step> <voice pitch velocity>...   -> [coll ---emi.queue]
 //   restart                    -> the player: notes off; the queue starts again at the next bar
 //   streamat <step>            -> the player: send "need" when this step is reached
-//   view clear|note|seam|cadence|done ...                       -> the piano roll
+//   view clear|note|seam|cadence|speac|done ...                 -> the piano roll
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
 //
@@ -63,6 +63,8 @@ const files = require("emi-load");
 const clips = require("emi-clips");
 const settingsFile = require("emi-settings");
 const streams = require("emi-stream");
+const { segment } = require("emi-segment");
+const speacLabels = require("emi-speac");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
@@ -80,6 +82,7 @@ let phrasesWanted = 8;
 let transposeBy = 0;
 let current = null; // { base (untransposed, or null for a stream), score, name, chorale }
 let flow = null; // the stream being queued: { state, steps, events, provenance, fermatas, name }
+let groupingsById = null; // { db, map }: the corpus's groupings by id, for the SPEAC lane
 let settingsPath = null; // known once startup has read the settings
 let remembered = {}; // the settings file's contents
 
@@ -391,9 +394,10 @@ function describePiece(piece) {
   if (!piece.form) return `${piece.id}: ${s.beats} beats from ${s.sources} chorales`;
   const phrases = piece.form.phrases + (piece.form.phrases === 1 ? " phrase" : " phrases");
   let text = `${piece.id}: form of ${piece.form.template}, ${phrases}, ${piece.form.beats} beats, ${s.sources} chorales`;
+  text += ", SPEAC " + Math.round(100 * piece.form.speac) + "%";
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
-  if (piece.form.relaxed === 2) relaxed.push("any cadence bass");
+  if (piece.form.relaxed === 3) relaxed.push("any cadence bass");
   if (relaxed.length) text += " (" + relaxed.join(", ") + ")";
   return text;
 }
@@ -473,10 +477,31 @@ function show(score, name, chorale) {
 }
 show.local = 1;
 
+// The SPEAC lane: one beat label per beat, as [tick, label]. A composed
+// piece shows the labels its beats bring from their chorales; a chorale (or
+// the test phrase) is analysed itself.
+function labelsFor(score) {
+  try {
+    if (score.provenance && db) {
+      if (!groupingsById || groupingsById.db !== db) groupingsById = { db, map: new Map(db.groupings.map((g) => [g.id, g])) };
+      return score.provenance
+        .map((p) => [p.tick, groupingsById.map.get(p.grouping)])
+        .filter(([, g]) => g && g.speac)
+        .map(([tick, g]) => [tick, g.speac.beat]);
+    }
+    const beatsPerBar = Math.round((score.meter[0] * 4) / score.meter[1]);
+    const groupings = segment({ ...score, id: score.id || "score", fermatas: score.fermatas || [] }, score.ppq);
+    return speacLabels.analyze(groupings, beatsPerBar).map((a, k) => [groupings[k].index * score.ppq, a.beat]);
+  } catch (e) {
+    return [];
+  }
+}
+labelsFor.local = 1;
+
 // Piano roll: notes colored by source chorale (composed pieces) or by voice;
 // seams where the source changes (level 1: voices moved by octaves); a mark
-// at each cadence (fermata). from/to: the ticks shown (a stream shows its
-// last few phrases).
+// at each cadence (fermata); the SPEAC lane. from/to: the ticks shown (a
+// stream shows its last few phrases).
 function draw(score, from = 0, to = score.lengthTicks) {
   const events = score.events.filter((e) => e[0] + e[2] > from && e[0] < to);
   const pitches = (events.length ? events : score.events).map((e) => e[1]);
@@ -498,6 +523,7 @@ function draw(score, from = 0, to = score.lengthTicks) {
     }
   }
   for (const tick of score.fermatas || []) if (tick >= from && tick < to) outlet(0, "view", "cadence", tick);
+  for (const [tick, label] of labelsFor(score)) if (tick >= from && tick < to) outlet(0, "view", "speac", tick, label);
   outlet(0, "view", "done");
 }
 draw.local = 1;
