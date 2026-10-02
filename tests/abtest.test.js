@@ -6,7 +6,7 @@ const vm = require("vm");
 
 const lexicon = require("emi-lexicon");
 const abtest = require("emi-abtest");
-const { page } = require("emi-abtest-page");
+const { page, RULES } = require("emi-abtest-page");
 const { work, I, IV, V, phrase } = require("./synthetic");
 
 const II = [74, 69, 65, 50];
@@ -58,7 +58,16 @@ test("abtest: the page carries its data, hides the answers, and its script parse
   assert.deepEqual(abtest.unseal(key), t.answers);
   const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
   assert.doesNotThrow(() => new vm.Script(script));
+  for (const id of ["size-5", "size-10", "board", "board-body", "paste-text"]) assert.ok(html.includes(`id="${id}"`), id);
   const body = page(t, { standalone: false });
   assert.match(body, /^<title>Which Is Bach\?<\/title>/);
   assert.ok(!body.includes("<html"));
+});
+
+test("abtest: the published page's results rules: each listener writes only their own; the owner reads all", () => {
+  assert.deepEqual(RULES, [
+    { path: "results", read: "admin", write: "admin" },
+    { path: "results/{self}", read: "interact", write: "interact" },
+    { path: "pasted", read: "admin", write: "admin" },
+  ]);
 });
