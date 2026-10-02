@@ -6,6 +6,9 @@
 // one phrase start through its cadence, plus the held or silent beats after it.
 // A stream walks through one chorale's phrases in order, then another
 // chorale's (chosen by the seed), so it inherits real chorales' tonal plans.
+// In a corpus of major and minor chorales (M8), a stream keeps to the mode of
+// the chorale it starts with.
+//
 // Every phrase is filled like a whole form (emi-form: the same rules and the
 // same relaxation steps, and (M7) a signature block at its cadence where one
 // fits), and its first beat joins the previous phrase's last beat by
@@ -57,7 +60,8 @@ function phraseTemplates(db) {
     }
     if (current.length) phrases.push(current);
     const tidy = (slots) => slots.map((slot, i) => (slot.rest ? slot : { ...slot, first: false, last: false, afterRest: i === 0 ? false : slot.afterRest }));
-    return { work: template.work, phrases: phrases.map(tidy) };
+    const work = db.works.find((w) => w.id === template.work);
+    return { work: template.work, mode: work ? work.mode : null, phrases: phrases.map(tidy) };
   });
   cache.set(db, works);
   return works;
@@ -73,6 +77,7 @@ function start({ seed = 1 } = {}) {
     last: null, // the last placed grouping, { index, shift }
     endsInRest: false,
     walk: null, // { w, p }: the work and phrase last used
+    mode: null, // the mode of its first phrase's chorale: a stream stays in it (M8)
     used: new Set(),
     usedByPhrase: [],
     fallbacks: 0,
@@ -135,7 +140,7 @@ function choices(db, stream, random, last) {
     const gap = (c) => (gapBefore(db, stream, c.slots[0].beatInBar) > 0 ? 1 : 0);
     return list.map((c, i) => [gap(c), i, c]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(([, , c]) => c);
   };
-  const indexes = shuffled(works.map((w, i) => i));
+  const indexes = shuffled(works.map((w, i) => i)).filter((w) => !stream.mode || works[w].mode === stream.mode);
 
   if (!stream.phrases.length) return indexes.map((w) => entry(w, 0));
   const walk = stream.walk;
@@ -228,6 +233,7 @@ function commit(db, stream, choice, { slots, placed, relaxed }, { seed, number, 
   stream.last = { index: placed[placed.length - 1].index, shift: placed[placed.length - 1].shift };
   stream.endsInRest = slots[slots.length - 1].rest;
   stream.walk = { w: choice.w, p: choice.p };
+  if (!stream.mode) stream.mode = db.works.find((w) => w.id === choice.work).mode;
   stream.usedByPhrase.push(placed.map((p) => p.index));
   if (stream.usedByPhrase.length > KEEP_USED) for (const i of stream.usedByPhrase.shift()) stream.used.delete(i);
   if (last) stream.finished = true;

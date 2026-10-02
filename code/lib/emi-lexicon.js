@@ -13,7 +13,8 @@
 //   mode: "major" | "minor" | "mixed"   (the works' modes; all in C major / A minor)
 //   works: [{ id, title, key, transposedBy, groupings, pickup, mode }],
 //   groupings: [grouping],            // see emi-segment, plus (M6) tension and
-//                                     // speac: { beat, bar, phrase } labels (emi-speac)
+//                                     // speac: { beat, bar, phrase } labels (emi-speac),
+//                                     // and (M8) mode: its work's mode
 //   lexicon:  { L0 key: [grouping index] },
 //   lexicon1: { L1 key: [grouping index] },
 //   templates: [{ work, start, count }], // each work's groupings, in order: its form (emi-form)
@@ -74,6 +75,7 @@ function build(works) {
     normalized.push(inC);
     modes.add(inC.key.mode);
     const groupings = segment(inC, db.beatTicks);
+    for (const g of groupings) g.mode = inC.key.mode; // M8: a mixed corpus composes each piece in one mode
     const beatsPerBar = Math.round((db.meter[0] * 4) / db.meter[1]);
     speac.analyze(groupings, beatsPerBar).forEach(({ tension, beat, bar, phrase }, k) => {
       groupings[k].tension = tension;

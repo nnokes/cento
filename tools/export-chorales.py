@@ -21,6 +21,8 @@ Run from the repo folder:
   .venv/bin/python tools/export-chorales.py                  # all 4/4 major (142)
   .venv/bin/python tools/export-chorales.py --count 20       # just the first 20
   .venv/bin/python tools/export-chorales.py --mode minor --out ~/Documents/ml_midi/corpus-minor
+  .venv/bin/python tools/export-chorales.py --mode any --out ~/Documents/ml_midi/corpus-both     # 4/4, major and minor (295)
+  .venv/bin/python tools/export-chorales.py --meter 3/4 --mode any --out ~/Documents/ml_midi/corpus-3-4  # 3/4 (32)
 """
 
 import argparse

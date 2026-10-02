@@ -8,12 +8,14 @@
 //
 // Detection works per voice on intervals, so a pattern is the same in any
 // key. A pattern ending on a cadence (fermata) chord in at least `minWorks`
-// different works is a signature. Each occurrence is a block of consecutive
+// different works (by default 5% of the works, and at least 3) is a
+// signature. Major and minor works are counted apart (M8: a corpus may have
+// both), so each signature belongs to one mode. Each occurrence is a block of consecutive
 // groupings of its work, from the beat of the pattern's first note to the
 // cadence beat; composing pins whole blocks at cadences (emi-form).
 //
 //   signatures = detect(db, works, { notes, minWorks })
-//   [{ id, voice, intervals, finalPc, works, occurrences: [{ work, start, end, beats }] }]
+//   [{ id, voice, intervals, finalPc, mode, works, occurrences: [{ work, start, end, beats }] }]
 // sorted strongest (most works) first; start and end index db.groupings.
 // describe(signature, mode) names it in scale degrees, e.g. "soprano 3-2-1".
 // blocks(db) lists each block once, with the signatures it carries.
@@ -24,9 +26,12 @@ const DEGREES = { 0: "1", 1: "b2", 2: "2", 3: "b3", 4: "3", 5: "4", 6: "#4", 7: 
 // works: the works the lexicon was built from, in C major / A minor, with
 // db.templates in the same order (one per work with groupings).
 function detect(db, works, { notes = 3, minWorks = null } = {}) {
-  const threshold = minWorks !== null ? minWorks : Math.max(3, Math.ceil(works.length * 0.05));
+  const inMode = new Map(); // mode -> how many works
+  for (const work of works) inMode.set(work.key.mode, (inMode.get(work.key.mode) || 0) + 1);
+  const threshold = (mode) => (minWorks !== null ? minWorks : Math.max(3, Math.ceil(inMode.get(mode) * 0.05)));
   const byKey = new Map();
   works.forEach((work) => {
+    const mode = work.key.mode;
     const template = db.templates.find((t) => t.work === work.id);
     if (!template) return;
     const groupings = db.groupings.slice(template.start, template.start + template.count);
@@ -45,8 +50,8 @@ function detect(db, works, { notes = 3, minWorks = null } = {}) {
         if (start === undefined || end - start !== g.index - startBeat) return; // a silent beat inside
         const intervals = pattern.slice(1).map((e, i) => e[1] - pattern[i][1]);
         if (intervals.every((step) => step === 0)) return; // a repeated note is no pattern
-        const key = voice + ":" + intervals.join(",");
-        if (!byKey.has(key)) byKey.set(key, { voice, intervals, occurrences: [], finals: new Map() });
+        const key = mode + ":" + voice + ":" + intervals.join(",");
+        if (!byKey.has(key)) byKey.set(key, { mode, voice, intervals, occurrences: [], finals: new Map() });
         const entry = byKey.get(key);
         entry.occurrences.push({ work: work.id, start, end, beats: end - start + 1 });
         const pc = pattern[pattern.length - 1][1] % 12;
@@ -57,9 +62,9 @@ function detect(db, works, { notes = 3, minWorks = null } = {}) {
   const signatures = [];
   for (const entry of byKey.values()) {
     const workCount = new Set(entry.occurrences.map((o) => o.work)).size;
-    if (workCount < threshold) continue;
+    if (workCount < threshold(entry.mode)) continue;
     const finalPc = [...entry.finals.entries()].sort((a, b) => b[1] - a[1])[0][0];
-    signatures.push({ voice: entry.voice, intervals: entry.intervals, finalPc, works: workCount, occurrences: entry.occurrences });
+    signatures.push({ voice: entry.voice, intervals: entry.intervals, finalPc, mode: entry.mode, works: workCount, occurrences: entry.occurrences });
   }
   signatures.sort((a, b) => b.works - a.works || a.voice - b.voice || a.intervals.join().localeCompare(b.intervals.join()));
   signatures.forEach((s, i) => (s.id = "sig" + (i + 1)));
@@ -67,9 +72,10 @@ function detect(db, works, { notes = 3, minWorks = null } = {}) {
 }
 
 // "soprano 3-2-1": the pattern's notes as scale degrees of C major (or A
-// minor), ending on its most common final note.
+// minor: the signature's own mode, or else `mode`), ending on its most
+// common final note.
 function describe(signature, mode = "major") {
-  const tonic = mode === "minor" ? 9 : 0;
+  const tonic = (signature.mode || mode) === "minor" ? 9 : 0;
   const pcs = [signature.finalPc];
   for (let i = signature.intervals.length - 1; i >= 0; i--) pcs.unshift(pcs[0] - signature.intervals[i]);
   return VOICES[signature.voice - 1] + " " + pcs.map((pc) => DEGREES[(((pc - tonic) % 12) + 12) % 12]).join("-");

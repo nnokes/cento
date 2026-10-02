@@ -1108,12 +1108,14 @@ exports.analyze = analyze;
 //
 // Detection works per voice on intervals, so a pattern is the same in any
 // key. A pattern ending on a cadence (fermata) chord in at least `minWorks`
-// different works is a signature. Each occurrence is a block of consecutive
+// different works (by default 5% of the works, and at least 3) is a
+// signature. Major and minor works are counted apart (M8: a corpus may have
+// both), so each signature belongs to one mode. Each occurrence is a block of consecutive
 // groupings of its work, from the beat of the pattern's first note to the
 // cadence beat; composing pins whole blocks at cadences (emi-form).
 //
 //   signatures = detect(db, works, { notes, minWorks })
-//   [{ id, voice, intervals, finalPc, works, occurrences: [{ work, start, end, beats }] }]
+//   [{ id, voice, intervals, finalPc, mode, works, occurrences: [{ work, start, end, beats }] }]
 // sorted strongest (most works) first; start and end index db.groupings.
 // describe(signature, mode) names it in scale degrees, e.g. "soprano 3-2-1".
 // blocks(db) lists each block once, with the signatures it carries.
@@ -1124,9 +1126,12 @@ const DEGREES = { 0: "1", 1: "b2", 2: "2", 3: "b3", 4: "3", 5: "4", 6: "#4", 7: 
 // works: the works the lexicon was built from, in C major / A minor, with
 // db.templates in the same order (one per work with groupings).
 function detect(db, works, { notes = 3, minWorks = null } = {}) {
-  const threshold = minWorks !== null ? minWorks : Math.max(3, Math.ceil(works.length * 0.05));
+  const inMode = new Map(); // mode -> how many works
+  for (const work of works) inMode.set(work.key.mode, (inMode.get(work.key.mode) || 0) + 1);
+  const threshold = (mode) => (minWorks !== null ? minWorks : Math.max(3, Math.ceil(inMode.get(mode) * 0.05)));
   const byKey = new Map();
   works.forEach((work) => {
+    const mode = work.key.mode;
     const template = db.templates.find((t) => t.work === work.id);
     if (!template) return;
     const groupings = db.groupings.slice(template.start, template.start + template.count);
@@ -1145,8 +1150,8 @@ function detect(db, works, { notes = 3, minWorks = null } = {}) {
         if (start === undefined || end - start !== g.index - startBeat) return; // a silent beat inside
         const intervals = pattern.slice(1).map((e, i) => e[1] - pattern[i][1]);
         if (intervals.every((step) => step === 0)) return; // a repeated note is no pattern
-        const key = voice + ":" + intervals.join(",");
-        if (!byKey.has(key)) byKey.set(key, { voice, intervals, occurrences: [], finals: new Map() });
+        const key = mode + ":" + voice + ":" + intervals.join(",");
+        if (!byKey.has(key)) byKey.set(key, { mode, voice, intervals, occurrences: [], finals: new Map() });
         const entry = byKey.get(key);
         entry.occurrences.push({ work: work.id, start, end, beats: end - start + 1 });
         const pc = pattern[pattern.length - 1][1] % 12;
@@ -1157,9 +1162,9 @@ function detect(db, works, { notes = 3, minWorks = null } = {}) {
   const signatures = [];
   for (const entry of byKey.values()) {
     const workCount = new Set(entry.occurrences.map((o) => o.work)).size;
-    if (workCount < threshold) continue;
+    if (workCount < threshold(entry.mode)) continue;
     const finalPc = [...entry.finals.entries()].sort((a, b) => b[1] - a[1])[0][0];
-    signatures.push({ voice: entry.voice, intervals: entry.intervals, finalPc, works: workCount, occurrences: entry.occurrences });
+    signatures.push({ voice: entry.voice, intervals: entry.intervals, finalPc, mode: entry.mode, works: workCount, occurrences: entry.occurrences });
   }
   signatures.sort((a, b) => b.works - a.works || a.voice - b.voice || a.intervals.join().localeCompare(b.intervals.join()));
   signatures.forEach((s, i) => (s.id = "sig" + (i + 1)));
@@ -1167,9 +1172,10 @@ function detect(db, works, { notes = 3, minWorks = null } = {}) {
 }
 
 // "soprano 3-2-1": the pattern's notes as scale degrees of C major (or A
-// minor), ending on its most common final note.
+// minor: the signature's own mode, or else `mode`), ending on its most
+// common final note.
 function describe(signature, mode = "major") {
-  const tonic = mode === "minor" ? 9 : 0;
+  const tonic = (signature.mode || mode) === "minor" ? 9 : 0;
   const pcs = [signature.finalPc];
   for (let i = signature.intervals.length - 1; i >= 0; i--) pcs.unshift(pcs[0] - signature.intervals[i]);
   return VOICES[signature.voice - 1] + " " + pcs.map((pc) => DEGREES[(((pc - tonic) % 12) + 12) % 12]).join("-");
@@ -1238,7 +1244,8 @@ exports.VOICES = VOICES;
 //   mode: "major" | "minor" | "mixed"   (the works' modes; all in C major / A minor)
 //   works: [{ id, title, key, transposedBy, groupings, pickup, mode }],
 //   groupings: [grouping],            // see emi-segment, plus (M6) tension and
-//                                     // speac: { beat, bar, phrase } labels (emi-speac)
+//                                     // speac: { beat, bar, phrase } labels (emi-speac),
+//                                     // and (M8) mode: its work's mode
 //   lexicon:  { L0 key: [grouping index] },
 //   lexicon1: { L1 key: [grouping index] },
 //   templates: [{ work, start, count }], // each work's groupings, in order: its form (emi-form)
@@ -1299,6 +1306,7 @@ function build(works) {
     normalized.push(inC);
     modes.add(inC.key.mode);
     const groupings = segment(inC, db.beatTicks);
+    for (const g of groupings) g.mode = inC.key.mode; // M8: a mixed corpus composes each piece in one mode
     const beatsPerBar = Math.round((db.meter[0] * 4) / db.meter[1]);
     speac.analyze(groupings, beatsPerBar).forEach(({ tension, beat, bar, phrase }, k) => {
       groupings[k].tension = tension;
@@ -1571,7 +1579,7 @@ function assemble(db, placed, { seed, source, form = null, offsetTicks = null })
     ppq: beat,
     meter: db.meter,
     tempoBpm: 100,
-    key: db.mode === "minor" ? { tonic: 9, mode: "minor", from: "composed" } : { tonic: 0, mode: "major", from: "composed" },
+    key: (first.mode || db.mode) === "minor" ? { tonic: 9, mode: "minor", from: "composed" } : { tonic: 0, mode: "major", from: "composed" },
     transposedBy: 0,
     voices: 4,
     voiceNames: ["Soprano", "Alto", "Tenor", "Bass"],
@@ -1824,7 +1832,9 @@ exports.eventsOfGroupings = eventsOfGroupings;
 //   - each slot takes a grouping with the template beat's SPEAC label (M6,
 //     emi-speac): a preparation where the template prepares, an antecedent
 //     where it builds up, and so on;
-//   - metre, voice-hooking and the different-source rule as in M2.
+//   - metre, voice-hooking and the different-source rule as in M2;
+//   - (M8) in a corpus of major and minor chorales, each slot takes a
+//     grouping of the template's mode, so a piece is all major or all minor.
 // The seed picks the template. If it can't be filled, the rules relax one
 // step at a time (RELAX below), and only then is the next template tried:
 //   0  strict: every hook exact (L0), every SPEAC label matched (skipped
@@ -1875,15 +1885,18 @@ const RELAX = [
 
 // A template's slots, one per beat from its first sounding beat to its last:
 //   { rest: true }                                    a silent beat
-//   { beatInBar, cadence, bass, speac, first, afterRest, last, newNotes }
+//   { beatInBar, cadence, bass, speac, first, afterRest, last, newNotes, mode }
 // bass is the pitch class a cadence slot's chord must stand on (null
 // elsewhere, and everywhere when cadenceBass is false); speac is the beat
-// label a grouping must have (null when speac is false). newNotes is the
+// label a grouping must have (null when speac is false); mode is the
+// template's mode in a mixed corpus (null otherwise). newNotes is the
 // template's own beat's (0: a held chord); emi-stream splits phrases with it.
 // A slot may also be marked needsExit (emi-stream): its grouping must have
 // somewhere to go next.
 function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
   const slots = [];
+  const work = db.works.find((w) => w.id === template.work);
+  const mode = db.mode === "mixed" && work ? work.mode : null;
   for (let k = 0; k < template.count; k++) {
     const g = db.groupings[template.start + k];
     if (k > 0) {
@@ -1901,6 +1914,7 @@ function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
       afterRest: k > 0 && g.restBefore,
       last: k === template.count - 1,
       newNotes: g.newNotes,
+      mode,
     });
   }
   return slots;
@@ -1910,6 +1924,7 @@ function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
 // labels: false for a signature block's grouping, which keeps its own label.
 function fits(g, slot, labels = true) {
   if (g.beatInBar !== slot.beatInBar || g.cadence !== slot.cadence) return false;
+  if (slot.mode && g.mode !== slot.mode) return false;
   if (slot.bass !== null && (g.bass === null || g.bass % 12 !== slot.bass)) return false;
   if (labels && slot.speac && slot.speacHard !== false && (!g.speac || g.speac.beat !== slot.speac)) return false;
   if (slot.first && !g.opening) return false;
@@ -2695,6 +2710,9 @@ exports.write = write;
 // one phrase start through its cadence, plus the held or silent beats after it.
 // A stream walks through one chorale's phrases in order, then another
 // chorale's (chosen by the seed), so it inherits real chorales' tonal plans.
+// In a corpus of major and minor chorales (M8), a stream keeps to the mode of
+// the chorale it starts with.
+//
 // Every phrase is filled like a whole form (emi-form: the same rules and the
 // same relaxation steps, and (M7) a signature block at its cadence where one
 // fits), and its first beat joins the previous phrase's last beat by
@@ -2746,7 +2764,8 @@ function phraseTemplates(db) {
     }
     if (current.length) phrases.push(current);
     const tidy = (slots) => slots.map((slot, i) => (slot.rest ? slot : { ...slot, first: false, last: false, afterRest: i === 0 ? false : slot.afterRest }));
-    return { work: template.work, phrases: phrases.map(tidy) };
+    const work = db.works.find((w) => w.id === template.work);
+    return { work: template.work, mode: work ? work.mode : null, phrases: phrases.map(tidy) };
   });
   cache.set(db, works);
   return works;
@@ -2762,6 +2781,7 @@ function start({ seed = 1 } = {}) {
     last: null, // the last placed grouping, { index, shift }
     endsInRest: false,
     walk: null, // { w, p }: the work and phrase last used
+    mode: null, // the mode of its first phrase's chorale: a stream stays in it (M8)
     used: new Set(),
     usedByPhrase: [],
     fallbacks: 0,
@@ -2824,7 +2844,7 @@ function choices(db, stream, random, last) {
     const gap = (c) => (gapBefore(db, stream, c.slots[0].beatInBar) > 0 ? 1 : 0);
     return list.map((c, i) => [gap(c), i, c]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(([, , c]) => c);
   };
-  const indexes = shuffled(works.map((w, i) => i));
+  const indexes = shuffled(works.map((w, i) => i)).filter((w) => !stream.mode || works[w].mode === stream.mode);
 
   if (!stream.phrases.length) return indexes.map((w) => entry(w, 0));
   const walk = stream.walk;
@@ -2917,6 +2937,7 @@ function commit(db, stream, choice, { slots, placed, relaxed }, { seed, number, 
   stream.last = { index: placed[placed.length - 1].index, shift: placed[placed.length - 1].shift };
   stream.endsInRest = slots[slots.length - 1].rest;
   stream.walk = { w: choice.w, p: choice.p };
+  if (!stream.mode) stream.mode = db.works.find((w) => w.id === choice.work).mode;
   stream.usedByPhrase.push(placed.map((p) => p.index));
   if (stream.usedByPhrase.length > KEEP_USED) for (const i of stream.usedByPhrase.shift()) stream.used.delete(i);
   if (last) stream.finished = true;
@@ -3323,8 +3344,9 @@ function loadCorpus(folder) {
   db = lexicon.build(works);
   remembered.corpus = String(folder);
   const s = lexicon.stats(db);
-  const mode = db.mode === "mixed" ? "major and minor mixed" : db.mode;
-  const words = ["corpus", s.works, "chorales", "(" + mode + "),", s.groupings, "beats,", Math.round(100 * s.deadEndShare) + "%", "dead", "ends,", db.signatures.length, "signatures"];
+  const counted = (m) => db.works.filter((w) => w.mode === m).length;
+  const mode = db.mode === "mixed" ? `${counted("major")} major, ${counted("minor")} minor` : db.mode;
+  const words = ["corpus", s.works, "chorales", ...("(" + mode + "),").split(" "), s.groupings, "beats,", Math.round(100 * s.deadEndShare) + "%", "dead", "ends,", db.signatures.length, "signatures"];
   if (skipped.length) words.push("(" + skipped.length, "skipped)");
   outlet(0, "status", ...words);
   listSignatures();
@@ -3460,7 +3482,8 @@ function describePiece(piece) {
   const s = composer.summary(piece);
   if (!piece.form) return `${piece.id}: ${s.beats} beats from ${s.sources} chorales`;
   const phrases = piece.form.phrases + (piece.form.phrases === 1 ? " phrase" : " phrases");
-  let text = `${piece.id}: form of ${piece.form.template}, ${phrases}, ${piece.form.beats} beats, ${s.sources} chorales`;
+  const key = db && db.mode === "mixed" ? (piece.key.mode === "minor" ? " (A minor)" : " (C major)") : "";
+  let text = `${piece.id}: form of ${piece.form.template}${key}, ${phrases}, ${piece.form.beats} beats, ${s.sources} chorales`;
   text += ", SPEAC " + Math.round(100 * piece.form.speac) + "%";
   if (piece.form.signatures !== undefined) text += ", " + piece.form.signatures + (piece.form.signatures === 1 ? " signature" : " signatures");
   const relaxed = [];
@@ -3584,7 +3607,8 @@ blocksOf.local = 1;
 function listSignatures() {
   const list = db.signatures;
   post(`ml_midi: ${list.length} signatures in ${db.works.length} chorales, strongest first (in how many chorales):\n`);
-  for (const sig of list.slice(0, 16)) post(`  ${sig.id}: ${signatureNames.describe(sig, db.mode)} (${sig.works})\n`);
+  const inMode = (sig) => (db.mode === "mixed" ? `, ${sig.mode}` : "");
+  for (const sig of list.slice(0, 16)) post(`  ${sig.id}: ${signatureNames.describe(sig, db.mode)} (${sig.works}${inMode(sig)})\n`);
   if (list.length > 16) post(`  ... and ${list.length - 16} more\n`);
 }
 listSignatures.local = 1;

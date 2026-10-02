@@ -172,7 +172,7 @@ function assemble(db, placed, { seed, source, form = null, offsetTicks = null })
     ppq: beat,
     meter: db.meter,
     tempoBpm: 100,
-    key: db.mode === "minor" ? { tonic: 9, mode: "minor", from: "composed" } : { tonic: 0, mode: "major", from: "composed" },
+    key: (first.mode || db.mode) === "minor" ? { tonic: 9, mode: "minor", from: "composed" } : { tonic: 0, mode: "major", from: "composed" },
     transposedBy: 0,
     voices: 4,
     voiceNames: ["Soprano", "Alto", "Tenor", "Bass"],

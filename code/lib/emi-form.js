@@ -11,7 +11,9 @@
 //   - each slot takes a grouping with the template beat's SPEAC label (M6,
 //     emi-speac): a preparation where the template prepares, an antecedent
 //     where it builds up, and so on;
-//   - metre, voice-hooking and the different-source rule as in M2.
+//   - metre, voice-hooking and the different-source rule as in M2;
+//   - (M8) in a corpus of major and minor chorales, each slot takes a
+//     grouping of the template's mode, so a piece is all major or all minor.
 // The seed picks the template. If it can't be filled, the rules relax one
 // step at a time (RELAX below), and only then is the next template tried:
 //   0  strict: every hook exact (L0), every SPEAC label matched (skipped
@@ -62,15 +64,18 @@ const RELAX = [
 
 // A template's slots, one per beat from its first sounding beat to its last:
 //   { rest: true }                                    a silent beat
-//   { beatInBar, cadence, bass, speac, first, afterRest, last, newNotes }
+//   { beatInBar, cadence, bass, speac, first, afterRest, last, newNotes, mode }
 // bass is the pitch class a cadence slot's chord must stand on (null
 // elsewhere, and everywhere when cadenceBass is false); speac is the beat
-// label a grouping must have (null when speac is false). newNotes is the
+// label a grouping must have (null when speac is false); mode is the
+// template's mode in a mixed corpus (null otherwise). newNotes is the
 // template's own beat's (0: a held chord); emi-stream splits phrases with it.
 // A slot may also be marked needsExit (emi-stream): its grouping must have
 // somewhere to go next.
 function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
   const slots = [];
+  const work = db.works.find((w) => w.id === template.work);
+  const mode = db.mode === "mixed" && work ? work.mode : null;
   for (let k = 0; k < template.count; k++) {
     const g = db.groupings[template.start + k];
     if (k > 0) {
@@ -88,6 +93,7 @@ function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
       afterRest: k > 0 && g.restBefore,
       last: k === template.count - 1,
       newNotes: g.newNotes,
+      mode,
     });
   }
   return slots;
@@ -97,6 +103,7 @@ function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
 // labels: false for a signature block's grouping, which keeps its own label.
 function fits(g, slot, labels = true) {
   if (g.beatInBar !== slot.beatInBar || g.cadence !== slot.cadence) return false;
+  if (slot.mode && g.mode !== slot.mode) return false;
   if (slot.bass !== null && (g.bass === null || g.bass % 12 !== slot.bass)) return false;
   if (labels && slot.speac && slot.speacHard !== false && (!g.speac || g.speac.beat !== slot.speac)) return false;
   if (slot.first && !g.opening) return false;

@@ -290,8 +290,9 @@ function loadCorpus(folder) {
   db = lexicon.build(works);
   remembered.corpus = String(folder);
   const s = lexicon.stats(db);
-  const mode = db.mode === "mixed" ? "major and minor mixed" : db.mode;
-  const words = ["corpus", s.works, "chorales", "(" + mode + "),", s.groupings, "beats,", Math.round(100 * s.deadEndShare) + "%", "dead", "ends,", db.signatures.length, "signatures"];
+  const counted = (m) => db.works.filter((w) => w.mode === m).length;
+  const mode = db.mode === "mixed" ? `${counted("major")} major, ${counted("minor")} minor` : db.mode;
+  const words = ["corpus", s.works, "chorales", ...("(" + mode + "),").split(" "), s.groupings, "beats,", Math.round(100 * s.deadEndShare) + "%", "dead", "ends,", db.signatures.length, "signatures"];
   if (skipped.length) words.push("(" + skipped.length, "skipped)");
   outlet(0, "status", ...words);
   listSignatures();
@@ -427,7 +428,8 @@ function describePiece(piece) {
   const s = composer.summary(piece);
   if (!piece.form) return `${piece.id}: ${s.beats} beats from ${s.sources} chorales`;
   const phrases = piece.form.phrases + (piece.form.phrases === 1 ? " phrase" : " phrases");
-  let text = `${piece.id}: form of ${piece.form.template}, ${phrases}, ${piece.form.beats} beats, ${s.sources} chorales`;
+  const key = db && db.mode === "mixed" ? (piece.key.mode === "minor" ? " (A minor)" : " (C major)") : "";
+  let text = `${piece.id}: form of ${piece.form.template}${key}, ${phrases}, ${piece.form.beats} beats, ${s.sources} chorales`;
   text += ", SPEAC " + Math.round(100 * piece.form.speac) + "%";
   if (piece.form.signatures !== undefined) text += ", " + piece.form.signatures + (piece.form.signatures === 1 ? " signature" : " signatures");
   const relaxed = [];
@@ -551,7 +553,8 @@ blocksOf.local = 1;
 function listSignatures() {
   const list = db.signatures;
   post(`ml_midi: ${list.length} signatures in ${db.works.length} chorales, strongest first (in how many chorales):\n`);
-  for (const sig of list.slice(0, 16)) post(`  ${sig.id}: ${signatureNames.describe(sig, db.mode)} (${sig.works})\n`);
+  const inMode = (sig) => (db.mode === "mixed" ? `, ${sig.mode}` : "");
+  for (const sig of list.slice(0, 16)) post(`  ${sig.id}: ${signatureNames.describe(sig, db.mode)} (${sig.works}${inMode(sig)})\n`);
   if (list.length > 16) post(`  ... and ${list.length - 16} more\n`);
 }
 listSignatures.local = 1;

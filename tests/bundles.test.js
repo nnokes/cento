@@ -216,6 +216,24 @@ test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece i
   assert.deepEqual(lastStatus(next).slice(0, 2), ["status", "emi-4:"]);
 });
 
+test("core: a corpus of major and minor chorales: counted by mode, each piece in one key", () => {
+  const dir = writeCorpus();
+  const [i, iv, V] = [[69, 64, 60, 45], [69, 65, 62, 50], [68, 64, 59, 52]];
+  const cycle = [i, iv, V, i, iv, V, i, iv, V].map((c) => [...c, 1]).concat([[...i, 2]]);
+  for (const id of ["m", "n", "o"]) writeChorale(dir, id, cycle, { keySignature: { sf: 0, minor: true }, key: { tonic: "A", mode: "minor" } });
+  const core = loadBundle("emi.core");
+  assert.deepEqual(lastStatus(core.send("corpus", dir)).slice(0, 7), ["status", "corpus", 6, "chorales", "(3", "major,", "3"]);
+  core.send("beats", 8);
+  const keys = new Set();
+  for (let seed = 1; seed <= 6; seed++) {
+    const status = lastStatus(core.send("compose", seed)).join(" ");
+    const [, key] = status.match(/form of [a-z] \((C major|A minor)\)/);
+    assert.equal(key === "A minor", /form of [mno]/.test(status), status);
+    keys.add(key);
+  }
+  assert.equal(keys.size, 2);
+});
+
 test("core: 'seed' sets the seed, and composes once a corpus is loaded", () => {
   const core = loadBundle("emi.core");
   assert.deepEqual(core.send("seed", 7), [], "no corpus yet: just remembered");
