@@ -9,7 +9,7 @@
 | The provenance view: hovering shows each beat's source; export writes a `.json` | | |
 | Minor mode: a corpus of major and minor chorales composes each piece in one mode | | |
 | 3/4: pieces in 3/4 bars, played from a barline | | |
-| A blind A/B listening test against real chorales | ❌ first test: 9 of 10 right (chance by guessing 0.011); retest after the changes below | |
+| A blind A/B listening test against real chorales | ❌ first test: 9 of 10 right (chance by guessing 0.011); retest after the changes below, 10 new chorales: 9 of 10 right again (0.011). Both taken by the developer, who knows Bach well; together 18 of 20 (0.0002) | |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M8 makes the composer harder to fool and easier to check.
