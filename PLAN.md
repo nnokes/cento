@@ -380,8 +380,13 @@ in the file so every output can be reproduced.
   - **Filter**: keep only works in the target meter and mode (to start, 4/4
     major only). *As tested in M5:* the 153 minor chorales in 4/4 work as
     well (`--mode minor`, into their own folder). They move to A minor, and
-    composed pieces are labelled A minor. Keep major and minor in separate
-    corpora; a mixed corpus is reported as such when it loads.
+    composed pieces are labelled A minor. *As built in M8:* a corpus may
+    mix them (`--mode any`, 295 chorales): each piece is all major or all
+    minor, in its template's mode and from that mode's chorales only;
+    signatures are found per mode, and a stream keeps to its first
+    chorale's mode. 3/4 works too (`--meter 3/4`: 20 major chorales, 12
+    minor); the player takes its bar length from the transport's time
+    signature, and the hosts set that from the music's meter.
 - **Output**: `dict emi.corpus` and a per-work report (key, meter, voices,
   warnings).
 - **Corpus files as exported** (`tools/export-chorales.py`): type-1 MIDI at
@@ -621,6 +626,34 @@ function fill(slots, i, prev, out, ctx) {
   - **Streams** place blocks at 76% of phrase cadences.
   - **Off switch**: with signatures off, the composer gives exactly M6's
     pieces.
+- *As built in M8* (`code/lib/emi-quality.js`, steps 5 and 6):
+  - **Quotation**: two measures per piece.
+    - The longest run of beats in order from one chorale (signature blocks
+      are such runs, on purpose).
+    - The longest run of notes in one voice, pitch and rhythm, also found in
+      that voice of one chorale.
+  - **Guard**: a piece over 8 beats or 16 notes is set aside, and the next
+    template is tried. If every template tried is over, the piece that
+    quotes least is kept and marked. Long quotes came from tunes Bach
+    harmonized more than once.
+  - **Quotation results** (full corpus, 100 pieces): the longest melody
+    quote is 14 notes, median 9. Each of Bach's chorales shares a median of
+    9 notes with the others. Streams stayed at or
+    under 16 notes in 400 phrases, so they aren't guarded.
+  - **Parallel fifths and octaves**: two voices moving the same way from a
+    perfect fifth or octave to another, not after a rest and not by octave
+    leaps. Each is checked against the source chorales.
+  - **Parallels results**: in 100 pieces there are 37, all of them Bach's
+    own (he has 34 in his 142 chorales). Exact voice-hooking carries every
+    seam's motion over from a source, so recombination adds none.
+  - **Provenance** (`emi-provenance`): each beat's source in words, for
+    the piano roll's hover view, and as a record written next to an
+    exported `.mid`.
+  - **Listening test** (`emi-abtest`, `emi-abtest-page`): 10 pairs, each a
+    chorale and a piece in its form, both in the chorale's key, with Bach
+    as A in half the pairs. The page plays them with Web Audio and scores
+    the guesses with a one-sided binomial test. Pass: listeners can't pick
+    Bach out more often than guessing would (p > 0.05).
 - **Seeded RNG** (mulberry32 or similar): every output records `seed + params +
   db version`, so any piece can be regenerated exactly.
 - **Provenance**: for every grouping in the output, record which work and which
@@ -1122,7 +1155,8 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M7 done; M8 next.** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M8 code done; waiting on the Max and Live checks
+([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.

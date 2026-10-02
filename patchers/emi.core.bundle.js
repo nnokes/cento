@@ -3876,6 +3876,7 @@ function appendPhrase() {
   const from = state.phrases[Math.max(0, state.phrases.length - WINDOW)].startTick;
   draw(current.score, from, phrase.endTick);
   let text = `${flow.name} stream: phrase ${number}${phrasesWanted ? " of " + phrasesWanted : ""} queued (${phrase.work} phrase ${phrase.index}`;
+  if (db.mode === "mixed") text += state.mode === "minor" ? ", A minor" : ", C major";
   const names = blocksOf(phrase.piece.provenance, db.beatTicks).map((b) => b.name);
   if (names.length) text += ", signature " + names.join(" and ");
   if (phrase.fallback) text += ", after a breath";

@@ -13,7 +13,8 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M7 done.** Both products load Bach chorales,
+**Status: M8 code done; waiting on the Max and Live checks
+([M8 checklist](docs/M8-checklist.md)).** Both products load Bach chorales,
 play them in C major or their own key, and compose new chorales by
 recombining beats from the whole corpus. Since M3, each new piece takes the
 form of a chorale from the corpus: its phrases, its cadences and its ending.
@@ -31,8 +32,11 @@ SPEAC function (statement, preparation, extension, antecedent, consequent),
 recombination matches beats by function, and the piano roll shows a SPEAC
 lane. Since M7, pieces keep Bach's *signatures*, the cadence formulas found
 across many chorales (soprano 3-2-1, bass 4-5-1), whole at their cadences,
-shown as gold bands in the piano roll. The full plan and milestones are in
-[PLAN.md](PLAN.md).
+shown as gold bands in the piano roll. Since M8, pieces that quote a chorale
+for too long are set aside, the piano roll shows where each beat came from
+when you hover over it, a corpus may mix major and minor chorales, 3/4
+chorales work, and the **A/B** button writes a blind listening test (Bach or
+not?) as a web page. The full plan and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
 
@@ -63,7 +67,9 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **Python for music21** | `<repo>/.venv/` | Made by `python3 -m venv .venv`. About 300 MB, git-ignored, delete it to uninstall |
 | **Chorale corpus** | `~/Documents/ml_midi/corpus/` | Written by `tools/export-chorales.py`; outside the repo |
 | **Minor-key corpus** (optional) | `~/Documents/ml_midi/corpus-minor/` | Written with `--mode minor`; load it with **load corpus** instead |
-| **Exported pieces** | `~/Documents/ml_midi/out/` | Where to save with **export midi**; outside the repo |
+| **Major and minor, 3/4** (optional, M8) | `~/Documents/ml_midi/corpus-both/`, `corpus-3-4/` | Written with `--mode any` and `--meter 3/4` |
+| **Exported pieces** | `~/Documents/ml_midi/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
+| **Listening tests** | anywhere, e.g. `~/Documents/ml_midi/` | Written by the **A/B** button: one web page, opened in a browser |
 | **Later: databases, Emily's memory** | `~/Documents/ml_midi/db/`, `emily/` | Outside the repo |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
 | **Remembered settings** | `<repo>/patchers/ml_midi.settings.json` | Last corpus, seed and other settings; written by the patches, git-ignored. Delete it to start fresh |
@@ -91,6 +97,9 @@ python3 -m venv .venv
 
 # Optional: the 153 minor-key chorales, as a corpus of their own
 .venv/bin/python tools/export-chorales.py --mode minor --out ~/Documents/ml_midi/corpus-minor
+# Optional (M8): major and minor together (295), and the 20 major chorales in 3/4
+.venv/bin/python tools/export-chorales.py --mode any --out ~/Documents/ml_midi/corpus-both
+.venv/bin/python tools/export-chorales.py --meter 3/4 --out ~/Documents/ml_midi/corpus-3-4
 ```
 
 Tip: in Terminal, type `cd ` (with a space), then drag the repo folder from
