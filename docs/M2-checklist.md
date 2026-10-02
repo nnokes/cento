@@ -1,14 +1,14 @@
 # M2 checklist: the first recombined chorales
 
-## Result: waiting on the Max and Live checks
+## Result: Max version passed; waiting on the Live checks
 
 | Check | Max version | Live version |
 |---|---|---|
-| **load corpus**: `Folder` lists the corpus in `[v8]`; the folder dialog's path works | | |
-| **compose** / **new** / seed box: the same seed gives the same piece as in Node | | |
-| The piano roll draws chorales (by voice) and composed pieces (by source, with seams) | | |
-| The composed piece plays: no broken voices at seams, ends on a cadence | | |
-| **export midi**: `File` writes a `.mid` that plays in Live | | |
+| **load corpus**: `Folder` lists the corpus in `[v8]`; the folder dialog's path works | ✅ | |
+| **compose** / **new** / seed box: the same seed gives the same piece as in Node | ✅ | |
+| The piano roll draws chorales (by voice) and composed pieces (by source, with seams) | ✅ | |
+| The composed piece plays: no broken voices at seams, ends on a cadence | ✅ | |
+| **export midi**: `File` writes a `.mid` (Max), which plays in Live | ✅ | |
 | **writeclips** writes a composed piece as clips | n/a | |
 | 142 chorales, 20 seeds: every piece keeps every rule | ✅ (`tests/corpus.test.js`) | |
 

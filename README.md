@@ -13,7 +13,7 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M2 code done; waiting on the Max and Live checks
+**Status: M2 passed in Max; waiting on the Live checks
 ([M2 checklist](docs/M2-checklist.md)).** Both products load Bach chorales,
 play them in C major or their own key, and (in Live) write them as clips
 ([M0 results](docs/M0-spikes.md), [M1 results](docs/M1-checklist.md)). M2
