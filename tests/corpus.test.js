@@ -112,7 +112,7 @@ test("corpus: pieces keep their chorale's form; under 5% dead ends", { skip }, (
   const steps = [0, 0, 0, 0];
   for (let seed = 1; seed <= seeds; seed++) {
     const result = form.compose(db, { seed });
-    if (result.stats.tried.length > 1 || !result.ok) deadEnds++;
+    if (result.stats.tried.length - result.stats.guarded > 1 || !result.ok) deadEnds++;
     if (!result.ok) continue;
     made++;
     steps[result.stats.relaxed]++;
@@ -201,4 +201,34 @@ test("corpus: stream phrases keep signature blocks at their cadences", { skip },
   }
   t.diagnostic(`${pinned} of ${phrases} phrases cadence on a signature block`);
   if (files.length >= 100) assert.ok(pinned >= 0.6 * phrases, `only ${pinned} of ${phrases}`);
+});
+
+// M8: quotation and voice-leading. Pieces stay within the quotation limits
+// (emi-quality), and their parallel fifths and octaves are Bach's own: voice-
+// hooking carries every seam's motion over from a source, so none are new.
+test("corpus: pieces stay within the quotation limits, with no new parallel 5ths or 8ves", { skip }, (t) => {
+  const quality = require("emi-quality");
+  const db = lexicon.build(files.map((file) => load(file).work));
+  let longest = 0;
+  let overLimit = 0;
+  let own = 0;
+  let fresh = 0;
+  for (let seed = 1; seed <= 30; seed++) {
+    const result = form.compose(db, { seed });
+    if (!result.ok) continue;
+    if (result.piece.form.overLimit) overLimit++;
+    else {
+      const q = quality.quotes(db, result.piece);
+      assert.ok(q.melody.notes <= quality.LIMITS.melody && q.run.beats <= quality.LIMITS.run, `seed ${seed}`);
+      longest = Math.max(longest, q.melody.notes);
+    }
+    const found = quality.parallels(result.piece, { db });
+    own += found.filter((p) => p.inherited).length;
+    fresh += found.filter((p) => !p.inherited).length;
+  }
+  t.diagnostic(`30 pieces: longest melody quote ${longest} notes, ${overLimit} over the limit; parallel 5ths/8ves: ${own} Bach's own, ${fresh} new`);
+  if (files.length >= 100) {
+    assert.equal(overLimit, 0);
+    assert.equal(fresh, 0);
+  }
 });

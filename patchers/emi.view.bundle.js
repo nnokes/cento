@@ -28,14 +28,19 @@ __emi_require.local = 1;
 // small triangles along the top mark cadences (fermatas). A lane along the
 // bottom shows each beat's SPEAC label (M6): S statement, P preparation,
 // E extension, A antecedent, C consequent. Gold bands mark signature blocks
-// (M7), named by their signature. The engine sends one score as:
-//   clear <endTick> <lowPitch> <highPitch> <barTicks> [startTick]
+// (M7), named by their signature. Small carets above the lane mark parallel
+// fifths and octaves (M8): grey for Bach's own, red for new ones. With the
+// mouse over a beat, a box at the top shows where it came from (M8: the
+// provenance view). The engine sends one score as:
+//   clear <endTick> <lowPitch> <highPitch> <barTicks> [startTick] [beatTicks]
 //                                        (the ticks shown; a stream shows its last phrases)
 //   note <on> <dur> <pitch> <color>      (one per note)
 //   seam <tick> [level]                  (one per seam; level 1: octave moves)
 //   cadence <tick>                       (one per fermata)
 //   speac <tick> <label>                 (one per beat)
 //   signature <start> <end> <name...>    (one per signature block, e.g. "soprano 3-2-1")
+//   parallel <tick> <new>                (one per parallel 5th/8ve; new: 1, Bach's own: 0)
+//   source <tick> <text...>              (one per beat: where it came from)
 //   done                                 (draw it)
 
 autowatch = 1;
@@ -60,9 +65,10 @@ const PALETTE = [
 
 let shown = null; // the score being drawn
 let incoming = null; // the score being received
+let hover = null; // the beat under the mouse: an index into shown.sources
 
-function clear(endTick, low, high, barTicks, startTick) {
-  incoming = { start: startTick || 0, end: endTick, low, high, barTicks, notes: [], seams: [], cadences: [], labels: [], signatures: [] };
+function clear(endTick, low, high, barTicks, startTick, beatTicks) {
+  incoming = { start: startTick || 0, end: endTick, low, high, barTicks, beatTicks: beatTicks || barTicks / 4, notes: [], seams: [], cadences: [], labels: [], signatures: [], parallels: [], sources: [] };
 }
 
 function note(on, dur, pitch, color) {
@@ -85,11 +91,57 @@ function signature(start, end, ...name) {
   if (incoming) incoming.signatures.push([start, end, name.join(" ")]);
 }
 
+function parallel(tick, fresh) {
+  if (incoming) incoming.parallels.push([tick, fresh ? 1 : 0]);
+}
+
+function source(tick, ...text) {
+  if (incoming) incoming.sources.push([tick, text.join(" ")]);
+}
+
 function done() {
   if (incoming) shown = incoming;
   incoming = null;
+  hover = null;
   mgraphics.redraw();
 }
+
+// The provenance view: the beat under the mouse.
+function onidle(x) {
+  const found = sourceAt(x);
+  if (found !== hover) {
+    hover = found;
+    mgraphics.redraw();
+  }
+}
+
+function onidleout() {
+  if (hover !== null) {
+    hover = null;
+    mgraphics.redraw();
+  }
+}
+
+function onclick(x) {
+  onidle(x);
+}
+
+function sourceAt(px) {
+  if (!shown || !shown.sources.length) return null;
+  const [width] = size();
+  const tick = shown.start + (px / width) * (shown.end - shown.start);
+  for (let i = shown.sources.length - 1; i >= 0; i--) {
+    const [at] = shown.sources[i];
+    if (at <= tick && tick < at + beatOf(shown)) return i;
+  }
+  return null;
+}
+sourceAt.local = 1;
+
+function beatOf(score) {
+  return score.beatTicks || score.barTicks / 4;
+}
+beatOf.local = 1;
 
 function onresize() {
   mgraphics.redraw();
@@ -164,7 +216,7 @@ function paint() {
   }
 
   // The SPEAC lane: a colored block per beat, with its letter when there's room.
-  const beat = shown.barTicks / 4;
+  const beat = beatOf(shown);
   const beatWidth = x(beat) - x(0);
   g.select_font_face("Arial");
   g.set_font_size(9);
@@ -178,6 +230,37 @@ function paint() {
       g.move_to(x(tick) + beatWidth / 2 - 3, rollHeight + LANE - 3);
       g.show_text(label);
     }
+  }
+
+  // Parallel fifths and octaves: a caret pointing up from the bottom of the roll.
+  for (const [tick, fresh] of shown.parallels) {
+    if (fresh) g.set_source_rgba(1, 0.25, 0.2, 0.95);
+    else g.set_source_rgba(0.7, 0.7, 0.72, 0.8);
+    const px = x(tick);
+    g.move_to(px - 4, rollHeight - 1);
+    g.line_to(px + 4, rollHeight - 1);
+    g.line_to(px, rollHeight - 8);
+    g.close_path();
+    g.fill();
+  }
+
+  // The provenance view: the hovered beat lit up, and its source above.
+  if (hover !== null && shown.sources[hover]) {
+    const [tick, text] = shown.sources[hover];
+    const left = x(tick);
+    g.set_source_rgba(1, 1, 1, 0.12);
+    g.rectangle(left, 0, x(tick + beatOf(shown)) - left, rollHeight);
+    g.fill();
+    g.select_font_face("Arial");
+    g.set_font_size(10);
+    const boxWidth = Math.min(width - 4, text.length * 5.6 + 10);
+    const boxLeft = Math.max(2, Math.min(left, width - boxWidth - 2));
+    g.set_source_rgba(0.05, 0.05, 0.06, 0.85);
+    g.rectangle(boxLeft, 8, boxWidth, 16);
+    g.fill();
+    g.set_source_rgba(1, 1, 1, 0.95);
+    g.move_to(boxLeft + 5, 20);
+    g.show_text(text);
   }
 
   g.set_source_rgba(1, 1, 1, 0.85);

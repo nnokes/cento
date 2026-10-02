@@ -11,6 +11,10 @@
 // Max window when it loads; with "sigs 1" (the default) pieces and stream
 // phrases keep signature blocks at their cadences, shown as gold bands.
 //
+// Quality (M8): each composed piece's quotation measures and parallel fifths
+// and octaves (emi-quality) go to the Max window; parallels are marked in the
+// piano roll (grey: Bach's own, red: new).
+//
 // Streaming (M5): with "stream 1", compose starts a stream of phrases. Two
 // phrases are queued; when the player reaches the start of the last queued
 // phrase it sends "need", and the next phrase is composed and queued. Changes
@@ -20,7 +24,7 @@
 //   coll clear | coll store <step> <voice pitch velocity>...   -> [coll ---emi.queue]
 //   restart                    -> the player: notes off; the queue starts again at the next bar
 //   streamat <step>            -> the player: send "need" when this step is reached
-//   view clear|note|seam|cadence|speac|signature|done ...       -> the piano roll
+//   view clear|note|seam|cadence|speac|signature|parallel|source|done -> the piano roll
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
 //
@@ -38,7 +42,8 @@
 //   phrases <n>            a stream ends after n phrases (0: endless)
 //   transpose <n>          semitones (-12..12): at once for a whole piece, from the next phrase in a stream
 //   need                   (from the player) queue the stream's next phrase
-//   exportmidi <path>      write the current score as a MIDI file
+//   exportmidi <path>      write the current score as a MIDI file (and, for a composed
+//                          piece or stream, its provenance as a .json next to it)
 //   writeclips             write the current score as Live clips (Live only)
 //   autoclips 1 | 0        also write clips after every compose (Live only)
 //   testclip               write the test phrase as Live clips (Live only)
@@ -71,6 +76,8 @@ const streams = require("emi-stream");
 const { segment } = require("emi-segment");
 const speacLabels = require("emi-speac");
 const signatureNames = require("emi-signatures");
+const quality = require("emi-quality");
+const provenanceOf = require("emi-provenance");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
@@ -229,7 +236,14 @@ function exportmidi(path) {
     if (!current) throw new Error("nothing to export yet");
     const target = /\.midi?$/i.test(String(path)) ? String(path) : path + ".mid";
     files.writeBytes(target, ingest.toMidi(current.score));
-    outlet(0, "status", "exported", files.fileName(target));
+    if (!current.score.provenance || !db) {
+      outlet(0, "status", "exported", files.fileName(target));
+      return;
+    }
+    const sidecar = target.replace(/\.midi?$/i, ".json");
+    const settings = { beats: minBeats, form: useForm, signatures: useSignatures, stream: Boolean(flow), transpose: transposeBy };
+    files.writeText(sidecar, JSON.stringify(provenanceOf.record(db, current.score, settings), null, 1) + "\n");
+    outlet(0, "status", "exported", files.fileName(target), "and", files.fileName(sidecar));
   });
 }
 
@@ -310,6 +324,7 @@ function composeNow(atStartup) {
     if (autoClips && !atStartup) text += "; " + clips.writeScore(piece, piece.id);
     outlet(0, "status", ...text.split(" "));
     for (const line of signatureLines(piece)) post(line + "\n");
+    post(qualityLine(piece) + "\n");
   });
 }
 composeNow.local = 1;
@@ -418,6 +433,7 @@ function describePiece(piece) {
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
   if (piece.form.relaxed === 3) relaxed.push("any cadence bass");
+  if (piece.form.overLimit) relaxed.push("quotes over the limit");
   if (relaxed.length) text += " (" + relaxed.join(", ") + ")";
   return text;
 }
@@ -552,6 +568,60 @@ function signatureLines(piece) {
 }
 signatureLines.local = 1;
 
+// A piece's quotation measures and parallels, for the Max window.
+function qualityLine(piece) {
+  const q = quality.quotes(db, piece);
+  const voice = ["soprano", "alto", "tenor", "bass"][q.melody.voice - 1];
+  let text = `${piece.id}: longest quote ${q.melody.notes} notes (${voice}, as in ${q.melody.work}), ${q.run.beats} beats in a row from ${q.run.work}`;
+  const found = quality.parallels(piece, { db });
+  const fresh = found.filter((p) => !p.inherited).length;
+  if (!found.length) text += "; no parallel 5ths or 8ves";
+  else if (!fresh) text += `; parallel 5ths/8ves: ${found.length}, all Bach's own`;
+  else text += `; parallel 5ths/8ves: ${found.length}, ${fresh} new`;
+  return text;
+}
+qualityLine.local = 1;
+
+// Parallel fifths and octaves between ticks from and to: [tick, new (0/1)].
+// A chorale's are all Bach's own; a piece's are checked against its sources.
+function parallelsFor(score, from, to) {
+  try {
+    const events = score.events.filter((e) => e[0] + e[2] > from && e[0] < to);
+    const provenance = score.provenance ? score.provenance.filter((p) => p.tick + score.ppq > from && p.tick < to) : null;
+    const found = quality.parallels({ events, provenance, ppq: score.ppq }, { db: provenance ? db : null });
+    return found.map((p) => [p.tick, provenance && !p.inherited ? 1 : 0]);
+  } catch (e) {
+    return [];
+  }
+}
+parallelsFor.local = 1;
+
+// What the piano roll shows when the mouse is over a beat, as [tick, text]:
+// for a composed piece, where the beat came from; for a chorale, its bar and
+// beat.
+function sourcesFor(score) {
+  try {
+    if (score.provenance && db) {
+      if (!groupingsById || groupingsById.db !== db) groupingsById = { db, map: new Map(db.groupings.map((g) => [g.id, g])) };
+      return score.provenance.map((p) => [p.tick, provenanceOf.describeBeat(db, p, groupingsById.map)]);
+    }
+    const barTicks = (score.meter[0] * score.ppq * 4) / score.meter[1];
+    const pickup = (score.padTicks || 0) > 0;
+    const labels = new Map(labelsFor(score));
+    const out = [];
+    for (let tick = 0; tick < score.lengthTicks; tick += score.ppq) {
+      if (!score.events.some((e) => e[0] < tick + score.ppq && e[0] + e[2] > tick)) continue;
+      const bar = Math.floor(tick / barTicks) + (pickup ? 0 : 1);
+      const beat = Math.floor((tick % barTicks) / score.ppq) + 1;
+      out.push([tick, `bar ${bar} beat ${beat}` + (labels.has(tick) ? " · " + labels.get(tick) : "")]);
+    }
+    return out;
+  } catch (e) {
+    return [];
+  }
+}
+sourcesFor.local = 1;
+
 // The SPEAC lane: one beat label per beat, as [tick, label]. A composed
 // piece shows the labels its beats bring from their chorales; a chorale (or
 // the test phrase) is analysed itself.
@@ -581,7 +651,7 @@ function draw(score, from = 0, to = score.lengthTicks) {
   const events = score.events.filter((e) => e[0] + e[2] > from && e[0] < to);
   const pitches = (events.length ? events : score.events).map((e) => e[1]);
   const barTicks = (score.meter[0] * score.ppq * 4) / score.meter[1];
-  outlet(0, "view", "clear", to, Math.min(...pitches), Math.max(...pitches), barTicks, from);
+  outlet(0, "view", "clear", to, Math.min(...pitches), Math.max(...pitches), barTicks, from, score.ppq);
   const prov = score.provenance || null;
   const sources = prov ? [...new Set(prov.map((p) => p.work))] : [];
   const colorAt = (tick, voice) => {
@@ -602,6 +672,8 @@ function draw(score, from = 0, to = score.lengthTicks) {
   for (const b of blocksOf(prov || [], score.ppq)) {
     if (b.end > from && b.start < to) outlet(0, "view", "signature", b.start, b.end, ...b.name.split(" "));
   }
+  for (const [tick, fresh] of parallelsFor(score, from, to)) if (tick >= from && tick < to) outlet(0, "view", "parallel", tick, fresh);
+  for (const [tick, text] of sourcesFor(score)) if (tick >= from && tick < to) outlet(0, "view", "source", tick, ...text.split(" "));
   outlet(0, "view", "done");
 }
 draw.local = 1;

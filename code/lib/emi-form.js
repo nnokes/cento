@@ -44,6 +44,7 @@
 const rng = require("emi-rng");
 const lexicon = require("emi-lexicon");
 const signatures = require("emi-signatures");
+const quality = require("emi-quality");
 const { assemble } = require("emi-compose");
 
 // A signature block is *strong* when its strongest soprano or bass
@@ -460,7 +461,15 @@ function templateBeats(db, template) {
 // seed among those at least `beats` long. relax: how far the rules may relax
 // (an index into RELAX; 0 = strict only). signatures: false composes without
 // signature blocks (as in M6).
-function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true } = {}) {
+//
+// M8: a piece that quotes a source for too long (emi-quality's guard: more
+// than 16 notes of one voice, or more than 8 beats in a row from one
+// chorale) is put aside and the next template tried. This happens when a
+// chorale's tune has other harmonizations in the corpus: their beats fit its
+// form well and bring back its melody. If every template tried quotes too
+// much, the piece that quotes least is returned, marked over the limit.
+// guard: false skips the check.
+function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true } = {}) {
   const random = rng.create(seed);
   const templates = db.templates.filter((t) => templateBeats(db, t) >= beats);
   for (let i = templates.length - 1; i > 0; i--) {
@@ -469,6 +478,9 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
   }
   const tried = [];
   const counters = { steps: 0, backtracks: 0 };
+  let quoting = null; // the piece put aside that quotes least: { piece, step }
+  let guarded = 0; // pieces put aside
+  const stats = (relaxed) => ({ tried, relaxed, steps: counters.steps, backtracks: counters.backtracks, guarded });
   for (const template of templates.slice(0, maxTemplates)) {
     tried.push(template.work);
     const slotsAt = memo((step) => slotsOf(db, template, RELAX[step]));
@@ -486,13 +498,24 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
       }).length;
       const piece = assemble(db, placed, {
         seed,
-        source: `EMI recombination (M7, form of ${template.work})`,
+        source: `EMI recombination (M8, form of ${template.work})`,
         form: { template: template.work, phrases: cadences, beats: slots.length, rests: slots.length - placed.length, relaxed: step, speac: matched / placed.length, signatures: placed.filter((p) => p.signatures).length },
       });
-      return { ok: true, piece, stats: { tried, relaxed: step, steps: counters.steps, backtracks: counters.backtracks } };
+      const check = quality.guard(db, piece);
+      piece.form.quotes = { run: check.quotes.run.beats, melody: check.quotes.melody.notes };
+      if (guard && !check.ok) {
+        guarded++;
+        if (!quoting || check.quotes.melody.notes < quoting.piece.form.quotes.melody) quoting = { piece, step };
+        break; // the next template
+      }
+      return { ok: true, piece, stats: stats(step) };
     }
   }
-  return { ok: false, piece: null, stats: { tried, relaxed: null, steps: counters.steps, backtracks: counters.backtracks } };
+  if (quoting) {
+    quoting.piece.form.overLimit = true;
+    return { ok: true, piece: quoting.piece, stats: stats(quoting.step) };
+  }
+  return { ok: false, piece: null, stats: stats(null) };
 }
 
 exports.compose = compose;

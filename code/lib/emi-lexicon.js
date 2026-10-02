@@ -11,7 +11,7 @@
 // db = {
 //   version, beatTicks, meter, matchLevels: ["L0", "L1"],
 //   mode: "major" | "minor" | "mixed"   (the works' modes; all in C major / A minor)
-//   works: [{ id, title, key, transposedBy, groupings }],
+//   works: [{ id, title, key, transposedBy, groupings, pickup, mode }],
 //   groupings: [grouping],            // see emi-segment, plus (M6) tension and
 //                                     // speac: { beat, bar, phrase } labels (emi-speac)
 //   lexicon:  { L0 key: [grouping index] },
@@ -79,7 +79,7 @@ function build(works) {
       groupings[k].tension = tension;
       groupings[k].speac = { beat, bar, phrase };
     });
-    db.works.push({ id: work.id, title: work.title, key: work.key, transposedBy: inC.transposedBy, groupings: groupings.length });
+    db.works.push({ id: work.id, title: work.title, key: work.key, transposedBy: inC.transposedBy, groupings: groupings.length, pickup: (work.padTicks || 0) > 0, mode: inC.key.mode });
     if (groupings.length) db.templates.push({ work: work.id, start: db.groupings.length, count: groupings.length });
     for (const g of groupings) {
       const i = db.groupings.length;

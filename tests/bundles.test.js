@@ -105,7 +105,7 @@ test("each bundle exposes exactly its documented messages", () => {
     "autoclips", "beats", "clear", "compose", "corpus", "exportmidi", "form", "key", "loadmidi", "need", "next",
     "pattern", "phrases", "remember", "seed", "sigs", "startup", "stream", "testclip", "transpose", "writeclips",
   ]);
-  assert.deepEqual(loadBundle("emi.view").handlers(), ["cadence", "clear", "done", "note", "onresize", "paint", "seam", "signature", "speac"]);
+  assert.deepEqual(loadBundle("emi.view").handlers(), ["cadence", "clear", "done", "note", "onclick", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "signature", "source", "speac"]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
 });
 
@@ -152,7 +152,7 @@ test("core: 'pattern' queues every step, draws it, and reports", () => {
   assert.deepEqual(coll[0], ["clear"]);
   assert.deepEqual(coll.slice(1), steps.map(({ step, events }) => ["store", step, ...events]));
   const view = select(out, "view");
-  assert.deepEqual(view[0], ["clear", 8 * Q, 48, 74, 4 * Q, 0]);
+  assert.deepEqual(view[0], ["clear", 8 * Q, 48, 74, 4 * Q, 0, Q]);
   assert.equal(view.filter(([kind]) => kind === "note").length, 28);
   assert.deepEqual(view.at(-1), ["done"]);
   assert.deepEqual(lastStatus(out), ["status", "test-cadence", "queued"]);
@@ -248,7 +248,9 @@ test("core: signatures: listed when a corpus loads, kept at cadences, drawn as b
   assert.match(name.join(" "), /^(soprano|bass) [-#b0-9]+$/);
   const cadence = select(out, "view").find(([kind]) => kind === "cadence")[1];
   assert.equal(end - 960, cadence, "the band ends with the cadence's beat");
-  assert.match(core.posted.join(""), /^emi-3: (soprano|bass) [-#b0-9]+( \+ (soprano|bass) [-#b0-9]+)? at the cadence in bar \d+ \(beat \d\), from [abc]\n$/);
+  const [blockLine, qualityLine] = core.posted.join("").split("\n");
+  assert.match(blockLine, /^emi-3: (soprano|bass) [-#b0-9]+( \+ (soprano|bass) [-#b0-9]+)? at the cadence in bar \d+ \(beat \d\), from [abc]$/);
+  assert.match(qualityLine, /^emi-3: longest quote \d+ notes \((soprano|alto|tenor|bass), as in [abc]\), \d+ beats in a row from [abc]; (no parallel 5ths or 8ves|parallel 5ths\/8ves: \d+, all Bach's own)$/);
 
   assert.deepEqual(lastStatus(core.send("sigs", 0)), ["status", "no", "signatures", "(as", "in", "M6)"]);
   const plain = core.send("compose", 3);
@@ -283,17 +285,47 @@ test("core: 'form 0' composes freely, as in M2; 'form 1' goes back to forms", ()
   assert.equal(lastStatus(core.send("compose", 3))[2], "form");
 });
 
-test("core: 'exportmidi' writes the current score as a MIDI file", () => {
+test("core: 'exportmidi' writes the current score as a MIDI file, and a piece's provenance next to it", () => {
   const core = loadBundle("emi.core");
   assert.equal(lastStatus(core.send("exportmidi", path.join(tempDir(), "x.mid")))[0], "error");
   core.send("corpus", writeCorpus());
   core.send("beats", 8);
   core.send("compose", 3);
   const target = path.join(tempDir(), "piece"); // ".mid" is added
-  assert.deepEqual(lastStatus(core.send("exportmidi", target)), ["status", "exported", "piece.mid"]);
+  assert.deepEqual(lastStatus(core.send("exportmidi", target)), ["status", "exported", "piece.mid", "and", "piece.json"]);
   const midi = smf.parse(fs.readFileSync(target + ".mid"));
   assert.deepEqual(midi.tracks.slice(1).map((t) => t.name), ["Soprano", "Alto", "Tenor", "Bass"]);
   assert.ok(midi.tracks.slice(1).every((t) => t.notes.length > 0));
+
+  const record = JSON.parse(fs.readFileSync(target + ".json", "utf8"));
+  assert.equal(record.piece, "emi-3");
+  assert.equal(record.seed, 3);
+  assert.deepEqual(record.settings, { beats: 8, form: true, signatures: true, stream: false, transpose: 0 });
+  assert.equal(record.beats.length, 11, "one entry per beat");
+  for (const beat of record.beats) {
+    assert.match(beat.grouping, /^[abc]:\d+$/);
+    assert.ok(beat.bar >= 0 && beat.beat >= 1 && beat.beat <= 4);
+    assert.match(beat.speac, /^[SPEAC]$/);
+  }
+  assert.ok(record.quotes.melody.notes > 0);
+  assert.deepEqual(record.quotes.limits, { run: 8, melody: 16 });
+
+  // A loaded chorale has no provenance: just the .mid.
+  core.send("loadmidi", writeAMajorChorale());
+  assert.deepEqual(lastStatus(core.send("exportmidi", path.join(tempDir(), "chorale.mid"))), ["status", "exported", "chorale.mid"]);
+});
+
+test("core: the provenance view: each beat's source, or a chorale's bar and beat", () => {
+  const core = loadBundle("emi.core");
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  const sources = select(core.send("compose", 3), "view").filter(([kind]) => kind === "source");
+  assert.equal(sources.length, 11);
+  for (const [, , ...text] of sources) assert.match(text.join(" "), /^[abc], bar \d+ beat [1-4] · [SPEAC]/);
+
+  const chorale = select(core.send("loadmidi", writeAMajorChorale()), "view").filter(([kind]) => kind === "source");
+  assert.equal(chorale.length, 3);
+  assert.match(chorale[0].slice(2).join(" "), /^bar \d+ beat [1-4] · [SPEAC]$/);
 });
 
 // ---------------------------------------------------------------- core: streams
@@ -579,6 +611,41 @@ test("view: a signature block is a band behind the notes, with its name (shorten
   const noteAt = g.calls.findIndex((c) => c[0] === "rectangle" && Math.abs(c[1]) < 1 && c[3] < 50);
   const bandAt = g.calls.findIndex((c) => c === rectangles[1]);
   assert.ok(bandAt < noteAt, "bands are drawn first, behind the notes");
+});
+
+test("view: parallel fifths and octaves are carets above the lane, red when new", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics;
+  view.send("clear", 4 * Q, 60, 72, 4 * Q);
+  view.send("parallel", Q, 0);
+  view.send("parallel", 2 * Q, 1);
+  view.send("done");
+  g.calls.length = 0;
+  view.send("paint");
+  const colors = g.calls.filter(([name]) => name === "set_source_rgba").map(([, r, gr]) => [r, gr]);
+  assert.ok(colors.some(([r, gr]) => r === 1 && gr === 0.25), "red for a new one");
+  const tips = g.calls.filter(([name, x, y]) => name === "line_to" && y === 169 - 8).map(([, x]) => x);
+  assert.deepEqual(tips, [90, 180], "one caret at each tick");
+});
+
+test("view: the beat under the mouse lights up, with where it came from", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics;
+  view.send("clear", 4 * Q, 60, 72, 4 * Q, 0, Q);
+  view.send("source", 0, "a,", "bar", "1", "beat", "1");
+  view.send("source", Q, "b,", "bar", "3", "beat", "2", "·", "P");
+  view.send("done");
+  g.calls.length = 0;
+  view.send("onidle", 100, 50); // 360 px for 4 beats: x 100 is beat 2
+  assert.equal(g.calls.filter(([name]) => name === "redraw").length, 1);
+  view.send("paint");
+  assert.ok(g.calls.some(([name, text]) => name === "show_text" && text === "b, bar 3 beat 2 · P"));
+  g.calls.length = 0;
+  view.send("onidle", 110, 60); // the same beat: no redraw
+  assert.equal(g.calls.filter(([name]) => name === "redraw").length, 0);
+  view.send("onidleout");
+  view.send("paint");
+  assert.ok(!g.calls.some(([name, text]) => name === "show_text" && /bar 3/.test(text)));
 });
 
 test("view: a start tick shows only the end of a long score (a stream's last phrases)", () => {
