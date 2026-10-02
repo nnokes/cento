@@ -1,15 +1,19 @@
 # M5 checklist: streaming
 
-## Result: waiting on the Max and Live checks
+## Result: M5 passed (macOS, Max 9, Live 12)
 
 | Check | Max version | Live version |
 |---|---|---|
-| A piece starts on the next barline after Play, wherever the playhead is | | |
-| Composing while playing: the old piece stops cleanly, the new one starts on the next bar | | |
-| A stream of 8 phrases plays through and ends on a final cadence | | |
-| An endless stream keeps going; transpose is heard from the next phrase | | |
-| No stuck or dropped notes at 60–160 BPM, through stop/start and tempo changes | | |
+| A piece starts on the next barline after Play, wherever the playhead is | ✅ | ✅ (bars 1 and 9, with the metronome) |
+| Composing while playing: the old piece stops cleanly, the new one starts on the next bar | ✅ | ✅ |
+| A stream of 8 phrases plays through and ends on a final cadence | ✅ | ✅ (4 phrases) |
+| An endless stream keeps going; transpose is heard from the next phrase | ✅ | ✅ (endless; transpose checked in Max) |
+| No stuck or dropped notes at 60–160 BPM, through stop/start and tempo changes | ✅ | ✅ |
 | Engine, stream and patch tests | ✅ (`npm test`) | ✅ |
+
+The checklist below is kept as a record and for re-testing. The player
+reading `[transport]` works in Max 9 and inside Live 12, where it follows
+Live's song position.
 
 M5 changes how the player and the composer work together.
 

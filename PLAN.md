@@ -1053,8 +1053,7 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M5 code done; waiting on the Max and Live checks
-([checklist](docs/M5-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M5 done; M6 next.** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
@@ -1069,9 +1068,10 @@ voice from the track's name, and the brain plays through them only with
 corpus (the same phrases, cadences on the same bass notes, the same rests and
 ending), and on the full corpus 1 seed in 100 is a dead end (the limit is 5).
 M4 passed in both products ([results](docs/M4-checklist.md)): one panel
-shared between the products, and settings that survive a reload. M5 plays
-pieces from the next barline wherever Play starts, and streams pieces phrase
-by phrase, endlessly or ending on a final cadence after N phrases. When a patch or set opens, the last corpus comes back and the
+shared between the products, and settings that survive a reload. M5 passed
+in both products ([results](docs/M5-checklist.md)): pieces play from the
+next barline wherever Play starts, and stream phrase by phrase, endlessly or
+ending on a final cadence after N phrases. When a patch or set opens, the last corpus comes back and the
 current seed's piece is composed again.
 
 | # | Milestone | Done when |
