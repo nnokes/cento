@@ -105,7 +105,7 @@ test("bundles in patchers/ are up to date with code/", () => {
 test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
-    "autoclips", "beats", "clear", "compose", "corpus", "exportmidi", "form", "key", "loadmidi", "need", "next",
+    "abtest", "autoclips", "beats", "clear", "compose", "corpus", "exportmidi", "form", "key", "loadmidi", "need", "next",
     "pattern", "phrases", "remember", "seed", "sigs", "startup", "stream", "testclip", "transpose", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), ["cadence", "clear", "done", "note", "onclick", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "signature", "source", "speac"]);
@@ -390,6 +390,17 @@ test("core: the provenance view: each beat's source, or a chorale's bar and beat
   const chorale = select(core.send("loadmidi", writeAMajorChorale()), "view").filter(([kind]) => kind === "source");
   assert.equal(chorale.length, 3);
   assert.match(chorale[0].slice(2).join(" "), /^bar \d+ beat [1-4] · [SPEAC]$/);
+});
+
+test("core: 'abtest' writes a listening test page from the loaded corpus", () => {
+  const core = loadBundle("emi.core");
+  assert.equal(lastStatus(core.send("abtest", path.join(tempDir(), "t")))[0], "error", "needs a corpus");
+  core.send("corpus", writeCorpus());
+  const target = path.join(tempDir(), "listen"); // ".html" is added
+  assert.deepEqual(lastStatus(core.send("abtest", target)), ["status", "wrote", "listen.html:", 3, "pairs;", "open", "it", "in", "a", "web", "browser"]);
+  const html = fs.readFileSync(target + ".html", "utf8");
+  assert.match(html, /^<!doctype html>/);
+  assert.match(html, /<title>Which Is Bach\?<\/title>/);
 });
 
 // ---------------------------------------------------------------- core: streams

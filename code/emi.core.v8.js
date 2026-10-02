@@ -45,6 +45,8 @@
 //   need                   (from the player) queue the stream's next phrase
 //   exportmidi <path>      write the current score as a MIDI file (and, for a composed
 //                          piece or stream, its provenance as a .json next to it)
+//   abtest <path>          write a blind A/B listening test (M8): a web page of 10
+//                          pairs, each a chorale and a piece in its form
 //   writeclips             write the current score as Live clips (Live only)
 //   autoclips 1 | 0        also write clips after every compose (Live only)
 //   testclip               write the test phrase as Live clips (Live only)
@@ -79,6 +81,8 @@ const speacLabels = require("emi-speac");
 const signatureNames = require("emi-signatures");
 const quality = require("emi-quality");
 const provenanceOf = require("emi-provenance");
+const abtests = require("emi-abtest");
+const abtestPage = require("emi-abtest-page");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
@@ -247,6 +251,17 @@ function exportmidi(path) {
     const settings = { beats: minBeats, form: useForm, signatures: useSignatures, stream: Boolean(flow), transpose: transposeBy };
     files.writeText(sidecar, JSON.stringify(provenanceOf.record(db, current.score, settings), null, 1) + "\n");
     outlet(0, "status", "exported", files.fileName(target), "and", files.fileName(sidecar));
+  });
+}
+
+function abtest(path) {
+  attempt(() => {
+    if (!db) throw new Error("load a corpus first");
+    const target = /\.html?$/i.test(String(path)) ? String(path) : path + ".html";
+    const test = abtests.build(db, { seed: currentSeed, signatures: useSignatures });
+    if (!test.pairs.length) throw new Error("no chorale's form could be filled for the test; try more chorales");
+    files.writeText(target, abtestPage.page(test));
+    outlet(0, "status", "wrote", files.fileName(target) + ":", test.pairs.length, "pairs;", "open", "it", "in", "a", "web", "browser");
   });
 }
 

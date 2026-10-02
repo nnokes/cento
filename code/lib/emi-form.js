@@ -475,10 +475,11 @@ function templateBeats(db, template) {
 // chorale's tune has other harmonizations in the corpus: their beats fit its
 // form well and bring back its melody. If every template tried quotes too
 // much, the piece that quotes least is returned, marked over the limit.
-// guard: false skips the check.
-function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true } = {}) {
+// guard: false skips the check. template: compose in this chorale's form
+// only (the listening test pairs a chorale with a piece in its form).
+function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null } = {}) {
   const random = rng.create(seed);
-  const templates = db.templates.filter((t) => templateBeats(db, t) >= beats);
+  const templates = db.templates.filter((t) => (only ? t.work === only : templateBeats(db, t) >= beats));
   for (let i = templates.length - 1; i > 0; i--) {
     const j = random.int(i + 1);
     [templates[i], templates[j]] = [templates[j], templates[i]];
