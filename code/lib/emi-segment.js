@@ -12,9 +12,12 @@
 //   destKey                   the next grouping's entryKey (null at the end of the work):
 //                             where this beat's voices go next in the original
 //   newNotes                  how many notes start inside this beat (0: pure continuation)
+//   bass                      the lowest pitch sounding at the start of the beat (null if none)
 //   opening, cadence, final   first sounding beat; a fermata starts here; last beat of the work
+//   restBefore                the beat before is silent (always true for the opening)
 //
-// Groupings are only made for beats with sound; silent padding beats are skipped.
+// Groupings are only made for beats with sound; silent beats are skipped (the
+// beat after one has restBefore set).
 
 function segment(work, beatTicks = work.ppq) {
   const barTicks = (work.meter[0] * work.ppq * 4) / work.meter[1];
@@ -28,6 +31,7 @@ function segment(work, beatTicks = work.ppq) {
     const end = start + beatTicks;
     const pieces = [];
     const entry = new Array(work.voices).fill("r");
+    let bass = null;
     for (const [on, pitch, dur, voice, vel] of work.events) {
       const off = on + dur;
       if (off <= start || on >= end) continue;
@@ -35,7 +39,10 @@ function segment(work, beatTicks = work.ppq) {
       const tiedOut = off > end;
       const from = Math.max(on, start);
       pieces.push([from - start, pitch, Math.min(off, end) - from, voice, vel, tiedIn ? 1 : 0, tiedOut ? 1 : 0]);
-      if (on <= start) entry[voice - 1] = (tiedIn ? "~" : "") + pitch;
+      if (on <= start) {
+        entry[voice - 1] = (tiedIn ? "~" : "") + pitch;
+        bass = bass === null ? pitch : Math.min(bass, pitch);
+      }
     }
     pieces.sort((a, b2) => a[0] - b2[0] || a[3] - b2[3]);
     beats.push({
@@ -44,6 +51,7 @@ function segment(work, beatTicks = work.ppq) {
       pieces,
       entryKey: entry.join(","),
       newNotes: pieces.filter((p) => !p[5]).length,
+      bass,
     });
   }
 
@@ -60,7 +68,9 @@ function segment(work, beatTicks = work.ppq) {
       entryKey: beat.entryKey,
       destKey: next && next.pieces.length ? next.entryKey : null,
       newNotes: beat.newNotes,
+      bass: beat.bass,
       opening: i === 0,
+      restBefore: i === 0 || beats[beat.index - 1].pieces.length === 0,
       cadence: fermataBeats.has(beat.index),
       final: beat.index === last,
     };

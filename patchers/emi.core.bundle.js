@@ -651,9 +651,12 @@ exports.barTicks = barTicks;
 //   destKey                   the next grouping's entryKey (null at the end of the work):
 //                             where this beat's voices go next in the original
 //   newNotes                  how many notes start inside this beat (0: pure continuation)
+//   bass                      the lowest pitch sounding at the start of the beat (null if none)
 //   opening, cadence, final   first sounding beat; a fermata starts here; last beat of the work
+//   restBefore                the beat before is silent (always true for the opening)
 //
-// Groupings are only made for beats with sound; silent padding beats are skipped.
+// Groupings are only made for beats with sound; silent beats are skipped (the
+// beat after one has restBefore set).
 
 function segment(work, beatTicks = work.ppq) {
   const barTicks = (work.meter[0] * work.ppq * 4) / work.meter[1];
@@ -667,6 +670,7 @@ function segment(work, beatTicks = work.ppq) {
     const end = start + beatTicks;
     const pieces = [];
     const entry = new Array(work.voices).fill("r");
+    let bass = null;
     for (const [on, pitch, dur, voice, vel] of work.events) {
       const off = on + dur;
       if (off <= start || on >= end) continue;
@@ -674,7 +678,10 @@ function segment(work, beatTicks = work.ppq) {
       const tiedOut = off > end;
       const from = Math.max(on, start);
       pieces.push([from - start, pitch, Math.min(off, end) - from, voice, vel, tiedIn ? 1 : 0, tiedOut ? 1 : 0]);
-      if (on <= start) entry[voice - 1] = (tiedIn ? "~" : "") + pitch;
+      if (on <= start) {
+        entry[voice - 1] = (tiedIn ? "~" : "") + pitch;
+        bass = bass === null ? pitch : Math.min(bass, pitch);
+      }
     }
     pieces.sort((a, b2) => a[0] - b2[0] || a[3] - b2[3]);
     beats.push({
@@ -683,6 +690,7 @@ function segment(work, beatTicks = work.ppq) {
       pieces,
       entryKey: entry.join(","),
       newNotes: pieces.filter((p) => !p[5]).length,
+      bass,
     });
   }
 
@@ -699,7 +707,9 @@ function segment(work, beatTicks = work.ppq) {
       entryKey: beat.entryKey,
       destKey: next && next.pieces.length ? next.entryKey : null,
       newNotes: beat.newNotes,
+      bass: beat.bass,
       opening: i === 0,
+      restBefore: i === 0 || beats[beat.index - 1].pieces.length === 0,
       cadence: fermataBeats.has(beat.index),
       final: beat.index === last,
     };
@@ -712,21 +722,46 @@ exports.segment = segment;
   // ---- emi-lexicon.js
   factories["emi-lexicon"] = function (exports, module, require) {
 "use strict";
-// The lexicon: every grouping of every work, indexed by how it starts.
-// In M2 the only match level is L0: exact pitches per voice, including which
-// voices are held over (see entryKey in emi-segment).
+// The lexicon: every grouping of every work, indexed by how it starts, at two
+// match levels:
+//   L0  exact pitches per voice, including which voices are held over (see
+//       entryKey in emi-segment): "67,64,~60,48"
+//   L1  the upper voices by pitch class, the bass exactly, held or not:
+//       "7,4,0,48". A grouping found this way is moved by octaves, voice by
+//       voice, so it starts exactly where the previous beat's voices went; a
+//       tie may become a repeated note, or the reverse (emi-form).
 //
 // db = {
-//   version, beatTicks, meter, matchLevel: "L0",
+//   version, beatTicks, meter, matchLevels: ["L0", "L1"],
 //   works: [{ id, title, key, transposedBy, groupings }],
 //   groupings: [grouping],            // see emi-segment
-//   lexicon: { entryKey: [grouping index] },
+//   lexicon:  { L0 key: [grouping index] },
+//   lexicon1: { L1 key: [grouping index] },
+//   templates: [{ work, start, count }], // each work's groupings, in order: its form (emi-form)
+//   ranges: [[lowest, highest] per voice],
 //   openings: [grouping index], finals: [grouping index]
 // }
 // Plain JSON, so a database can be saved and loaded later.
 
 const ingest = require("emi-ingest");
 const { segment } = require("emi-segment");
+
+// Keys are lists of voice tokens: "60" (a new note), "~60" (held over) or "r"
+// (silent), joined by ",". These parse and rebuild them.
+function parseKey(key) {
+  return key.split(",").map((t) => (t === "r" ? null : { held: t[0] === "~", pitch: Number(t.replace("~", "")) }));
+}
+
+function keyOf(tokens) {
+  return tokens.map((t) => (t ? (t.held ? "~" : "") + t.pitch : "r")).join(",");
+}
+
+// The L1 key of a list of tokens: upper voices as pitch classes, the bass
+// (the last voice) exactly, without the held marks.
+function l1Key(tokens) {
+  const bass = tokens.length - 1;
+  return tokens.map((t, v) => (t ? String(v === bass ? t.pitch : t.pitch % 12) : "r")).join(",");
+}
 
 // works: as read (any key); each is moved to C major / A minor first.
 function build(works) {
@@ -735,13 +770,16 @@ function build(works) {
   if (meters.size > 1) throw new Error("works must share one meter, found " + [...meters].join(", "));
 
   const db = {
-    version: 1,
+    version: 2,
     beatTicks: works[0].ppq,
     meter: works[0].meter,
-    matchLevel: "L0",
+    matchLevels: ["L0", "L1"],
     works: [],
     groupings: [],
     lexicon: {},
+    lexicon1: {},
+    templates: [],
+    ranges: [],
     openings: [],
     finals: [],
   };
@@ -749,42 +787,57 @@ function build(works) {
     const inC = ingest.normalize(work);
     const groupings = segment(inC, db.beatTicks);
     db.works.push({ id: work.id, title: work.title, key: work.key, transposedBy: inC.transposedBy, groupings: groupings.length });
+    if (groupings.length) db.templates.push({ work: work.id, start: db.groupings.length, count: groupings.length });
     for (const g of groupings) {
       const i = db.groupings.length;
       db.groupings.push(g);
       (db.lexicon[g.entryKey] = db.lexicon[g.entryKey] || []).push(i);
+      const loose = l1Key(parseKey(g.entryKey));
+      (db.lexicon1[loose] = db.lexicon1[loose] || []).push(i);
       if (g.opening) db.openings.push(i);
       if (g.final) db.finals.push(i);
+      for (const [, pitch, , voice] of g.pieces) {
+        const range = (db.ranges[voice - 1] = db.ranges[voice - 1] || [pitch, pitch]);
+        range[0] = Math.min(range[0], pitch);
+        range[1] = Math.max(range[1], pitch);
+      }
     }
   }
   return db;
 }
 
 // For each grouping that has a continuation: how many groupings from OTHER
-// works start where it goes. Zero means a dead end for the different-source
-// rule (unless the next beat is a pure continuation).
+// works start where it goes, at L0 and at L1. Zero means a dead end for the
+// different-source rule (unless the next beat is a pure continuation).
 function stats(db) {
   let withDest = 0;
   let deadEnds = 0;
+  let deadEnds1 = 0;
   let choices = 0;
   for (const g of db.groupings) {
     if (g.destKey === null) continue;
     withDest++;
-    const others = (db.lexicon[g.destKey] || []).filter((i) => db.groupings[i].work !== g.work).length;
-    if (others === 0) deadEnds++;
-    choices += others;
+    const others = (list) => (list || []).filter((i) => db.groupings[i].work !== g.work).length;
+    const exact = others(db.lexicon[g.destKey]);
+    if (exact === 0) deadEnds++;
+    if (others(db.lexicon1[l1Key(parseKey(g.destKey))]) === 0) deadEnds1++;
+    choices += exact;
   }
   return {
     works: db.works.length,
     groupings: db.groupings.length,
     keys: Object.keys(db.lexicon).length,
     deadEndShare: withDest ? deadEnds / withDest : 0,
+    deadEndShareL1: withDest ? deadEnds1 / withDest : 0,
     meanChoices: withDest ? choices / withDest : 0,
   };
 }
 
 exports.build = build;
 exports.stats = stats;
+exports.parseKey = parseKey;
+exports.keyOf = keyOf;
+exports.l1Key = l1Key;
   };
 
   // ---- emi-rng.js
@@ -929,7 +982,10 @@ function compose(db, { seed = 1, beats = 32, maxBeats = beats + 16, budget = 500
   for (const start of shuffle(db.openings.filter((i) => dist[i] + 1 <= maxBeats))) {
     chain.push(start);
     used.add(start);
-    if (extend()) return { ok: true, piece: assemble(db, chain, seed), stats: { steps, backtracks } };
+    if (extend()) {
+      const placed = chain.map((index, beat) => ({ index, beat, shift: null, level: 0 }));
+      return { ok: true, piece: assemble(db, placed, { seed, source: "EMI recombination (M2, L0)" }), stats: { steps, backtracks } };
+    }
     chain.pop();
     used.delete(start);
     if (steps > budget) break;
@@ -937,25 +993,34 @@ function compose(db, { seed = 1, beats = 32, maxBeats = beats + 16, budget = 500
   return { ok: false, piece: null, stats: { steps, backtracks } };
 }
 
-// Places the chain's groupings one beat apart, joining notes that were split at
-// beat lines (tiedOut followed by tiedIn on the same pitch) back into one note.
-function assemble(db, chain, seed) {
+// Places groupings at the given beats (counted from the piece's first beat),
+// moves each voice by its shift (octaves, at match level L1), and joins notes
+// that were split at beat lines (tiedOut, then tiedIn on the same pitch in the
+// next beat) back into one note. A tied note with nothing to join is cut at
+// the beat line, or starts there as a new note.
+//   placed: [{ index, beat, shift: [semitones per voice] | null, level: 0 | 1 }]
+function assemble(db, placed, { seed, source, form = null }) {
   const beat = db.beatTicks;
-  const first = db.groupings[chain[0]];
+  const first = db.groupings[placed[0].index];
   const offset = (first.beatInBar - 1) * beat; // keep the opening's place in the bar
   const barTicks = (db.meter[0] * beat * 4) / db.meter[1];
   const events = [];
-  const open = {}; // voice -> event still tied over
+  let open = {}; // voice -> event still tied over from the previous beat
+  let lastBeat = null;
   const provenance = [];
   const fermatas = [];
 
-  chain.forEach((index, n) => {
+  for (const { index, beat: at, shift, level = 0 } of placed) {
     const g = db.groupings[index];
-    const t0 = offset + n * beat;
-    provenance.push({ tick: t0, work: g.work, beat: g.index, grouping: g.id });
+    const t0 = offset + at * beat;
+    if (lastBeat === null || at !== lastBeat + 1) open = {};
+    const entry = { tick: t0, work: g.work, beat: g.index, grouping: g.id, level };
+    if (shift && shift.some((v) => v !== 0)) entry.shift = shift;
+    provenance.push(entry);
     if (g.cadence) fermatas.push(t0);
     const tiedOver = {};
-    for (const [on, pitch, dur, voice, vel, tiedIn, tiedOut] of g.pieces) {
+    for (const [on, sourcePitch, dur, voice, vel, tiedIn, tiedOut] of g.pieces) {
+      const pitch = sourcePitch + (shift ? shift[voice - 1] : 0);
       const held = open[voice];
       let event;
       if (tiedIn && held && held[1] === pitch && held[0] + held[2] === t0 + on) {
@@ -967,16 +1032,16 @@ function assemble(db, chain, seed) {
       }
       if (tiedOut) tiedOver[voice] = event;
     }
-    for (const voice of Object.keys(open)) delete open[voice];
-    Object.assign(open, tiedOver);
-  });
+    open = tiedOver;
+    lastBeat = at;
+  }
 
   events.sort((a, b) => a[0] - b[0] || a[3] - b[3] || a[1] - b[1]);
-  const end = offset + chain.length * beat;
+  const end = offset + (placed[placed.length - 1].beat + 1) * beat;
   return {
     id: "emi-" + seed,
     title: null,
-    source: "EMI recombination (M2, L0)",
+    source,
     seed,
     ppq: beat,
     meter: db.meter,
@@ -990,6 +1055,7 @@ function assemble(db, chain, seed) {
     lengthTicks: Math.ceil(end / barTicks) * barTicks,
     events,
     provenance,
+    form,
     warnings: [],
   };
 }
@@ -1003,13 +1069,284 @@ function summary(piece) {
     run = works[i] === works[i - 1] ? run + 1 : 1;
     longestRun = Math.max(longestRun, run);
   }
-  return { beats: works.length, sources: new Set(works).size, longestRun };
+  const relaxed = piece.provenance.filter((p) => p.level > 0).length;
+  return { beats: works.length, sources: new Set(works).size, longestRun, relaxed };
 }
 
 exports.compose = compose;
 exports.toEnd = toEnd;
 exports.assemble = assemble;
 exports.summary = summary;
+  };
+
+  // ---- emi-form.js
+  factories["emi-form"] = function (exports, module, require) {
+"use strict";
+// M3: composing to a form. A *template* is a real chorale's plan, beat by
+// beat: where each beat falls in the bar, where its phrases cadence (its
+// fermata beats) and on which bass note, where it rests, and where it ends. A
+// new piece fills the template's slots with groupings from the lexicon:
+//   - the first slot takes a grouping that opened a work, a slot after a rest
+//     one that followed a rest, and the last slot one that ended a work;
+//   - a cadence slot takes a cadence grouping on the same bass pitch class,
+//     and every other slot a non-cadence grouping, so the piece cadences where
+//     the template does and nowhere else;
+//   - metre, voice-hooking and the different-source rule as in M2.
+// The seed picks the template. If it can't be filled, the rules relax one
+// step at a time (RELAX below), and only then is the next template tried:
+//   0  strict: every hook exact (L0)
+//   1  L1 hooks too: a grouping's upper voices move by octaves so each starts
+//      exactly where the previous beat's voice went (see emi-lexicon), as long
+//      as every voice stays in its range and no voices cross that didn't
+//      before; exact hooks still come first
+//   2  as 1, and a cadence may stand on any bass note
+//
+// Before searching, a backward pass over the template finds, for every slot,
+// the groupings from which the rest of the template can still be filled. The
+// search only enters those, so it rarely backtracks.
+
+const rng = require("emi-rng");
+const lexicon = require("emi-lexicon");
+const { assemble } = require("emi-compose");
+
+const RELAX = [
+  { level: 0, cadenceBass: true },
+  { level: 1, cadenceBass: true },
+  { level: 1, cadenceBass: false },
+];
+
+// A template's slots, one per beat from its first sounding beat to its last:
+//   { rest: true }                                    a silent beat
+//   { beatInBar, cadence, bass, first, afterRest, last }
+// bass is the pitch class a cadence slot's chord must stand on (null
+// elsewhere, and everywhere when cadenceBass is false).
+function slotsOf(db, template, { cadenceBass = true } = {}) {
+  const slots = [];
+  for (let k = 0; k < template.count; k++) {
+    const g = db.groupings[template.start + k];
+    if (k > 0) {
+      const prev = db.groupings[template.start + k - 1];
+      for (let gap = prev.index + 1; gap < g.index; gap++) slots.push({ rest: true });
+    }
+    slots.push({
+      rest: false,
+      beatInBar: g.beatInBar,
+      cadence: g.cadence,
+      bass: cadenceBass && g.cadence && g.bass !== null ? g.bass % 12 : null,
+      first: k === 0,
+      afterRest: k > 0 && g.restBefore,
+      last: k === template.count - 1,
+    });
+  }
+  return slots;
+}
+
+// May grouping g fill this slot, leaving aside how it joins its neighbours?
+function fits(g, slot) {
+  if (g.beatInBar !== slot.beatInBar || g.cadence !== slot.cadence) return false;
+  if (slot.bass !== null && (g.bass === null || g.bass % 12 !== slot.bass)) return false;
+  if (slot.first && !g.opening) return false;
+  if (slot.afterRest && !g.restBefore) return false;
+  if (slot.last && !g.final) return false;
+  return true;
+}
+
+const sourceOk = (from, to) => to.work !== from.work || to.newNotes === 0;
+
+// For each grouping, the groupings that may follow it at L0 and at L1: metre
+// and the different-source rule included; repeats, ranges and octaves not.
+// Computed once per database.
+const graphCache = new WeakMap();
+function successors(db) {
+  if (graphCache.has(db)) return graphCache.get(db);
+  const beatsPerBar = (db.meter[0] * 4) / db.meter[1];
+  const graph = (index, keyOf) =>
+    db.groupings.map((g) => {
+      if (g.destKey === null) return [];
+      const next = (g.beatInBar % beatsPerBar) + 1;
+      return (index[keyOf(g.destKey)] || []).filter((i) => db.groupings[i].beatInBar === next && sourceOk(g, db.groupings[i]));
+    });
+  const result = [graph(db.lexicon, (key) => key), graph(db.lexicon1, (key) => lexicon.l1Key(lexicon.parseKey(key)))];
+  graphCache.set(db, result);
+  return result;
+}
+
+// ok[s][i] = 1: grouping i may fill slot s, and the rest of the template can
+// still be filled after it through `next` (one of the successor graphs).
+// Computed backwards from the last slot. Rest slots have no row.
+function feasible(db, slots, next) {
+  const n = db.groupings.length;
+  const ok = new Array(slots.length).fill(null);
+  let later = null; // the row of the next non-rest slot
+  let laterAny = true;
+  let restBetween = false;
+  for (let s = slots.length - 1; s >= 0; s--) {
+    if (slots[s].rest) {
+      restBetween = true;
+      continue;
+    }
+    const row = new Uint8Array(n);
+    let any = false;
+    for (let i = 0; i < n; i++) {
+      if (!fits(db.groupings[i], slots[s])) continue;
+      if (later && (restBetween ? !laterAny : !next[i].some((j) => later[j]))) continue;
+      row[i] = 1;
+      any = true;
+    }
+    ok[s] = row;
+    later = row;
+    laterAny = any;
+    restBetween = false;
+  }
+  return ok;
+}
+
+// The pitches a grouping's voices go to next, after its voices were moved.
+function shiftedDestination(g, shift) {
+  return lexicon.parseKey(g.destKey).map((t, v) => (t ? { held: t.held, pitch: t.pitch + (shift ? shift[v] : 0) } : null));
+}
+
+// The octave moves that make grouping h start on `target`, voice by voice.
+function shiftTo(target, h) {
+  return lexicon.parseKey(h.entryKey).map((t, v) => (t && target[v] ? target[v].pitch - t.pitch : 0));
+}
+
+// Whether grouping g, its voices moved by `shift`, stays in every voice's
+// range and crosses no neighbouring voices that didn't cross before.
+function voicesFit(db, g, shift) {
+  for (const [, pitch, , voice] of g.pieces) {
+    const [low, high] = db.ranges[voice - 1];
+    const moved = pitch + shift[voice - 1];
+    if (moved < low || moved > high) return false;
+  }
+  for (const upper of g.pieces) {
+    for (const lower of g.pieces) {
+      if (lower[3] !== upper[3] + 1) continue;
+      if (upper[0] >= lower[0] + lower[2] || lower[0] >= upper[0] + upper[2]) continue; // not together
+      const before = upper[1] - lower[1];
+      const after = upper[1] + shift[upper[3] - 1] - (lower[1] + shift[lower[3] - 1]);
+      if (before >= 0 && after < 0) return false;
+    }
+  }
+  return true;
+}
+
+// Fills one template's slots. Returns the placed groupings, or null.
+function fill(db, slots, { random, level, budget, counters }) {
+  const graphs = successors(db);
+  const ok = feasible(db, slots, graphs[level]);
+  const ok0 = level > 0 ? feasible(db, slots, graphs[0]) : ok;
+  const at = slots.map((slot, s) => s).filter((s) => !slots[s].rest); // the slots to fill
+  if (!ok[at[0]].some((v, i) => v && db.groupings[i].opening)) return null; // can't be filled at all
+
+  const shuffle = (list) => {
+    const out = list.slice();
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = random.int(i + 1);
+      [out[i], out[j]] = [out[j], out[i]];
+    }
+    return out;
+  };
+  const restStarts = db.groupings.map((g, i) => i).filter((i) => db.groupings[i].restBefore);
+  const placed = [];
+  const used = new Set();
+
+  // Hooks that keep every voice where its source had it come first: exact
+  // hooks, then L1 hooks that move no voice (a tie becomes a repeated note or
+  // the reverse). Among those, the ones from which the template can be
+  // finished with exact hooks come first. Hooks that move voices come last.
+  const candidates = (k) => {
+    const s = at[k];
+    const free = (i) => ok[s][i] && !used.has(i);
+    const prev = k > 0 ? placed[k - 1] : null;
+    if (!prev || at[k - 1] !== s - 1) {
+      // The first slot, or the first after a rest: nothing to hook to.
+      const pool = (k === 0 ? db.openings : restStarts).filter(free);
+      return [...shuffle(pool.filter((i) => ok0[s][i])), ...shuffle(pool.filter((i) => !ok0[s][i]))].map((index) => ({ index, shift: null, level: 0 }));
+    }
+    const from = db.groupings[prev.index];
+    const target = shiftedDestination(from, prev.shift);
+    const exact = (db.lexicon[lexicon.keyOf(target)] || []).filter((i) => free(i) && sourceOk(from, db.groupings[i]));
+    const unmoved = []; // L1, no voice moved
+    const moved = [];
+    if (level >= 1) {
+      const isExact = new Set(exact);
+      for (const i of db.lexicon1[lexicon.l1Key(target)] || []) {
+        if (isExact.has(i) || !free(i) || !sourceOk(from, db.groupings[i])) continue;
+        const shift = shiftTo(target, db.groupings[i]);
+        if (shift.every((v) => v === 0)) unmoved.push(i);
+        else if (voicesFit(db, db.groupings[i], shift)) moved.push({ index: i, shift, level: 1 });
+      }
+    }
+    const asIs = (level) => (index) => ({ index, shift: null, level });
+    const exactFirst = (list, level) => [
+      ...shuffle(list.filter((i) => ok0[s][i])).map(asIs(level)),
+    ];
+    const rest = (list, level) => shuffle(list.filter((i) => !ok0[s][i])).map(asIs(level));
+    return [...exactFirst(exact, 0), ...exactFirst(unmoved, 1), ...rest(exact, 0), ...rest(unmoved, 1), ...shuffle(moved)];
+  };
+
+  const extend = (k) => {
+    if (k === at.length) return true;
+    if (++counters.steps > budget) return false;
+    for (const c of candidates(k)) {
+      placed.push({ ...c, beat: at[k] });
+      used.add(c.index);
+      if (extend(k + 1)) return true;
+      placed.pop();
+      used.delete(c.index);
+      counters.backtracks++;
+      if (counters.steps > budget) return false;
+    }
+    return false;
+  };
+  return extend(0) ? placed : null;
+}
+
+// A template's length in beats, rests included.
+function templateBeats(db, template) {
+  const first = db.groupings[template.start];
+  const last = db.groupings[template.start + template.count - 1];
+  return last.index - first.index + 1;
+}
+
+// Composes a piece in the form of a chorale from the corpus, chosen by the
+// seed among those at least `beats` long. relax: how far the rules may relax
+// (an index into RELAX; 0 = strict only).
+function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10 } = {}) {
+  const random = rng.create(seed);
+  const templates = db.templates.filter((t) => templateBeats(db, t) >= beats);
+  for (let i = templates.length - 1; i > 0; i--) {
+    const j = random.int(i + 1);
+    [templates[i], templates[j]] = [templates[j], templates[i]];
+  }
+  const tried = [];
+  const counters = { steps: 0, backtracks: 0 };
+  for (const template of templates.slice(0, maxTemplates)) {
+    tried.push(template.work);
+    for (let step = 0; step <= relax; step++) {
+      const slots = slotsOf(db, template, RELAX[step]);
+      const placed = fill(db, slots, { random, level: RELAX[step].level, budget: counters.steps + budget, counters });
+      if (!placed) continue;
+      const cadences = slots.filter((slot) => slot.cadence).length;
+      const piece = assemble(db, placed, {
+        seed,
+        source: `EMI recombination (M3, form of ${template.work})`,
+        form: { template: template.work, phrases: cadences, beats: slots.length, rests: slots.length - placed.length, relaxed: step },
+      });
+      return { ok: true, piece, stats: { tried, relaxed: step, steps: counters.steps, backtracks: counters.backtracks } };
+    }
+  }
+  return { ok: false, piece: null, stats: { tried, relaxed: null, steps: counters.steps, backtracks: counters.backtracks } };
+}
+
+exports.compose = compose;
+exports.RELAX = RELAX;
+exports.slotsOf = slotsOf;
+exports.fits = fits;
+exports.feasible = feasible;
+exports.successors = successors;
+exports.templateBeats = templateBeats;
   };
 
   // ---- emi-load.js
@@ -1301,7 +1638,7 @@ __emi_require.local = 1;
 //
 // One inlet, one outlet; every output starts with a selector:
 //   coll clear | coll store <step> <voice pitch velocity>...   -> [coll ---emi.queue]
-//   view clear|note|seam|done ...                               -> the piano roll
+//   view clear|note|seam|cadence|done ...                       -> the piano roll
 //   status <text...> | error <text...>                          -> the host's status line
 //
 // Messages:
@@ -1309,6 +1646,7 @@ __emi_require.local = 1;
 //   key c | key original   chorales in C major / A minor (default) or as written
 //   corpus <folder>        read every chorale in a folder and build the lexicon
 //   beats <n>              shortest piece to compose (default 32)
+//   form 1 | form 0        compose in the form of a chorale (M3, default) or freely (M2)
 //   compose [seed]         compose a piece (seed defaults to the last one + 1)
 //   exportmidi <path>      write the current score as a MIDI file
 //   writeclips             write the current score as Live clips (Live only)
@@ -1325,6 +1663,7 @@ const queue = __emi_require("emi-queue");
 const ingest = __emi_require("emi-ingest");
 const lexicon = __emi_require("emi-lexicon");
 const composer = __emi_require("emi-compose");
+const forms = __emi_require("emi-form");
 const files = __emi_require("emi-load");
 const clips = __emi_require("emi-clips");
 
@@ -1332,6 +1671,7 @@ let loaded = null; // the last chorale read, in its written key
 let keyMode = "c";
 let db = null;
 let minBeats = 32;
+let useForm = true;
 let lastSeed = 0;
 let current = null; // { score, name }
 
@@ -1368,19 +1708,40 @@ function beats(n) {
   outlet(0, "status", "pieces", "of", minBeats + "+", "beats");
 }
 
+function form(on) {
+  useForm = Boolean(on);
+  if (useForm) outlet(0, "status", "pieces", "in", "the", "form", "of", "a", "chorale");
+  else outlet(0, "status", "free", "pieces", "(M2),", minBeats + "+", "beats");
+}
+
 function compose(seed) {
   attempt(() => {
     if (!db) throw new Error("load a corpus first");
     const useSeed = seed === undefined ? lastSeed + 1 : Math.round(seed);
     lastSeed = useSeed;
-    const result = composer.compose(db, { seed: useSeed, beats: minBeats });
+    const result = useForm ? forms.compose(db, { seed: useSeed, beats: minBeats }) : composer.compose(db, { seed: useSeed, beats: minBeats });
     if (!result.ok) {
-      outlet(0, "error", "no", "piece", "for", "seed", useSeed, "with", minBeats + "+", "beats;", "try", "another", "seed", "or", "more", "chorales");
+      if (useForm && !result.stats.tried.length) {
+        outlet(0, "error", "no", "chorale", "is", minBeats + "+", "beats", "long;", "lower", "beats");
+      } else {
+        outlet(0, "error", "no", "piece", "for", "seed", useSeed, "with", minBeats + "+", "beats;", "try", "another", "seed", "or", "more", "chorales");
+      }
       return;
     }
-    const s = composer.summary(result.piece);
-    show(result.piece, result.piece.id, false);
-    outlet(0, "status", result.piece.id + ":", s.beats, "beats", "from", s.sources, "chorales");
+    const piece = result.piece;
+    const s = composer.summary(piece);
+    show(piece, piece.id, false);
+    if (!piece.form) {
+      outlet(0, "status", piece.id + ":", s.beats, "beats", "from", s.sources, "chorales");
+      return;
+    }
+    const phrases = piece.form.phrases + (piece.form.phrases === 1 ? " phrase" : " phrases");
+    let text = `${piece.id}: form of ${piece.form.template}, ${phrases}, ${piece.form.beats} beats, ${s.sources} chorales`;
+    const relaxed = [];
+    if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
+    if (piece.form.relaxed === 2) relaxed.push("any cadence bass");
+    if (relaxed.length) text += " (" + relaxed.join(", ") + ")";
+    outlet(0, "status", ...text.split(" "));
   });
 }
 
@@ -1449,7 +1810,9 @@ function show(score, name, chorale) {
 }
 show.local = 1;
 
-// Piano roll: notes colored by source chorale (composed pieces) or by voice.
+// Piano roll: notes colored by source chorale (composed pieces) or by voice;
+// seams where the source changes (level 1: voices moved by octaves); a mark
+// at each cadence (fermata).
 function draw(score) {
   const pitches = score.events.map((e) => e[1]);
   const barTicks = (score.meter[0] * score.ppq * 4) / score.meter[1];
@@ -1464,8 +1827,11 @@ function draw(score) {
   };
   for (const [on, pitch, dur, voice] of score.events) outlet(0, "view", "note", on, dur, pitch, colorAt(on, voice));
   if (prov) {
-    for (let i = 1; i < prov.length; i++) if (prov[i].work !== prov[i - 1].work) outlet(0, "view", "seam", prov[i].tick);
+    for (let i = 1; i < prov.length; i++) {
+      if (prov[i].work !== prov[i - 1].work || prov[i].level > 0) outlet(0, "view", "seam", prov[i].tick, prov[i].level || 0);
+    }
   }
+  for (const tick of score.fermatas || []) outlet(0, "view", "cadence", tick);
   outlet(0, "view", "done");
 }
 draw.local = 1;

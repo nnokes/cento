@@ -24,10 +24,13 @@ __emi_require.local = 1;
 //
 // Notes are colored by source chorale for composed pieces (by voice for a
 // single chorale); thin lines mark bars, bright lines mark seams, where the
-// source changes. The engine sends one score as:
+// source changes (orange where voices were moved by octaves to join), and
+// small triangles along the top mark cadences (fermatas). The engine sends
+// one score as:
 //   clear <lengthTicks> <lowPitch> <highPitch> <barTicks>
 //   note <on> <dur> <pitch> <color>      (one per note)
-//   seam <tick>                          (one per change of source)
+//   seam <tick> [level]                  (one per seam; level 1: octave moves)
+//   cadence <tick>                       (one per fermata)
 //   done                                 (draw it)
 
 autowatch = 1;
@@ -49,15 +52,19 @@ let shown = null; // the score being drawn
 let incoming = null; // the score being received
 
 function clear(lengthTicks, low, high, barTicks) {
-  incoming = { lengthTicks, low, high, barTicks, notes: [], seams: [] };
+  incoming = { lengthTicks, low, high, barTicks, notes: [], seams: [], cadences: [] };
 }
 
 function note(on, dur, pitch, color) {
   if (incoming) incoming.notes.push([on, dur, pitch, color]);
 }
 
-function seam(tick) {
-  if (incoming) incoming.seams.push(tick);
+function seam(tick, level) {
+  if (incoming) incoming.seams.push([tick, level || 0]);
+}
+
+function cadence(tick) {
+  if (incoming) incoming.cadences.push(tick);
 }
 
 function done() {
@@ -105,12 +112,26 @@ function paint() {
     g.fill();
   }
 
-  g.set_source_rgba(1, 1, 1, 0.35);
-  for (const tick of shown.seams) {
-    g.move_to(Math.round(x(tick)) + 0.5, 0);
-    g.line_to(Math.round(x(tick)) + 0.5, height);
+  for (const level of [0, 1]) {
+    if (level === 0) g.set_source_rgba(1, 1, 1, 0.35);
+    else g.set_source_rgba(1, 0.6, 0.15, 0.9);
+    for (const [tick, l] of shown.seams) {
+      if (l !== level) continue;
+      g.move_to(Math.round(x(tick)) + 0.5, 0);
+      g.line_to(Math.round(x(tick)) + 0.5, height);
+    }
+    g.stroke();
   }
-  g.stroke();
+
+  g.set_source_rgba(1, 1, 1, 0.85);
+  for (const tick of shown.cadences) {
+    const cx = x(tick);
+    g.move_to(cx - 4, 0);
+    g.line_to(cx + 4, 0);
+    g.line_to(cx, 6);
+    g.close_path();
+    g.fill();
+  }
 }
 
 function size() {

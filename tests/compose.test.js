@@ -7,43 +7,12 @@ const lexicon = require("emi-lexicon");
 const composer = require("emi-compose");
 const { checkPiece } = require("./piece-rules");
 
-const Q = 960;
-
-// A 4-voice work in C from a list of [soprano, alto, tenor, bass, beats] chords,
-// starting with a one-beat pickup on beat 4 (time 0 is a barline).
-function work(id, chords, { fermataAt = [] } = {}) {
-  const events = [];
-  let t = 3 * Q;
-  for (const [s, a, tn, b, beats] of chords) {
-    [s, a, tn, b].forEach((pitch, v) => events.push([t, pitch, beats * Q, v + 1, 90]));
-    t += beats * Q;
-  }
-  return {
-    id,
-    ppq: Q,
-    meter: [4, 4],
-    key: { tonic: 0, mode: "major", from: "test" },
-    transposedBy: 0,
-    voices: 4,
-    voiceNames: ["Soprano", "Alto", "Tenor", "Bass"],
-    padTicks: 3 * Q,
-    fermatas: fermataAt.map((beat) => beat * Q),
-    lengthTicks: Math.ceil(t / (4 * Q)) * 4 * Q,
-    events,
-    warnings: [],
-  };
-}
-
-const I = [72, 67, 64, 48];
-const IV = [72, 69, 65, 53];
-const V = [71, 67, 62, 55];
-const phrase = (...chords) => chords.map((c) => [...c, 1]);
+const { Q, work, cycle } = require("./synthetic");
 
 // Three works on the same I-IV-V cycle with the same voicings, so every
 // grouping has a twin in the other works at the same place in the bar and
 // recombination always has a choice. (Real chorales are far less regular; the
 // corpus test covers those.) Beat 3 is the pickup; the final I falls on beat 12.
-const cycle = [...phrase(I, IV, V, I, IV, V, I, IV, V), [...I, 2]];
 const corpus = ["a", "b", "c"].map((id) => work(id, cycle, { fermataAt: [12] }));
 
 test("segment: groupings per sounding beat, with ties, destinations and cadences", () => {

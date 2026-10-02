@@ -15,7 +15,8 @@ const keys = require("emi-key");
 const queue = require("emi-queue");
 const lexicon = require("emi-lexicon");
 const composer = require("emi-compose");
-const { checkPiece } = require("./piece-rules");
+const form = require("emi-form");
+const { checkPiece, checkForm } = require("./piece-rules");
 
 const dir = process.env.EMI_CORPUS || path.join(os.homedir(), "Documents", "ml_midi", "corpus");
 const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith(".mid")).sort() : [];
@@ -93,4 +94,34 @@ test("corpus: composed pieces keep every rule (voice-hooking, metre, sources, fo
   }
   t.diagnostic(`composed ${made} of 20 seeds`);
   if (files.length >= 100) assert.equal(made, 20, `only ${made} of 20 seeds composed a piece`);
+});
+
+// M3: pieces in the form of a chorale. A dead end is a seed whose chorale's
+// form can't be filled even with every relaxation, so the composer moves on to
+// another chorale's form. With 100+ chorales that must stay under 5%, and
+// every seed must compose.
+test("corpus: pieces keep their chorale's form; under 5% dead ends", { skip }, (t) => {
+  const db = lexicon.build(files.map((file) => load(file).work));
+  const s = lexicon.stats(db);
+  t.diagnostic(`dead-end groupings: L0 ${(100 * s.deadEndShare).toFixed(1)}%, L1 ${(100 * s.deadEndShareL1).toFixed(1)}%`);
+  const seeds = 100;
+  let made = 0;
+  let deadEnds = 0;
+  let relaxedSeams = 0;
+  const steps = [0, 0, 0];
+  for (let seed = 1; seed <= seeds; seed++) {
+    const result = form.compose(db, { seed });
+    if (result.stats.tried.length > 1 || !result.ok) deadEnds++;
+    if (!result.ok) continue;
+    made++;
+    steps[result.stats.relaxed]++;
+    relaxedSeams += composer.summary(result.piece).relaxed;
+    checkForm(db, result.piece);
+    assert.doesNotThrow(() => queue.toSteps(ingest.quantize(result.piece).work));
+  }
+  t.diagnostic(`composed ${made} of ${seeds}; dead ends ${deadEnds}; strict ${steps[0]}, octave moves ${steps[1]}, any cadence bass ${steps[2]}; ${(relaxedSeams / Math.max(1, made)).toFixed(1)} octave seams per piece`);
+  if (files.length >= 100) {
+    assert.equal(made, seeds);
+    assert.ok(deadEnds < 0.05 * seeds, `${deadEnds} dead ends in ${seeds} seeds`);
+  }
 });

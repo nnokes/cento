@@ -309,6 +309,13 @@ per **match level**:
 | `L2 pcset+bass` | pitch-class set + bass pitch class | looser, needs octave adjustment of upper voices |
 | `L3 harmony` | chord root + quality | last resort, needs voice-leading repair |
 
+*As built in M3:* L0 and L1 only. L1 keys the upper voices by pitch class and
+the bass exactly, and ignores whether a voice is held or re-struck. A grouping
+found at L1 has its upper voices moved by octaves so each starts exactly where
+the previous beat's voice went, within the corpus's range for that voice and
+without new voice crossings. On the full corpus, forms fill with 1% dead ends
+(§4.6), so L2 and L3 aren't needed yet.
+
 **Signature**
 
 ```js
@@ -321,6 +328,12 @@ per **match level**:
 ```js
 [{ beatInBar, speac: {beat, bar, phrase}, cadence, phraseIndex, signatureSlot? }, ...]
 ```
+
+*As built in M3* (`code/lib/emi-form.js`): one slot per beat, from the work's
+first sounding beat to its last: `{ rest: true }` for a silent beat (32 of the
+142 chorales rest for a beat after some cadences), otherwise `{ beatInBar,
+cadence, bass, first, afterRest, last }`. `bass` is the pitch class a cadence
+chord stands on. SPEAC labels and signature slots come in M6 and M7.
 
 **Database file** (`~/Documents/ml_midi/db/<style>.json`): `{ version, settings, works, groupings,
 lexicon: {L0, L1, L2, L3}, signatures, templates }`. Record the analysis settings
@@ -514,6 +527,16 @@ function fill(slots, i, prev, out, ctx) {
   This needs a second lexicon index, by `destination`, so you can ask "what can
   come *before* this grouping?". Build it so `fill` can run in either direction
   and compare the results by ear in M3.
+  *Not built in M3:* before searching, a backward pass over the template
+  finds which groupings can still reach every later cadence, and the forward
+  search only enters those. That already makes cadences land, with 1% dead
+  ends.
+- *As built in M3:* the seed picks the template. On a dead end the rules relax
+  in this order: exact hooks (L0), then octave moves (L1), then a cadence on
+  any bass note. Only then is another template tried. A piece records its
+  template, how far it relaxed, and each octave-moved beat in its provenance.
+  On the full corpus, out of 100 seeds: 95 strict, 3 with octave moves, 2
+  with any cadence bass; 1 dead end, which took another template.
 - **Seeded RNG** (mulberry32 or similar): every output records `seed + params +
   db version`, so any piece can be regenerated exactly.
 - **Provenance**: for every grouping in the output, record which work and which
@@ -767,7 +790,7 @@ ml_midi/
 │   └── lib/               emi-smf.js  emi-ingest.js  emi-key.js  emi-queue.js
 │                          emi-segment.js  emi-tension.js  emi-speac.js
 │                          emi-signatures.js  emi-lexicon.js  emi-compose.js
-│                          emi-rng.js  emily-assoc.js
+│                          emi-form.js  emi-rng.js  emily-assoc.js
 ├── data/starter/        bach-chorales.json: the prebuilt starter database (§6.1)
 ├── tests/               node --test, incl. bundles in a simulated [v8] context;
 │                        fixtures/ for tiny inputs (Cope's book examples)
@@ -977,7 +1000,8 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M2 done; M3 next.** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M3 code done; waiting on the Max and Live checks
+([checklist](docs/M3-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
@@ -987,7 +1011,9 @@ tried, keep every rule (`tests/corpus.test.js`), show in the piano roll, play
 in Max and in Live (as clips or through the voice devices), and export as
 `.mid`. The Live checks found one bug, now fixed: voice devices pick their
 voice from the track's name, and the brain plays through them only with
-**Play through voices** on.
+**Play through voices** on. M3 composes in the form of a chorale from the
+corpus: the same phrases, cadences on the same bass notes, the same rests and
+ending. On the full corpus, 1 seed in 100 is a dead end (the limit is 5).
 
 | # | Milestone | Done when |
 |---|-----------|-----------|

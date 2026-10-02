@@ -103,7 +103,10 @@ function compose(db, { seed = 1, beats = 32, maxBeats = beats + 16, budget = 500
   for (const start of shuffle(db.openings.filter((i) => dist[i] + 1 <= maxBeats))) {
     chain.push(start);
     used.add(start);
-    if (extend()) return { ok: true, piece: assemble(db, chain, seed), stats: { steps, backtracks } };
+    if (extend()) {
+      const placed = chain.map((index, beat) => ({ index, beat, shift: null, level: 0 }));
+      return { ok: true, piece: assemble(db, placed, { seed, source: "EMI recombination (M2, L0)" }), stats: { steps, backtracks } };
+    }
     chain.pop();
     used.delete(start);
     if (steps > budget) break;
@@ -111,25 +114,34 @@ function compose(db, { seed = 1, beats = 32, maxBeats = beats + 16, budget = 500
   return { ok: false, piece: null, stats: { steps, backtracks } };
 }
 
-// Places the chain's groupings one beat apart, joining notes that were split at
-// beat lines (tiedOut followed by tiedIn on the same pitch) back into one note.
-function assemble(db, chain, seed) {
+// Places groupings at the given beats (counted from the piece's first beat),
+// moves each voice by its shift (octaves, at match level L1), and joins notes
+// that were split at beat lines (tiedOut, then tiedIn on the same pitch in the
+// next beat) back into one note. A tied note with nothing to join is cut at
+// the beat line, or starts there as a new note.
+//   placed: [{ index, beat, shift: [semitones per voice] | null, level: 0 | 1 }]
+function assemble(db, placed, { seed, source, form = null }) {
   const beat = db.beatTicks;
-  const first = db.groupings[chain[0]];
+  const first = db.groupings[placed[0].index];
   const offset = (first.beatInBar - 1) * beat; // keep the opening's place in the bar
   const barTicks = (db.meter[0] * beat * 4) / db.meter[1];
   const events = [];
-  const open = {}; // voice -> event still tied over
+  let open = {}; // voice -> event still tied over from the previous beat
+  let lastBeat = null;
   const provenance = [];
   const fermatas = [];
 
-  chain.forEach((index, n) => {
+  for (const { index, beat: at, shift, level = 0 } of placed) {
     const g = db.groupings[index];
-    const t0 = offset + n * beat;
-    provenance.push({ tick: t0, work: g.work, beat: g.index, grouping: g.id });
+    const t0 = offset + at * beat;
+    if (lastBeat === null || at !== lastBeat + 1) open = {};
+    const entry = { tick: t0, work: g.work, beat: g.index, grouping: g.id, level };
+    if (shift && shift.some((v) => v !== 0)) entry.shift = shift;
+    provenance.push(entry);
     if (g.cadence) fermatas.push(t0);
     const tiedOver = {};
-    for (const [on, pitch, dur, voice, vel, tiedIn, tiedOut] of g.pieces) {
+    for (const [on, sourcePitch, dur, voice, vel, tiedIn, tiedOut] of g.pieces) {
+      const pitch = sourcePitch + (shift ? shift[voice - 1] : 0);
       const held = open[voice];
       let event;
       if (tiedIn && held && held[1] === pitch && held[0] + held[2] === t0 + on) {
@@ -141,16 +153,16 @@ function assemble(db, chain, seed) {
       }
       if (tiedOut) tiedOver[voice] = event;
     }
-    for (const voice of Object.keys(open)) delete open[voice];
-    Object.assign(open, tiedOver);
-  });
+    open = tiedOver;
+    lastBeat = at;
+  }
 
   events.sort((a, b) => a[0] - b[0] || a[3] - b[3] || a[1] - b[1]);
-  const end = offset + chain.length * beat;
+  const end = offset + (placed[placed.length - 1].beat + 1) * beat;
   return {
     id: "emi-" + seed,
     title: null,
-    source: "EMI recombination (M2, L0)",
+    source,
     seed,
     ppq: beat,
     meter: db.meter,
@@ -164,6 +176,7 @@ function assemble(db, chain, seed) {
     lengthTicks: Math.ceil(end / barTicks) * barTicks,
     events,
     provenance,
+    form,
     warnings: [],
   };
 }
@@ -177,7 +190,8 @@ function summary(piece) {
     run = works[i] === works[i - 1] ? run + 1 : 1;
     longestRun = Math.max(longestRun, run);
   }
-  return { beats: works.length, sources: new Set(works).size, longestRun };
+  const relaxed = piece.provenance.filter((p) => p.level > 0).length;
+  return { beats: works.length, sources: new Set(works).size, longestRun, relaxed };
 }
 
 exports.compose = compose;

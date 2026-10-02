@@ -144,8 +144,8 @@
 					"numoutlets": 0,
 					"linecount": 2,
 					"patching_rect": [
-						130.0,
-						229.0,
+						20.0,
+						269.0,
 						480.0,
 						34.0
 					],

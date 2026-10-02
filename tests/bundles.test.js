@@ -102,9 +102,9 @@ test("bundles in patchers/ are up to date with code/", () => {
 test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
-    "beats", "clear", "compose", "corpus", "exportmidi", "key", "loadmidi", "pattern", "testclip", "writeclips",
+    "beats", "clear", "compose", "corpus", "exportmidi", "form", "key", "loadmidi", "pattern", "testclip", "writeclips",
   ]);
-  assert.deepEqual(loadBundle("emi.view").handlers(), ["clear", "done", "note", "onresize", "paint", "seam"]);
+  assert.deepEqual(loadBundle("emi.view").handlers(), ["cadence", "clear", "done", "note", "onresize", "paint", "seam"]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
 });
 
@@ -185,7 +185,7 @@ test("core: 'compose' needs a corpus", () => {
   assert.deepEqual(lastStatus(loadBundle("emi.core").send("compose", 1)), ["error", "load", "a", "corpus", "first"]);
 });
 
-test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece", () => {
+test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece in a chorale's form", () => {
   const core = loadBundle("emi.core");
   const loaded = core.send("corpus", writeCorpus());
   assert.deepEqual(lastStatus(loaded).slice(0, 6), ["status", "corpus", 3, "chorales,", 33, "beats,"]);
@@ -193,17 +193,31 @@ test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece",
   core.send("beats", 8);
   const out = core.send("compose", 3);
   const status = lastStatus(out);
-  assert.deepEqual(status.slice(0, 2), ["status", "emi-3:"]);
-  assert.ok(status[2] >= 8, "at least 8 beats");
+  // e.g. "emi-3: form of b, 1 phrase, 11 beats, 3 chorales"
+  assert.deepEqual(status.slice(0, 3), ["status", "emi-3:", "form"]);
+  assert.match(status.join(" "), /^status emi-3: form of [abc], 1 phrase, 11 beats, [23] chorales$/);
   assert.ok(select(out, "coll").length > 1);
   const view = select(out, "view");
   assert.ok(view.some(([kind]) => kind === "seam"), "seams between sources");
+  assert.equal(view.filter(([kind]) => kind === "cadence").length, 1, "the template's one cadence");
   const colors = new Set(view.filter(([kind]) => kind === "note").map((n) => n[4]));
   assert.ok(colors.size >= 2, "notes colored by source");
 
   // Same seed, same piece; no seed: the next one.
   assert.deepEqual(core.send("compose", 3), out);
   assert.deepEqual(lastStatus(core.send("compose")).slice(0, 2), ["status", "emi-4:"]);
+});
+
+test("core: 'form 0' composes freely, as in M2; 'form 1' goes back to forms", () => {
+  const core = loadBundle("emi.core");
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  assert.deepEqual(lastStatus(core.send("form", 0)), ["status", "free", "pieces", "(M2),", "8+", "beats"]);
+  const status = lastStatus(core.send("compose", 3));
+  assert.deepEqual([status[1], status[3], status[4]], ["emi-3:", "beats", "from"]);
+  assert.ok(status[2] >= 8, "at least 8 beats");
+  assert.equal(lastStatus(core.send("form", 1))[1], "pieces");
+  assert.equal(lastStatus(core.send("compose", 3))[2], "form");
 });
 
 test("core: 'exportmidi' writes the current score as a MIDI file", () => {
@@ -283,6 +297,8 @@ test("view: draws one rectangle per note, plus bar lines and seams", () => {
   view.send("note", Q, Q, 64, 1);
   view.send("note", 2 * Q, 2 * Q, 72, 13); // colors wrap around the palette
   view.send("seam", Q);
+  view.send("seam", 2 * Q, 1); // voices moved by octaves: drawn in orange
+  view.send("cadence", 3 * Q);
   assert.equal(g.calls.filter(([name]) => name === "redraw").length, 0, "nothing drawn before 'done'");
   view.send("done");
   assert.equal(g.calls.filter(([name]) => name === "redraw").length, 1);
@@ -293,4 +309,8 @@ test("view: draws one rectangle per note, plus bar lines and seams", () => {
   assert.equal(rectangles.length, 1 + 3); // background + notes
   const [, x, , w] = rectangles[3];
   assert.ok(Math.abs(x - 180) < 1 && Math.abs(w - 179) < 1, "the last note spans the right half");
+  const colors = g.calls.filter(([name]) => name === "set_source_rgba").map((c) => c.slice(1).join(","));
+  assert.ok(colors.includes("1,0.6,0.15,0.9"), "an orange seam");
+  const triangle = g.calls.filter(([name, cx]) => name === "move_to" && Math.abs(cx - (270 - 4)) < 1);
+  assert.equal(triangle.length, 1, "a cadence mark at 3/4 of the width");
 });

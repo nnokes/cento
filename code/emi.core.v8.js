@@ -8,7 +8,7 @@
 //
 // One inlet, one outlet; every output starts with a selector:
 //   coll clear | coll store <step> <voice pitch velocity>...   -> [coll ---emi.queue]
-//   view clear|note|seam|done ...                               -> the piano roll
+//   view clear|note|seam|cadence|done ...                       -> the piano roll
 //   status <text...> | error <text...>                          -> the host's status line
 //
 // Messages:
@@ -16,6 +16,7 @@
 //   key c | key original   chorales in C major / A minor (default) or as written
 //   corpus <folder>        read every chorale in a folder and build the lexicon
 //   beats <n>              shortest piece to compose (default 32)
+//   form 1 | form 0        compose in the form of a chorale (M3, default) or freely (M2)
 //   compose [seed]         compose a piece (seed defaults to the last one + 1)
 //   exportmidi <path>      write the current score as a MIDI file
 //   writeclips             write the current score as Live clips (Live only)
@@ -32,6 +33,7 @@ const queue = require("emi-queue");
 const ingest = require("emi-ingest");
 const lexicon = require("emi-lexicon");
 const composer = require("emi-compose");
+const forms = require("emi-form");
 const files = require("emi-load");
 const clips = require("emi-clips");
 
@@ -39,6 +41,7 @@ let loaded = null; // the last chorale read, in its written key
 let keyMode = "c";
 let db = null;
 let minBeats = 32;
+let useForm = true;
 let lastSeed = 0;
 let current = null; // { score, name }
 
@@ -75,19 +78,40 @@ function beats(n) {
   outlet(0, "status", "pieces", "of", minBeats + "+", "beats");
 }
 
+function form(on) {
+  useForm = Boolean(on);
+  if (useForm) outlet(0, "status", "pieces", "in", "the", "form", "of", "a", "chorale");
+  else outlet(0, "status", "free", "pieces", "(M2),", minBeats + "+", "beats");
+}
+
 function compose(seed) {
   attempt(() => {
     if (!db) throw new Error("load a corpus first");
     const useSeed = seed === undefined ? lastSeed + 1 : Math.round(seed);
     lastSeed = useSeed;
-    const result = composer.compose(db, { seed: useSeed, beats: minBeats });
+    const result = useForm ? forms.compose(db, { seed: useSeed, beats: minBeats }) : composer.compose(db, { seed: useSeed, beats: minBeats });
     if (!result.ok) {
-      outlet(0, "error", "no", "piece", "for", "seed", useSeed, "with", minBeats + "+", "beats;", "try", "another", "seed", "or", "more", "chorales");
+      if (useForm && !result.stats.tried.length) {
+        outlet(0, "error", "no", "chorale", "is", minBeats + "+", "beats", "long;", "lower", "beats");
+      } else {
+        outlet(0, "error", "no", "piece", "for", "seed", useSeed, "with", minBeats + "+", "beats;", "try", "another", "seed", "or", "more", "chorales");
+      }
       return;
     }
-    const s = composer.summary(result.piece);
-    show(result.piece, result.piece.id, false);
-    outlet(0, "status", result.piece.id + ":", s.beats, "beats", "from", s.sources, "chorales");
+    const piece = result.piece;
+    const s = composer.summary(piece);
+    show(piece, piece.id, false);
+    if (!piece.form) {
+      outlet(0, "status", piece.id + ":", s.beats, "beats", "from", s.sources, "chorales");
+      return;
+    }
+    const phrases = piece.form.phrases + (piece.form.phrases === 1 ? " phrase" : " phrases");
+    let text = `${piece.id}: form of ${piece.form.template}, ${phrases}, ${piece.form.beats} beats, ${s.sources} chorales`;
+    const relaxed = [];
+    if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
+    if (piece.form.relaxed === 2) relaxed.push("any cadence bass");
+    if (relaxed.length) text += " (" + relaxed.join(", ") + ")";
+    outlet(0, "status", ...text.split(" "));
   });
 }
 
@@ -156,7 +180,9 @@ function show(score, name, chorale) {
 }
 show.local = 1;
 
-// Piano roll: notes colored by source chorale (composed pieces) or by voice.
+// Piano roll: notes colored by source chorale (composed pieces) or by voice;
+// seams where the source changes (level 1: voices moved by octaves); a mark
+// at each cadence (fermata).
 function draw(score) {
   const pitches = score.events.map((e) => e[1]);
   const barTicks = (score.meter[0] * score.ppq * 4) / score.meter[1];
@@ -171,8 +197,11 @@ function draw(score) {
   };
   for (const [on, pitch, dur, voice] of score.events) outlet(0, "view", "note", on, dur, pitch, colorAt(on, voice));
   if (prov) {
-    for (let i = 1; i < prov.length; i++) if (prov[i].work !== prov[i - 1].work) outlet(0, "view", "seam", prov[i].tick);
+    for (let i = 1; i < prov.length; i++) {
+      if (prov[i].work !== prov[i - 1].work || prov[i].level > 0) outlet(0, "view", "seam", prov[i].tick, prov[i].level || 0);
+    }
   }
+  for (const tick of score.fermatas || []) outlet(0, "view", "cadence", tick);
   outlet(0, "view", "done");
 }
 draw.local = 1;
