@@ -19,23 +19,23 @@ const tempDir = () => fs.mkdtempSync(path.join(os.tmpdir(), "emi-"));
 
 // Writes a chorale as tools/export-chorales.py would: <id>.mid + <id>.json.
 // chords: [[soprano, alto, tenor, bass, beats]], starting with a pickup on beat 4.
-function writeChorale(dir, id, chords, { keySignature = { sf: 0, minor: false }, key = { tonic: "C", mode: "major" }, fermatas = null } = {}) {
-  let t = 3 * Q;
+function writeChorale(dir, id, chords, { keySignature = { sf: 0, minor: false }, key = { tonic: "C", mode: "major" }, fermatas = null, meter = [4, 4] } = {}) {
+  let t = (meter[0] - 1) * Q; // a one-beat pickup
   const tracks = ["Soprano", "Alto", "Tenor", "Bass"].map((name) => ({ name, channel: 1, notes: [] }));
   for (const [s, a, tn, b, beats] of chords) {
     [s, a, tn, b].forEach((pitch, v) => tracks[v].notes.push({ on: t, pitch, dur: beats * Q, vel: 90 }));
     t += beats * Q;
   }
   const midiPath = path.join(dir, id + ".mid");
-  fs.writeFileSync(midiPath, smf.write({ ppq: Q, meter: [4, 4], keySignature, tracks }));
+  fs.writeFileSync(midiPath, smf.write({ ppq: Q, meter, keySignature, tracks }));
   fs.writeFileSync(
     path.join(dir, id + ".json"),
     JSON.stringify({
-      meter: "4/4",
+      meter: meter.join("/"),
       key,
       parts: ["Soprano", "Alto", "Tenor", "Bass"],
       midi: { ppq: Q, voiceTracks: [1, 2, 3, 4] },
-      padQuarters: 3,
+      padQuarters: meter[0] - 1,
       fermatasQuarters: fermatas || [t / Q - 2],
     }),
   );
@@ -59,9 +59,10 @@ function writeCorpus() {
 }
 
 // A fake Live set: tracks with names and clip slots, recording every call.
-function fakeLive({ trackNames, ownTrack = 0, slotsPerTrack = 4, filled = [] }) {
+function fakeLive({ trackNames, ownTrack = 0, slotsPerTrack = 4, filled = [], meter = [4, 4] }) {
   const calls = [];
   const hasClip = new Set(filled);
+  const song = { signature_numerator: meter[0], signature_denominator: meter[1] };
   class LiveAPI {
     constructor(p) {
       this.unquotedpath = p === "this_device canonical_parent" ? `live_set tracks ${ownTrack}` : p;
@@ -72,6 +73,7 @@ function fakeLive({ trackNames, ownTrack = 0, slotsPerTrack = 4, filled = [] }) 
       throw new Error(`unexpected getcount ${property} on ${this.unquotedpath}`);
     }
     get(property) {
+      if (this.unquotedpath === "live_set" && property in song) return [song[property]];
       const track = this.unquotedpath.match(/^live_set tracks (\d+)$/);
       if (track && property === "name") return [trackNames[Number(track[1])]];
       const slot = this.unquotedpath.match(/^live_set tracks (\d+) clip_slots (\d+)$/);
@@ -85,9 +87,10 @@ function fakeLive({ trackNames, ownTrack = 0, slotsPerTrack = 4, filled = [] }) 
     }
     set(property, value) {
       calls.push([this.unquotedpath, "set", property, value]);
+      if (this.unquotedpath === "live_set") song[property] = value;
     }
   }
-  return { LiveAPI, calls };
+  return { LiveAPI, calls, song };
 }
 
 const select = (out, selector) => out.filter(([, s]) => s === selector).map(([, , ...rest]) => rest);
@@ -232,6 +235,49 @@ test("core: a corpus of major and minor chorales: counted by mode, each piece in
     keys.add(key);
   }
   assert.equal(keys.size, 2);
+});
+
+// M8: 3/4. Three chorales on a I-IV-V cycle in 3/4.
+function write34Corpus() {
+  const dir = tempDir();
+  const [I, IV, V] = [[72, 67, 64, 48], [72, 69, 65, 53], [71, 67, 62, 55]];
+  const cycle = [I, IV, V, I, IV, V, I, IV, V].map((c) => [...c, 1]).concat([[...I, 3]]);
+  for (const id of ["a", "b", "c"]) writeChorale(dir, id, cycle, { meter: [3, 4] });
+  return dir;
+}
+
+test("core: 3/4: pieces in 3/4 bars, and the transport follows the meter", () => {
+  const core = loadBundle("emi.core");
+  core.send("corpus", write34Corpus());
+  core.send("beats", 8);
+  const out = core.send("compose", 1);
+  assert.match(lastStatus(out).join(" "), /^status emi-1: form of [abc], 1 phrase, 12 beats/);
+  assert.deepEqual(select(out, "meter"), [[3, 4]]);
+  const [clear] = select(out, "view").filter(([kind]) => kind === "clear");
+  assert.deepEqual(clear.slice(4), [3 * Q, 0, Q], "bars of 3 beats");
+  for (const [, , ...text] of select(out, "view").filter(([kind]) => kind === "source")) assert.match(text.join(" "), /beat [1-3] /);
+  // The queue: step 0 is a barline; the pickup is on beat 3 (step 8).
+  const steps = select(out, "coll").filter(([kind]) => kind === "store").map(([, step]) => step);
+  assert.equal(steps[0], 8);
+});
+
+test("core: 3/4 in Live: the set's time signature follows the corpus, only when it differs", () => {
+  const folder = tempDir();
+  const live = fakeLive({ trackNames: ["EMI", "Soprano", "Alto", "Tenor", "Bass"] });
+  const core = engineIn(folder, live);
+  core.send("startup", "corpus"); // the Live version
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  core.send("compose", 1);
+  assert.deepEqual(live.calls.filter(([p]) => p === "live_set"), [], "already 4/4");
+  core.send("corpus", write34Corpus());
+  core.posted.length = 0;
+  core.send("compose", 1);
+  assert.deepEqual(live.song, { signature_numerator: 3, signature_denominator: 4 });
+  assert.match(core.posted.join(""), /Live's time signature set to 3\/4/);
+  live.calls.length = 0;
+  core.send("compose", 2);
+  assert.deepEqual(live.calls.filter(([p]) => p === "live_set"), [], "no change the second time");
 });
 
 test("core: 'seed' sets the seed, and composes once a corpus is loaded", () => {

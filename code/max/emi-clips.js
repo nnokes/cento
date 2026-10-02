@@ -5,7 +5,8 @@
 //
 // writeScore(score, name) -> status text. One clip per voice into the
 // Soprano/Alto/Tenor/Bass tracks if all four exist, otherwise all voices into
-// one clip on the device's own track.
+// one clip on the device's own track. setMeter(n, d): the set's time
+// signature.
 
 const live = require("emi-live");
 
@@ -50,4 +51,16 @@ function writeScore(score, name) {
   return "wrote " + name + " to this track";
 }
 
+// Sets the Live set's time signature to a score's meter (M8: 3/4 corpora),
+// if it isn't already. Returns true if it changed it.
+function setMeter(numerator, denominator) {
+  const song = liveApi("live_set");
+  const current = [song.get("signature_numerator"), song.get("signature_denominator")].map((v) => Number(live.liveValue(v)));
+  if (current[0] === numerator && current[1] === denominator) return false;
+  song.set("signature_numerator", numerator);
+  song.set("signature_denominator", denominator);
+  return true;
+}
+
 exports.writeScore = writeScore;
+exports.setMeter = setMeter;

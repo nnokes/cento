@@ -16,7 +16,8 @@ function checkPiece(db, piece, minBeats) {
   for (let i = 1; i < chain.length; i++) {
     const [prev, next] = [chain[i - 1], chain[i]];
     assert.equal(next.entryKey, prev.destKey, `voice-hooking broken at beat ${i}`);
-    assert.equal(next.beatInBar, (prev.beatInBar % 4) + 1, `metre broken at beat ${i}`);
+    const beatsPerBar = (db.meter[0] * 4) / db.meter[1];
+    assert.equal(next.beatInBar, (prev.beatInBar % beatsPerBar) + 1, `metre broken at beat ${i}`);
     if (next.work === prev.work) assert.equal(next.newNotes, 0, `same source at beat ${i}`);
   }
   checkVoices(piece);

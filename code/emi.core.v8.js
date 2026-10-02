@@ -27,6 +27,7 @@
 //   view clear|note|seam|cadence|speac|signature|parallel|source|done -> the piano roll
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
+//   meter <numerator> <denominator>                             -> the Max version's transport (M8)
 //
 // Messages:
 //   loadmidi <path>        read a chorale (+ its .json) and make it current
@@ -99,6 +100,7 @@ let flow = null; // the stream being queued: { state, steps, events, provenance,
 let groupingsById = null; // { db, map }: the corpus's groupings by id, for the SPEAC lane
 let signaturesById = null; // { db, map }: the corpus's signatures by id, for their names
 let settingsPath = null; // known once startup has read the settings
+let host = null; // "max" or "live", known from startup ("startup all" or "startup corpus")
 let remembered = {}; // the settings file's contents
 
 function loadmidi(path) {
@@ -211,6 +213,7 @@ function remember(name, ...values) {
 
 function startup(mode) {
   const patcher = this && this.patcher; // `this` is the [v8] object
+  host = mode === "corpus" ? "live" : "max";
   attempt(() => {
     const folder = settingsFile.folderOf(patcher);
     if (!folder) {
@@ -342,6 +345,7 @@ function startStream() {
   };
   current = null;
   outlet(0, "restart");
+  followMeter(db.meter);
   outlet(0, "coll", "clear");
   if (appendPhrase() && !flow.state.finished) appendPhrase();
 }
@@ -512,10 +516,25 @@ function show(score, name, chorale) {
   current = { base: work, score: shown, name, chorale };
   outlet(0, "restart");
   outlet(0, "streamat", NO_STEP);
+  followMeter(shown.meter);
   outlet(0, "coll", "clear");
   for (const { step, events } of queue.toSteps(shown, STEPS_PER_BEAT)) outlet(0, "coll", "store", step, ...events);
   draw(shown);
 }
+
+// The transport follows the music's meter (M8: 3/4), so the player starts it
+// on a barline of its own bars. The Max version's adapter sets its transport
+// from "meter"; in Live, the set's time signature is changed here, if needed.
+function followMeter(meter) {
+  outlet(0, "meter", meter[0], meter[1]);
+  if (host !== "live") return;
+  try {
+    if (clips.setMeter(meter[0], meter[1])) post(`ml_midi: Live's time signature set to ${meter[0]}/${meter[1]}\n`);
+  } catch (e) {
+    outlet(0, "error", "can't", "set", "Live's", "time", "signature:", ...String(e.message).split(" "));
+  }
+}
+followMeter.local = 1;
 show.local = 1;
 
 // A signature's name ("soprano 3-2-1"), or its id if the corpus has changed.

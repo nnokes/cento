@@ -242,6 +242,51 @@ test("top patches: host panel, shared panel and piano roll, all wired to one eng
 
 // ---------------------------------------------------------------- M5: the player and streaming
 
+// Evaluates a Max [expr] such as "expr ($i1 - 1) * $i4 + int(($f3 + 60.) / 120.)"
+// with inlet values `args` ($i1 = args[0]), as Max does: integers stay
+// integers, so dividing two of them truncates.
+function maxExpr(text, args) {
+  const tokens = text.replace(/^expr\s+/, "").match(/\$[if]\d+|\d+\.\d*|\d+|int|[()+\-*/]/g);
+  let k = 0;
+  const value = (v, float) => ({ v, float });
+  const primary = () => {
+    const t = tokens[k++];
+    if (t === "(") {
+      const v = sum();
+      k++; // ")"
+      return v;
+    }
+    if (t === "int") {
+      k++; // "("
+      const v = sum();
+      k++;
+      return value(Math.trunc(v.v), false);
+    }
+    if (t[0] === "$") return value(t[1] === "f" ? args[Number(t.slice(2)) - 1] : Math.trunc(args[Number(t.slice(2)) - 1]), t[1] === "f");
+    return value(Number(t), t.includes("."));
+  };
+  const product = () => {
+    let a = primary();
+    while (tokens[k] === "*" || tokens[k] === "/") {
+      const op = tokens[k++];
+      const b = primary();
+      const float = a.float || b.float;
+      a = value(op === "*" ? a.v * b.v : float ? a.v / b.v : Math.trunc(a.v / b.v), float);
+    }
+    return a;
+  };
+  const sum = () => {
+    let a = product();
+    while (tokens[k] === "+" || tokens[k] === "-") {
+      const op = tokens[k++];
+      const b = product();
+      a = value(op === "+" ? a.v + b.v : a.v - b.v, a.float || b.float);
+    }
+    return a;
+  };
+  return sum().v;
+}
+
 // The [p grid-player] subpatcher inside emi.engine, with the same helpers.
 function playerPatch() {
   const engine = readPatcher(path.join(ROOT, "patchers", "emi.engine.maxpat"));
@@ -259,8 +304,29 @@ test("grid player: the step comes from the transport's position, and the queue s
   const [metro] = p.find("metro 16n @quantize 16n @active 1");
   assert.deepEqual(p.from(metro.id).map(([b]) => b.text), ["transport"]);
   const [transport] = p.find("transport");
-  assert.deepEqual(p.from(transport.id).map(([b, inlet]) => [b.text, inlet]).sort(), [["pack 0 0 0.", 0], ["pack 0 0 0.", 1], ["pack 0 0 0.", 2]]);
-  assert.equal(p.find("expr (($i1 + 15) / 16) * 16").length, 1, "the origin rounds up to a barline");
+  assert.deepEqual(p.from(transport.id).map(([b, inlet]) => [b.text, inlet]).sort(), [
+    ["expr $i1 * $i2", 0], ["expr 16 / $i1", 0], ["pack 0 0 0.", 0], ["pack 0 0 0.", 1], ["pack 0 0 0.", 2],
+  ]);
+  assert.deepEqual(p.from(transport.id, 5).map(([b]) => b.text), ["expr $i1 * $i2"], "numerator");
+  assert.deepEqual(p.from(transport.id, 6).map(([b]) => b.text), ["expr 16 / $i1"], "denominator");
+
+  // M8: steps per bar follow the time signature. Evaluate the player's own
+  // expressions (as Max's [expr] does: integer division for integers).
+  const [toStep] = p.find("expr ($i1 - 1) * $i4 + ($i2 - 1) * $i5 + int(($f3 + 60.) / 120.)");
+  const [toBar] = p.find("expr (($i1 + $i2 - 1) / $i2) * $i2");
+  const [perBeat] = p.find("expr 16 / $i1");
+  const [perBar] = p.find("expr $i1 * $i2");
+  assert.deepEqual(p.from(perBeat.id).map(([b, inlet]) => [b.id, inlet]).sort(), [[perBar.id, 1], [toStep.id, 4]].sort());
+  assert.deepEqual(p.from(perBar.id).map(([b, inlet]) => [b.id, inlet]).sort(), [[toBar.id, 1], [toStep.id, 3]].sort());
+  for (const [num, den, bars, beats, units, step, origin] of [
+    [4, 4, 1, 1, 0, 0, 0], [4, 4, 2, 3, 240, 26, 32], [3, 4, 2, 1, 0, 12, 12], [3, 4, 2, 2, 125, 17, 24], [6, 8, 2, 4, 0, 18, 24],
+  ]) {
+    const spBeat = maxExpr(perBeat.text, [den]);
+    const spBar = maxExpr(perBar.text, [num, spBeat]);
+    const at = maxExpr(toStep.text, [bars, beats, units, spBar, spBeat]);
+    assert.equal(at, step, `${num}/${den} bar ${bars} beat ${beats} units ${units}`);
+    assert.equal(maxExpr(toBar.text, [at, spBar]), origin, `${num}/${den}: the next barline`);
+  }
   // Every way in that changes where the queue starts also sends note-offs.
   const [flushAll] = p.find("t b").filter((b) => p.from(b.id).filter(([to]) => to.text === "flush").length === 4);
   assert.ok(flushAll, "one [t b] reaches all four [flush]es");
@@ -275,6 +341,14 @@ test("grid player: the step comes from the transport's position, and the queue s
     const [[trigger]] = p.from(inlet.id);
     assert.ok(p.from(trigger.id).some(([to]) => to.id === flushAll.id), comment);
   }
+});
+
+test("emi.host.max: the engine's meter sets the transport's time signature (M8: 3/4)", () => {
+  const p = patchFile("emi.host.max.maxpat");
+  const [route] = p.find("route voice setting meter");
+  const [[pre]] = p.from(route.id, 2);
+  assert.equal(pre.text, "prepend timesig");
+  assert.deepEqual(p.from(pre.id).map(([b, inlet]) => [b.text, inlet]), [["transport", 0]]);
 });
 
 test("emi.engine: the core feeds the queue and the player, and 'need' comes back on the main thread", () => {
