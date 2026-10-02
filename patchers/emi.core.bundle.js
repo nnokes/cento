@@ -1096,6 +1096,131 @@ exports.phrasesOf = phrasesOf;
 exports.analyze = analyze;
   };
 
+  // ---- emi-signatures.js
+  factories["emi-signatures"] = function (exports, module, require) {
+"use strict";
+// M7: signatures (David Cope, Computer Models of Musical Creativity, ch. 7;
+// Experiments in Musical Intelligence). A signature is a short melodic
+// pattern, the intervals of a few notes in one voice, that recurs across
+// many works of a style: in Bach's chorales, mostly the way voices move into
+// a cadence (the soprano's 3-2-1, the bass's 4-5-1). Kept whole in new music,
+// signatures make it sound like its style.
+//
+// Detection works per voice on intervals, so a pattern is the same in any
+// key. A pattern ending on a cadence (fermata) chord in at least `minWorks`
+// different works is a signature. Each occurrence is a block of consecutive
+// groupings of its work, from the beat of the pattern's first note to the
+// cadence beat; composing pins whole blocks at cadences (emi-form).
+//
+//   signatures = detect(db, works, { notes, minWorks })
+//   [{ id, voice, intervals, finalPc, works, occurrences: [{ work, start, end, beats }] }]
+// sorted strongest (most works) first; start and end index db.groupings.
+// describe(signature, mode) names it in scale degrees, e.g. "soprano 3-2-1".
+// blocks(db) lists each block once, with the signatures it carries.
+
+const VOICES = ["soprano", "alto", "tenor", "bass"];
+const DEGREES = { 0: "1", 1: "b2", 2: "2", 3: "b3", 4: "3", 5: "4", 6: "#4", 7: "5", 8: "b6", 9: "6", 10: "b7", 11: "7" };
+
+// works: the works the lexicon was built from, in C major / A minor, with
+// db.templates in the same order (one per work with groupings).
+function detect(db, works, { notes = 3, minWorks = null } = {}) {
+  const threshold = minWorks !== null ? minWorks : Math.max(3, Math.ceil(works.length * 0.05));
+  const byKey = new Map();
+  works.forEach((work) => {
+    const template = db.templates.find((t) => t.work === work.id);
+    if (!template) return;
+    const groupings = db.groupings.slice(template.start, template.start + template.count);
+    const dbIndexOfBeat = new Map(groupings.map((g, k) => [g.index, template.start + k]));
+    for (let voice = 1; voice <= 4; voice++) {
+      const line = work.events.filter((e) => e[3] === voice);
+      groupings.forEach((g, k) => {
+        if (!g.cadence) return;
+        const at = g.index * db.beatTicks;
+        const last = line.findIndex((e) => e[0] <= at && at < e[0] + e[2]);
+        if (last < notes - 1) return;
+        const pattern = line.slice(last - notes + 1, last + 1);
+        const startBeat = Math.floor(pattern[0][0] / db.beatTicks);
+        const start = dbIndexOfBeat.get(startBeat);
+        const end = template.start + k;
+        if (start === undefined || end - start !== g.index - startBeat) return; // a silent beat inside
+        const intervals = pattern.slice(1).map((e, i) => e[1] - pattern[i][1]);
+        if (intervals.every((step) => step === 0)) return; // a repeated note is no pattern
+        const key = voice + ":" + intervals.join(",");
+        if (!byKey.has(key)) byKey.set(key, { voice, intervals, occurrences: [], finals: new Map() });
+        const entry = byKey.get(key);
+        entry.occurrences.push({ work: work.id, start, end, beats: end - start + 1 });
+        const pc = pattern[pattern.length - 1][1] % 12;
+        entry.finals.set(pc, (entry.finals.get(pc) || 0) + 1);
+      });
+    }
+  });
+  const signatures = [];
+  for (const entry of byKey.values()) {
+    const workCount = new Set(entry.occurrences.map((o) => o.work)).size;
+    if (workCount < threshold) continue;
+    const finalPc = [...entry.finals.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    signatures.push({ voice: entry.voice, intervals: entry.intervals, finalPc, works: workCount, occurrences: entry.occurrences });
+  }
+  signatures.sort((a, b) => b.works - a.works || a.voice - b.voice || a.intervals.join().localeCompare(b.intervals.join()));
+  signatures.forEach((s, i) => (s.id = "sig" + (i + 1)));
+  return signatures;
+}
+
+// "soprano 3-2-1": the pattern's notes as scale degrees of C major (or A
+// minor), ending on its most common final note.
+function describe(signature, mode = "major") {
+  const tonic = mode === "minor" ? 9 : 0;
+  const pcs = [signature.finalPc];
+  for (let i = signature.intervals.length - 1; i >= 0; i--) pcs.unshift(pcs[0] - signature.intervals[i]);
+  return VOICES[signature.voice - 1] + " " + pcs.map((pc) => DEGREES[(((pc - tonic) % 12) + 12) % 12]).join("-");
+}
+
+// Every signature block of a database once (several voices' signatures often
+// end on the same cadence over the same beats), with the signatures it
+// carries: [{ work, start, end, sigs: [id], outer, strength }]. The outer
+// voices' signatures come first (the soprano's and the bass's: what a
+// listener hears first), the strongest first, then the inner voices';
+// outer: it carries a soprano or bass signature; strength: in how many works
+// the strongest of those occurs.
+// Computed once per database.
+const blockCache = new WeakMap();
+function blocks(db) {
+  if (blockCache.has(db)) return blockCache.get(db);
+  const byRange = new Map();
+  for (const signature of db.signatures || []) {
+    for (const o of signature.occurrences) {
+      const key = o.start + "-" + o.end;
+      if (!byRange.has(key)) byRange.set(key, { work: o.work, start: o.start, end: o.end, sigs: [] });
+      const block = byRange.get(key);
+      if (!block.sigs.includes(signature.id)) block.sigs.push(signature.id);
+    }
+  }
+  const isOuter = (sig) => sig.voice === 1 || sig.voice === 4;
+  const rank = new Map((db.signatures || []).map((sig, i) => [sig.id, (isOuter(sig) ? 0 : 100000) + i])); // signatures are strongest first
+  const list = [...byRange.values()].sort((a, b) => a.start - b.start || a.end - b.end);
+  const byId = new Map((db.signatures || []).map((sig) => [sig.id, sig]));
+  for (const block of list) {
+    block.sigs.sort((a, b) => rank.get(a) - rank.get(b));
+    const outer = block.sigs.map((id) => byId.get(id)).filter(isOuter);
+    block.outer = outer.length > 0;
+    block.strength = Math.max(0, ...outer.map((sig) => sig.works));
+  }
+  blockCache.set(db, list);
+  return list;
+}
+
+// The block that runs from grouping `start` to grouping `end`, or null.
+function blockAt(db, start, end) {
+  return blocks(db).find((b) => b.start === start && b.end === end) || null;
+}
+
+exports.detect = detect;
+exports.blocks = blocks;
+exports.blockAt = blockAt;
+exports.describe = describe;
+exports.VOICES = VOICES;
+  };
+
   // ---- emi-lexicon.js
   factories["emi-lexicon"] = function (exports, module, require) {
 "use strict";
@@ -1118,13 +1243,15 @@ exports.analyze = analyze;
 //   lexicon1: { L1 key: [grouping index] },
 //   templates: [{ work, start, count }], // each work's groupings, in order: its form (emi-form)
 //   ranges: [[lowest, highest] per voice],
-//   openings: [grouping index], finals: [grouping index]
+//   openings: [grouping index], finals: [grouping index],
+//   signatures: [signature]           // (M7) cadence patterns found in many works (emi-signatures)
 // }
 // Plain JSON, so a database can be saved and loaded later.
 
 const ingest = require("emi-ingest");
 const { segment } = require("emi-segment");
 const speac = require("emi-speac");
+const signatures = require("emi-signatures");
 
 // Keys are lists of voice tokens: "60" (a new note), "~60" (held over) or "r"
 // (silent), joined by ",". These parse and rebuild them.
@@ -1150,7 +1277,7 @@ function build(works) {
   if (meters.size > 1) throw new Error("works must share one meter, found " + [...meters].join(", "));
 
   const db = {
-    version: 2,
+    version: 3,
     beatTicks: works[0].ppq,
     meter: works[0].meter,
     matchLevels: ["L0", "L1"],
@@ -1163,10 +1290,13 @@ function build(works) {
     ranges: [],
     openings: [],
     finals: [],
+    signatures: [],
   };
   const modes = new Set();
+  const normalized = [];
   for (const work of works) {
     const inC = ingest.normalize(work);
+    normalized.push(inC);
     modes.add(inC.key.mode);
     const groupings = segment(inC, db.beatTicks);
     const beatsPerBar = Math.round((db.meter[0] * 4) / db.meter[1]);
@@ -1192,6 +1322,7 @@ function build(works) {
     }
   }
   db.mode = modes.size === 1 ? [...modes][0] : "mixed";
+  db.signatures = signatures.detect(db, normalized);
   return db;
 }
 
@@ -1387,7 +1518,8 @@ function compose(db, { seed = 1, beats = 32, maxBeats = beats + 16, budget = 500
 // that were split at beat lines (tiedOut, then tiedIn on the same pitch in the
 // next beat) back into one note. A tied note with nothing to join is cut at
 // the beat line, or starts there as a new note.
-//   placed: [{ index, beat, shift: [semitones per voice] | null, level: 0 | 1 }]
+//   placed: [{ index, beat, shift: [semitones per voice] | null, level: 0 | 1,
+//             block?, signatures? }]   (M7: a signature block, see emi-form)
 // offsetTicks: where beat 0 falls; by default, the first grouping keeps its
 // place in the bar (a pickup on beat 4 starts three beats into bar 1).
 function assemble(db, placed, { seed, source, form = null, offsetTicks = null }) {
@@ -1401,12 +1533,14 @@ function assemble(db, placed, { seed, source, form = null, offsetTicks = null })
   const provenance = [];
   const fermatas = [];
 
-  for (const { index, beat: at, shift, level = 0 } of placed) {
+  for (const { index, beat: at, shift, level = 0, block, signatures } of placed) {
     const g = db.groupings[index];
     const t0 = offset + at * beat;
     if (lastBeat === null || at !== lastBeat + 1) open = {};
     const entry = { tick: t0, work: g.work, beat: g.index, grouping: g.id, level };
     if (shift && shift.some((v) => v !== 0)) entry.shift = shift;
+    if (block) entry.block = block;
+    if (signatures) entry.signatures = signatures;
     provenance.push(entry);
     if (g.cadence) fermatas.push(t0);
     const tiedOver = {};
@@ -1488,7 +1622,8 @@ exports.summary = summary;
 //   - metre, voice-hooking and the different-source rule as in M2.
 // The seed picks the template. If it can't be filled, the rules relax one
 // step at a time (RELAX below), and only then is the next template tried:
-//   0  strict: every hook exact (L0), every SPEAC label matched
+//   0  strict: every hook exact (L0), every SPEAC label matched (skipped
+//      when step 1 can keep more signatures, M7)
 //   1  every hook exact; SPEAC labels preferred, not required (Cope's "soft
 //      constraint"): groupings with the template's label are tried first
 //   2  L1 hooks too: a grouping's upper voices move by octaves so each starts
@@ -1496,17 +1631,34 @@ exports.summary = summary;
 //      as every voice stays in its range and no voices cross that didn't
 //      before; exact hooks still come first
 //   3  as 2, and a cadence may stand on any bass note
-// On the full corpus about 95 pieces in 100 keep exact voice-leading
-// throughout, and 62% of beats keep their template beat's label (33% by
-// chance, without SPEAC).
+// On the full corpus 98 pieces in 100 keep exact voice-leading throughout
+// (95 without signatures), and 56% of beats keep their template beat's label
+// (62% without signatures, 33% by chance without SPEAC).
+//
+// M7: signatures (emi-signatures). A cadence slot may take a whole
+// *signature block*: the beats of a real chorale from a signature's first
+// note to its cadence (soprano 3-2-1 over bass 4-5-1, say), kept as they are:
+// one work, its labels, no different-source rule inside it. The block's first
+// beat hooks to the beat before it like any other, so the search must choose
+// that beat with the block in view (Cope's lookahead hooking). Blocks come
+// from works other than the template's, and pieces take as many as their
+// voice-leading allows: on the full corpus, 91% of cadences.
 //
 // Before searching, a backward pass over the template finds, for every slot,
-// the groupings from which the rest of the template can still be filled. The
-// search only enters those, so it rarely backtracks.
+// the groupings from which the rest of the template can still be filled, and
+// how many signature blocks can still be placed after each. The search only
+// enters those, most blocks first, so it rarely backtracks.
 
 const rng = require("emi-rng");
 const lexicon = require("emi-lexicon");
+const signatures = require("emi-signatures");
 const { assemble } = require("emi-compose");
+
+// A signature block is *strong* when its strongest soprano or bass
+// signature is found in at least this share of the works that the corpus's
+// strongest signature is found in (on the 142 major chorales: bass 4-5-1,
+// soprano 3-2-1 and bass 5-5-1). See byBlocks in fill.
+const STRONG = 0.5;
 
 const RELAX = [
   { level: 0, speac: true, cadenceBass: true },
@@ -1549,10 +1701,11 @@ function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
 }
 
 // May grouping g fill this slot, leaving aside how it joins its neighbours?
-function fits(g, slot) {
+// labels: false for a signature block's grouping, which keeps its own label.
+function fits(g, slot, labels = true) {
   if (g.beatInBar !== slot.beatInBar || g.cadence !== slot.cadence) return false;
   if (slot.bass !== null && (g.bass === null || g.bass % 12 !== slot.bass)) return false;
-  if (slot.speac && slot.speacHard !== false && (!g.speac || g.speac.beat !== slot.speac)) return false;
+  if (labels && slot.speac && slot.speacHard !== false && (!g.speac || g.speac.beat !== slot.speac)) return false;
   if (slot.first && !g.opening) return false;
   if (slot.afterRest && !g.restBefore) return false;
   if (slot.last && !g.final) return false;
@@ -1579,35 +1732,119 @@ function successors(db) {
   return result;
 }
 
-// ok[s][i] = 1: grouping i may fill slot s, and the rest of the template can
-// still be filled after it through `next` (one of the successor graphs).
-// Computed backwards from the last slot. Rest slots have no row.
-function feasible(db, slots, next) {
+// The signature blocks that may end at each cadence slot (M7): those that
+// carry a soprano or bass signature, the formulas a listener hears (an inner
+// voice's pattern alone isn't kept). A block of L groupings may stand on
+// slots s-L+1..s when none of them is silent and each of its groupings fits
+// its slot (labels aside). Returns, per slot, the
+// groupings that may start, continue or end a block there:
+//   pins[s] = { start: Map(i -> the block's strength), inner: Set, end: Set } | null
+// or null when no cadence can take a block. avoid: a work whose blocks are
+// left out (the template's own).
+function pinsFor(db, slots, avoid = null) {
+  const all = signatures.blocks(db);
+  if (!all.length) return null;
+  const pins = slots.map(() => null);
+  const at = (s) => (pins[s] = pins[s] || { start: new Map(), inner: new Set(), end: new Set() });
+  let any = false;
+  slots.forEach((slot, s) => {
+    if (slot.rest || !slot.cadence) return;
+    for (const block of all) {
+      if (!block.outer || block.work === avoid || !fits(db.groupings[block.end], slot, false)) continue;
+      const first = s - (block.end - block.start);
+      if (first < 0) continue;
+      let ok = true;
+      for (let t = first; t < s && ok; t++) ok = !slots[t].rest && fits(db.groupings[block.start + t - first], slots[t], false);
+      if (!ok) continue;
+      const starts = at(first).start;
+      starts.set(block.start, Math.max(starts.get(block.start) || 0, block.strength));
+      for (let t = first + 1; t < s; t++) at(t).inner.add(block.start + t - first);
+      at(s).end.add(block.end);
+      any = true;
+    }
+  });
+  return any ? pins : null;
+}
+
+// The backward pass. For every slot s and grouping i, the most signature
+// blocks that can still be placed from slot s on with grouping i there, or -1
+// if the rest of the template can't be filled after it (rest slots have no
+// rows):
+//   best[s][i]   i hooks to what comes before it (as any grouping, or as the
+//                first of a block)
+//   free[s][i]   the same, as a grouping outside any block
+//   cont[s][i]   i continues the block of the grouping before it (null
+//                where no block can be)
+//   roles[s]     Map(i -> { start, inner, end }): i as the first, a middle
+//                or the last grouping of a block (only where blocks can be)
+// next: one of the successor graphs; pins: from pinsFor, or null.
+function feasible(db, slots, next, pins = null) {
   const n = db.groupings.length;
-  const ok = new Array(slots.length).fill(null);
-  let later = null; // the row of the next non-rest slot
-  let laterAny = true;
+  const plan = { best: [], free: [], cont: [], roles: [] };
+  let later = null; // the best row of the next non-rest slot
+  let laterCont = null;
+  let laterMost = -1;
   let restBetween = false;
   for (let s = slots.length - 1; s >= 0; s--) {
-    if (slots[s].rest) {
+    const slot = slots[s];
+    if (slot.rest) {
       restBetween = true;
       continue;
     }
-    const row = new Uint8Array(n);
-    let any = false;
-    for (let i = 0; i < n; i++) {
-      if (!fits(db.groupings[i], slots[s])) continue;
-      if (slots[s].needsExit && !next[i].length) continue;
-      if (later && (restBetween ? !laterAny : !next[i].some((j) => later[j]))) continue;
-      row[i] = 1;
-      any = true;
+    // The most blocks after slot s, with i at s and the next slot hooked to it.
+    const open = (i) => {
+      if (slot.needsExit && !next[i].length) return -1;
+      if (!later) return 0;
+      if (restBetween) return laterMost;
+      let most = -1;
+      for (const j of next[i]) if (later[j] > most) most = later[j];
+      return most;
+    };
+    const free = new Int16Array(n).fill(-1);
+    for (let i = 0; i < n; i++) if (fits(db.groupings[i], slot)) free[i] = open(i);
+    let best = free;
+    let cont = null;
+    if (pins && pins[s]) {
+      const roles = new Map();
+      const role = (i) => roles.get(i) || roles.set(i, { start: -1, inner: -1, end: -1 }).get(i);
+      const onward = (i) => (laterCont && laterCont[i + 1] !== undefined ? laterCont[i + 1] : -1);
+      for (const i of pins[s].start.keys()) role(i).start = onward(i);
+      for (const i of pins[s].inner) role(i).inner = onward(i);
+      for (const i of pins[s].end) {
+        const most = open(i);
+        role(i).end = most < 0 ? -1 : most + 1;
+      }
+      best = free.slice();
+      cont = new Int16Array(n).fill(-1);
+      for (const [i, r] of roles) {
+        best[i] = Math.max(best[i], r.start);
+        cont[i] = Math.max(r.inner, r.end);
+      }
+      plan.roles[s] = roles;
     }
-    ok[s] = row;
-    later = row;
-    laterAny = any;
+    plan.best[s] = best;
+    plan.free[s] = free;
+    plan.cont[s] = cont;
+    later = best;
+    laterCont = cont;
+    laterMost = -1;
+    for (let i = 0; i < n; i++) if (best[i] > laterMost) laterMost = best[i];
     restBetween = false;
   }
-  return ok;
+  return plan;
+}
+
+// feasible() for these slots at a match level, computed once for the same
+// slots, level and pins (compose asks the same question while choosing a
+// relaxation step and while filling).
+const planCache = new WeakMap();
+function planFor(db, slots, level, pins) {
+  if (!planCache.has(slots)) planCache.set(slots, []);
+  const known = planCache.get(slots).find((p) => p.db === db && p.level === level && p.pins === pins);
+  if (known) return known.plan;
+  const plan = feasible(db, slots, successors(db)[level], pins);
+  planCache.get(slots).push({ db, level, pins, plan });
+  return plan;
 }
 
 // The pitches a grouping's voices go to next, after its voices were moved.
@@ -1640,17 +1877,20 @@ function voicesFit(db, g, shift) {
   return true;
 }
 
-// Fills one template's slots. Returns the placed groupings, or null.
+// Fills one template's slots. Returns the placed groupings, or null:
+//   [{ index, beat, shift, level, order, block?, signatures? }]
+// Groupings of a signature block share `block` (the id of its first
+// grouping); its last one lists the block's `signatures`.
 //   prev: the grouping placed just before slot 0 ({ index, shift }), which
 //         slot 0 hooks to unless it is the first slot or follows a rest
 //   used: groupings already used (shared across a stream's phrases); the
 //         ones placed here are added to it
-function fill(db, slots, { random, level, budget, counters, prev = null, used = new Set() }) {
-  const graphs = successors(db);
-  const ok = feasible(db, slots, graphs[level]);
-  const ok0 = level > 0 ? feasible(db, slots, graphs[0]) : ok;
+//   pins: signature blocks that may stand at cadences (pinsFor), or null
+function fill(db, slots, { random, level, budget, counters, prev = null, used = new Set(), pins = null }) {
+  const plan = planFor(db, slots, level, pins);
+  const plan0 = level > 0 ? planFor(db, slots, 0, pins) : plan;
   const at = slots.map((slot, s) => s).filter((s) => !slots[s].rest); // the slots to fill
-  if (!at.length || !ok[at[0]].some((v) => v)) return null; // can't be filled at all
+  if (!at.length || !plan.best[at[0]].some((v) => v >= 0)) return null; // can't be filled at all
 
   const shuffle = (list) => {
     const out = list.slice();
@@ -1662,22 +1902,37 @@ function fill(db, slots, { random, level, budget, counters, prev = null, used = 
   };
   const restStarts = db.groupings.map((g, i) => i).filter((i) => db.groupings[i].restBefore);
   const placed = [];
+  const strongest = db.signatures && db.signatures.length ? db.signatures[0].works : 0;
 
   // Hooks that keep every voice where its source had it come first: exact
   // hooks, then L1 hooks that move no voice (a tie becomes a repeated note or
   // the reverse). Among those, the ones from which the template can be
   // finished with exact hooks come first. Hooks that move voices come last.
+  // Then (M7) the candidates that leave room for the most signature blocks
+  // come first, those that move voices still last.
   const candidates = (k) => {
     const s = at[k];
     const slot = slots[s];
-    const free = (i) => ok[s][i] && !used.has(i);
+    const free = (i) => plan.best[s][i] >= 0 && !used.has(i);
+    const ok0 = (i) => plan0.best[s][i] >= 0;
     let before = null; // the placed grouping this slot hooks to
     if (k > 0) before = at[k - 1] === s - 1 ? placed[k - 1] : null;
     else if (!slot.first && !slot.afterRest && s === 0) before = prev;
+    if (before && (before.role === "start" || before.role === "inner")) {
+      // Inside a signature block: its next grouping, moved as its first was.
+      const index = before.index + 1;
+      const r = plan.roles[s] && plan.roles[s].get(index);
+      if (!r || used.has(index) || (before.shift && !voicesFit(db, db.groupings[index], before.shift))) return [];
+      const roles = [
+        { role: "end", value: r.end },
+        { role: "inner", value: r.inner },
+      ].filter((c) => c.value >= 0);
+      return roles.sort((a, b) => b.value - a.value).map((c) => ({ index, shift: before.shift, level: before.level, ...c }));
+    }
     if (!before) {
       // The first slot, or the first after a rest: nothing to hook to.
       const pool = (slot.first ? db.openings : restStarts).filter(free);
-      return preferLabel([...shuffle(pool.filter((i) => ok0[s][i])), ...shuffle(pool.filter((i) => !ok0[s][i]))].map((index) => ({ index, shift: null, level: 0 })), s);
+      return byBlocks(preferLabel([...shuffle(pool.filter(ok0)), ...shuffle(pool.filter((i) => !ok0(i)))].map((index) => ({ index, shift: null, level: 0 })), s), s);
     }
     const from = db.groupings[before.index];
     const target = shiftedDestination(from, before.shift);
@@ -1695,11 +1950,11 @@ function fill(db, slots, { random, level, budget, counters, prev = null, used = 
     }
     const asIs = (level) => (index) => ({ index, shift: null, level });
     const exactFirst = (list, level) => [
-      ...shuffle(list.filter((i) => ok0[s][i])).map(asIs(level)),
+      ...shuffle(list.filter(ok0)).map(asIs(level)),
     ];
-    const rest = (list, level) => shuffle(list.filter((i) => !ok0[s][i])).map(asIs(level));
+    const rest = (list, level) => shuffle(list.filter((i) => !ok0(i))).map(asIs(level));
     const all = [...exactFirst(exact, 0), ...exactFirst(unmoved, 1), ...rest(exact, 0), ...rest(unmoved, 1), ...shuffle(moved)];
-    return preferLabel(all, s);
+    return byBlocks(preferLabel(all, s), s);
   };
 
   // With a preferred (not required) SPEAC label, the groupings that have it
@@ -1719,6 +1974,28 @@ function fill(db, slots, { random, level, budget, counters, prev = null, used = 
     return [...out, ...moved.filter(has), ...moved.filter((c) => !has(c))];
   }
 
+  // Each candidate as a grouping on its own and, where it may, as the first
+  // of a signature block; then those leaving room for the most blocks first.
+  // Among those, a strong block (STRONG) starts as soon as it can, the
+  // strongest first; a weaker one only where nothing else would lead to a
+  // block, so it is as short as it can be, leaving more to recombination.
+  // With that, pieces use Bach's formulas about as often as he does (soprano
+  // 3-2-1 at 18% of cadences, against his 20%; bass 4-5-1 at 18%, against
+  // 21%). The sort is stable, so with no blocks in view the order is as
+  // above.
+  function byBlocks(list, s) {
+    const roles = plan.roles[s];
+    const out = [];
+    for (const c of list) {
+      if (plan.free[s][c.index] >= 0) out.push({ ...c, role: "free", value: plan.free[s][c.index] });
+      const r = roles && roles.get(c.index);
+      if (r && r.start >= 0) out.push({ ...c, role: "start", value: r.start });
+    }
+    const strength = (c) => (c.role === "start" ? pins[s].start.get(c.index) : STRONG * strongest);
+    const rank = out.map((c, i) => [c.shift ? 1 : 0, -c.value, -strength(c), i]);
+    return rank.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2] || a[3] - b[3]).map((r) => out[r[3]]);
+  }
+
   const extend = (k) => {
     if (k === at.length) return true;
     if (++counters.steps > budget) return false;
@@ -1733,7 +2010,51 @@ function fill(db, slots, { random, level, budget, counters, prev = null, used = 
     }
     return false;
   };
-  return extend(0) ? placed : null;
+  if (!extend(0)) return null;
+
+  let block = null;
+  return placed.map(({ role, value, ...p }) => {
+    if (role === "start") block = { id: db.groupings[p.index].id, start: p.index };
+    if (role === "free") return p;
+    const out = { ...p, block: block.id };
+    if (role === "end") {
+      const found = signatures.blockAt(db, block.start, p.index);
+      out.signatures = found ? found.sigs : [];
+    }
+    return out;
+  });
+}
+
+// The most signature blocks a fill of these slots can place, at this match
+// level (-1: the slots can't be filled).
+function mostBlocks(db, slots, level, pins) {
+  const plan = planFor(db, slots, level, pins);
+  const first = slots.findIndex((slot) => !slot.rest);
+  let most = -1;
+  if (first >= 0) for (const v of plan.best[first]) if (v > most) most = v;
+  return most;
+}
+
+// Signatures come before strict SPEAC labels: a relaxation step is skipped
+// when the next one, with the same voice-leading and cadence rules and only
+// its labels preferred instead of required, can place more blocks.
+// slotsAt(step) gives the slots for a step, pinsAt(slots) their pins (both
+// remembered: see memo).
+function labelsGiveWay(db, step, slotsAt, pinsAt) {
+  const [here, looser] = [RELAX[step], RELAX[step + 1]];
+  if (!looser || here.speac !== true || looser.level !== here.level || looser.cadenceBass !== here.cadenceBass) return false;
+  const strict = slotsAt(step);
+  const loose = slotsAt(step + 1);
+  const pinsStrict = pinsAt(strict);
+  if (!pinsStrict) return false;
+  return mostBlocks(db, loose, looser.level, pinsAt(loose)) > mostBlocks(db, strict, here.level, pinsStrict);
+}
+
+// A function's results remembered by argument, so the same slots and pins
+// (and the plans cached on them) are reused across relaxation steps.
+function memo(f) {
+  const known = new Map();
+  return (x) => (known.has(x) ? known.get(x) : known.set(x, f(x)).get(x));
 }
 
 // A template's length in beats, rests included.
@@ -1745,8 +2066,9 @@ function templateBeats(db, template) {
 
 // Composes a piece in the form of a chorale from the corpus, chosen by the
 // seed among those at least `beats` long. relax: how far the rules may relax
-// (an index into RELAX; 0 = strict only).
-function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10 } = {}) {
+// (an index into RELAX; 0 = strict only). signatures: false composes without
+// signature blocks (as in M6).
+function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true } = {}) {
   const random = rng.create(seed);
   const templates = db.templates.filter((t) => templateBeats(db, t) >= beats);
   for (let i = templates.length - 1; i > 0; i--) {
@@ -1757,9 +2079,13 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
   const counters = { steps: 0, backtracks: 0 };
   for (const template of templates.slice(0, maxTemplates)) {
     tried.push(template.work);
+    const slotsAt = memo((step) => slotsOf(db, template, RELAX[step]));
+    const pinsAt = memo((slots) => (signatures ? pinsFor(db, slots, template.work) : null));
     for (let step = 0; step <= relax; step++) {
-      const slots = slotsOf(db, template, RELAX[step]);
-      const placed = fill(db, slots, { random, level: RELAX[step].level, budget: counters.steps + budget, counters });
+      if (step < relax && labelsGiveWay(db, step, slotsAt, pinsAt)) continue;
+      const slots = slotsAt(step);
+      const pins = pinsAt(slots);
+      const placed = fill(db, slots, { random, level: RELAX[step].level, budget: counters.steps + budget, counters, pins });
       if (!placed) continue;
       const cadences = slots.filter((slot) => slot.cadence).length;
       const matched = placed.filter((p) => {
@@ -1768,8 +2094,8 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
       }).length;
       const piece = assemble(db, placed, {
         seed,
-        source: `EMI recombination (M6, form of ${template.work})`,
-        form: { template: template.work, phrases: cadences, beats: slots.length, rests: slots.length - placed.length, relaxed: step, speac: matched / placed.length },
+        source: `EMI recombination (M7, form of ${template.work})`,
+        form: { template: template.work, phrases: cadences, beats: slots.length, rests: slots.length - placed.length, relaxed: step, speac: matched / placed.length, signatures: placed.filter((p) => p.signatures).length },
       });
       return { ok: true, piece, stats: { tried, relaxed: step, steps: counters.steps, backtracks: counters.backtracks } };
     }
@@ -1785,6 +2111,9 @@ exports.feasible = feasible;
 exports.successors = successors;
 exports.templateBeats = templateBeats;
 exports.fill = fill;
+exports.pinsFor = pinsFor;
+exports.labelsGiveWay = labelsGiveWay;
+exports.memo = memo;
   };
 
   // ---- emi-load.js
@@ -2139,8 +2468,9 @@ exports.write = write;
 // A stream walks through one chorale's phrases in order, then another
 // chorale's (chosen by the seed), so it inherits real chorales' tonal plans.
 // Every phrase is filled like a whole form (emi-form: the same rules and the
-// same relaxation steps), and its first beat joins the previous phrase's last
-// beat by voice-hooking, so phrases flow into each other.
+// same relaxation steps, and (M7) a signature block at its cadence where one
+// fits), and its first beat joins the previous phrase's last beat by
+// voice-hooking, so phrases flow into each other.
 //
 // Where the next phrase's first beat doesn't follow on in the bar (after a
 // change of chorale, say), silent beats fill the gap and the phrase starts
@@ -2149,9 +2479,10 @@ exports.write = write;
 // fallbacks.
 //
 //   stream = start({ seed })
-//   next(db, stream, { seed, last }) -> { ok, phrase }
+//   next(db, stream, { seed, last, signatures }) -> { ok, phrase }
 //     phrase: { number, work, index, count, startBeat, endBeat, startTick,
-//               endTick, slots, placed, piece, relaxed, gap, fallback }
+//               endTick, slots, placed, piece, relaxed, gap, fallback,
+//               signatures (how many blocks it has) }
 // `seed` may change between calls: each phrase is drawn from its own seed and
 // number, so a stream is reproducible and a new seed is heard from the next
 // phrase. `last: true` makes the phrase a final one (it ends on a chorale's
@@ -2212,7 +2543,7 @@ function start({ seed = 1 } = {}) {
 
 const phraseSeed = (seed, number) => (Math.imul(seed, 7919) + Math.imul(number, 104729)) >>> 0 || 1;
 
-function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 8 } = {}) {
+function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 8, signatures = true } = {}) {
   if (stream.finished) return { ok: false, phrase: null };
   const number = stream.phrases.length + 1;
   const random = rng.create(phraseSeed(seed, number));
@@ -2225,7 +2556,7 @@ function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX
       stream.endsInRest = true;
     }
     for (const choice of choices(db, stream, random, last).slice(0, tries)) {
-      const attempt = place(db, stream, choice, { random, last, relax, budget, counters });
+      const attempt = place(db, stream, choice, { random, last, relax, budget, counters, signatures });
       if (attempt) {
         if (fallback) stream.fallbacks++;
         return { ok: true, phrase: commit(db, stream, choice, attempt, { seed, number, last, fallback }) };
@@ -2298,10 +2629,13 @@ function prepare(db, stream, choice, { last, cadenceBass, speac }) {
   return [...Array.from({ length: gap }, () => ({ rest: true })), ...slots];
 }
 
-function place(db, stream, choice, { random, last, relax, budget, counters }) {
+function place(db, stream, choice, { random, last, relax, budget, counters, signatures }) {
+  const slotsAt = form.memo((step) => prepare(db, stream, choice, { last, ...form.RELAX[step] }));
+  const pinsAt = form.memo((slots) => (signatures ? form.pinsFor(db, slots, choice.work) : null));
   for (let step = 0; step <= relax; step++) {
-    const { level, cadenceBass, speac } = form.RELAX[step];
-    const slots = prepare(db, stream, choice, { last, cadenceBass, speac });
+    if (step < relax && form.labelsGiveWay(db, step, slotsAt, pinsAt)) continue;
+    const { level } = form.RELAX[step];
+    const slots = slotsAt(step);
     const placed = form.fill(db, slots, {
       random,
       level,
@@ -2309,6 +2643,7 @@ function place(db, stream, choice, { random, last, relax, budget, counters }) {
       counters,
       prev: stream.last,
       used: stream.used,
+      pins: pinsAt(slots),
     });
     if (placed) return { slots, placed, relaxed: step };
   }
@@ -2326,7 +2661,7 @@ function commit(db, stream, choice, { slots, placed, relaxed }, { seed, number, 
   const cadences = slots.filter((slot) => !slot.rest && slot.cadence).length;
   const piece = assemble(db, at, {
     seed,
-    source: `EMI stream (M5), phrase ${number}, from ${choice.work}`,
+    source: `EMI stream (M7), phrase ${number}, from ${choice.work}`,
     offsetTicks: stream.offsetTicks,
     form: { template: choice.work, phrase: choice.p + 1, phrases: cadences, beats: slots.length, rests: slots.length - placed.length, relaxed },
   });
@@ -2347,6 +2682,7 @@ function commit(db, stream, choice, { slots, placed, relaxed }, { seed, number, 
     gap: slots.findIndex((slot) => !slot.rest),
     fallback,
     final: last,
+    signatures: at.filter((p) => p.signatures).length,
   };
   stream.phrases.push(phrase);
   stream.nextBeat = endBeat;
@@ -2388,6 +2724,10 @@ __emi_require.local = 1;
 // the piano roll, exports it, and (in Live) writes it as clips. JS never plays
 // notes itself.
 //
+// Signatures (M7): a corpus's signatures (emi-signatures) are listed in the
+// Max window when it loads; with "sigs 1" (the default) pieces and stream
+// phrases keep signature blocks at their cadences, shown as gold bands.
+//
 // Streaming (M5): with "stream 1", compose starts a stream of phrases. Two
 // phrases are queued; when the player reaches the start of the last queued
 // phrase it sends "need", and the next phrase is composed and queued. Changes
@@ -2397,7 +2737,7 @@ __emi_require.local = 1;
 //   coll clear | coll store <step> <voice pitch velocity>...   -> [coll ---emi.queue]
 //   restart                    -> the player: notes off; the queue starts again at the next bar
 //   streamat <step>            -> the player: send "need" when this step is reached
-//   view clear|note|seam|cadence|speac|done ...                 -> the piano roll
+//   view clear|note|seam|cadence|speac|signature|done ...       -> the piano roll
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
 //
@@ -2407,6 +2747,7 @@ __emi_require.local = 1;
 //   corpus <folder>        read every chorale in a folder and build the lexicon
 //   beats <n>              shortest piece to compose (default 32)
 //   form 1 | form 0        compose in the form of a chorale (M3, default) or freely (M2)
+//   sigs 1 | sigs 0        keep signatures at cadences (M7, default) or not
 //   seed <n>               set the seed; compose with it if a corpus is loaded
 //   compose [seed]         compose with the current seed (or this one)
 //   next                   add 1 to the seed and compose
@@ -2446,6 +2787,7 @@ const settingsFile = __emi_require("emi-settings");
 const streams = __emi_require("emi-stream");
 const { segment } = __emi_require("emi-segment");
 const speacLabels = __emi_require("emi-speac");
+const signatureNames = __emi_require("emi-signatures");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
@@ -2456,6 +2798,7 @@ let keyMode = "c";
 let db = null;
 let minBeats = 32;
 let useForm = true;
+let useSignatures = true;
 let currentSeed = 1;
 let autoClips = false;
 let streaming = false;
@@ -2464,6 +2807,7 @@ let transposeBy = 0;
 let current = null; // { base (untransposed, or null for a stream), score, name, chorale }
 let flow = null; // the stream being queued: { state, steps, events, provenance, fermatas, name }
 let groupingsById = null; // { db, map }: the corpus's groupings by id, for the SPEAC lane
+let signaturesById = null; // { db, map }: the corpus's signatures by id, for their names
 let settingsPath = null; // known once startup has read the settings
 let remembered = {}; // the settings file's contents
 
@@ -2503,6 +2847,13 @@ function form(on) {
   save();
   if (useForm) outlet(0, "status", "pieces", "in", "the", "form", "of", "a", "chorale");
   else outlet(0, "status", "free", "pieces", "(M2),", minBeats + "+", "beats");
+}
+
+function sigs(on) {
+  useSignatures = Boolean(on);
+  save();
+  if (useSignatures) outlet(0, "status", "signatures", "kept", "at", "cadences");
+  else outlet(0, "status", "no", "signatures", "(as", "in", "M6)");
 }
 
 function seed(n) {
@@ -2643,9 +2994,10 @@ function loadCorpus(folder) {
   remembered.corpus = String(folder);
   const s = lexicon.stats(db);
   const mode = db.mode === "mixed" ? "major and minor mixed" : db.mode;
-  const words = ["corpus", s.works, "chorales", "(" + mode + "),", s.groupings, "beats,", Math.round(100 * s.deadEndShare) + "%", "dead", "ends"];
+  const words = ["corpus", s.works, "chorales", "(" + mode + "),", s.groupings, "beats,", Math.round(100 * s.deadEndShare) + "%", "dead", "ends,", db.signatures.length, "signatures"];
   if (skipped.length) words.push("(" + skipped.length, "skipped)");
   outlet(0, "status", ...words);
+  listSignatures();
 }
 loadCorpus.local = 1;
 
@@ -2659,7 +3011,7 @@ function composeNow(atStartup) {
       startStream();
       return;
     }
-    const options = { seed: currentSeed, beats: minBeats };
+    const options = { seed: currentSeed, beats: minBeats, signatures: useSignatures };
     const result = useForm ? forms.compose(db, options) : composer.compose(db, options);
     if (!result.ok) {
       if (useForm && !result.stats.tried.length) {
@@ -2674,6 +3026,7 @@ function composeNow(atStartup) {
     let text = describePiece(piece);
     if (autoClips && !atStartup) text += "; " + clips.writeScore(piece, piece.id);
     outlet(0, "status", ...text.split(" "));
+    for (const line of signatureLines(piece)) post(line + "\n");
   });
 }
 composeNow.local = 1;
@@ -2701,8 +3054,8 @@ function appendPhrase() {
   const state = flow.state;
   const number = state.phrases.length + 1;
   const last = phrasesWanted > 0 && number >= phrasesWanted;
-  let result = streams.next(db, state, { seed: currentSeed, last });
-  if (!result.ok && last) result = streams.next(db, state, { seed: currentSeed }); // end later instead
+  let result = streams.next(db, state, { seed: currentSeed, last, signatures: useSignatures });
+  if (!result.ok && last) result = streams.next(db, state, { seed: currentSeed, signatures: useSignatures }); // end later instead
   if (!result.ok) {
     outlet(0, "streamat", NO_STEP);
     outlet(0, "error", "the", "stream", "ran", "out", "after", "phrase", number - 1 + ";", "try", "another", "seed", "or", "more", "chorales");
@@ -2725,6 +3078,8 @@ function appendPhrase() {
   const from = state.phrases[Math.max(0, state.phrases.length - WINDOW)].startTick;
   draw(current.score, from, phrase.endTick);
   let text = `${flow.name} stream: phrase ${number}${phrasesWanted ? " of " + phrasesWanted : ""} queued (${phrase.work} phrase ${phrase.index}`;
+  const names = blocksOf(phrase.piece.provenance, db.beatTicks).map((b) => b.name);
+  if (names.length) text += ", signature " + names.join(" and ");
   if (phrase.fallback) text += ", after a breath";
   if (phrase.final) text += ", the last";
   if (transposeBy) text += ", transposed " + signed(transposeBy);
@@ -2776,6 +3131,7 @@ function describePiece(piece) {
   const phrases = piece.form.phrases + (piece.form.phrases === 1 ? " phrase" : " phrases");
   let text = `${piece.id}: form of ${piece.form.template}, ${phrases}, ${piece.form.beats} beats, ${s.sources} chorales`;
   text += ", SPEAC " + Math.round(100 * piece.form.speac) + "%";
+  if (piece.form.signatures !== undefined) text += ", " + piece.form.signatures + (piece.form.signatures === 1 ? " signature" : " signatures");
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
   if (piece.form.relaxed === 3) relaxed.push("any cadence bass");
@@ -2790,6 +3146,7 @@ function restore() {
   if (remembered.seed !== undefined) currentSeed = clampSeed(remembered.seed);
   if (remembered.beats !== undefined) minBeats = Math.max(4, Math.min(256, Math.round(remembered.beats)));
   if (remembered.form !== undefined) useForm = Boolean(remembered.form);
+  if (remembered.signatures !== undefined) useSignatures = Boolean(remembered.signatures);
   if (remembered.key !== undefined) keyMode = remembered.key ? "original" : "c";
   if (remembered.stream !== undefined) streaming = Boolean(remembered.stream);
   if (remembered.phrases !== undefined) phrasesWanted = Math.max(0, Math.min(64, Math.round(remembered.phrases)));
@@ -2797,6 +3154,7 @@ function restore() {
   outlet(0, "setting", "seed", currentSeed);
   outlet(0, "setting", "beats", minBeats);
   outlet(0, "setting", "form", useForm ? 1 : 0);
+  outlet(0, "setting", "sigs", useSignatures ? 1 : 0);
   outlet(0, "setting", "key", keyMode === "original" ? 1 : 0);
   outlet(0, "setting", "stream", streaming ? 1 : 0);
   outlet(0, "setting", "phrases", phrasesWanted);
@@ -2813,6 +3171,7 @@ function save() {
   remembered.seed = currentSeed;
   remembered.beats = minBeats;
   remembered.form = useForm ? 1 : 0;
+  remembered.signatures = useSignatures ? 1 : 0;
   remembered.key = keyMode === "original" ? 1 : 0;
   remembered.stream = streaming ? 1 : 0;
   remembered.phrases = phrasesWanted;
@@ -2857,6 +3216,58 @@ function show(score, name, chorale) {
   draw(shown);
 }
 show.local = 1;
+
+// A signature's name ("soprano 3-2-1"), or its id if the corpus has changed.
+function signatureName(id) {
+  if (!db) return id;
+  if (!signaturesById || signaturesById.db !== db) signaturesById = { db, map: new Map(db.signatures.map((sig) => [sig.id, sig])) };
+  const found = signaturesById.map.get(id);
+  return found ? signatureNames.describe(found, db.mode) : id;
+}
+signatureName.local = 1;
+
+// The signature blocks in a provenance list: [{ start, end, name, outer, work }],
+// end the tick after the block's last beat; named after its strongest
+// soprano or bass signature (see emi-signatures); outer: all of its soprano
+// and bass signatures' names.
+function blocksOf(provenance, beatTicks) {
+  const blocks = [];
+  for (let k = 0; k < provenance.length; k++) {
+    const p = provenance[k];
+    if (!p.block) continue;
+    const previous = blocks[blocks.length - 1];
+    if (previous && previous.id === p.block && previous.end === p.tick) previous.end = p.tick + beatTicks;
+    else blocks.push({ id: p.block, start: p.tick, end: p.tick + beatTicks, work: p.work, sigs: [] });
+    if (p.signatures) blocks[blocks.length - 1].sigs = p.signatures;
+  }
+  return blocks.map((b) => {
+    const names = b.sigs.map(signatureName);
+    const outer = names.filter((name) => /^(soprano|bass) /.test(name));
+    return { start: b.start, end: b.end, work: b.work, name: names[0] || "signature", outer: outer.length ? outer : names.slice(0, 1) };
+  });
+}
+blocksOf.local = 1;
+
+// The corpus's signatures, strongest first, in the Max window.
+function listSignatures() {
+  const list = db.signatures;
+  post(`ml_midi: ${list.length} signatures in ${db.works.length} chorales, strongest first (in how many chorales):\n`);
+  for (const sig of list.slice(0, 16)) post(`  ${sig.id}: ${signatureNames.describe(sig, db.mode)} (${sig.works})\n`);
+  if (list.length > 16) post(`  ... and ${list.length - 16} more\n`);
+}
+listSignatures.local = 1;
+
+// Where a piece keeps its signatures, for the Max window: one line per block.
+function signatureLines(piece) {
+  const barTicks = (piece.meter[0] * piece.ppq * 4) / piece.meter[1];
+  return blocksOf(piece.provenance || [], piece.ppq).map((b) => {
+    const cadence = b.end - piece.ppq; // the block's last beat
+    const bar = Math.floor(cadence / barTicks) + 1;
+    const beat = Math.floor((cadence % barTicks) / piece.ppq) + 1;
+    return `${piece.id}: ${b.outer.join(" + ")} at the cadence in bar ${bar} (beat ${beat}), from ${b.work}`;
+  });
+}
+signatureLines.local = 1;
 
 // The SPEAC lane: one beat label per beat, as [tick, label]. A composed
 // piece shows the labels its beats bring from their chorales; a chorale (or
@@ -2905,6 +3316,9 @@ function draw(score, from = 0, to = score.lengthTicks) {
   }
   for (const tick of score.fermatas || []) if (tick >= from && tick < to) outlet(0, "view", "cadence", tick);
   for (const [tick, label] of labelsFor(score)) if (tick >= from && tick < to) outlet(0, "view", "speac", tick, label);
+  for (const b of blocksOf(prov || [], score.ppq)) {
+    if (b.end > from && b.start < to) outlet(0, "view", "signature", b.start, b.end, ...b.name.split(" "));
+  }
   outlet(0, "view", "done");
 }
 draw.local = 1;

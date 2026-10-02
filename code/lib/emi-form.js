@@ -14,7 +14,8 @@
 //   - metre, voice-hooking and the different-source rule as in M2.
 // The seed picks the template. If it can't be filled, the rules relax one
 // step at a time (RELAX below), and only then is the next template tried:
-//   0  strict: every hook exact (L0), every SPEAC label matched
+//   0  strict: every hook exact (L0), every SPEAC label matched (skipped
+//      when step 1 can keep more signatures, M7)
 //   1  every hook exact; SPEAC labels preferred, not required (Cope's "soft
 //      constraint"): groupings with the template's label are tried first
 //   2  L1 hooks too: a grouping's upper voices move by octaves so each starts
@@ -22,17 +23,34 @@
 //      as every voice stays in its range and no voices cross that didn't
 //      before; exact hooks still come first
 //   3  as 2, and a cadence may stand on any bass note
-// On the full corpus about 95 pieces in 100 keep exact voice-leading
-// throughout, and 62% of beats keep their template beat's label (33% by
-// chance, without SPEAC).
+// On the full corpus 98 pieces in 100 keep exact voice-leading throughout
+// (95 without signatures), and 56% of beats keep their template beat's label
+// (62% without signatures, 33% by chance without SPEAC).
+//
+// M7: signatures (emi-signatures). A cadence slot may take a whole
+// *signature block*: the beats of a real chorale from a signature's first
+// note to its cadence (soprano 3-2-1 over bass 4-5-1, say), kept as they are:
+// one work, its labels, no different-source rule inside it. The block's first
+// beat hooks to the beat before it like any other, so the search must choose
+// that beat with the block in view (Cope's lookahead hooking). Blocks come
+// from works other than the template's, and pieces take as many as their
+// voice-leading allows: on the full corpus, 91% of cadences.
 //
 // Before searching, a backward pass over the template finds, for every slot,
-// the groupings from which the rest of the template can still be filled. The
-// search only enters those, so it rarely backtracks.
+// the groupings from which the rest of the template can still be filled, and
+// how many signature blocks can still be placed after each. The search only
+// enters those, most blocks first, so it rarely backtracks.
 
 const rng = require("emi-rng");
 const lexicon = require("emi-lexicon");
+const signatures = require("emi-signatures");
 const { assemble } = require("emi-compose");
+
+// A signature block is *strong* when its strongest soprano or bass
+// signature is found in at least this share of the works that the corpus's
+// strongest signature is found in (on the 142 major chorales: bass 4-5-1,
+// soprano 3-2-1 and bass 5-5-1). See byBlocks in fill.
+const STRONG = 0.5;
 
 const RELAX = [
   { level: 0, speac: true, cadenceBass: true },
@@ -75,10 +93,11 @@ function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
 }
 
 // May grouping g fill this slot, leaving aside how it joins its neighbours?
-function fits(g, slot) {
+// labels: false for a signature block's grouping, which keeps its own label.
+function fits(g, slot, labels = true) {
   if (g.beatInBar !== slot.beatInBar || g.cadence !== slot.cadence) return false;
   if (slot.bass !== null && (g.bass === null || g.bass % 12 !== slot.bass)) return false;
-  if (slot.speac && slot.speacHard !== false && (!g.speac || g.speac.beat !== slot.speac)) return false;
+  if (labels && slot.speac && slot.speacHard !== false && (!g.speac || g.speac.beat !== slot.speac)) return false;
   if (slot.first && !g.opening) return false;
   if (slot.afterRest && !g.restBefore) return false;
   if (slot.last && !g.final) return false;
@@ -105,35 +124,119 @@ function successors(db) {
   return result;
 }
 
-// ok[s][i] = 1: grouping i may fill slot s, and the rest of the template can
-// still be filled after it through `next` (one of the successor graphs).
-// Computed backwards from the last slot. Rest slots have no row.
-function feasible(db, slots, next) {
+// The signature blocks that may end at each cadence slot (M7): those that
+// carry a soprano or bass signature, the formulas a listener hears (an inner
+// voice's pattern alone isn't kept). A block of L groupings may stand on
+// slots s-L+1..s when none of them is silent and each of its groupings fits
+// its slot (labels aside). Returns, per slot, the
+// groupings that may start, continue or end a block there:
+//   pins[s] = { start: Map(i -> the block's strength), inner: Set, end: Set } | null
+// or null when no cadence can take a block. avoid: a work whose blocks are
+// left out (the template's own).
+function pinsFor(db, slots, avoid = null) {
+  const all = signatures.blocks(db);
+  if (!all.length) return null;
+  const pins = slots.map(() => null);
+  const at = (s) => (pins[s] = pins[s] || { start: new Map(), inner: new Set(), end: new Set() });
+  let any = false;
+  slots.forEach((slot, s) => {
+    if (slot.rest || !slot.cadence) return;
+    for (const block of all) {
+      if (!block.outer || block.work === avoid || !fits(db.groupings[block.end], slot, false)) continue;
+      const first = s - (block.end - block.start);
+      if (first < 0) continue;
+      let ok = true;
+      for (let t = first; t < s && ok; t++) ok = !slots[t].rest && fits(db.groupings[block.start + t - first], slots[t], false);
+      if (!ok) continue;
+      const starts = at(first).start;
+      starts.set(block.start, Math.max(starts.get(block.start) || 0, block.strength));
+      for (let t = first + 1; t < s; t++) at(t).inner.add(block.start + t - first);
+      at(s).end.add(block.end);
+      any = true;
+    }
+  });
+  return any ? pins : null;
+}
+
+// The backward pass. For every slot s and grouping i, the most signature
+// blocks that can still be placed from slot s on with grouping i there, or -1
+// if the rest of the template can't be filled after it (rest slots have no
+// rows):
+//   best[s][i]   i hooks to what comes before it (as any grouping, or as the
+//                first of a block)
+//   free[s][i]   the same, as a grouping outside any block
+//   cont[s][i]   i continues the block of the grouping before it (null
+//                where no block can be)
+//   roles[s]     Map(i -> { start, inner, end }): i as the first, a middle
+//                or the last grouping of a block (only where blocks can be)
+// next: one of the successor graphs; pins: from pinsFor, or null.
+function feasible(db, slots, next, pins = null) {
   const n = db.groupings.length;
-  const ok = new Array(slots.length).fill(null);
-  let later = null; // the row of the next non-rest slot
-  let laterAny = true;
+  const plan = { best: [], free: [], cont: [], roles: [] };
+  let later = null; // the best row of the next non-rest slot
+  let laterCont = null;
+  let laterMost = -1;
   let restBetween = false;
   for (let s = slots.length - 1; s >= 0; s--) {
-    if (slots[s].rest) {
+    const slot = slots[s];
+    if (slot.rest) {
       restBetween = true;
       continue;
     }
-    const row = new Uint8Array(n);
-    let any = false;
-    for (let i = 0; i < n; i++) {
-      if (!fits(db.groupings[i], slots[s])) continue;
-      if (slots[s].needsExit && !next[i].length) continue;
-      if (later && (restBetween ? !laterAny : !next[i].some((j) => later[j]))) continue;
-      row[i] = 1;
-      any = true;
+    // The most blocks after slot s, with i at s and the next slot hooked to it.
+    const open = (i) => {
+      if (slot.needsExit && !next[i].length) return -1;
+      if (!later) return 0;
+      if (restBetween) return laterMost;
+      let most = -1;
+      for (const j of next[i]) if (later[j] > most) most = later[j];
+      return most;
+    };
+    const free = new Int16Array(n).fill(-1);
+    for (let i = 0; i < n; i++) if (fits(db.groupings[i], slot)) free[i] = open(i);
+    let best = free;
+    let cont = null;
+    if (pins && pins[s]) {
+      const roles = new Map();
+      const role = (i) => roles.get(i) || roles.set(i, { start: -1, inner: -1, end: -1 }).get(i);
+      const onward = (i) => (laterCont && laterCont[i + 1] !== undefined ? laterCont[i + 1] : -1);
+      for (const i of pins[s].start.keys()) role(i).start = onward(i);
+      for (const i of pins[s].inner) role(i).inner = onward(i);
+      for (const i of pins[s].end) {
+        const most = open(i);
+        role(i).end = most < 0 ? -1 : most + 1;
+      }
+      best = free.slice();
+      cont = new Int16Array(n).fill(-1);
+      for (const [i, r] of roles) {
+        best[i] = Math.max(best[i], r.start);
+        cont[i] = Math.max(r.inner, r.end);
+      }
+      plan.roles[s] = roles;
     }
-    ok[s] = row;
-    later = row;
-    laterAny = any;
+    plan.best[s] = best;
+    plan.free[s] = free;
+    plan.cont[s] = cont;
+    later = best;
+    laterCont = cont;
+    laterMost = -1;
+    for (let i = 0; i < n; i++) if (best[i] > laterMost) laterMost = best[i];
     restBetween = false;
   }
-  return ok;
+  return plan;
+}
+
+// feasible() for these slots at a match level, computed once for the same
+// slots, level and pins (compose asks the same question while choosing a
+// relaxation step and while filling).
+const planCache = new WeakMap();
+function planFor(db, slots, level, pins) {
+  if (!planCache.has(slots)) planCache.set(slots, []);
+  const known = planCache.get(slots).find((p) => p.db === db && p.level === level && p.pins === pins);
+  if (known) return known.plan;
+  const plan = feasible(db, slots, successors(db)[level], pins);
+  planCache.get(slots).push({ db, level, pins, plan });
+  return plan;
 }
 
 // The pitches a grouping's voices go to next, after its voices were moved.
@@ -166,17 +269,20 @@ function voicesFit(db, g, shift) {
   return true;
 }
 
-// Fills one template's slots. Returns the placed groupings, or null.
+// Fills one template's slots. Returns the placed groupings, or null:
+//   [{ index, beat, shift, level, order, block?, signatures? }]
+// Groupings of a signature block share `block` (the id of its first
+// grouping); its last one lists the block's `signatures`.
 //   prev: the grouping placed just before slot 0 ({ index, shift }), which
 //         slot 0 hooks to unless it is the first slot or follows a rest
 //   used: groupings already used (shared across a stream's phrases); the
 //         ones placed here are added to it
-function fill(db, slots, { random, level, budget, counters, prev = null, used = new Set() }) {
-  const graphs = successors(db);
-  const ok = feasible(db, slots, graphs[level]);
-  const ok0 = level > 0 ? feasible(db, slots, graphs[0]) : ok;
+//   pins: signature blocks that may stand at cadences (pinsFor), or null
+function fill(db, slots, { random, level, budget, counters, prev = null, used = new Set(), pins = null }) {
+  const plan = planFor(db, slots, level, pins);
+  const plan0 = level > 0 ? planFor(db, slots, 0, pins) : plan;
   const at = slots.map((slot, s) => s).filter((s) => !slots[s].rest); // the slots to fill
-  if (!at.length || !ok[at[0]].some((v) => v)) return null; // can't be filled at all
+  if (!at.length || !plan.best[at[0]].some((v) => v >= 0)) return null; // can't be filled at all
 
   const shuffle = (list) => {
     const out = list.slice();
@@ -188,22 +294,37 @@ function fill(db, slots, { random, level, budget, counters, prev = null, used = 
   };
   const restStarts = db.groupings.map((g, i) => i).filter((i) => db.groupings[i].restBefore);
   const placed = [];
+  const strongest = db.signatures && db.signatures.length ? db.signatures[0].works : 0;
 
   // Hooks that keep every voice where its source had it come first: exact
   // hooks, then L1 hooks that move no voice (a tie becomes a repeated note or
   // the reverse). Among those, the ones from which the template can be
   // finished with exact hooks come first. Hooks that move voices come last.
+  // Then (M7) the candidates that leave room for the most signature blocks
+  // come first, those that move voices still last.
   const candidates = (k) => {
     const s = at[k];
     const slot = slots[s];
-    const free = (i) => ok[s][i] && !used.has(i);
+    const free = (i) => plan.best[s][i] >= 0 && !used.has(i);
+    const ok0 = (i) => plan0.best[s][i] >= 0;
     let before = null; // the placed grouping this slot hooks to
     if (k > 0) before = at[k - 1] === s - 1 ? placed[k - 1] : null;
     else if (!slot.first && !slot.afterRest && s === 0) before = prev;
+    if (before && (before.role === "start" || before.role === "inner")) {
+      // Inside a signature block: its next grouping, moved as its first was.
+      const index = before.index + 1;
+      const r = plan.roles[s] && plan.roles[s].get(index);
+      if (!r || used.has(index) || (before.shift && !voicesFit(db, db.groupings[index], before.shift))) return [];
+      const roles = [
+        { role: "end", value: r.end },
+        { role: "inner", value: r.inner },
+      ].filter((c) => c.value >= 0);
+      return roles.sort((a, b) => b.value - a.value).map((c) => ({ index, shift: before.shift, level: before.level, ...c }));
+    }
     if (!before) {
       // The first slot, or the first after a rest: nothing to hook to.
       const pool = (slot.first ? db.openings : restStarts).filter(free);
-      return preferLabel([...shuffle(pool.filter((i) => ok0[s][i])), ...shuffle(pool.filter((i) => !ok0[s][i]))].map((index) => ({ index, shift: null, level: 0 })), s);
+      return byBlocks(preferLabel([...shuffle(pool.filter(ok0)), ...shuffle(pool.filter((i) => !ok0(i)))].map((index) => ({ index, shift: null, level: 0 })), s), s);
     }
     const from = db.groupings[before.index];
     const target = shiftedDestination(from, before.shift);
@@ -221,11 +342,11 @@ function fill(db, slots, { random, level, budget, counters, prev = null, used = 
     }
     const asIs = (level) => (index) => ({ index, shift: null, level });
     const exactFirst = (list, level) => [
-      ...shuffle(list.filter((i) => ok0[s][i])).map(asIs(level)),
+      ...shuffle(list.filter(ok0)).map(asIs(level)),
     ];
-    const rest = (list, level) => shuffle(list.filter((i) => !ok0[s][i])).map(asIs(level));
+    const rest = (list, level) => shuffle(list.filter((i) => !ok0(i))).map(asIs(level));
     const all = [...exactFirst(exact, 0), ...exactFirst(unmoved, 1), ...rest(exact, 0), ...rest(unmoved, 1), ...shuffle(moved)];
-    return preferLabel(all, s);
+    return byBlocks(preferLabel(all, s), s);
   };
 
   // With a preferred (not required) SPEAC label, the groupings that have it
@@ -245,6 +366,28 @@ function fill(db, slots, { random, level, budget, counters, prev = null, used = 
     return [...out, ...moved.filter(has), ...moved.filter((c) => !has(c))];
   }
 
+  // Each candidate as a grouping on its own and, where it may, as the first
+  // of a signature block; then those leaving room for the most blocks first.
+  // Among those, a strong block (STRONG) starts as soon as it can, the
+  // strongest first; a weaker one only where nothing else would lead to a
+  // block, so it is as short as it can be, leaving more to recombination.
+  // With that, pieces use Bach's formulas about as often as he does (soprano
+  // 3-2-1 at 18% of cadences, against his 20%; bass 4-5-1 at 18%, against
+  // 21%). The sort is stable, so with no blocks in view the order is as
+  // above.
+  function byBlocks(list, s) {
+    const roles = plan.roles[s];
+    const out = [];
+    for (const c of list) {
+      if (plan.free[s][c.index] >= 0) out.push({ ...c, role: "free", value: plan.free[s][c.index] });
+      const r = roles && roles.get(c.index);
+      if (r && r.start >= 0) out.push({ ...c, role: "start", value: r.start });
+    }
+    const strength = (c) => (c.role === "start" ? pins[s].start.get(c.index) : STRONG * strongest);
+    const rank = out.map((c, i) => [c.shift ? 1 : 0, -c.value, -strength(c), i]);
+    return rank.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2] || a[3] - b[3]).map((r) => out[r[3]]);
+  }
+
   const extend = (k) => {
     if (k === at.length) return true;
     if (++counters.steps > budget) return false;
@@ -259,7 +402,51 @@ function fill(db, slots, { random, level, budget, counters, prev = null, used = 
     }
     return false;
   };
-  return extend(0) ? placed : null;
+  if (!extend(0)) return null;
+
+  let block = null;
+  return placed.map(({ role, value, ...p }) => {
+    if (role === "start") block = { id: db.groupings[p.index].id, start: p.index };
+    if (role === "free") return p;
+    const out = { ...p, block: block.id };
+    if (role === "end") {
+      const found = signatures.blockAt(db, block.start, p.index);
+      out.signatures = found ? found.sigs : [];
+    }
+    return out;
+  });
+}
+
+// The most signature blocks a fill of these slots can place, at this match
+// level (-1: the slots can't be filled).
+function mostBlocks(db, slots, level, pins) {
+  const plan = planFor(db, slots, level, pins);
+  const first = slots.findIndex((slot) => !slot.rest);
+  let most = -1;
+  if (first >= 0) for (const v of plan.best[first]) if (v > most) most = v;
+  return most;
+}
+
+// Signatures come before strict SPEAC labels: a relaxation step is skipped
+// when the next one, with the same voice-leading and cadence rules and only
+// its labels preferred instead of required, can place more blocks.
+// slotsAt(step) gives the slots for a step, pinsAt(slots) their pins (both
+// remembered: see memo).
+function labelsGiveWay(db, step, slotsAt, pinsAt) {
+  const [here, looser] = [RELAX[step], RELAX[step + 1]];
+  if (!looser || here.speac !== true || looser.level !== here.level || looser.cadenceBass !== here.cadenceBass) return false;
+  const strict = slotsAt(step);
+  const loose = slotsAt(step + 1);
+  const pinsStrict = pinsAt(strict);
+  if (!pinsStrict) return false;
+  return mostBlocks(db, loose, looser.level, pinsAt(loose)) > mostBlocks(db, strict, here.level, pinsStrict);
+}
+
+// A function's results remembered by argument, so the same slots and pins
+// (and the plans cached on them) are reused across relaxation steps.
+function memo(f) {
+  const known = new Map();
+  return (x) => (known.has(x) ? known.get(x) : known.set(x, f(x)).get(x));
 }
 
 // A template's length in beats, rests included.
@@ -271,8 +458,9 @@ function templateBeats(db, template) {
 
 // Composes a piece in the form of a chorale from the corpus, chosen by the
 // seed among those at least `beats` long. relax: how far the rules may relax
-// (an index into RELAX; 0 = strict only).
-function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10 } = {}) {
+// (an index into RELAX; 0 = strict only). signatures: false composes without
+// signature blocks (as in M6).
+function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true } = {}) {
   const random = rng.create(seed);
   const templates = db.templates.filter((t) => templateBeats(db, t) >= beats);
   for (let i = templates.length - 1; i > 0; i--) {
@@ -283,9 +471,13 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
   const counters = { steps: 0, backtracks: 0 };
   for (const template of templates.slice(0, maxTemplates)) {
     tried.push(template.work);
+    const slotsAt = memo((step) => slotsOf(db, template, RELAX[step]));
+    const pinsAt = memo((slots) => (signatures ? pinsFor(db, slots, template.work) : null));
     for (let step = 0; step <= relax; step++) {
-      const slots = slotsOf(db, template, RELAX[step]);
-      const placed = fill(db, slots, { random, level: RELAX[step].level, budget: counters.steps + budget, counters });
+      if (step < relax && labelsGiveWay(db, step, slotsAt, pinsAt)) continue;
+      const slots = slotsAt(step);
+      const pins = pinsAt(slots);
+      const placed = fill(db, slots, { random, level: RELAX[step].level, budget: counters.steps + budget, counters, pins });
       if (!placed) continue;
       const cadences = slots.filter((slot) => slot.cadence).length;
       const matched = placed.filter((p) => {
@@ -294,8 +486,8 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
       }).length;
       const piece = assemble(db, placed, {
         seed,
-        source: `EMI recombination (M6, form of ${template.work})`,
-        form: { template: template.work, phrases: cadences, beats: slots.length, rests: slots.length - placed.length, relaxed: step, speac: matched / placed.length },
+        source: `EMI recombination (M7, form of ${template.work})`,
+        form: { template: template.work, phrases: cadences, beats: slots.length, rests: slots.length - placed.length, relaxed: step, speac: matched / placed.length, signatures: placed.filter((p) => p.signatures).length },
       });
       return { ok: true, piece, stats: { tried, relaxed: step, steps: counters.steps, backtracks: counters.backtracks } };
     }
@@ -311,3 +503,6 @@ exports.feasible = feasible;
 exports.successors = successors;
 exports.templateBeats = templateBeats;
 exports.fill = fill;
+exports.pinsFor = pinsFor;
+exports.labelsGiveWay = labelsGiveWay;
+exports.memo = memo;

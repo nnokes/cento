@@ -103,9 +103,9 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
     "autoclips", "beats", "clear", "compose", "corpus", "exportmidi", "form", "key", "loadmidi", "need", "next",
-    "pattern", "phrases", "remember", "seed", "startup", "stream", "testclip", "transpose", "writeclips",
+    "pattern", "phrases", "remember", "seed", "sigs", "startup", "stream", "testclip", "transpose", "writeclips",
   ]);
-  assert.deepEqual(loadBundle("emi.view").handlers(), ["cadence", "clear", "done", "note", "onresize", "paint", "seam", "speac"]);
+  assert.deepEqual(loadBundle("emi.view").handlers(), ["cadence", "clear", "done", "note", "onresize", "paint", "seam", "signature", "speac"]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
 });
 
@@ -200,7 +200,7 @@ test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece i
   const status = lastStatus(out);
   // e.g. "emi-3: form of b, 1 phrase, 11 beats, 3 chorales"
   assert.deepEqual(status.slice(0, 3), ["status", "emi-3:", "form"]);
-  assert.match(status.join(" "), /^status emi-3: form of [abc], 1 phrase, 11 beats, [23] chorales, SPEAC \d+%$/);
+  assert.match(status.join(" "), /^status emi-3: form of [abc], 1 phrase, 11 beats, [23] chorales, SPEAC \d+%, [01] signatures?$/);
   assert.ok(select(out, "coll").length > 1);
   const view = select(out, "view");
   assert.ok(view.some(([kind]) => kind === "seam"), "seams between sources");
@@ -225,6 +225,36 @@ test("core: 'seed' sets the seed, and composes once a corpus is loaded", () => {
   assert.deepEqual(lastStatus(core.send("seed", 9)).slice(0, 2), ["status", "emi-9:"]);
   assert.deepEqual(core.send("key", 1), [], "0/1 from a toggle work too (quiet: no chorale is current)");
   assert.equal(lastStatus(core.send("key", "sideways"))[0], "error");
+});
+
+test("core: signatures: listed when a corpus loads, kept at cadences, drawn as bands; 'sigs 0' turns them off", () => {
+  const core = loadBundle("emi.core");
+  const loaded = lastStatus(core.send("corpus", writeCorpus()));
+  assert.equal(loaded.at(-1), "signatures");
+  const count = loaded.at(-2);
+  assert.ok(count > 0);
+  const list = core.posted.join("");
+  assert.match(list, new RegExp(`^ml_midi: ${count} signatures in 3 chorales`));
+  assert.match(list, /sig1: (soprano|alto|tenor|bass) [-#b0-9]+ \(3\)/);
+
+  core.send("beats", 8);
+  core.posted.length = 0;
+  const out = core.send("compose", 3);
+  assert.match(lastStatus(out).join(" "), /, 1 signature$/);
+  const bands = select(out, "view").filter(([kind]) => kind === "signature");
+  assert.equal(bands.length, 1);
+  const [, start, end, ...name] = bands[0];
+  assert.ok(end > start);
+  assert.match(name.join(" "), /^(soprano|bass) [-#b0-9]+$/);
+  const cadence = select(out, "view").find(([kind]) => kind === "cadence")[1];
+  assert.equal(end - 960, cadence, "the band ends with the cadence's beat");
+  assert.match(core.posted.join(""), /^emi-3: (soprano|bass) [-#b0-9]+( \+ (soprano|bass) [-#b0-9]+)? at the cadence in bar \d+ \(beat \d\), from [abc]\n$/);
+
+  assert.deepEqual(lastStatus(core.send("sigs", 0)), ["status", "no", "signatures", "(as", "in", "M6)"]);
+  const plain = core.send("compose", 3);
+  assert.match(lastStatus(plain).join(" "), /, 0 signatures$/);
+  assert.equal(select(plain, "view").filter(([kind]) => kind === "signature").length, 0);
+  assert.deepEqual(lastStatus(core.send("sigs", 1)), ["status", "signatures", "kept", "at", "cadences"]);
 });
 
 test("core: the SPEAC lane: a chorale's own labels, and a piece's labels from its sources", () => {
@@ -318,7 +348,7 @@ test("stream: compose queues two phrases; 'need' adds the next, until the last",
   core.send("phrases", 3);
   const start = core.send("compose", 4);
   assert.deepEqual(start.filter(([, kind]) => kind !== "setting")[0], [0, "restart"], "the player starts the stream on the next bar");
-  assert.match(lastStatus(start).join(" "), /^status emi-4 stream: phrase 2 of 3 queued \([a-e] phrase 2\)$/);
+  assert.match(lastStatus(start).join(" "), /^status emi-4 stream: phrase 2 of 3 queued \([a-e] phrase 2(, signature [a-z]+ [-#b0-9]+)?\)$/);
   const [first, second] = thresholds(start);
   assert.ok(second > first, "'need' comes when the second phrase starts");
 
@@ -413,13 +443,13 @@ test("settings: the Max version restores every setting, reloads the corpus and c
   first.send("remember", "bpm", 120);
   first.send("remember", "output", 2);
   assert.deepEqual(settingsIn(folder), {
-    corpus: corpusDir, seed: 5, beats: 8, form: 0, key: 1, stream: 0, phrases: 8, transpose: 0, host: { bpm: [120], output: [2] },
+    corpus: corpusDir, seed: 5, beats: 8, form: 0, signatures: 1, key: 1, stream: 0, phrases: 8, transpose: 0, host: { bpm: [120], output: [2] },
   });
 
   const second = engineIn(folder);
   const out = second.send("startup", "all");
   assert.deepEqual(select(out, "setting"), [
-    ["seed", 5], ["beats", 8], ["form", 0], ["key", 1], ["stream", 0], ["phrases", 8], ["transpose", 0], ["bpm", 120], ["output", 2],
+    ["seed", 5], ["beats", 8], ["form", 0], ["sigs", 1], ["key", 1], ["stream", 0], ["phrases", 8], ["transpose", 0], ["bpm", 120], ["output", 2],
   ]);
   const status = lastStatus(out);
   assert.deepEqual([status[1], status[3]], ["emi-5:", "beats"], "composed seed 5 freely (form off)");
@@ -530,6 +560,25 @@ test("view: the SPEAC lane, one block per beat with its letter, under the notes"
   assert.deepEqual(g.calls.filter(([name]) => name === "show_text").map(([, text]) => text), ["P", "E", "A", "C"]);
   const [, , noteY, , noteHeight] = g.calls.filter(([name]) => name === "rectangle")[1];
   assert.ok(noteY + noteHeight <= 169 - 12, "notes stay above the lane");
+});
+
+test("view: a signature block is a band behind the notes, with its name (shortened where narrow)", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics;
+  view.send("clear", 8 * Q, 60, 72, 4 * Q);
+  view.send("note", 0, Q, 60, 0);
+  view.send("signature", Q, 4 * Q, "soprano", "3-2-1"); // 3 beats: 135 px
+  view.send("signature", 6 * Q, 7 * Q, "bass", "4-5-1"); // 1 beat: 45 px
+  view.send("done");
+  g.calls.length = 0;
+  view.send("paint");
+  assert.deepEqual(g.calls.filter(([name]) => name === "show_text").map(([, text]) => text), ["soprano 3-2-1", "B 4-5-1"]);
+  const rectangles = g.calls.filter(([name]) => name === "rectangle");
+  const [, x, , w, h] = rectangles[1];
+  assert.ok(Math.abs(x - 45) < 1 && Math.abs(w - 135) < 1 && h === 169, "the first band, over the whole roll");
+  const noteAt = g.calls.findIndex((c) => c[0] === "rectangle" && Math.abs(c[1]) < 1 && c[3] < 50);
+  const bandAt = g.calls.findIndex((c) => c === rectangles[1]);
+  assert.ok(bandAt < noteAt, "bands are drawn first, behind the notes");
 });
 
 test("view: a start tick shows only the end of a long score (a stream's last phrases)", () => {

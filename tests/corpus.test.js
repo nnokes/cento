@@ -153,3 +153,52 @@ test("corpus: streams of 24 phrases keep the rules, with few breaths", { skip },
     assert.ok(breaths <= 0.1 * phrases, `${breaths} breaths in ${phrases} phrases`);
   }
 });
+
+// M7: signatures. Bach's best-known cadence formulas, the soprano's 3-2-1
+// (b3-2-1 in minor) and the bass's 4-5-1, are among the strongest; pieces
+// keep signature blocks at most of their cadences, and those formulas among
+// them.
+test("corpus: Bach's cadence formulas are signatures and turn up at cadences", { skip }, (t) => {
+  const signatures = require("emi-signatures");
+  const db = lexicon.build(files.map((file) => load(file).work));
+  const name = (id) => signatures.describe(db.signatures.find((s) => s.id === id), db.mode);
+  const top = db.signatures.slice(0, 8).map((s) => `${signatures.describe(s, db.mode)} (${s.works})`);
+  t.diagnostic(`${db.signatures.length} signatures; strongest: ${top.join(", ")}`);
+  const soprano = db.mode === "minor" ? "soprano b3-2-1" : "soprano 3-2-1";
+  let cadences = 0;
+  let pinned = 0;
+  const heard = new Map();
+  for (let seed = 1; seed <= 20; seed++) {
+    const result = form.compose(db, { seed });
+    if (!result.ok) continue;
+    cadences += result.piece.fermatas.length;
+    pinned += result.piece.form.signatures;
+    for (const p of result.piece.provenance) for (const id of p.signatures || []) heard.set(name(id), (heard.get(name(id)) || 0) + 1);
+  }
+  t.diagnostic(`signature blocks at ${pinned} of ${cadences} cadences; ${soprano} in ${heard.get(soprano) || 0}, bass 4-5-1 in ${heard.get("bass 4-5-1") || 0}`);
+  if (files.length >= 100) {
+    const strongest = db.signatures.slice(0, 8).map((s) => signatures.describe(s, db.mode));
+    assert.ok(strongest.includes(soprano), strongest.join(", "));
+    assert.ok(strongest.includes("bass 4-5-1"), strongest.join(", "));
+    assert.ok(pinned >= 0.8 * cadences, `blocks at only ${pinned} of ${cadences} cadences`);
+    assert.ok(heard.get(soprano) >= 10 && heard.get("bass 4-5-1") >= 10, "the formulas turn up in pieces");
+  }
+});
+
+test("corpus: stream phrases keep signature blocks at their cadences", { skip }, (t) => {
+  const streams = require("emi-stream");
+  const db = lexicon.build(files.map((file) => load(file).work));
+  let phrases = 0;
+  let pinned = 0;
+  for (const seed of [1, 2, 3]) {
+    const stream = streams.start({ seed });
+    for (let k = 1; k <= 24; k++) {
+      const { ok, phrase } = streams.next(db, stream);
+      if (!ok) break;
+      phrases++;
+      pinned += phrase.signatures;
+    }
+  }
+  t.diagnostic(`${pinned} of ${phrases} phrases cadence on a signature block`);
+  if (files.length >= 100) assert.ok(pinned >= 0.6 * phrases, `only ${pinned} of ${phrases}`);
+});

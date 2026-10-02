@@ -119,7 +119,8 @@ function compose(db, { seed = 1, beats = 32, maxBeats = beats + 16, budget = 500
 // that were split at beat lines (tiedOut, then tiedIn on the same pitch in the
 // next beat) back into one note. A tied note with nothing to join is cut at
 // the beat line, or starts there as a new note.
-//   placed: [{ index, beat, shift: [semitones per voice] | null, level: 0 | 1 }]
+//   placed: [{ index, beat, shift: [semitones per voice] | null, level: 0 | 1,
+//             block?, signatures? }]   (M7: a signature block, see emi-form)
 // offsetTicks: where beat 0 falls; by default, the first grouping keeps its
 // place in the bar (a pickup on beat 4 starts three beats into bar 1).
 function assemble(db, placed, { seed, source, form = null, offsetTicks = null }) {
@@ -133,12 +134,14 @@ function assemble(db, placed, { seed, source, form = null, offsetTicks = null })
   const provenance = [];
   const fermatas = [];
 
-  for (const { index, beat: at, shift, level = 0 } of placed) {
+  for (const { index, beat: at, shift, level = 0, block, signatures } of placed) {
     const g = db.groupings[index];
     const t0 = offset + at * beat;
     if (lastBeat === null || at !== lastBeat + 1) open = {};
     const entry = { tick: t0, work: g.work, beat: g.index, grouping: g.id, level };
     if (shift && shift.some((v) => v !== 0)) entry.shift = shift;
+    if (block) entry.block = block;
+    if (signatures) entry.signatures = signatures;
     provenance.push(entry);
     if (g.cadence) fermatas.push(t0);
     const tiedOver = {};

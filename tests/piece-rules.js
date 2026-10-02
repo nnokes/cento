@@ -4,6 +4,7 @@
 const assert = require("node:assert/strict");
 const lexicon = require("emi-lexicon");
 const form = require("emi-form");
+const signatures = require("emi-signatures");
 
 // The rules every composed piece must keep, checked from its provenance.
 function checkPiece(db, piece, minBeats) {
@@ -48,11 +49,12 @@ function checkForm(db, piece) {
   const t0 = piece.provenance[0].tick;
   const moved = (key, shift) => lexicon.parseKey(key).map((t, v) => t && { held: t.held, pitch: t.pitch + (shift ? shift[v] : 0) });
 
+  checkBlocks(db, piece.provenance, (k) => filled[k], piece.form.template);
   piece.provenance.forEach((p, k) => {
     const s = filled[k];
     const g = byId.get(p.grouping);
     assert.equal(p.tick, t0 + s * db.beatTicks, `slot ${s} is at the wrong time`);
-    assert.ok(form.fits(g, slots[s]), `slot ${s}: ${g.id} doesn't fit`);
+    assert.ok(form.fits(g, slots[s], !p.block), `slot ${s}: ${g.id} doesn't fit`);
     if (piece.form.relaxed === 0) assert.equal(p.level, 0, `slot ${s}: relaxed in a strict piece`);
     for (const [, pitch, , voice] of g.pieces) {
       const [low, high] = db.ranges[voice - 1];
@@ -70,7 +72,7 @@ function checkForm(db, piece) {
       assert.equal(p.shift, undefined, `slot ${s}: an exact hook moved voices`);
       assert.equal(lexicon.keyOf(entry), lexicon.keyOf(dest), `slot ${s}: ties differ in an exact hook`);
     }
-    if (g.work === prev.work) assert.equal(g.newNotes, 0, `slot ${s}: same source`);
+    if (g.work === prev.work && !(p.block && p.block === prevP.block)) assert.equal(g.newNotes, 0, `slot ${s}: same source`);
   });
 
   const cadenceTicks = filled.filter((s) => slots[s].cadence).map((s) => t0 + s * db.beatTicks);
@@ -92,15 +94,16 @@ function checkStream(db, stream) {
     const where = `phrase ${phrase.number} (${phrase.work} #${phrase.index})`;
     assert.equal(phrase.startBeat, expectedStart + (phrase.fallback ? 1 : 0), `${where}: starts where the last ended`);
     assert.equal(phrase.endBeat - phrase.startBeat, phrase.slots.length, where);
+    checkBlocks(db, phrase.piece.provenance, (k) => phrase.placed[k].beat - phrase.startBeat, phrase.work);
     for (const p of phrase.placed) {
       const g = db.groupings[p.index];
       const slot = phrase.slots[p.beat - phrase.startBeat];
       assert.ok(slot && !slot.rest, `${where}: beat ${p.beat} has no slot`);
-      assert.ok(form.fits(g, slot), `${where}: ${g.id} doesn't fit beat ${p.beat}`);
+      assert.ok(form.fits(g, slot, !p.block), `${where}: ${g.id} doesn't fit beat ${p.beat}`);
       if (prev && prev.beat === p.beat - 1) {
         const before = db.groupings[prev.placed.index];
         assert.deepEqual(moved(g.entryKey, p.shift), moved(before.destKey, prev.placed.shift), `${where}: voices don't join at beat ${p.beat}`);
-        if (g.work === before.work) assert.equal(g.newNotes, 0, `${where}: same source at beat ${p.beat}`);
+        if (g.work === before.work && !(p.block && p.block === prev.placed.block)) assert.equal(g.newNotes, 0, `${where}: same source at beat ${p.beat}`);
       } else if (prev) {
         assert.ok(g.restBefore, `${where}: beat ${p.beat} follows silence but isn't a phrase start`);
       }
@@ -111,4 +114,35 @@ function checkStream(db, stream) {
   }
 }
 
-module.exports = { checkPiece, checkForm, checkStream };
+// Signature blocks (M7): each is a run of consecutive groupings of one work,
+// on consecutive slots, moved alike, ending on a cadence; together they are
+// one of the corpus's signature blocks (emi-signatures), from a work other
+// than the template's, and its last grouping lists that block's signatures.
+// slotOf(k): the slot of provenance entry k.
+function checkBlocks(db, provenance, slotOf, template = null) {
+  const byId = new Map(db.groupings.map((g, i) => [g.id, i]));
+  for (let k = 0; k < provenance.length; ) {
+    if (!provenance[k].block) {
+      k++;
+      continue;
+    }
+    let end = k;
+    while (end + 1 < provenance.length && provenance[end + 1].block === provenance[k].block) end++;
+    const first = byId.get(provenance[k].grouping);
+    assert.equal(provenance[k].block, provenance[k].grouping, "a block is named after its first grouping");
+    for (let j = k; j <= end; j++) {
+      assert.equal(byId.get(provenance[j].grouping), first + j - k, `block ${provenance[k].block}: not consecutive groupings`);
+      assert.equal(slotOf(j), slotOf(k) + j - k, `block ${provenance[k].block}: not on consecutive slots`);
+      assert.deepEqual(provenance[j].shift, provenance[k].shift, `block ${provenance[k].block}: voices moved differently`);
+    }
+    const last = db.groupings[first + end - k];
+    assert.ok(last.cadence, `block ${provenance[k].block}: doesn't end on a cadence`);
+    const found = signatures.blockAt(db, first, first + end - k);
+    assert.ok(found, `block ${provenance[k].block}: not a signature block`);
+    assert.deepEqual(provenance[end].signatures, found.sigs, `block ${provenance[k].block}: signatures`);
+    if (template) assert.notEqual(found.work, template, `block ${provenance[k].block}: from the template's own work`);
+    k = end + 1;
+  }
+}
+
+module.exports = { checkPiece, checkForm, checkStream, checkBlocks };

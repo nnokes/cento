@@ -93,9 +93,10 @@ function recordingGraphics(width = 360, height = 169) {
 function loadBundle(name, { LiveAPI, File = FsFile, Folder = FsFolder, mgraphics = recordingGraphics() } = {}) {
   const file = path.join(ROOT, "patchers", name + ".bundle.js");
   const sent = [];
+  const posted = []; // what the script printed in the Max window
   const context = {
     outlet: (index, ...atoms) => sent.push([index, ...atoms.flat()]),
-    post: () => {},
+    post: (...atoms) => posted.push(atoms.join(" ")),
     error: () => {},
     LiveAPI,
     File,
@@ -108,6 +109,7 @@ function loadBundle(name, { LiveAPI, File = FsFile, Folder = FsFolder, mgraphics
 
   return {
     context,
+    posted,
     // Sends a message to the script and returns what came out of its outlets.
     send(message, ...args) {
       if (typeof context[message] !== "function" || context[message].local === 1) {

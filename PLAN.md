@@ -510,6 +510,24 @@ These defaults also come from Cope's code (`pattern-match`):
 - For each occurrence, store **where it happens**: `phrasePos`, `beatsToCadence`
   and `beatInBar`. Placement in §4.6 depends on this.
 
+*As built in M7* (`code/lib/emi-signatures.js`): a narrower first version,
+aimed at the "done when" (cadential formulas).
+- **What is compared**: the last 3 notes of each voice going into every
+  cadence (fermata) chord, as exact intervals (no amount off, no rhythm). A
+  pattern of one repeated note doesn't count.
+- **Threshold**: a pattern is a signature when it ends cadences in at least
+  max(3, 5% of the works). Unifications and the fuzzy pass are left for
+  later.
+- **Occurrences**: each one is stored as the run of the work's groupings
+  from the pattern's first note to its cadence (2 to 5 beats, rarely more),
+  which §4.6 places whole.
+- **Speed**: detection runs when the lexicon is built, in about 40 ms for
+  142 chorales, so it needs no `Task`.
+- **Result**: 76 signatures in the 142 major chorales. The strongest are
+  bass 4-5-1 (99 chorales), alto 1-7-5 (96), tenor 5-4-3 (94) and soprano
+  3-2-1 (92). In the 153 minor chorales there are 78, led by soprano b3-2-1
+  (91) and bass 4-5-1 (89).
+
 ### 4.5 `emi.analyze/lexicon` and templates
 
 - Build the four match-level indexes from §3.
@@ -579,6 +597,30 @@ function fill(slots, i, prev, out, ctx) {
   template, how far it relaxed, and each octave-moved beat in its provenance.
   On the full corpus, out of 100 seeds: 95 strict, 3 with octave moves, 2
   with any cadence bass; 1 dead end, which took another template.
+- *As built in M7:* steps 2 and 3 are one search.
+  - **Blocks**: a cadence slot may take a *signature block*, an occurrence's
+    groupings kept whole, from a work other than the template's. The block
+    must carry a soprano or bass signature, and each of its groupings must
+    fit its slot (labels aside).
+  - **Lookahead hooking**: the backward pass counts, for every slot and
+    grouping, how many blocks can still be placed after it. The forward
+    search tries the candidates that leave room for the most first, so the
+    beat before a block is chosen to hook exactly into it.
+  - **Order**: strong blocks start as soon as they can. A block is strong
+    when it carries a soprano or bass signature found in at least half as
+    many works as the strongest signature. Other blocks start as late as
+    they can, so they stay short.
+  - **Labels give way**: the strict-labels step is skipped when "labels
+    preferred" can place more blocks with the same voice-leading.
+  - **Results** (full corpus, 100 seeds): 91% of cadences get a block, and
+    27% of beats come from blocks. 98 pieces in 100 are strict or "labels
+    preferred". 56% of beats keep their template label, against 62%
+    without signatures.
+  - **Bach's formulas**: pieces use soprano 3-2-1 and bass 4-5-1 at 18% of
+    cadences each; Bach uses them at 20% and 21%.
+  - **Streams** place blocks at 76% of phrase cadences.
+  - **Off switch**: with signatures off, the composer gives exactly M6's
+    pieces.
 - **Seeded RNG** (mulberry32 or similar): every output records `seed + params +
   db version`, so any piece can be regenerated exactly.
 - **Provenance**: for every grouping in the output, record which work and which
@@ -1080,8 +1122,8 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M6 code done; waiting on the Max and Live checks
-([checklist](docs/M6-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M7 code done; waiting on the Max and Live checks
+([checklist](docs/M7-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
@@ -1099,9 +1141,13 @@ M4 passed in both products ([results](docs/M4-checklist.md)): one panel
 shared between the products, and settings that survive a reload. M5 passed
 in both products ([results](docs/M5-checklist.md)): pieces play from the
 next barline wherever Play starts, and stream phrase by phrase, endlessly or
-ending on a final cadence after N phrases. M6 labels every beat with Cope's
-SPEAC functions (golden tests reproduce his published analyses exactly),
-matches beats by function when recombining, and shows a SPEAC lane in the
+ending on a final cadence after N phrases. M6 passed in both products
+([results](docs/M6-checklist.md)): every beat is labelled with Cope's SPEAC
+functions (golden tests reproduce his published analyses exactly), beats are
+matched by function when recombining, and the piano roll shows a SPEAC lane.
+M7 finds the corpus's signatures (Bach's cadence formulas: bass 4-5-1 and
+soprano 3-2-1 among the strongest) and keeps them whole at the cadences of
+pieces and stream phrases, with a **sigs** toggle and gold bands in the
 piano roll. When a patch or set opens, the last corpus comes back and the
 current seed's piece is composed again.
 

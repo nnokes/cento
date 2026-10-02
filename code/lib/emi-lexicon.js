@@ -18,13 +18,15 @@
 //   lexicon1: { L1 key: [grouping index] },
 //   templates: [{ work, start, count }], // each work's groupings, in order: its form (emi-form)
 //   ranges: [[lowest, highest] per voice],
-//   openings: [grouping index], finals: [grouping index]
+//   openings: [grouping index], finals: [grouping index],
+//   signatures: [signature]           // (M7) cadence patterns found in many works (emi-signatures)
 // }
 // Plain JSON, so a database can be saved and loaded later.
 
 const ingest = require("emi-ingest");
 const { segment } = require("emi-segment");
 const speac = require("emi-speac");
+const signatures = require("emi-signatures");
 
 // Keys are lists of voice tokens: "60" (a new note), "~60" (held over) or "r"
 // (silent), joined by ",". These parse and rebuild them.
@@ -50,7 +52,7 @@ function build(works) {
   if (meters.size > 1) throw new Error("works must share one meter, found " + [...meters].join(", "));
 
   const db = {
-    version: 2,
+    version: 3,
     beatTicks: works[0].ppq,
     meter: works[0].meter,
     matchLevels: ["L0", "L1"],
@@ -63,10 +65,13 @@ function build(works) {
     ranges: [],
     openings: [],
     finals: [],
+    signatures: [],
   };
   const modes = new Set();
+  const normalized = [];
   for (const work of works) {
     const inC = ingest.normalize(work);
+    normalized.push(inC);
     modes.add(inC.key.mode);
     const groupings = segment(inC, db.beatTicks);
     const beatsPerBar = Math.round((db.meter[0] * 4) / db.meter[1]);
@@ -92,6 +97,7 @@ function build(works) {
     }
   }
   db.mode = modes.size === 1 ? [...modes][0] : "mixed";
+  db.signatures = signatures.detect(db, normalized);
   return db;
 }
 

@@ -1,13 +1,15 @@
 # M6 checklist: tension and SPEAC
 
-## Result: waiting on the Max and Live checks
+## Result: M6 passed (macOS, Max 9, Live 12)
+
+Reported back: "Seems good".
 
 | Check | Max version | Live version |
 |---|---|---|
-| Golden tests reproduce Cope's published analyses | ✅ (`tests/speac.test.js`) | |
-| The piano roll shows a SPEAC lane, for chorales and for composed pieces | | |
-| Pieces report how many of their template's labels they keep | | |
-| Compose and streams still work as in M3–M5 (timing, voice-leading) | | |
+| Golden tests reproduce Cope's published analyses | ✅ (`tests/speac.test.js`) | ✅ (the same engine) |
+| The piano roll shows a SPEAC lane, for chorales and for composed pieces | ✅ | ✅ |
+| Pieces report how many of their template's labels they keep | ✅ | ✅ |
+| Compose and streams still work as in M3–M5 (timing, voice-leading) | ✅ | ✅ |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M6 gives every beat a musical *function*, as Cope's SPEAC does. Beats were

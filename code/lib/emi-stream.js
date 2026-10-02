@@ -7,8 +7,9 @@
 // A stream walks through one chorale's phrases in order, then another
 // chorale's (chosen by the seed), so it inherits real chorales' tonal plans.
 // Every phrase is filled like a whole form (emi-form: the same rules and the
-// same relaxation steps), and its first beat joins the previous phrase's last
-// beat by voice-hooking, so phrases flow into each other.
+// same relaxation steps, and (M7) a signature block at its cadence where one
+// fits), and its first beat joins the previous phrase's last beat by
+// voice-hooking, so phrases flow into each other.
 //
 // Where the next phrase's first beat doesn't follow on in the bar (after a
 // change of chorale, say), silent beats fill the gap and the phrase starts
@@ -17,9 +18,10 @@
 // fallbacks.
 //
 //   stream = start({ seed })
-//   next(db, stream, { seed, last }) -> { ok, phrase }
+//   next(db, stream, { seed, last, signatures }) -> { ok, phrase }
 //     phrase: { number, work, index, count, startBeat, endBeat, startTick,
-//               endTick, slots, placed, piece, relaxed, gap, fallback }
+//               endTick, slots, placed, piece, relaxed, gap, fallback,
+//               signatures (how many blocks it has) }
 // `seed` may change between calls: each phrase is drawn from its own seed and
 // number, so a stream is reproducible and a new seed is heard from the next
 // phrase. `last: true` makes the phrase a final one (it ends on a chorale's
@@ -80,7 +82,7 @@ function start({ seed = 1 } = {}) {
 
 const phraseSeed = (seed, number) => (Math.imul(seed, 7919) + Math.imul(number, 104729)) >>> 0 || 1;
 
-function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 8 } = {}) {
+function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 8, signatures = true } = {}) {
   if (stream.finished) return { ok: false, phrase: null };
   const number = stream.phrases.length + 1;
   const random = rng.create(phraseSeed(seed, number));
@@ -93,7 +95,7 @@ function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX
       stream.endsInRest = true;
     }
     for (const choice of choices(db, stream, random, last).slice(0, tries)) {
-      const attempt = place(db, stream, choice, { random, last, relax, budget, counters });
+      const attempt = place(db, stream, choice, { random, last, relax, budget, counters, signatures });
       if (attempt) {
         if (fallback) stream.fallbacks++;
         return { ok: true, phrase: commit(db, stream, choice, attempt, { seed, number, last, fallback }) };
@@ -166,10 +168,13 @@ function prepare(db, stream, choice, { last, cadenceBass, speac }) {
   return [...Array.from({ length: gap }, () => ({ rest: true })), ...slots];
 }
 
-function place(db, stream, choice, { random, last, relax, budget, counters }) {
+function place(db, stream, choice, { random, last, relax, budget, counters, signatures }) {
+  const slotsAt = form.memo((step) => prepare(db, stream, choice, { last, ...form.RELAX[step] }));
+  const pinsAt = form.memo((slots) => (signatures ? form.pinsFor(db, slots, choice.work) : null));
   for (let step = 0; step <= relax; step++) {
-    const { level, cadenceBass, speac } = form.RELAX[step];
-    const slots = prepare(db, stream, choice, { last, cadenceBass, speac });
+    if (step < relax && form.labelsGiveWay(db, step, slotsAt, pinsAt)) continue;
+    const { level } = form.RELAX[step];
+    const slots = slotsAt(step);
     const placed = form.fill(db, slots, {
       random,
       level,
@@ -177,6 +182,7 @@ function place(db, stream, choice, { random, last, relax, budget, counters }) {
       counters,
       prev: stream.last,
       used: stream.used,
+      pins: pinsAt(slots),
     });
     if (placed) return { slots, placed, relaxed: step };
   }
@@ -194,7 +200,7 @@ function commit(db, stream, choice, { slots, placed, relaxed }, { seed, number, 
   const cadences = slots.filter((slot) => !slot.rest && slot.cadence).length;
   const piece = assemble(db, at, {
     seed,
-    source: `EMI stream (M5), phrase ${number}, from ${choice.work}`,
+    source: `EMI stream (M7), phrase ${number}, from ${choice.work}`,
     offsetTicks: stream.offsetTicks,
     form: { template: choice.work, phrase: choice.p + 1, phrases: cadences, beats: slots.length, rests: slots.length - placed.length, relaxed },
   });
@@ -215,6 +221,7 @@ function commit(db, stream, choice, { slots, placed, relaxed }, { seed, number, 
     gap: slots.findIndex((slot) => !slot.rest),
     fallback,
     final: last,
+    signatures: at.filter((p) => p.signatures).length,
   };
   stream.phrases.push(phrase);
   stream.nextBeat = endBeat;

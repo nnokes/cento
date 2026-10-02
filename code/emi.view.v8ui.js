@@ -6,13 +6,15 @@
 // source changes (orange where voices were moved by octaves to join), and
 // small triangles along the top mark cadences (fermatas). A lane along the
 // bottom shows each beat's SPEAC label (M6): S statement, P preparation,
-// E extension, A antecedent, C consequent. The engine sends one score as:
+// E extension, A antecedent, C consequent. Gold bands mark signature blocks
+// (M7), named by their signature. The engine sends one score as:
 //   clear <endTick> <lowPitch> <highPitch> <barTicks> [startTick]
 //                                        (the ticks shown; a stream shows its last phrases)
 //   note <on> <dur> <pitch> <color>      (one per note)
 //   seam <tick> [level]                  (one per seam; level 1: octave moves)
 //   cadence <tick>                       (one per fermata)
 //   speac <tick> <label>                 (one per beat)
+//   signature <start> <end> <name...>    (one per signature block, e.g. "soprano 3-2-1")
 //   done                                 (draw it)
 
 autowatch = 1;
@@ -27,6 +29,7 @@ mgraphics.autofill = 0;
 // SPEAC lane colors: tension rising (P, A) warm, resolving (C) cool.
 const SPEAC_COLORS = { S: [0.55, 0.6, 0.7], P: [0.5, 0.8, 0.45], E: [0.35, 0.35, 0.38], A: [0.95, 0.5, 0.3], C: [0.4, 0.65, 0.95] };
 const LANE = 12; // px
+const GOLD = [1, 0.82, 0.3];
 
 const PALETTE = [
   [0.95, 0.55, 0.35], [0.35, 0.7, 0.95], [0.6, 0.85, 0.4], [0.95, 0.8, 0.3],
@@ -38,7 +41,7 @@ let shown = null; // the score being drawn
 let incoming = null; // the score being received
 
 function clear(endTick, low, high, barTicks, startTick) {
-  incoming = { start: startTick || 0, end: endTick, low, high, barTicks, notes: [], seams: [], cadences: [], labels: [] };
+  incoming = { start: startTick || 0, end: endTick, low, high, barTicks, notes: [], seams: [], cadences: [], labels: [], signatures: [] };
 }
 
 function note(on, dur, pitch, color) {
@@ -55,6 +58,10 @@ function cadence(tick) {
 
 function speac(tick, label) {
   if (incoming) incoming.labels.push([tick, String(label)]);
+}
+
+function signature(start, end, ...name) {
+  if (incoming) incoming.signatures.push([start, end, name.join(" ")]);
 }
 
 function done() {
@@ -95,6 +102,27 @@ function paint() {
     g.line_to(Math.round(x(t)) + 0.5, rollHeight);
   }
   g.stroke();
+
+  // Signature blocks: a gold band behind the notes, its name at the top
+  // ("soprano 3-2-1", or "S 3-2-1" where the band is narrow).
+  g.select_font_face("Arial");
+  g.set_font_size(9);
+  for (const [start, end, name] of shown.signatures) {
+    const left = x(start);
+    const w = x(end) - left;
+    g.set_source_rgba(GOLD[0], GOLD[1], GOLD[2], 0.13);
+    g.rectangle(left, 0, w, rollHeight);
+    g.fill();
+    g.set_source_rgba(GOLD[0], GOLD[1], GOLD[2], 0.8);
+    g.rectangle(left, rollHeight - 2, w, 2);
+    g.fill();
+    const words = name.split(" ");
+    const text = w >= 70 ? name : w >= 32 ? words[0].charAt(0).toUpperCase() + " " + words.slice(1).join(" ") : "";
+    if (text) {
+      g.move_to(left + 3, 17);
+      g.show_text(text);
+    }
+  }
 
   for (const [on, dur, pitch, color] of shown.notes) {
     const [r, gr, b] = PALETTE[((color % PALETTE.length) + PALETTE.length) % PALETTE.length];
