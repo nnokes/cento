@@ -517,7 +517,8 @@ function page(test, { standalone = true } = {}) {
   <header>
     <p class="eyebrow">Blind listening test · ml_midi</p>
     <h1>Which is Bach?</h1>
-    <p class="lede">Each pair is one chorale harmonized by J. S. Bach and one piece that ml_midi recombined from his chorales, after David Cope's EMI. Both have the same form and key. Play both, then choose the one you think Bach wrote. The answers stay hidden until you ask for the results.</p>
+    <p class="lede">ml_midi is a recreation of Experiments in Musical Intelligence (EMI), a music AI that the composer David Cope began building in the 1980s. It writes new chorales in the style of Johann Sebastian Bach by recombining short fragments of Bach's own.</p>
+    <p class="lede">Each pair is one of J. S. Bach's chorales and one piece by ml_midi in the same form and key. Play both, then choose the one you think J. S. Bach wrote. The answers stay hidden until you ask for the results.</p>
     <p class="meta">♩ = ${test.tempo} · organ sound · headphones help</p>
   </header>
   <section class="start" id="start" aria-labelledby="start-title">
