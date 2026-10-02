@@ -120,7 +120,8 @@ function compose(db, { seed = 1, beats = 32, maxBeats = beats + 16, budget = 500
 // next beat) back into one note. A tied note with nothing to join is cut at
 // the beat line, or starts there as a new note.
 //   placed: [{ index, beat, shift: [semitones per voice] | null, level: 0 | 1,
-//             block?, signatures? }]   (M7: a signature block, see emi-form)
+//             block?, signatures?,      (M7: a signature block, see emi-form)
+//             repeat? }]               (M8: the slot of the beat this one repeats)
 // offsetTicks: where beat 0 falls; by default, the first grouping keeps its
 // place in the bar (a pickup on beat 4 starts three beats into bar 1).
 function assemble(db, placed, { seed, source, form = null, offsetTicks = null }) {
@@ -134,7 +135,7 @@ function assemble(db, placed, { seed, source, form = null, offsetTicks = null })
   const provenance = [];
   const fermatas = [];
 
-  for (const { index, beat: at, shift, level = 0, block, signatures } of placed) {
+  for (const { index, beat: at, shift, level = 0, block, signatures, repeat } of placed) {
     const g = db.groupings[index];
     const t0 = offset + at * beat;
     if (lastBeat === null || at !== lastBeat + 1) open = {};
@@ -142,6 +143,7 @@ function assemble(db, placed, { seed, source, form = null, offsetTicks = null })
     if (shift && shift.some((v) => v !== 0)) entry.shift = shift;
     if (block) entry.block = block;
     if (signatures) entry.signatures = signatures;
+    if (repeat !== undefined) entry.repeat = repeat;
     provenance.push(entry);
     if (g.cadence) fermatas.push(t0);
     const tiedOver = {};

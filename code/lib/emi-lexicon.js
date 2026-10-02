@@ -14,7 +14,8 @@
 //   works: [{ id, title, key, transposedBy, groupings, pickup, mode }],
 //   groupings: [grouping],            // see emi-segment, plus (M6) tension and
 //                                     // speac: { beat, bar, phrase } labels (emi-speac),
-//                                     // and (M8) mode: its work's mode
+//                                     // and (M8) mode: its work's mode; area: its key
+//                                     // area ("7:major": G major); accidentals ("6": F#), see areas()
 //   lexicon:  { L0 key: [grouping index] },
 //   lexicon1: { L1 key: [grouping index] },
 //   templates: [{ work, start, count }], // each work's groupings, in order: its form (emi-form)
@@ -28,6 +29,7 @@ const ingest = require("emi-ingest");
 const { segment } = require("emi-segment");
 const speac = require("emi-speac");
 const signatures = require("emi-signatures");
+const keys = require("emi-key");
 
 // Keys are lists of voice tokens: "60" (a new note), "~60" (held over) or "r"
 // (silent), joined by ",". These parse and rebuild them.
@@ -76,6 +78,7 @@ function build(works) {
     modes.add(inC.key.mode);
     const groupings = segment(inC, db.beatTicks);
     for (const g of groupings) g.mode = inC.key.mode; // M8: a mixed corpus composes each piece in one mode
+    areas(inC, groupings, db.beatTicks);
     const beatsPerBar = Math.round((db.meter[0] * 4) / db.meter[1]);
     speac.analyze(groupings, beatsPerBar).forEach(({ tension, beat, bar, phrase }, k) => {
       groupings[k].tension = tension;
@@ -102,6 +105,36 @@ function build(works) {
   db.signatures = signatures.detect(db, normalized);
   return db;
 }
+
+// M8: each grouping's accidentals (its notes outside the scale) and key
+// area, the key its music is in around it (two
+// bars, from the beat before the grouping's bar to the beat after the next),
+// by Krumhansl-Schmuckler key finding: "7:major" for G major, in the work's
+// C major / A minor. Where a chorale modulates (to G with its F#, to A minor
+// with its G#), its beats carry the new key and its accidentals; forms
+// prefer beats with the template's accidentals, then its key area
+// (emi-form), so pieces modulate where their templates do.
+function areas(work, groupings, beatTicks) {
+  const reach = 4 * beatTicks;
+  for (const g of groupings) {
+    const from = g.index * beatTicks - reach;
+    const to = (g.index + 1) * beatTicks + reach;
+    const window = [];
+    for (const [on, pitch, dur] of work.events) {
+      const start = Math.max(on, from);
+      const end = Math.min(on + dur, to);
+      if (end > start) window.push([start, pitch, end - start]);
+    }
+    const key = keys.estimate(window);
+    g.area = key.tonic + ":" + key.mode;
+    // Its own notes outside the work's scale (C major, or A natural minor):
+    // "6" for an F#, "6,8" for F# and G#; "" for none.
+    const scale = work.key.mode === "minor" ? MINOR_SCALE : MAJOR_SCALE;
+    g.accidentals = [...new Set(g.pieces.map((p) => p[1] % 12).filter((pc) => !scale.has(pc)))].sort((a, b) => a - b).join(",");
+  }
+}
+const MAJOR_SCALE = new Set([0, 2, 4, 5, 7, 9, 11]);
+const MINOR_SCALE = new Set([9, 11, 0, 2, 4, 5, 7]);
 
 // For each grouping that has a continuation: how many groupings from OTHER
 // works start where it goes, at L0 and at L1. Zero means a dead end for the

@@ -123,3 +123,44 @@ test("lexicon: every grouping carries its tension and its beat, bar and phrase l
   const labels = db.groupings.filter((g) => g.work === "d").map((g) => g.speac.phrase);
   assert.ok(new Set(labels).size <= 2);
 });
+
+// M8: repetition. Bar form: the first phrase's melody comes back as the
+// second, then a closing phrase. Where the template repeats, so does the piece.
+test("form: a repeated phrase in the template is repeated in the piece (bar form)", () => {
+  const II = [74, 69, 65, 50];
+  const VI = [69, 64, 60, 57];
+  const a = [...phrase(I, IV, V), [...I, 1]]; // 4 beats: pickup .. cadence
+  const b = [...phrase(I, VI, II, V), [...I, 2]]; // the closing phrase
+  const works = ["p", "q", "r", "s", "t"].map((id) => work(id, [...a, ...a, ...b], { fermataAt: [6, 10, 15] }));
+  const db = lexicon.build(works);
+  const slots = form.markRepeats(db, db.templates[0], form.slotsOf(db, db.templates[0]));
+  assert.deepEqual(slots.map((s) => (s.repeat ? s.repeat.of : null)), [null, null, null, null, 0, 1, 2, 3, null, null, null, null, null, null]);
+  assert.equal(slots[4].repeat.first, true);
+  let repeated = 0;
+  for (const seed of [1, 2, 3, 4, 5, 6]) {
+    const result = form.compose(db, { seed, beats: 8 });
+    assert.equal(result.ok, true);
+    checkForm(db, result.piece);
+    const prov = result.piece.provenance;
+    if (prov.some((p) => p.repeat !== undefined)) {
+      repeated++;
+      for (let k = 0; k < 4; k++) assert.equal(prov[4 + k].grouping, prov[k].grouping, `seed ${seed}: beat ${k} repeated`);
+    }
+  }
+  assert.ok(repeated >= 4, `only ${repeated} of 6 pieces repeat`);
+  const plain = form.compose(db, { seed: 1, beats: 8, repeats: false });
+  assert.ok(plain.piece.provenance.every((p) => p.repeat === undefined));
+});
+
+test("lexicon: each grouping's accidentals and key area (M8)", () => {
+  const D7 = [72, 66, 62, 50]; // F# in C major: on the way to G
+  const G = [71, 67, 62, 43];
+  const db = lexicon.build(["a", "b", "c"].map((id) => work(id, [...phrase(I, IV, D7, G, D7), [...G, 2]], { fermataAt: [8] })));
+  const of = (index) => db.groupings.find((g) => g.work === "a" && g.index === index);
+  assert.equal(of(3).accidentals, "");
+  assert.equal(of(5).accidentals, "6", "F#");
+  assert.match(of(7).area, /^7:major$/, "the end is in G");
+  const slots = form.slotsOf(db, db.templates[0]);
+  assert.equal(slots[2].accidentals, "6");
+  assert.deepEqual(slots[0].sopranoRange, [71, 72]);
+});

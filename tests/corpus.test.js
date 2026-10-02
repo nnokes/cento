@@ -180,7 +180,9 @@ test("corpus: Bach's cadence formulas are signatures and turn up at cadences", {
     const strongest = db.signatures.slice(0, 8).map((s) => signatures.describe(s, db.mode));
     assert.ok(strongest.includes(soprano), strongest.join(", "));
     assert.ok(strongest.includes("bass 4-5-1"), strongest.join(", "));
-    assert.ok(pinned >= 0.8 * cadences, `blocks at only ${pinned} of ${cadences} cadences`);
+    // At least 70%: a cadence just before a repeated phrase (M8) is left free
+    // so the phrase before can lead into the repeat.
+    assert.ok(pinned >= 0.7 * cadences, `blocks at only ${pinned} of ${cadences} cadences`);
     assert.ok(heard.get(soprano) >= 10 && heard.get("bass 4-5-1") >= 10, "the formulas turn up in pieces");
   }
 });

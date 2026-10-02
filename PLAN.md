@@ -649,6 +649,27 @@ function fill(slots, i, prev, out, ctx) {
   - **Provenance** (`emi-provenance`): each beat's source in words, for
     the piano roll's hover view, and as a record written next to an
     exported `.mid`.
+  - **After the first listening test** (9 of 10 right, chance 0.011):
+    pieces matched Bach beat by beat but not as wholes. Three changes:
+    - **Repeats** (`markRepeats`): where the template repeats a melody
+      phrase (77 of the 142 chorales do, mostly A A B bar form), the piece
+      repeats its own phrase. A second backward pass, made once the
+      original's first beat is placed, steers the beats before the repeat
+      into it. The cadence just before a repeat takes no signature block.
+      35 of the 42 pieces whose template repeats now repeat.
+    - **Score**: the backward pass now maximizes a score instead of only
+      counting blocks.
+      - Each signature block counts most, a strong one a little more.
+      - Per beat: the template beat's accidentals (the modulation cues,
+        such as an F#, found on 19% of beats), its SPEAC label where labels
+        are preferred, a
+        soprano within the template melody's range, and a small seeded
+        random amount, so each seed has its own best path.
+    - **Measured** against Bach (first test → now):
+      - notes outside the key 2.2% → 3.0% (Bach 4.5%);
+      - soprano range 15.0 → 12.6 semitones (Bach 12.3);
+      - labels kept 56% → 62%.
+      Pieces in the same form share about 20% of their beats across seeds.
   - **Listening test** (`emi-abtest`, `emi-abtest-page`): 10 pairs, each a
     chorale and a piece in its form, both in the chorale's key, with Bach
     as A in half the pairs. The page plays them with Web Audio and scores

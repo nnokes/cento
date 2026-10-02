@@ -55,7 +55,13 @@ function checkForm(db, piece) {
     const s = filled[k];
     const g = byId.get(p.grouping);
     assert.equal(p.tick, t0 + s * db.beatTicks, `slot ${s} is at the wrong time`);
-    assert.ok(form.fits(g, slots[s], !p.block), `slot ${s}: ${g.id} doesn't fit`);
+    if (p.repeat !== undefined) {
+      // A repeat (M8): the same grouping as the beat it repeats, fitting this
+      // slot apart from labels and how phrases start.
+      const original = piece.provenance[filled.indexOf(p.repeat)];
+      assert.ok(original && original.grouping === p.grouping, `slot ${s}: not a repeat of slot ${p.repeat}`);
+      assert.ok(form.fits(g, { ...slots[s], first: false, afterRest: false, bass: null }, false), `slot ${s}: ${g.id} doesn't fit`);
+    } else assert.ok(form.fits(g, slots[s], !p.block), `slot ${s}: ${g.id} doesn't fit`);
     if (piece.form.relaxed === 0) assert.equal(p.level, 0, `slot ${s}: relaxed in a strict piece`);
     for (const [, pitch, , voice] of g.pieces) {
       const [low, high] = db.ranges[voice - 1];

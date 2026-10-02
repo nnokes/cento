@@ -5,7 +5,7 @@
 // listener hears both and says which is Bach; if listeners can't pick Bach
 // out more often than guessing would, the recombination passes (PLAN.md, M8).
 //
-//   test = build(db, { count, seed, signatures })
+//   test = build(db, { count, seed, signatures, exclude })   exclude: chorales to leave out
 //     { id, tempo, pairs: [{ key, bars, beatsPerBar, A, B }], answers: [...] }
 //   A and B: notes [onset, pitch, duration, voice], onset and duration in beats.
 //   answers (one per pair): { bach: "A" | "B", chorale, title, piece, template }
@@ -17,9 +17,9 @@ const quality = require("emi-quality");
 
 const NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 
-function build(db, { count = 10, seed = 1, signatures = true, tempo = 84 } = {}) {
+function build(db, { count = 10, seed = 1, signatures = true, tempo = 84, exclude = [] } = {}) {
   const random = rng.create(seed);
-  const order = db.templates.map((t) => t.work);
+  const order = db.templates.map((t) => t.work).filter((w) => !exclude.includes(w));
   for (let i = order.length - 1; i > 0; i--) {
     const j = random.int(i + 1);
     [order[i], order[j]] = [order[j], order[i]];
@@ -55,7 +55,10 @@ function build(db, { count = 10, seed = 1, signatures = true, tempo = 84 } = {})
     });
     answers.push({ bach: bachFirst ? "A" : "B", chorale: work, title: info.title || null, piece: result.piece.id, template: work, signatures });
   }
-  return { id: `abtest-${seed}-${db.works.length}`, tempo, pairs, answers };
+  // The id names this test's music, so a browser keeps choices per test.
+  let hash = 0x811c9dc5;
+  for (const ch of JSON.stringify(pairs)) hash = Math.imul(hash ^ ch.charCodeAt(0), 16777619) >>> 0;
+  return { id: `abtest-${seed}-${hash.toString(36)}`, tempo, pairs, answers };
 }
 
 // Notes [on, pitch, dur, voice] in ticks, as [onset, pitch, duration, voice]

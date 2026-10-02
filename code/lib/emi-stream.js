@@ -12,7 +12,8 @@
 // Every phrase is filled like a whole form (emi-form: the same rules and the
 // same relaxation steps, and (M7) a signature block at its cadence where one
 // fits), and its first beat joins the previous phrase's last beat by
-// voice-hooking, so phrases flow into each other.
+// voice-hooking, so phrases flow into each other. (M8) A phrase that quotes a
+// chorale for too long, with the two before it, is put aside.
 //
 // Where the next phrase's first beat doesn't follow on in the bar (after a
 // change of chorale, say), silent beats fill the gap and the phrase starts
@@ -35,6 +36,7 @@
 const rng = require("emi-rng");
 const form = require("emi-form");
 const { assemble } = require("emi-compose");
+const quality = require("emi-quality");
 
 const KEEP_USED = 64; // phrases whose groupings may not be used again
 
@@ -87,7 +89,7 @@ function start({ seed = 1 } = {}) {
 
 const phraseSeed = (seed, number) => (Math.imul(seed, 7919) + Math.imul(number, 104729)) >>> 0 || 1;
 
-function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 8, signatures = true } = {}) {
+function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 12, signatures = true, guard = true } = {}) {
   if (stream.finished) return { ok: false, phrase: null };
   const number = stream.phrases.length + 1;
   const random = rng.create(phraseSeed(seed, number));
@@ -100,7 +102,11 @@ function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX
       stream.endsInRest = true;
     }
     for (const choice of choices(db, stream, random, last).slice(0, tries)) {
-      const attempt = place(db, stream, choice, { random, last, relax, budget, counters, signatures });
+      const attempt = place(db, stream, choice, { random, last, relax, budget, counters, signatures, noise: phraseSeed(seed, number) });
+      if (attempt && guard && quotesTooMuch(db, stream, attempt)) {
+        for (const p of attempt.placed) stream.used.delete(p.index); // put aside: another phrase
+        continue;
+      }
       if (attempt) {
         if (fallback) stream.fallbacks++;
         return { ok: true, phrase: commit(db, stream, choice, attempt, { seed, number, last, fallback }) };
@@ -112,6 +118,18 @@ function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX
 }
 
 const beatsPerBar = (db) => (db.meter[0] * 4) / db.meter[1];
+
+// M8: the quotation guard for streams. A phrase that, with the two phrases
+// before it, quotes one chorale's voice for more than the limit (emi-quality)
+// is put aside like one that can't be placed.
+function quotesTooMuch(db, stream, { placed }) {
+  const at = placed.map((p) => ({ ...p, beat: stream.nextBeat + p.beat }));
+  const offsetTicks = stream.offsetTicks !== null ? stream.offsetTicks : 0;
+  const phrase = assemble(db, at, { seed: 0, source: "", offsetTicks });
+  const before = stream.phrases.slice(-2).flatMap((p) => p.piece.events);
+  const events = [...before, ...phrase.events].sort((a, b) => a[0] - b[0] || a[3] - b[3]);
+  return quality.quotes(db, { events, provenance: [], ppq: db.beatTicks }).melody.notes > quality.LIMITS.melody;
+}
 
 // Silent beats needed before a phrase whose first beat falls on `beatInBar`.
 function gapBefore(db, stream, beatInBar) {
@@ -173,11 +191,11 @@ function prepare(db, stream, choice, { last, cadenceBass, speac }) {
   return [...Array.from({ length: gap }, () => ({ rest: true })), ...slots];
 }
 
-function place(db, stream, choice, { random, last, relax, budget, counters, signatures }) {
+function place(db, stream, choice, { random, last, relax, budget, counters, signatures, noise }) {
   const slotsAt = form.memo((step) => prepare(db, stream, choice, { last, ...form.RELAX[step] }));
   const pinsAt = form.memo((slots) => (signatures ? form.pinsFor(db, slots, choice.work) : null));
   for (let step = 0; step <= relax; step++) {
-    if (step < relax && form.labelsGiveWay(db, step, slotsAt, pinsAt)) continue;
+    if (step < relax && form.labelsGiveWay(db, step, slotsAt, pinsAt, noise)) continue;
     const { level } = form.RELAX[step];
     const slots = slotsAt(step);
     const placed = form.fill(db, slots, {
@@ -188,6 +206,7 @@ function place(db, stream, choice, { random, last, relax, budget, counters, sign
       prev: stream.last,
       used: stream.used,
       pins: pinsAt(slots),
+      noise,
     });
     if (placed) return { slots, placed, relaxed: step };
   }

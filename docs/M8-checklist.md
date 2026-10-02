@@ -9,10 +9,48 @@
 | The provenance view: hovering shows each beat's source; export writes a `.json` | | |
 | Minor mode: a corpus of major and minor chorales composes each piece in one mode | | |
 | 3/4: pieces in 3/4 bars, played from a barline | | |
-| A blind A/B listening test against real chorales | | |
+| A blind A/B listening test against real chorales | ❌ first test: 9 of 10 right (chance by guessing 0.011); retest after the changes below | |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M8 makes the composer harder to fool and easier to check.
+
+### After the first listening test
+
+The first test failed: Bach was picked out in 9 of 10 pairs, and the chance
+of that by guessing is 0.011. Comparing pieces with their own templates
+showed why. Beat to beat they matched Bach closely (melodic steps, leaps,
+voice-leading). As whole pieces they didn't:
+
+| | Bach | Pieces (first test) | Pieces now |
+|---|---|---|---|
+| Templates that repeat a melody phrase (the hymn tune's A A B bar form), and pieces that repeat it too | 77 of 142 chorales | none | 35 of the 42 pieces whose template repeats |
+| Notes outside the key (modulations) | 4.5% | 2.2% | 3.0% |
+| Soprano range | 12.3 semitones | 15.0 | 12.6 |
+| Beats keeping their template beat's SPEAC label | | 56% | 62% |
+
+Three changes, all in the composer:
+- **Repeats.** Where the template repeats a phrase, the piece repeats its
+  own composed phrase there. The search looks ahead so that the beat before
+  the repeat leads exactly into it. A cadence just before a repeat is left
+  free of signature blocks for this, so signatures now stand at 81% of
+  cadences (91% before).
+- **Modulations.** Each beat now knows its accidentals (an F# in C major,
+  say) and its key area. The search scores a beat with its template beat's
+  accidentals, and plans several beats ahead to reach it.
+- **Range.** It also scores a soprano that stays within the template
+  melody's range.
+
+Each seed now adds a small random amount to each beat's score, so different
+seeds still give different pieces. Streams also get the quotation guard,
+checked over the last three phrases.
+
+Every other measure holds:
+- quotes of 16 notes at most;
+- no new parallels (51 in 100 pieces, all Bach's own);
+- 98 pieces in 100 with exact voice-leading;
+- about 75 ms a piece.
+
+Pieces have changed, so the status lines below are new.
 
 **Quotation.** Recombination should make new music, not copy old music.
 Two measures check each piece:
@@ -26,7 +64,7 @@ harmonized more than once: their beats fit each other's forms well and
 bring the melody back.
 
 On the full corpus (100 pieces):
-- the longest melody quote is 14 notes, with a median of 9;
+- the longest melody quote is 16 notes, with a median of 9;
 - Bach's own chorales share a median of 9 notes with each other.
 
 So pieces quote about as much as Bach quotes himself.
@@ -37,7 +75,7 @@ found is compared with the source chorales:
 - **grey caret:** Bach's own (the source has the same motion);
 - **red caret:** new.
 
-In 100 pieces there are 37, all of them Bach's own (he has 34 in his 142
+In 100 pieces there are 51, all of them Bach's own (he has 34 in his 142
 chorales). Voice-hooking carries each seam's motion over from a source, so
 recombination adds none. This is Cope's claim, now measured.
 
@@ -106,52 +144,57 @@ picked the wrong folder (see the M2 checklist for recreating `.venv`).
 1. [ ] **Open the patch.** The corpus reloads as before:
        `corpus 142 chorales (major), 8578 beats, 18% dead ends, 76 signatures`.
        A new **A/B** button sits at the right end of the second row.
-2. [ ] **Quality in the Max window.** Turn **stream** off and set **seed** to 3.
-       The status line is unchanged since M7:
-       `emi-3: form of bwv260, 5 phrases, 56 beats, 37 chorales, SPEAC 61%, 4 signatures`.
+2. [ ] **Quality in the Max window.** Turn **stream** off and set **seed** to 3:
+       `emi-3: form of bwv260, 5 phrases, 56 beats, 23 chorales, SPEAC 68%, 3 signatures`.
        The Max window (**Window ▸ Max Console**) now ends with one more line:
        ```
-       emi-3: longest quote 9 notes (alto, as in bwv154.3), 4 beats in a row from bwv300; no parallel 5ths or 8ves
+       emi-3: longest quote 10 notes (soprano, as in bwv260), 4 beats in a row from bwv245.14; no parallel 5ths or 8ves
        ```
 3. [ ] **Where each beat came from.** Move the mouse slowly over the piano
        roll. The beat under it lights up, and a dark box at the top names
        its source.
-       - The first beat: `bwv307, bar 0 beat 4 · P`.
-       - The second: `bwv389, bar 4 beat 1 · A`.
+       - The first beat: `bwv322, bar 0 beat 4 · P`.
+       - The second: `bwv260, bar 4 beat 1 · E`.
        - Over a gold band, the box adds `signature block`, and on its last
          beat the signature's name.
 4. [ ] **Parallels.** Set **seed** to 2. The Max window's last line ends
-       with `parallel 5ths/8ves: 1, all Bach's own`. In the piano roll, a
-       small grey caret sits just above the SPEAC lane in bar 12. Grey
-       means Bach wrote the same motion; none should be red.
-5. [ ] **Export with provenance.** Set **seed** back to 3. Click
+       with `parallel 5ths/8ves: 2, all Bach's own`. In the piano roll, two
+       small grey carets sit just above the SPEAC lane, in bars 3 and 7.
+       Grey means Bach wrote the same motion; none should be red.
+5. [ ] **Repeats.** Still on seed 2 (`form of bwv248.12-2`): its template
+       repeats its first two phrases, and so does the piece. From the
+       pickup on beat 4 of bar 5, the piano roll shows the same 16 beats as
+       from beat 4 of bar 1. Hovering over a beat in bar 6 names the same
+       source as the matching beat in bar 2.
+6. [ ] **Export with provenance.** Set **seed** back to 3. Click
        **export midi** and save as `emi-3` in `Documents/ml_midi/out`.
        - The status line says `exported emi-3.mid and emi-3.json`.
        - Open `emi-3.json` in TextEdit. Near the bottom, under `"beats"`,
-         each beat names its `"grouping"` (such as `"bwv307:3"`), its
+         each beat names its `"grouping"` (such as `"bwv322:3"`), its
          `"bar"`, `"beat"` and `"speac"`.
-6. [ ] **Major and minor together.** Click **load corpus** and choose
+7. [ ] **Major and minor together.** Click **load corpus** and choose
        `Documents/ml_midi/corpus-both`:
        `corpus 295 chorales (142 major, 153 minor), 17746 beats, 14% dead ends, 154 signatures`.
        Then seeds 1 and 2:
-       - `emi-1: form of bwv258 (A minor), 5 phrases, 56 beats, 33 chorales, SPEAC 80%, 5 signatures`
-       - `emi-2: form of bwv45.7 (C major), 8 phrases, 64 beats, 33 chorales, SPEAC 68%, 7 signatures`
+       - `emi-1: form of bwv258 (A minor), 5 phrases, 56 beats, 31 chorales, SPEAC 89%, 3 signatures`
+       - `emi-2: form of bwv45.7 (C major), 8 phrases, 64 beats, 30 chorales, SPEAC 68%, 8 signatures`
 
        Listen to seed 1: minor throughout. Then turn **stream** on, compose
        seed 1 and play a few phrases. Each status line names the key, e.g.
-       `emi-1 stream: phrase 2 queued (bwv145-a phrase 2, C major, signature bass 5-5-1)`,
+       `emi-1 stream: phrase 2 queued (bwv145-a phrase 2, C major, signature soprano 4-2-1)`,
        and every phrase stays in C major. Seed 2's stream stays in A minor.
        Turn **stream** off.
-7. [ ] **3/4.** **load corpus** `Documents/ml_midi/corpus-3-4`:
+8. [ ] **3/4.** **load corpus** `Documents/ml_midi/corpus-3-4`:
        `corpus 20 chorales (major), 1522 beats, 48% dead ends, 41 signatures`.
-       Seed 1: `emi-1: form of bwv194.12, 4 phrases, 49 beats, 11 chorales, SPEAC 41%, 3 signatures`.
+       Seed 1: `emi-1: form of bwv194.12, 4 phrases, 49 beats, 10 chorales, SPEAC 47%, 2 signatures`.
        - The piano roll's bar lines are three beats apart.
        - Press Play: the piece starts on a barline and moves in three.
-       - Seed 2 shows the small corpus at work: `(19 octave moves)` at the
+       - Seed 2 shows the small corpus at work: `(25 octave moves)` at the
          end of its status line.
-8. [ ] **Back to the main corpus.** **load corpus** `Documents/ml_midi/corpus`
+9. [ ] **Back to the main corpus.** **load corpus** `Documents/ml_midi/corpus`
        and compose any seed: playback is in four again.
-9. [ ] **The listening test.** Click **A/B** and save as `listening-test` in
+10. [ ] **The listening test.** Set **seed** to 5 (so the pairs differ from
+       the test you took), click **A/B** and save as `listening-test` in
        `Documents/ml_midi`. The status line says
        `wrote listening-test.html: 10 pairs; open it in a web browser`.
        - Double-click the file in Finder: it opens in your browser. Play one
