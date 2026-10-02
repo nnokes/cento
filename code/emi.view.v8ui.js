@@ -10,7 +10,10 @@
 // (M7), named by their signature. Small carets above the lane mark parallel
 // fifths and octaves (M8): grey for Bach's own, red for new ones. With the
 // mouse over a beat, a box at the top shows where it came from (M8: the
-// provenance view). The engine sends one score as:
+// provenance view). Dragging across the roll selects whole beats for
+// Emily to rate (M9): a blue band, sent to the engine as "select <from>
+// <to>" (ticks) while dragging; a click clears it ("select"). The engine
+// sends one score as:
 //   clear <endTick> <lowPitch> <highPitch> <barTicks> [startTick] [beatTicks]
 //                                        (the ticks shown; a stream shows its last phrases)
 //   note <on> <dur> <pitch> <color>      (one per note)
@@ -20,11 +23,12 @@
 //   signature <start> <end> <name...>    (one per signature block, e.g. "soprano 3-2-1")
 //   parallel <tick> <new>                (one per parallel 5th/8ve; new: 1, Bach's own: 0)
 //   source <tick> <text...>              (one per beat: where it came from)
+//   selection <from> <to>                (the beats selected, kept when a stream redraws)
 //   done                                 (draw it)
 
 autowatch = 1;
 inlets = 1;
-outlets = 0;
+outlets = 1;
 
 mgraphics.init();
 mgraphics.relative_coords = 0;
@@ -45,9 +49,11 @@ const PALETTE = [
 let shown = null; // the score being drawn
 let incoming = null; // the score being received
 let hover = null; // the beat under the mouse: an index into shown.sources
+let selected = null; // [from, to]: the ticks selected (whole beats)
+let dragFrom = null; // the tick of the beat where a drag started
 
 function clear(endTick, low, high, barTicks, startTick, beatTicks) {
-  incoming = { start: startTick || 0, end: endTick, low, high, barTicks, beatTicks: beatTicks || barTicks / 4, notes: [], seams: [], cadences: [], labels: [], signatures: [], parallels: [], sources: [] };
+  incoming = { selected: null, start: startTick || 0, end: endTick, low, high, barTicks, beatTicks: beatTicks || barTicks / 4, notes: [], seams: [], cadences: [], labels: [], signatures: [], parallels: [], sources: [] };
 }
 
 function note(on, dur, pitch, color) {
@@ -78,8 +84,15 @@ function source(tick, ...text) {
   if (incoming) incoming.sources.push([tick, text.join(" ")]);
 }
 
+function selection(from, to) {
+  if (incoming) incoming.selected = [from, to];
+}
+
 function done() {
-  if (incoming) shown = incoming;
+  if (incoming) {
+    shown = incoming;
+    selected = incoming.selected;
+  }
   incoming = null;
   hover = null;
   mgraphics.redraw();
@@ -101,9 +114,39 @@ function onidleout() {
   }
 }
 
+// A click starts a selection (and clears the one before); dragging extends
+// it beat by beat.
 function onclick(x) {
   onidle(x);
+  if (selected) outlet(0, "select");
+  selected = null;
+  dragFrom = beatTickAt(x);
+  mgraphics.redraw();
 }
+
+function ondrag(x, y, button) {
+  if (!shown || dragFrom === null) return;
+  const tick = beatTickAt(x);
+  if (tick !== null && tick !== dragFrom) {
+    const next = [Math.min(dragFrom, tick), Math.max(dragFrom, tick) + beatOf(shown)];
+    if (!selected || next[0] !== selected[0] || next[1] !== selected[1]) {
+      selected = next;
+      outlet(0, "select", selected[0], selected[1]);
+      mgraphics.redraw();
+    }
+  }
+  if (!button) dragFrom = null;
+}
+
+// The start of the beat under x (within the ticks shown), or null.
+function beatTickAt(px) {
+  if (!shown) return null;
+  const [width] = size();
+  const beat = beatOf(shown);
+  const tick = shown.start + (Math.max(0, Math.min(width - 1, px)) / width) * (shown.end - shown.start);
+  return Math.floor(tick / beat) * beat;
+}
+beatTickAt.local = 1;
 
 function sourceAt(px) {
   if (!shown || !shown.sources.length) return null;
@@ -221,6 +264,20 @@ function paint() {
     g.line_to(px, rollHeight - 8);
     g.close_path();
     g.fill();
+  }
+
+  // The beats selected for rating: a blue band over the roll and the lane.
+  if (selected) {
+    const left = x(Math.max(selected[0], shown.start));
+    const right = x(Math.min(selected[1], shown.end));
+    if (right > left) {
+      g.set_source_rgba(0.35, 0.6, 1, 0.22);
+      g.rectangle(left, 0, right - left, height);
+      g.fill();
+      g.set_source_rgba(0.45, 0.7, 1, 0.9);
+      g.rectangle(left, 0, right - left, 2);
+      g.fill();
+    }
   }
 
   // The provenance view: the hovered beat lit up, and its source above.

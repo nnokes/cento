@@ -179,8 +179,8 @@ const liveParameters = (name) =>
 
 test("live.* parameters: named, and unique within each product", () => {
   const products = {
-    "Max version": ["ml_midi.maxpat", "emi.host.max.maxpat", "emi.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat"],
-    "emi.brain": ["emi.brain.maxpat", "emi.host.live.maxpat", "emi.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat"],
+    "Max version": ["ml_midi.maxpat", "emi.host.max.maxpat", "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat"],
+    "emi.brain": ["emi.brain.maxpat", "emi.host.live.maxpat", "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat"],
   };
   for (const [product, names] of Object.entries(products)) {
     const params = names.flatMap(liveParameters);
@@ -190,6 +190,42 @@ test("live.* parameters: named, and unique within each product", () => {
   }
   assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Beats", "Form", "Original Key", "Phrases", "Seed", "Signatures", "Stream", "Transpose"]);
   assert.deepEqual(liveParameters("emi.host.live.maxpat").map((p) => p.longname).sort(), ["All Voices Here", "Clips On Compose", "Play Through Voices"]);
+  assert.deepEqual(liveParameters("emily.panel.maxpat").map((p) => p.longname).sort(), ["Dislike", "Like", "Temperature"]);
+});
+
+test("emily.panel (M9): like and dislike are mappable buttons; temperature is saved and shown when restored", () => {
+  const p = patchFile("emily.panel.maxpat");
+  const [outlet] = p.find("outlet");
+  const control = (name) => [...p.boxes.values()].find((b) => b.varname === name);
+  for (const [name, message] of [["Like", "like"], ["Dislike", "dislike"]]) {
+    const button = control(name);
+    assert.equal(button.maxclass, "live.text", name);
+    assert.equal(button.mode, 0, `${name} is a button (it sends a bang)`);
+    assert.equal(button.saved_attribute_attributes.valueof.parameter_initial_enable, 0, `${name} sends nothing when the patch loads`);
+    const [[msg]] = p.from(button.id, 0);
+    assert.equal(msg.text, message, name);
+    assert.deepEqual(p.from(msg.id).map(([b]) => b.id), [outlet.id], `${name} goes to the engine`);
+  }
+  const dial = control("Temperature");
+  assert.equal(dial.maxclass, "live.dial");
+  const range = dial.saved_attribute_attributes.valueof;
+  assert.deepEqual([range.parameter_mmin, range.parameter_mmax, range.parameter_initial[0]], [0, 3, 1]);
+  const [[pre]] = p.from(dial.id, 0);
+  assert.equal(pre.text, "prepend temperature");
+  assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
+  for (const word of ["taste", "forget"]) {
+    const [msg] = p.find(word);
+    assert.deepEqual(p.from(msg.id).map(([b]) => b.id), [outlet.id], word);
+  }
+  const [route] = p.find("route emily setting");
+  const [[setText]] = p.from(route.id, 0);
+  const [[text]] = p.from(setText.id);
+  assert.equal(text.maxclass, "message", "emily <text> shows in the panel");
+  const [[settings]] = p.from(route.id, 1);
+  assert.equal(settings.text, "route temperature");
+  const [[set]] = p.from(settings.id, 0);
+  assert.equal(set.text, "prepend set");
+  assert.deepEqual(p.from(set.id).map(([b]) => b.id), [dial.id], "a restored temperature is shown, not sent back");
 });
 
 test("emi.panel: each saved control sends its message, and shows restored values without sending", () => {
@@ -222,18 +258,18 @@ test("startup: Max restores everything after loading; Live only reloads the corp
   chain("emi.host.live.maxpat", "live.thisdevice", "startup corpus");
 });
 
-test("top patches: host panel, shared panel and piano roll, all wired to one engine", () => {
+test("top patches: host panel, shared panel, Emily's panel and piano roll, all wired to one engine", () => {
   for (const [file, host] of [["ml_midi.maxpat", "emi.host.max.maxpat"], ["emi.brain.maxpat", "emi.host.live.maxpat"]]) {
     const p = patchFile(file);
     const [engine] = p.find("emi.engine");
     const bpatchers = [...p.boxes.values()].filter((b) => b.maxclass === "bpatcher").map((b) => b.name);
-    assert.deepEqual(bpatchers, [host, "emi.panel.maxpat", "emi.view.maxpat"], file);
+    assert.deepEqual(bpatchers, [host, "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat"], file);
     const into = p.into(engine.id).map(([b]) => b.name).sort();
-    assert.deepEqual(into, [host, "emi.panel.maxpat"].sort(), `${file}: both panels talk to the engine`);
+    assert.deepEqual(into, [host, "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat"].sort(), `${file}: the panels (and the roll's selections) go to the engine`);
     const from = p.from(engine.id).map(([b]) => b.name || b.text).sort();
-    assert.deepEqual(from, [host, "emi.panel.maxpat", "route view"].sort(), `${file}: the engine answers both`);
+    assert.deepEqual(from, [host, "emi.panel.maxpat", "emily.panel.maxpat", "route view"].sort(), `${file}: the engine answers them`);
   }
-  // The device is exactly as wide as its three panels.
+  // The device is exactly as wide as its four panels.
   const device = readPatcher(path.join(ROOT, "patchers", "emi.brain.amxd"));
   const brain = patchFile("emi.brain.maxpat");
   const right = Math.max(...[...brain.boxes.values()].filter((b) => b.presentation_rect).map((b) => b.presentation_rect[0] + b.presentation_rect[2]));

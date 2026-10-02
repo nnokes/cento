@@ -105,24 +105,27 @@ test("bundles in patchers/ are up to date with code/", () => {
 test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
-    "abtest", "autoclips", "beats", "clear", "compose", "corpus", "exportmidi", "form", "key", "loadmidi", "need", "next",
-    "pattern", "phrases", "remember", "seed", "sigs", "startup", "stream", "testclip", "transpose", "writeclips",
+    "abtest", "autoclips", "beats", "clear", "compose", "corpus", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
+    "need", "next", "pattern", "phrases", "remember", "seed", "select", "sigs", "startup", "stream", "taste", "temperature", "testclip",
+    "transpose", "writeclips",
   ]);
-  assert.deepEqual(loadBundle("emi.view").handlers(), ["cadence", "clear", "done", "note", "onclick", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "signature", "source", "speac"]);
+  assert.deepEqual(loadBundle("emi.view").handlers(), [
+    "cadence", "clear", "done", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "selection", "signature", "source", "speac",
+  ]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
 });
 
 // Convention: one inlet and one outlet per [v8] wrapper. If a script fails to
 // load, [v8] keeps its default single inlet and outlet and Max deletes any
 // other cords ("patchcord outlet out of range"), which is what happened in M0.
-test("[v8] bundles have one inlet and one outlet; the view has no outlet", () => {
+test("[v8] bundles have one inlet and one outlet (the view's sends selections, M9)", () => {
   const counts = (name) => {
     const { context } = loadBundle(name);
     return [context.inlets, context.outlets, context.autowatch];
   };
   assert.deepEqual(counts("emi.hello"), [1, 1, 1]);
   assert.deepEqual(counts("emi.core"), [1, 1, 1]);
-  assert.deepEqual(counts("emi.view"), [1, 0, 1]);
+  assert.deepEqual(counts("emi.view"), [1, 1, 1]);
   assert.deepEqual(counts("emi.voice"), [1, 1, 1]);
 });
 
@@ -364,7 +367,7 @@ test("core: 'exportmidi' writes the current score as a MIDI file, and a piece's 
   const record = JSON.parse(fs.readFileSync(target + ".json", "utf8"));
   assert.equal(record.piece, "emi-3");
   assert.equal(record.seed, 3);
-  assert.deepEqual(record.settings, { beats: 8, form: true, signatures: true, stream: false, transpose: 0 });
+  assert.deepEqual(record.settings, { beats: 8, form: true, signatures: true, stream: false, transpose: 0, temperature: 1, tasteRatings: 0 });
   assert.equal(record.beats.length, 11, "one entry per beat");
   for (const beat of record.beats) {
     assert.match(beat.grouping, /^[abc]:\d+$/);
@@ -550,13 +553,13 @@ test("settings: the Max version restores every setting, reloads the corpus and c
   first.send("remember", "bpm", 120);
   first.send("remember", "output", 2);
   assert.deepEqual(settingsIn(folder), {
-    corpus: corpusDir, seed: 5, beats: 8, form: 0, signatures: 1, key: 1, stream: 0, phrases: 8, transpose: 0, host: { bpm: [120], output: [2] },
+    corpus: corpusDir, seed: 5, beats: 8, form: 0, signatures: 1, key: 1, stream: 0, phrases: 8, transpose: 0, temperature: 1, host: { bpm: [120], output: [2] },
   });
 
   const second = engineIn(folder);
   const out = second.send("startup", "all");
   assert.deepEqual(select(out, "setting"), [
-    ["seed", 5], ["beats", 8], ["form", 0], ["sigs", 1], ["key", 1], ["stream", 0], ["phrases", 8], ["transpose", 0], ["bpm", 120], ["output", 2],
+    ["seed", 5], ["beats", 8], ["form", 0], ["sigs", 1], ["key", 1], ["stream", 0], ["phrases", 8], ["transpose", 0], ["temperature", 1], ["bpm", 120], ["output", 2],
   ]);
   const status = lastStatus(out);
   assert.deepEqual([status[1], status[3]], ["emi-5:", "beats"], "composed seed 5 freely (form off)");
@@ -763,4 +766,179 @@ test("view: draws one rectangle per note, plus bar lines and seams", () => {
   assert.ok(colors.includes("1,0.6,0.15,0.9"), "an orange seam");
   const triangle = g.calls.filter(([name, cx]) => name === "move_to" && Math.abs(cx - (270 - 4)) < 1);
   assert.equal(triangle.length, 1, "a cadence mark at 3/4 of the width");
+});
+
+// ---------------------------------------------------------------- core: Emily (M9)
+
+const tasteIn = (folder) => JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.taste.json"), "utf8"));
+// A clock the test sets (Date.now inside the script).
+function setClock(core, now) {
+  core.context.Date = class extends Date {
+    static now() {
+      return now;
+    }
+  };
+}
+
+test("emily: like and dislike learn from the piece or the beats selected, and the taste is saved", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  const started = core.send("startup", "all");
+  assert.deepEqual(select(started, "emily"), [["no", "ratings", "yet"]], "the Emily panel shows her taste");
+  assert.deepEqual(lastStatus(core.send("like")), ["error", "load", "a", "corpus", "first"]);
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  const composed = core.send("compose", 1);
+  const ticks = select(composed, "view").filter(([kind]) => kind === "source").map(([, tick]) => tick);
+
+  let out = core.send("like");
+  assert.match(lastStatus(out).join(" "), new RegExp(`^status liked emi-1 \\(${ticks.length} beats\\)(: .*)?; 1 rating$`));
+  assert.match(select(out, "emily")[0].join(" "), /^1 rating/);
+  assert.equal(tasteIn(folder).ratings, 1, "saved next to the settings");
+  assert.ok(["a", "b", "c"].some((work) => tasteIn(folder).weights["tpl:" + work]), "the whole piece: its form too");
+
+  // Two beats selected in the piano roll.
+  out = core.send("select", ticks[1], ticks[3]);
+  assert.match(lastStatus(out).join(" "), /^status selected bars? [-0-9]+ \(2 beats\): like or dislike rates them$/);
+  out = core.send("dislike");
+  assert.match(lastStatus(out).join(" "), /^status disliked bars? [-0-9]+ of emi-1 \(2 beats\)/);
+  assert.equal(tasteIn(folder).ratings, 2);
+  core.send("select"); // a click clears it
+  assert.match(lastStatus(core.send("like")).join(" "), /^status liked emi-1 \(/);
+
+  // A new piece clears the selection; a selection is redrawn with the piece.
+  core.send("select", ticks[1], ticks[3]);
+  const again = core.send("compose", 1);
+  assert.deepEqual(select(again, "view").filter(([kind]) => kind === "selection"), []);
+  core.send("select", ticks[1], ticks[3]);
+  assert.match(lastStatus(core.send("like")).join(" "), /of emi-1 \(2 beats\)/);
+});
+
+test("emily: a chorale isn't rated; composing with a taste is compared with the same seed without", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  core.send("loadmidi", writeAMajorChorale());
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  core.send("loadmidi", writeAMajorChorale());
+  assert.match(lastStatus(core.send("like")).join(" "), /^error Emily learns from composed music: compose a piece first$/);
+  core.send("compose", 1);
+  core.send("like");
+  core.posted.length = 0;
+  core.send("compose", 2);
+  assert.ok(core.posted.some((line) => /^emi-2: her taste [-+]\d\.\d\d a beat \([-+]\d\.\d\d without\)/.test(line)), core.posted.join(""));
+});
+
+test("emily: in a stream, like rates the phrase playing (the one before in its first moments)", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  core.send("corpus", writeStreamCorpus());
+  core.send("stream", 1);
+  core.send("phrases", 0);
+  setClock(core, 1000);
+  core.send("compose", 4);
+  setClock(core, 9000);
+  assert.match(lastStatus(core.send("like")).join(" "), /^status liked phrase 1 of emi-4 \(/);
+  core.send("need"); // phrase 2 starts playing
+  setClock(core, 9500);
+  assert.match(lastStatus(core.send("like")).join(" "), /^status liked phrase 1 of emi-4 \(/, "just after it started: the one before");
+  setClock(core, 12000);
+  assert.match(lastStatus(core.send("dislike")).join(" "), /^status disliked phrase 2 of emi-4 \(/);
+  assert.equal(tasteIn(folder).log.at(-1).what, "phrase 2 of emi-4");
+});
+
+test("emily: temperature is clamped, saved and restored", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  assert.deepEqual(lastStatus(core.send("temperature", 0.5)).slice(0, 7), ["status", "temperature", "0.50:", "less", "chance,", "more", "taste"]);
+  assert.equal(settingsIn(folder).temperature, 0.5);
+  assert.deepEqual(lastStatus(core.send("temperature", 7)).slice(0, 4), ["status", "temperature", "3.00:", "more"]);
+  assert.deepEqual(lastStatus(core.send("temperature", 0)).slice(0, 5), ["status", "temperature", "0.00:", "only", "Emily's"]);
+  core.send("temperature", 1.5);
+  const restored = engineIn(folder).send("startup", "all");
+  assert.deepEqual(select(restored, "setting").find(([name]) => name === "temperature"), ["temperature", 1.5]);
+});
+
+test("emily: a startup after a session with ratings lets the taste fade; forget keeps a backup", () => {
+  const folder = tempDir();
+  fs.writeFileSync(path.join(folder, "ml_midi.taste.json"), JSON.stringify({ weights: { "f:susp": 1, "f:16ths": -0.5 }, ratings: 4, likes: 3, rated: 2 }));
+  const core = engineIn(folder);
+  const out = core.send("startup", "all");
+  assert.deepEqual(select(out, "emily"), [["4", "ratings;", "likes", "suspensions;", "dislikes", "16th", "notes"]]);
+  const faded = tasteIn(folder);
+  assert.deepEqual([faded.weights["f:susp"], faded.weights["f:16ths"], faded.sessions, faded.rated], [0.9, -0.45, 1, 0]);
+  engineIn(folder).send("startup", "all");
+  assert.equal(tasteIn(folder).weights["f:susp"], 0.9, "no ratings since: no fading");
+
+  const forgot = core.send("forget");
+  assert.deepEqual(lastStatus(forgot), ["status", "Emily", "forgot", "her", "taste", "(4", "ratings,", "kept", "in", "ml_midi.taste.backup.json)"]);
+  assert.deepEqual(select(forgot, "emily"), [["no", "ratings", "yet"]]);
+  assert.equal(tasteIn(folder).ratings, 0);
+  const backup = JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.taste.backup.json"), "utf8"));
+  assert.equal(backup.weights["f:susp"], 0.9);
+});
+
+test("emily: 'taste' lists her opinions and compares ten pieces with and without them", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  assert.deepEqual(lastStatus(core.send("taste")), ["status", "Emily:", "no", "ratings", "yet"]);
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  for (const seed of [1, 2, 3]) {
+    core.send("compose", seed);
+    core.send(seed === 2 ? "dislike" : "like");
+  }
+  core.posted.length = 0;
+  const out = core.send("taste");
+  assert.match(core.posted[0], /^ml_midi: Emily's taste: 3 ratings/);
+  assert.ok(core.posted.some((line) => /^ {2}seeds 3-12, with her taste and without: her taste /.test(line)), core.posted.join(""));
+  assert.match(lastStatus(out).join(" "), /^status Emily, seeds 3-12: her taste [-+]\d\.\d\d a beat/);
+});
+
+// ---------------------------------------------------------------- view: selecting beats (M9)
+
+test("view: dragging across the roll selects whole beats and tells the engine; a click clears", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics;
+  view.send("clear", 4 * Q, 60, 72, 4 * Q, 0, Q); // 90 px a beat
+  view.send("done");
+  assert.deepEqual(view.send("onclick", 10, 50), [], "nothing was selected");
+  assert.deepEqual(view.send("ondrag", 200, 50, 1), [[0, "select", 0, 3 * Q]], "beats 1-3");
+  assert.deepEqual(view.send("ondrag", 210, 50, 1), [], "the same beats: nothing new");
+  assert.deepEqual(view.send("ondrag", 210, 50, 0), [], "released");
+  g.calls.length = 0;
+  view.send("paint");
+  const blue = g.calls.findIndex(([name, r, gr, b, a]) => name === "set_source_rgba" && r === 0.35 && gr === 0.6 && b === 1 && a === 0.22);
+  assert.ok(blue >= 0, "a blue band");
+  const [, x, , w] = g.calls.slice(blue).find(([name]) => name === "rectangle");
+  assert.deepEqual([x, w], [0, 270]);
+  assert.deepEqual(view.send("onclick", 300, 50), [[0, "select"]], "a click clears it");
+
+  // The engine sends the selection again when it redraws (a stream's next phrase).
+  view.send("clear", 4 * Q, 60, 72, 4 * Q, 0, Q);
+  view.send("selection", Q, 2 * Q);
+  view.send("done");
+  g.calls.length = 0;
+  view.send("paint");
+  assert.ok(g.calls.some(([name, r, gr, b, a]) => name === "set_source_rgba" && r === 0.35 && a === 0.22));
+});
+
+test("emily: both products open at once share one taste: each reads the other's ratings", () => {
+  const folder = tempDir();
+  const corpusDir = writeCorpus();
+  const [max, live] = [engineIn(folder), engineIn(folder)];
+  for (const core of [max, live]) {
+    core.send("startup", "all");
+    core.send("corpus", corpusDir);
+    core.send("beats", 8);
+    core.send("compose", 1);
+  }
+  max.send("like");
+  assert.match(lastStatus(live.send("dislike")).join(" "), /; 2 ratings$/, "the Live version counts the Max version's like");
+  assert.match(lastStatus(max.send("like")).join(" "), /; 3 ratings$/);
+  assert.equal(tasteIn(folder).ratings, 3);
 });

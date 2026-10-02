@@ -2073,8 +2073,22 @@ function pinsFor(db, slots, avoid = null) {
 // required), a soprano within the template melody's range, and a small
 // seeded random amount, so that each seed has its own best path and
 // different seeds give different pieces.
-const PIN = 1 << 16;
-const SCORE = { strong: 16, blockChance: 48, accidentals: 16, label: 4, range: 4, chance: 8 };
+//
+// M9: Emily's taste (emily-assoc) adds each beat's taste, a liked
+// transition's where two beats join, and a liked signature's where its block
+// ends; each at most TASTE_MAX either way, so taste chooses among the valid
+// beats and blocks but never outweighs a block. With a taste, a beat's SPEAC
+// label counts double (tasteLabel), so taste rarely pulls beats off their
+// template beat's labels (on the full corpus, 59% of beats keep them after
+// ten ratings, against 61% without a taste; 47% if labels count as before). (Taste is offset by
+// TASTE_MAX, so scores stay positive: every way through the template has the
+// same number of beats and joins, so the offset changes no choice.) The
+// temperature scales the random amounts: 0, none (the best liked path); 1,
+// as before M9; higher, more adventurous.
+const PIN = 1 << 20;
+const SCORE = { strong: 16, blockChance: 48, accidentals: 16, label: 4, tasteLabel: 8, range: 4, chance: 8 };
+const TASTE_MAX = 64;
+const clampTaste = (v) => Math.max(-TASTE_MAX, Math.min(TASTE_MAX, v));
 
 // Each grouping's lowest and highest soprano note (computed once per database).
 const sopranoCache = new WeakMap();
@@ -2094,8 +2108,11 @@ function sopranoOf(db) {
   return sopranoCache.get(db);
 }
 
-function feasible(db, slots, next, pins = null, noise = 0) {
+function feasible(db, slots, next, pins = null, noise = 0, { taste = null, temperature = 1 } = {}) {
   const n = db.groupings.length;
+  const beatTaste = taste ? taste.beat : null;
+  const edges = taste ? taste.edges : null;
+  const blockEnd = taste ? taste.blockEnd : null;
   const soprano = sopranoOf(db);
   const strongest = db.signatures && db.signatures.length ? db.signatures[0].works : 0;
   const plan = { best: [], free: [], cont: [], roles: [] };
@@ -2115,20 +2132,28 @@ function feasible(db, slots, next, pins = null, noise = 0) {
       if (!later) return 0;
       if (restBetween) return laterMost;
       let most = -1;
+      const liked = edges && edges.get(i);
+      if (liked) {
+        for (const j of next[i]) if (later[j] >= 0) most = Math.max(most, later[j] + TASTE_MAX + clampTaste(liked.get(j) || 0));
+        return most;
+      }
       for (const j of next[i]) if (later[j] > most) most = later[j];
-      return most;
+      return most >= 0 && edges ? most + TASTE_MAX : most;
     };
     // What a beat scores here (see SCORE).
     const color = slot.accidentals ? slot.accidentals : null;
     const range = slot.sopranoRange || null;
     const label = slot.speac && slot.speacHard === false ? slot.speac : null;
+    const labelPoints = beatTaste ? SCORE.tasteLabel : SCORE.label;
     const inRange = (i) => !range || (soprano.low[i] >= range[0] && soprano.high[i] <= range[1]);
-    const chance = (i) => (noise ? (Math.imul(noise ^ Math.imul(s + 1, 0x9e3779b1), 0x85ebca6b) ^ Math.imul(i + 1, 0xc2b2ae35)) >>> 29 : 0) % (SCORE.chance + 1);
+    // 0 to SCORE.chance - 1 at temperature 1.
+    const chance = (i) => (noise ? Math.floor((((Math.imul(noise ^ Math.imul(s + 1, 0x9e3779b1), 0x85ebca6b) ^ Math.imul(i + 1, 0xc2b2ae35)) >>> 0) * SCORE.chance * temperature) / 4294967296) : 0);
     // Which block a cadence takes varies with the seed too.
-    const blockChance = (i) => (noise ? ((Math.imul(noise ^ 0x5bd1e995, Math.imul(i + 1, 0x27d4eb2f)) ^ Math.imul(s + 7, 0x165667b1)) >>> 0) % (SCORE.blockChance + 1) : 0);
+    const blockChance = (i) => (noise ? Math.floor((((Math.imul(noise ^ 0x5bd1e995, Math.imul(i + 1, 0x27d4eb2f)) ^ Math.imul(s + 7, 0x165667b1)) >>> 0) % (SCORE.blockChance + 1)) * temperature) : 0);
     const reward = (i) => {
       const g = db.groupings[i];
-      return (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? SCORE.label : 0) + (inRange(i) ? SCORE.range : 0) + chance(i);
+      const liked = beatTaste ? TASTE_MAX + clampTaste(beatTaste[i]) : 0;
+      return (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? labelPoints : 0) + (inRange(i) ? SCORE.range : 0) + chance(i) + liked;
     };
     const plus = (v, i) => (v < 0 ? -1 : v + reward(i));
     const free = new Int32Array(n).fill(-1);
@@ -2143,7 +2168,8 @@ function feasible(db, slots, next, pins = null, noise = 0) {
       for (const i of pins[s].inner) role(i).inner = plus(onward(i), i);
       for (const [i, strength] of pins[s].end) {
         const most = open(i);
-        role(i).end = most < 0 ? -1 : most + PIN + (strength >= STRONG * strongest ? SCORE.strong : 0) + blockChance(i) + reward(i);
+        const liked = blockEnd ? clampTaste(blockEnd.get(i) || 0) : 0;
+        role(i).end = most < 0 ? -1 : most + PIN + (strength >= STRONG * strongest ? SCORE.strong : 0) + blockChance(i) + liked + reward(i);
       }
       best = free.slice();
       cont = new Int32Array(n).fill(-1);
@@ -2166,15 +2192,18 @@ function feasible(db, slots, next, pins = null, noise = 0) {
 }
 
 // feasible() for these slots at a match level, computed once for the same
-// slots, level and pins (compose asks the same question while choosing a
-// relaxation step and while filling).
+// slots, level, pins and preferences (compose asks the same question while
+// choosing a relaxation step and while filling). prefs: { taste,
+// temperature } (M9), or null.
 const planCache = new WeakMap();
-function planFor(db, slots, level, pins, noise = 0) {
+function planFor(db, slots, level, pins, noise = 0, prefs = null) {
   if (!planCache.has(slots)) planCache.set(slots, []);
-  const known = planCache.get(slots).find((p) => p.db === db && p.level === level && p.pins === pins && p.noise === noise);
+  const taste = prefs ? prefs.taste || null : null;
+  const temperature = prefs && prefs.temperature !== undefined ? prefs.temperature : 1;
+  const known = planCache.get(slots).find((p) => p.db === db && p.level === level && p.pins === pins && p.noise === noise && p.taste === taste && p.temperature === temperature);
   if (known) return known.plan;
-  const plan = feasible(db, slots, successors(db)[level], pins, noise);
-  planCache.get(slots).push({ db, level, pins, noise, plan });
+  const plan = feasible(db, slots, successors(db)[level], pins, noise, { taste, temperature });
+  planCache.get(slots).push({ db, level, pins, noise, taste, temperature, plan });
   return plan;
 }
 
@@ -2217,9 +2246,10 @@ function voicesFit(db, g, shift) {
 //   used: groupings already used (shared across a stream's phrases); the
 //         ones placed here are added to it
 //   pins: signature blocks that may stand at cadences (pinsFor), or null
-function fill(db, slots, { random, level, budget, counters, prev = null, used = new Set(), pins = null, noise = 0 }) {
-  const plan = planFor(db, slots, level, pins, noise);
-  const plan0 = level > 0 ? planFor(db, slots, 0, pins, noise) : plan;
+//   prefs: Emily's taste and the temperature (M9; see planFor), or null
+function fill(db, slots, { random, level, budget, counters, prev = null, used = new Set(), pins = null, noise = 0, prefs = null }) {
+  const plan = planFor(db, slots, level, pins, noise, prefs);
+  const plan0 = level > 0 ? planFor(db, slots, 0, pins, noise, prefs) : plan;
   const graph = successors(db)[level];
   const at = slots.map((slot, s) => s).filter((s) => !slots[s].rest); // the slots to fill
   if (!at.length || !plan.best[at[0]].some((v) => v >= 0)) return null; // can't be filled at all
@@ -2558,8 +2588,8 @@ function markRepeats(db, template, slots) {
 
 // The most signature blocks a fill of these slots can place, at this match
 // level (-1: the slots can't be filled).
-function mostBlocks(db, slots, level, pins, noise = 0) {
-  const plan = planFor(db, slots, level, pins, noise);
+function mostBlocks(db, slots, level, pins, noise = 0, prefs = null) {
+  const plan = planFor(db, slots, level, pins, noise, prefs);
   const first = slots.findIndex((slot) => !slot.rest);
   let most = -1;
   if (first >= 0) for (const v of plan.best[first]) if (v > most) most = v;
@@ -2571,14 +2601,14 @@ function mostBlocks(db, slots, level, pins, noise = 0) {
 // its labels preferred instead of required, can place more blocks.
 // slotsAt(step) gives the slots for a step, pinsAt(slots) their pins (both
 // remembered: see memo); noise as for fill, so the passes are shared.
-function labelsGiveWay(db, step, slotsAt, pinsAt, noise = 0) {
+function labelsGiveWay(db, step, slotsAt, pinsAt, noise = 0, prefs = null) {
   const [here, looser] = [RELAX[step], RELAX[step + 1]];
   if (!looser || here.speac !== true || looser.level !== here.level || looser.cadenceBass !== here.cadenceBass) return false;
   const strict = slotsAt(step);
   const loose = slotsAt(step + 1);
   const pinsStrict = pinsAt(strict);
   if (!pinsStrict) return false;
-  return mostBlocks(db, loose, looser.level, pinsAt(loose), noise) > mostBlocks(db, strict, here.level, pinsStrict, noise);
+  return mostBlocks(db, loose, looser.level, pinsAt(loose), noise, prefs) > mostBlocks(db, strict, here.level, pinsStrict, noise, prefs);
 }
 
 // A function's results remembered by argument, so the same slots and pins
@@ -2609,13 +2639,19 @@ function templateBeats(db, template) {
 // guard: false skips the check. template: compose in this chorale's form
 // only (the listening test pairs a chorale with a piece in its form).
 // repeats: false composes repeated phrases afresh (as before M8).
-function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true } = {}) {
+//
+// M9: taste (from emily-assoc's prepare, or null) and temperature (default
+// 1) are Emily's: they steer the search toward liked beats (see SCORE), and
+// the choice of form toward liked forms (byTaste).
+function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true, taste = null, temperature = 1 } = {}) {
   const random = rng.create(seed);
-  const templates = db.templates.filter((t) => (only ? t.work === only : templateBeats(db, t) >= beats));
+  const prefs = taste || temperature !== 1 ? { taste, temperature } : null;
+  let templates = db.templates.filter((t) => (only ? t.work === only : templateBeats(db, t) >= beats));
   for (let i = templates.length - 1; i > 0; i--) {
     const j = random.int(i + 1);
     [templates[i], templates[j]] = [templates[j], templates[i]];
   }
+  if (taste && taste.templates) templates = byTaste(templates, (t) => taste.templates.get(t.work) || 0, temperature);
   const tried = [];
   const counters = { steps: 0, backtracks: 0 };
   let quoting = null; // the piece put aside that quotes least: { piece, step }
@@ -2626,10 +2662,10 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
     const slotsAt = memo((step) => (repeats ? markRepeats(db, template, slotsOf(db, template, RELAX[step])) : slotsOf(db, template, RELAX[step])));
     const pinsAt = memo((slots) => (signatures ? pinsFor(db, slots, template.work) : null));
     for (let step = 0; step <= relax; step++) {
-      if (step < relax && labelsGiveWay(db, step, slotsAt, pinsAt, seed)) continue;
+      if (step < relax && labelsGiveWay(db, step, slotsAt, pinsAt, seed, prefs)) continue;
       const slots = slotsAt(step);
       const pins = pinsAt(slots);
-      const placed = fill(db, slots, { random, level: RELAX[step].level, budget: counters.steps + budget, counters, pins, noise: seed });
+      const placed = fill(db, slots, { random, level: RELAX[step].level, budget: counters.steps + budget, counters, pins, noise: seed, prefs });
       if (!placed) continue;
       const cadences = slots.filter((slot) => slot.cadence).length;
       const matched = placed.filter((p) => {
@@ -2658,7 +2694,28 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
   return { ok: false, piece: null, stats: stats(null) };
 }
 
+// A list in its seeded order, reordered by taste (M9): liked items move
+// forward, disliked ones back, by how much depending on the temperature. The
+// list's order stands for a random draw (the first item drew the highest
+// number); each item's taste is added to its draw, as a Gumbel variable,
+// so the result is a draw in which an item's chance of coming first grows
+// as exp(weight / temperature). With no taste, the order is unchanged; at
+// temperature 0, liked items come first and disliked ones last, in their
+// seeded order.
+function byTaste(list, weightOf, temperature = 1) {
+  const n = list.length;
+  const keyed = list.map((item, k) => {
+    const draw = -Math.log(-Math.log(1 - (k + 0.5) / n));
+    const w = weightOf(item);
+    return [temperature > 0 ? draw + w / temperature : draw + Math.sign(w) * 1e9, k, item];
+  });
+  return keyed.sort((a, b) => b[0] - a[0] || a[1] - b[1]).map(([, , item]) => item);
+}
+
 exports.compose = compose;
+exports.byTaste = byTaste;
+exports.planFor = planFor;
+exports.TASTE_MAX = TASTE_MAX;
 exports.RELAX = RELAX;
 exports.slotsOf = slotsOf;
 exports.fits = fits;
@@ -2987,10 +3044,16 @@ exports.setMeter = setMeter;
 //   pathIn(folder)     the settings file in that folder
 //   read(path)         the settings, or {} if there are none or they're unreadable
 //   write(path, settings)
+//
+// Emily's taste (M9) is kept the same way, in ml_midi.taste.json in the same
+// folder (also git-ignored), so it carries over between the products too:
+//   tastePathIn(folder), backupPathIn(folder) (what "forget" sets aside)
 
 const files = require("emi-load");
 
 const FILE_NAME = "ml_midi.settings.json";
+const TASTE_NAME = "ml_midi.taste.json";
+const BACKUP_NAME = "ml_midi.taste.backup.json";
 
 function folderOf(patcher) {
   for (let p = patcher; p; p = p.parentpatcher) {
@@ -3003,6 +3066,14 @@ function folderOf(patcher) {
 
 function pathIn(folder) {
   return folder + "/" + FILE_NAME;
+}
+
+function tastePathIn(folder) {
+  return folder + "/" + TASTE_NAME;
+}
+
+function backupPathIn(folder) {
+  return folder + "/" + BACKUP_NAME;
 }
 
 function read(path) {
@@ -3022,6 +3093,10 @@ function write(path, settings) {
 exports.FILE_NAME = FILE_NAME;
 exports.folderOf = folderOf;
 exports.pathIn = pathIn;
+exports.TASTE_NAME = TASTE_NAME;
+exports.BACKUP_NAME = BACKUP_NAME;
+exports.tastePathIn = tastePathIn;
+exports.backupPathIn = backupPathIn;
 exports.read = read;
 exports.write = write;
   };
@@ -3062,6 +3137,10 @@ exports.write = write;
 // last chord) and finishes the stream. If no phrase can be placed, next()
 // returns ok: false and leaves the stream as it was (a caller can then ask
 // for an ordinary phrase and try the ending again after it).
+//
+// M9: next() also takes Emily's taste and the temperature (see emi-form's
+// compose): they steer each phrase's beats, and which chorale a stream moves
+// on to.
 
 const rng = require("emi-rng");
 const form = require("emi-form");
@@ -3119,20 +3198,21 @@ function start({ seed = 1 } = {}) {
 
 const phraseSeed = (seed, number) => (Math.imul(seed, 7919) + Math.imul(number, 104729)) >>> 0 || 1;
 
-function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 12, signatures = true, guard = true } = {}) {
+function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 12, signatures = true, guard = true, taste = null, temperature = 1 } = {}) {
   if (stream.finished) return { ok: false, phrase: null };
   const number = stream.phrases.length + 1;
   const random = rng.create(phraseSeed(seed, number));
   const counters = { steps: 0, backtracks: 0 };
   const before = { nextBeat: stream.nextBeat, endsInRest: stream.endsInRest };
+  const prefs = taste || temperature !== 1 ? { taste, temperature } : null;
   for (const fallback of [false, true]) {
     if (fallback) {
       // A breath: one silent beat, then a fresh phrase start.
       stream.nextBeat += 1;
       stream.endsInRest = true;
     }
-    for (const choice of choices(db, stream, random, last).slice(0, tries)) {
-      const attempt = place(db, stream, choice, { random, last, relax, budget, counters, signatures, noise: phraseSeed(seed, number) });
+    for (const choice of choices(db, stream, random, last, prefs).slice(0, tries)) {
+      const attempt = place(db, stream, choice, { random, last, relax, budget, counters, signatures, noise: phraseSeed(seed, number), prefs });
       if (attempt && guard && quotesTooMuch(db, stream, attempt)) {
         for (const p of attempt.placed) stream.used.delete(p.index); // put aside: another phrase
         continue;
@@ -3172,8 +3252,9 @@ function gapBefore(db, stream, beatInBar) {
 // The phrase templates to try, best first: the walk's next phrase (the same
 // chorale's next phrase, or the first phrase of another chorale), then
 // others, those that need no silent gap first. A stream's first phrase is a
-// chorale's first phrase; a final phrase is a chorale's last.
-function choices(db, stream, random, last) {
+// chorale's first phrase; a final phrase is a chorale's last. Liked
+// chorales' forms move forward (M9, emi-form's byTaste).
+function choices(db, stream, random, last, prefs = null) {
   const works = phraseTemplates(db).filter((w) => w.phrases.length);
   const shuffled = (list) => {
     const out = list.slice();
@@ -3188,7 +3269,9 @@ function choices(db, stream, random, last) {
     const gap = (c) => (gapBefore(db, stream, c.slots[0].beatInBar) > 0 ? 1 : 0);
     return list.map((c, i) => [gap(c), i, c]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(([, , c]) => c);
   };
-  const indexes = shuffled(works.map((w, i) => i)).filter((w) => !stream.mode || works[w].mode === stream.mode);
+  let indexes = shuffled(works.map((w, i) => i)).filter((w) => !stream.mode || works[w].mode === stream.mode);
+  const liked = prefs && prefs.taste && prefs.taste.templates;
+  if (liked) indexes = form.byTaste(indexes, (w) => liked.get(works[w].work) || 0, prefs.temperature);
 
   if (!stream.phrases.length) return indexes.map((w) => entry(w, 0));
   const walk = stream.walk;
@@ -3221,11 +3304,11 @@ function prepare(db, stream, choice, { last, cadenceBass, speac }) {
   return [...Array.from({ length: gap }, () => ({ rest: true })), ...slots];
 }
 
-function place(db, stream, choice, { random, last, relax, budget, counters, signatures, noise }) {
+function place(db, stream, choice, { random, last, relax, budget, counters, signatures, noise, prefs = null }) {
   const slotsAt = form.memo((step) => prepare(db, stream, choice, { last, ...form.RELAX[step] }));
   const pinsAt = form.memo((slots) => (signatures ? form.pinsFor(db, slots, choice.work) : null));
   for (let step = 0; step <= relax; step++) {
-    if (step < relax && form.labelsGiveWay(db, step, slotsAt, pinsAt, noise)) continue;
+    if (step < relax && form.labelsGiveWay(db, step, slotsAt, pinsAt, noise, prefs)) continue;
     const { level } = form.RELAX[step];
     const slots = slotsAt(step);
     const placed = form.fill(db, slots, {
@@ -3237,6 +3320,7 @@ function place(db, stream, choice, { random, last, relax, budget, counters, sign
       used: stream.used,
       pins: pinsAt(slots),
       noise,
+      prefs,
     });
     if (placed) return { slots, placed, relaxed: step };
   }
@@ -4087,6 +4171,445 @@ exports.page = page;
 exports.RULES = RULES;
   };
 
+  // ---- emily-assoc.js
+  factories["emily-assoc"] = function (exports, module, require) {
+"use strict";
+// M9: Emily's taste (Tier 1 of the Emily layer, PLAN §7). You rate what you
+// hear, like or dislike; Emily keeps an *association network*: a weight for
+// each musical feature, learned from your ratings. Composing then prefers
+// beats whose features you liked, among the beats the rules allow. The rules
+// and the corpus don't change: Emily only changes which of the valid
+// choices is made.
+//
+// Features. Each beat of the corpus (a grouping) has one feature of each
+// musical kind, worked out from its notes (featuresOf):
+//   f:motion:still|flowing|busy   how many voices move within the beat
+//                                 (none: block chords; one; two or more)
+//   f:16ths                       16th notes
+//   f:susp                        a suspension: an upper voice held over
+//                                 from the beat before, then stepping down
+//   f:melody:same|step|leap       the soprano's move to the next beat
+//   f:chord:major|minor|seventh|diminished|other   the chord on the beat
+//   f:chromatic                   notes outside the key
+//   f:key:home|dominant|relative|subdominant|other the key area it's in
+//   f:register:low|mid|high       the soprano's highest note
+//   f:tension:low|mid|high        Cope's tension (thirds of the corpus)
+//   f:mode:major|minor            (corpora of both modes only)
+// and four kinds that name things exactly:
+//   g:<grouping>   that beat;  t:<a>><b>  that beat followed by that one;
+//   w:<work>       beats from that chorale;  sig:<id>  that signature;
+//   tpl:<work>     pieces in that chorale's form.
+//
+// Learning (rate). A rating r is +1 (like) or -1 (dislike), of a whole
+// piece, a stream phrase or a selection of beats. For each musical
+// feature, Emily compares how often the rated beats have it with how often
+// the corpus's beats do, as a z-score (so that a long selection counts more
+// than a short one, and a rare feature isn't over-read):
+//     w <- w + LEARN * r * clip(z, -3, 3) / 3
+// so a liked piece with more 16th notes than usual raises f:16ths and lowers
+// whatever it has less of. The exact kinds follow PLAN §7's rule: each one
+// present in the rated beats gets w <- w + LEARN_EXACT * r. Weights stay
+// within ±LIMIT. Between sessions every weight decays toward 0 by DECAY, so
+// early opinions don't harden (decay, at startup).
+//
+// Using it (prepare). A beat's taste is the sum of its features' weights;
+// emi-form adds TASTE times that to the beat's score in its search, a
+// transition's weight where it joins two beats, a signature's where its
+// block ends, and a template's when choosing the form. Temperature (in
+// emi-form) scales the random part of the score instead: at 0 Emily picks
+// the most liked of the valid choices; at 1, as before M9; higher, more
+// adventurous.
+//
+// On the full corpus, after ten ratings by a listener who likes one feature
+// (pieces with more of it than usual liked, the others disliked), new pieces
+// have about 1.5 times as much of it as without the taste (tests/corpus).
+//
+// Memory, as saved (JSON; the engine keeps it in ml_midi.taste.json next to
+// the settings file, so both products share it):
+//   { version: 1, weights: { feature: w }, ratings, likes, sessions,
+//     rated (ratings since the last decay), log: [{ at, piece, rating, beats, what }] }
+
+const lexicon = require("emi-lexicon");
+const signatures = require("emi-signatures");
+
+const LEARN = 0.25;
+const LEARN_EXACT = 0.2;
+const LIMIT = 3;
+const DECAY = 0.1;
+const TASTE = 4; // score points per unit of taste (emi-form's SCORE: an accidental match is 16, a label 4)
+const PRUNE = 0.02; // weights smaller than this are dropped at decay
+const LOG = 200; // ratings kept in the log
+
+// In words, for the panel and the Max window.
+const NAMES = {
+  "f:motion:still": "block chords",
+  "f:motion:flowing": "one moving voice",
+  "f:motion:busy": "busy voices",
+  "f:16ths": "16th notes",
+  "f:susp": "suspensions",
+  "f:melody:same": "repeated melody notes",
+  "f:melody:step": "stepwise melody",
+  "f:melody:leap": "melodic leaps",
+  "f:chord:major": "major chords",
+  "f:chord:minor": "minor chords",
+  "f:chord:seventh": "seventh chords",
+  "f:chord:diminished": "diminished chords",
+  "f:chord:other": "other sonorities",
+  "f:chromatic": "chromatic notes",
+  "f:key:home": "the home key",
+  "f:key:dominant": "the dominant key",
+  "f:key:relative": "the relative key",
+  "f:key:subdominant": "the subdominant key",
+  "f:key:other": "distant keys",
+  "f:register:low": "a low melody",
+  "f:register:mid": "a middle melody",
+  "f:register:high": "a high melody",
+  "f:tension:low": "low tension",
+  "f:tension:mid": "middling tension",
+  "f:tension:high": "high tension",
+  "f:mode:major": "major",
+  "f:mode:minor": "minor",
+};
+
+function create() {
+  return { version: 1, weights: {}, ratings: 0, likes: 0, sessions: 0, rated: 0, log: [] };
+}
+
+// A memory as read from a file, made safe to use (unknown or broken parts
+// are dropped).
+function normalize(memory) {
+  const out = create();
+  if (!memory || typeof memory !== "object") return out;
+  if (memory.weights && typeof memory.weights === "object") {
+    for (const [name, w] of Object.entries(memory.weights)) if (typeof w === "number" && Number.isFinite(w)) out.weights[name] = clamp(w);
+  }
+  for (const key of ["ratings", "likes", "sessions", "rated"]) if (Number.isFinite(memory[key])) out[key] = Math.max(0, Math.round(memory[key]));
+  if (Array.isArray(memory.log)) out.log = memory.log.slice(-LOG);
+  return out;
+}
+
+const clamp = (w) => Math.max(-LIMIT, Math.min(LIMIT, w));
+
+// ---- features
+
+// Where a key area ("7:major": G major, in the work's C major / A minor)
+// stands from the home key.
+function keyArea(area, mode) {
+  if (!area) return "other";
+  const [tonic, quality] = area.split(":");
+  const t = Number(tonic);
+  const rel = mode === "minor" ? (t - 9 + 12) % 12 : t;
+  if (mode === "minor") {
+    if (rel === 0 && quality === "minor") return "home";
+    if (rel === 7) return "dominant";
+    if (rel === 3 && quality === "major") return "relative";
+    if (rel === 5 && quality === "minor") return "subdominant";
+    return "other";
+  }
+  if (rel === 0 && quality === "major") return "home";
+  if (rel === 7 && quality === "major") return "dominant";
+  if (rel === 9 && quality === "minor") return "relative";
+  if (rel === 5 && quality === "major") return "subdominant";
+  return "other";
+}
+
+// The chord on the beat's first moment, from its intervals above the bass
+// (in semitones, within the octave). Triads in any inversion; a seventh (or
+// a second, a seventh chord's third inversion) makes a seventh chord.
+function chordOf(tokens, bass) {
+  if (bass === null) return "other";
+  const rel = new Set(tokens.filter(Boolean).map((t) => (((t.pitch - bass) % 12) + 12) % 12));
+  const has = (...list) => list.every((i) => rel.has(i));
+  if (has(10) || has(11) || has(2) || has(3, 6, 8) || has(3, 5, 9)) return "seventh";
+  if (has(3, 6) || has(3, 9) || has(6, 9)) return "diminished";
+  if (has(4, 7) || has(3, 8) || has(5, 9)) return "major";
+  if (has(3, 7) || has(4, 9) || has(5, 8)) return "minor";
+  if (rel.size <= 2 && (has(4) || has(8))) return "major"; // an incomplete chord
+  if (rel.size <= 2 && (has(3) || has(9))) return "minor";
+  return "other";
+}
+
+// One grouping's musical features (the f: kinds).
+function musicalFeatures(db, g, cuts) {
+  const out = [];
+  const onsets = new Map();
+  for (const p of g.pieces) if (!p[5]) onsets.set(p[3], (onsets.get(p[3]) || 0) + 1);
+  const moving = [...onsets.values()].filter((n) => n > 1).length;
+  out.push(moving === 0 ? "f:motion:still" : moving === 1 ? "f:motion:flowing" : "f:motion:busy");
+  if (g.pieces.some((p) => !p[5] && !p[6] && p[2] > 0 && p[2] < db.beatTicks / 2)) out.push("f:16ths");
+  const entry = lexicon.parseKey(g.entryKey);
+  for (let v = 0; v < entry.length - 1; v++) {
+    if (!entry[v] || !entry[v].held) continue;
+    const notes = g.pieces.filter((p) => p[3] === v + 1).sort((a, b) => a[0] - b[0]);
+    if (notes.length > 1 && notes[1][1] - notes[0][1] < 0 && notes[1][1] - notes[0][1] >= -2) {
+      out.push("f:susp");
+      break;
+    }
+  }
+  const soprano = g.pieces.filter((p) => p[3] === 1).sort((a, b) => a[0] - b[0]);
+  if (g.destKey !== null && soprano.length) {
+    const to = lexicon.parseKey(g.destKey)[0];
+    if (to) {
+      const step = Math.abs(to.pitch - soprano[soprano.length - 1][1]);
+      out.push(step === 0 ? "f:melody:same" : step <= 2 ? "f:melody:step" : "f:melody:leap");
+    }
+  }
+  out.push("f:chord:" + chordOf(entry, g.bass));
+  if (g.accidentals) out.push("f:chromatic");
+  out.push("f:key:" + keyArea(g.area, g.mode));
+  if (soprano.length) {
+    const top = Math.max(...soprano.map((p) => p[1]));
+    out.push(top >= cuts.register[1] ? "f:register:high" : top >= cuts.register[0] ? "f:register:mid" : "f:register:low");
+  }
+  if (typeof g.tension === "number") out.push(g.tension >= cuts.tension[1] ? "f:tension:high" : g.tension >= cuts.tension[0] ? "f:tension:mid" : "f:tension:low");
+  if (db.mode === "mixed" && g.mode) out.push("f:mode:" + g.mode);
+  return out;
+}
+
+// The thirds of a list of numbers: [lower cut, upper cut].
+function thirds(values) {
+  const sorted = values.filter((v) => typeof v === "number").sort((a, b) => a - b);
+  if (!sorted.length) return [0, 0];
+  return [sorted[Math.floor(sorted.length / 3)], sorted[Math.floor((2 * sorted.length) / 3)]];
+}
+
+// Every grouping's musical features, and how often each occurs in the
+// corpus (its share of beats). Computed once per database.
+const featureCache = new WeakMap();
+function featureTable(db) {
+  if (featureCache.has(db)) return featureCache.get(db);
+  const tops = db.groupings.map((g) => Math.max(-1, ...g.pieces.filter((p) => p[3] === 1).map((p) => p[1]))).filter((p) => p >= 0);
+  const cuts = { tension: thirds(db.groupings.map((g) => g.tension)), register: thirds(tops) };
+  const of = db.groupings.map((g) => musicalFeatures(db, g, cuts));
+  const counts = new Map();
+  for (const list of of) for (const f of list) counts.set(f, (counts.get(f) || 0) + 1);
+  const share = new Map([...counts].map(([f, n]) => [f, n / db.groupings.length]));
+  const table = { of, share, cuts };
+  featureCache.set(db, table);
+  return table;
+}
+
+function featuresOf(db, i) {
+  return featureTable(db).of[i];
+}
+
+// ---- learning
+
+// The beats of a composed piece or stream (its provenance) between two
+// ticks, as a region to rate: { beats: [grouping index], transitions:
+// [[a, b]], works, signatures, template }.
+function regionOf(db, piece, from = -Infinity, to = Infinity) {
+  const index = indexOf(db);
+  const entries = (piece.provenance || []).filter((p) => p.tick >= from && p.tick < to && index.has(p.grouping));
+  const beats = entries.map((p) => index.get(p.grouping));
+  const transitions = [];
+  for (let k = 1; k < entries.length; k++) {
+    if (entries[k].tick - entries[k - 1].tick === db.beatTicks) transitions.push([beats[k - 1], beats[k]]);
+  }
+  const sigs = [...new Set(entries.flatMap((p) => p.signatures || []))];
+  const whole = from === -Infinity && to === Infinity;
+  const template = piece.form && piece.form.template && whole ? piece.form.template : null;
+  return { beats, transitions, works: [...new Set(entries.map((p) => p.work))], signatures: sigs, template };
+}
+
+const indexCache = new WeakMap();
+function indexOf(db) {
+  if (!indexCache.has(db)) indexCache.set(db, new Map(db.groupings.map((g, i) => [g.id, i])));
+  return indexCache.get(db);
+}
+
+// Learns from one rating (r: 1 like, -1 dislike) of a region. Returns the
+// musical features that moved most: [[feature, change]], largest first.
+function rate(db, memory, region, r, { piece = null, what = null, at = null } = {}) {
+  const n = region.beats.length;
+  if (!n) return [];
+  const { of, share } = featureTable(db);
+  const counts = new Map();
+  for (const i of region.beats) for (const f of of[i]) counts.set(f, (counts.get(f) || 0) + 1);
+  const changes = [];
+  const add = (name, delta) => {
+    const w = clamp((memory.weights[name] || 0) + delta);
+    if (w === 0) delete memory.weights[name];
+    else memory.weights[name] = w;
+  };
+  for (const [f, mean] of share) {
+    if (mean <= 0 || mean >= 1) continue;
+    const x = (counts.get(f) || 0) / n;
+    const z = Math.max(-3, Math.min(3, (x - mean) / Math.sqrt((mean * (1 - mean)) / n)));
+    const delta = (LEARN * r * z) / 3;
+    add(f, delta);
+    changes.push([f, delta]);
+  }
+  for (const i of new Set(region.beats)) add("g:" + db.groupings[i].id, LEARN_EXACT * r);
+  for (const [a, b] of region.transitions) add(`t:${db.groupings[a].id}>${db.groupings[b].id}`, LEARN_EXACT * r);
+  for (const work of region.works) add("w:" + work, LEARN_EXACT * r);
+  for (const id of region.signatures) add("sig:" + id, LEARN_EXACT * r);
+  if (region.template) add("tpl:" + region.template, LEARN_EXACT * r);
+  memory.ratings++;
+  if (r > 0) memory.likes++;
+  memory.rated++;
+  memory.log.push({ at, piece, rating: r, beats: n, what });
+  if (memory.log.length > LOG) memory.log.splice(0, memory.log.length - LOG);
+  return changes.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+}
+
+// A new session: if anything was rated since the last one, every weight
+// moves DECAY of the way toward 0 (and the smallest are dropped). Returns
+// whether it decayed.
+function decay(memory) {
+  if (!memory.rated) return false;
+  for (const [name, w] of Object.entries(memory.weights)) {
+    const next = w * (1 - DECAY);
+    if (Math.abs(next) < PRUNE) delete memory.weights[name];
+    else memory.weights[name] = next;
+  }
+  memory.rated = 0;
+  memory.sessions++;
+  return true;
+}
+
+// ---- using it
+
+// What emi-form needs, in its score points (null when Emily has no opinions):
+//   beat: Int32Array, each grouping's taste
+//   edges: Map(a -> Map(b -> points)), transitions
+//   blockEnd: Map(end grouping -> points), a signature block's signatures
+//   templates: Map(work -> weight), the form's weight (with its mode's)
+function prepare(db, memory) {
+  const weights = memory && memory.weights ? memory.weights : {};
+  const names = Object.keys(weights);
+  if (!names.length) return null;
+  const { of } = featureTable(db);
+  const index = indexOf(db);
+  const beat = new Int32Array(db.groupings.length);
+  let any = false;
+  db.groupings.forEach((g, i) => {
+    let sum = (weights["g:" + g.id] || 0) + (weights["w:" + g.work] || 0);
+    for (const f of of[i]) sum += weights[f] || 0;
+    beat[i] = Math.round(TASTE * sum);
+    if (beat[i]) any = true;
+  });
+  const edges = new Map();
+  for (const name of names) {
+    if (!name.startsWith("t:")) continue;
+    const [a, b] = name.slice(2).split(">").map((id) => index.get(id));
+    if (a === undefined || b === undefined) continue;
+    const points = Math.round(TASTE * weights[name]);
+    if (!points) continue;
+    if (!edges.has(a)) edges.set(a, new Map());
+    edges.get(a).set(b, points);
+  }
+  const blockEnd = new Map();
+  for (const block of signatures.blocks(db)) {
+    const points = Math.round(TASTE * block.sigs.reduce((sum, id) => sum + (weights["sig:" + id] || 0), 0));
+    if (points && (!blockEnd.has(block.end) || Math.abs(points) > Math.abs(blockEnd.get(block.end)))) blockEnd.set(block.end, points);
+  }
+  const templates = new Map();
+  for (const work of db.works) {
+    const w = (weights["tpl:" + work.id] || 0) + (db.mode === "mixed" ? weights["f:mode:" + work.mode] || 0 : 0);
+    if (w) templates.set(work.id, w);
+  }
+  if (!any && !edges.size && !blockEnd.size && !templates.size) return null;
+  return { beat, edges: edges.size ? edges : null, blockEnd: blockEnd.size ? blockEnd : null, templates: templates.size ? templates : null };
+}
+
+// How well a piece's beats fit the taste: the mean of their taste, in
+// weight units (0: no opinion).
+function fit(db, memory, piece) {
+  const region = regionOf(db, piece);
+  if (!region.beats.length) return 0;
+  const { of } = featureTable(db);
+  const weights = memory.weights;
+  let sum = 0;
+  for (const i of region.beats) {
+    const g = db.groupings[i];
+    sum += (weights["g:" + g.id] || 0) + (weights["w:" + g.work] || 0);
+    for (const f of of[i]) sum += weights[f] || 0;
+  }
+  return sum / region.beats.length;
+}
+
+// How often each musical feature occurs in a piece's beats: Map(f -> share).
+function shares(db, piece) {
+  const region = regionOf(db, piece);
+  const { of } = featureTable(db);
+  const counts = new Map();
+  for (const i of region.beats) for (const f of of[i]) counts.set(f, (counts.get(f) || 0) + 1);
+  return new Map([...counts].map(([f, c]) => [f, c / Math.max(1, region.beats.length)]));
+}
+
+// The musical features Emily likes and dislikes most: { likes: [[f, w]],
+// dislikes: [[f, w]] }, strongest first, at most `count` of each.
+function opinions(memory, count = 3, threshold = 0.1) {
+  const musical = Object.entries(memory.weights).filter(([f]) => f.startsWith("f:"));
+  const likes = musical.filter(([, w]) => w >= threshold).sort((a, b) => b[1] - a[1]).slice(0, count);
+  const dislikes = musical.filter(([, w]) => w <= -threshold).sort((a, b) => a[1] - b[1]).slice(0, count);
+  return { likes, dislikes };
+}
+
+const nameOf = (f) => NAMES[f] || f;
+
+// What a rating taught, in words: "+ suspensions, + seventh chords, - block
+// chords" (the features that moved most, at most `count`).
+function describeChanges(changes, count = 3) {
+  return changes
+    .filter(([, delta]) => Math.abs(delta) >= 0.01)
+    .slice(0, count)
+    .map(([f, delta]) => (delta > 0 ? "+ " : "- ") + nameOf(f))
+    .join(", ");
+}
+
+// Emily's taste in a line: "12 ratings; likes suspensions, seventh chords;
+// dislikes block chords".
+function summary(memory, count = 2) {
+  if (!memory.ratings) return "no ratings yet";
+  const { likes, dislikes } = opinions(memory, count);
+  const parts = [memory.ratings + (memory.ratings === 1 ? " rating" : " ratings")];
+  if (likes.length) parts.push("likes " + likes.map(([f]) => nameOf(f)).join(", "));
+  if (dislikes.length) parts.push("dislikes " + dislikes.map(([f]) => nameOf(f)).join(", "));
+  return parts.join("; ");
+}
+
+// Pieces composed with the taste and the same seeds without it, compared:
+// { fit: [with, without], features: [[f, share with, share without]] } for
+// the features Emily likes and dislikes most (mean shares over the pieces).
+function compare(db, memory, withTaste, without, count = 3) {
+  const mean = (list, f) => list.reduce((sum, value) => sum + f(value), 0) / Math.max(1, list.length);
+  const { likes, dislikes } = opinions(memory, count);
+  const all = [...likes, ...dislikes].map(([f]) => f);
+  const sharesWith = withTaste.map((p) => shares(db, p));
+  const sharesWithout = without.map((p) => shares(db, p));
+  return {
+    fit: [mean(withTaste, (p) => fit(db, memory, p)), mean(without, (p) => fit(db, memory, p))],
+    features: all.map((f) => [f, mean(sharesWith, (m) => m.get(f) || 0), mean(sharesWithout, (m) => m.get(f) || 0)]),
+  };
+}
+
+exports.LEARN = LEARN;
+exports.LEARN_EXACT = LEARN_EXACT;
+exports.LIMIT = LIMIT;
+exports.DECAY = DECAY;
+exports.TASTE = TASTE;
+exports.NAMES = NAMES;
+exports.create = create;
+exports.normalize = normalize;
+exports.featuresOf = featuresOf;
+exports.featureTable = featureTable;
+exports.chordOf = chordOf;
+exports.keyArea = keyArea;
+exports.regionOf = regionOf;
+exports.rate = rate;
+exports.decay = decay;
+exports.prepare = prepare;
+exports.fit = fit;
+exports.shares = shares;
+exports.opinions = opinions;
+exports.nameOf = nameOf;
+exports.describeChanges = describeChanges;
+exports.summary = summary;
+exports.compare = compare;
+  };
+
   var cache = {};
   function load(name) {
     if (!Object.prototype.hasOwnProperty.call(cache, name)) {
@@ -4119,6 +4642,17 @@ __emi_require.local = 1;
 // and octaves (emi-quality) go to the Max window; parallels are marked in the
 // piano roll (grey: Bach's own, red: new).
 //
+// Emily (M9, emily-assoc): "like" and "dislike" rate what you hear: the
+// beats selected in the piano roll (drag across it; a click clears), or
+// else the stream phrase playing (the one before, in its first 1.5 s), or
+// else the whole piece. Emily learns which musical features you like and
+// composing prefers them among the choices the rules allow; "temperature"
+// sets how much chance still plays (0: Emily's favourite choices; 1: as
+// before M9; up to 3: more adventurous). Her taste is kept in
+// ml_midi.taste.json next to the settings file, and fades a little at each
+// startup after a session with ratings. Each piece composed with a taste
+// reports in the Max window how it compares with the same seed without one.
+//
 // Streaming (M5): with "stream 1", compose starts a stream of phrases. Two
 // phrases are queued; when the player reaches the start of the last queued
 // phrase it sends "need", and the next phrase is composed and queued. Changes
@@ -4132,6 +4666,7 @@ __emi_require.local = 1;
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
 //   meter <numerator> <denominator>                             -> the Max version's transport (M8)
+//   emily <text...>                                             -> the Emily panel: her taste in a line (M9)
 //
 // Messages:
 //   loadmidi <path>        read a chorale (+ its .json) and make it current
@@ -4151,6 +4686,13 @@ __emi_require.local = 1;
 //                          piece or stream, its provenance as a .json next to it)
 //   abtest <path>          write a blind A/B listening test (M8): a web page of 10
 //                          pairs, each a chorale and a piece in its form
+//   like | dislike         rate the selection, the stream phrase playing, or the piece (M9)
+//   select <from> <to>     (from the piano roll) the beats from tick `from` to `to` are
+//                          selected for rating; "select" alone clears the selection
+//   temperature <0..3>     how much chance plays in composing (M9, default 1)
+//   taste                  Emily's taste in the Max window, and how ten pieces compare
+//                          with and without it
+//   forget                 start a new taste (the old one is kept in ml_midi.taste.backup.json)
 //   writeclips             write the current score as Live clips (Live only)
 //   autoclips 1 | 0        also write clips after every compose (Live only)
 //   testclip               write the test phrase as Live clips (Live only)
@@ -4187,10 +4729,12 @@ const quality = __emi_require("emi-quality");
 const provenanceOf = __emi_require("emi-provenance");
 const abtests = __emi_require("emi-abtest");
 const abtestPage = __emi_require("emi-abtest-page");
+const emily = __emi_require("emily-assoc");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
 const WINDOW = 4; // phrases of a stream shown in the piano roll
+const GRACE_MS = 1500; // a rating this soon after a stream phrase starts is for the one before
 
 let loaded = null; // the last chorale read, in its written key
 let keyMode = "c";
@@ -4210,6 +4754,14 @@ let signaturesById = null; // { db, map }: the corpus's signatures by id, for th
 let settingsPath = null; // known once startup has read the settings
 let host = null; // "max" or "live", known from startup ("startup all" or "startup corpus")
 let remembered = {}; // the settings file's contents
+let memory = emily.create(); // Emily's memory: her taste (M9)
+let tasteVersion = 0; // changes with every rating, so the prepared taste is redone
+let prepared = null; // { db, version, value }: emily.prepare's result for the current corpus
+let tastePath = null; // known once startup has read the settings
+let tasteBackupPath = null;
+let tasteText = null; // the taste file as last read or written: re-read when it changes
+let temperatureValue = 1;
+let selection = null; // { from, to }: ticks of the current score selected in the piano roll
 
 function loadmidi(path) {
   attempt(() => {
@@ -4309,6 +4861,8 @@ function need() {
       outlet(0, "streamat", NO_STEP);
       return;
     }
+    flow.playing = flow.state.phrases.length; // the last queued phrase has started
+    flow.since = Date.now();
     appendPhrase();
   });
 }
@@ -4331,6 +4885,7 @@ function startup(mode) {
     settingsPath = settingsFile.pathIn(folder);
     remembered = settingsFile.read(settingsPath);
     if (mode !== "corpus") restore();
+    loadTaste(folder);
     if (!remembered.corpus) return;
     try {
       loadCorpus(remembered.corpus);
@@ -4352,7 +4907,7 @@ function exportmidi(path) {
       return;
     }
     const sidecar = target.replace(/\.midi?$/i, ".json");
-    const settings = { beats: minBeats, form: useForm, signatures: useSignatures, stream: Boolean(flow), transpose: transposeBy };
+    const settings = { beats: minBeats, form: useForm, signatures: useSignatures, stream: Boolean(flow), transpose: transposeBy, temperature: temperatureValue, tasteRatings: memory.ratings };
     files.writeText(sidecar, JSON.stringify(provenanceOf.record(db, current.score, settings), null, 1) + "\n");
     outlet(0, "status", "exported", files.fileName(target), "and", files.fileName(sidecar));
   });
@@ -4399,7 +4954,202 @@ function clear() {
   outlet(0, "status", "queue", "cleared");
 }
 
+function like() {
+  rateNow(1);
+}
+
+function dislike() {
+  rateNow(-1);
+}
+
+function select(from, to) {
+  if (from === undefined || to === undefined || !(Number(to) > Number(from)) || !current) {
+    selection = null;
+    return;
+  }
+  selection = { from: Number(from), to: Number(to) };
+  const beats = Math.round((selection.to - selection.from) / current.score.ppq);
+  outlet(0, "status", "selected", ...barsOf(current.score, selection.from, selection.to).split(" "), "(" + beats, beats === 1 ? "beat):" : "beats):", "like", "or", "dislike", "rates", "them");
+}
+
+function temperature(t) {
+  temperatureValue = Math.max(0, Math.min(3, Math.round(Number(t) * 100) / 100 || 0));
+  save();
+  const words = temperatureValue === 0 ? "only Emily's favourite choices" : temperatureValue < 1 ? "less chance, more taste" : temperatureValue === 1 ? "as before Emily" : "more adventurous";
+  outlet(0, "status", "temperature", temperatureValue.toFixed(2) + ":", ...words.split(" "), "(from", "the", "next", "piece", "or", "phrase)");
+}
+
+function forget() {
+  attempt(() => {
+    syncTaste();
+    const was = memory.ratings;
+    if (tastePath) files.writeText(tasteBackupPath, JSON.stringify(memory) + "\n");
+    memory = emily.create();
+    tasteVersion++;
+    saveTaste();
+    outlet(0, "emily", ...emily.summary(memory).split(" "));
+    outlet(0, "status", "Emily", "forgot", "her", "taste", "(" + was, "ratings,", "kept", "in", settingsFile.BACKUP_NAME + ")");
+  });
+}
+
+// Emily's taste in the Max window, and ten pieces (from the current seed)
+// composed with and without it, compared.
+function taste() {
+  attempt(() => {
+    syncTaste();
+    const earlier = memory.sessions ? `; ${memory.sessions} earlier ${memory.sessions === 1 ? "session" : "sessions"}` : "";
+    post(`ml_midi: Emily's taste: ${emily.summary(memory, 6)}${earlier}\n`);
+    const { likes, dislikes } = emily.opinions(memory, 8, 0.05);
+    if (likes.length) post("  likes: " + likes.map(([f, w]) => `${emily.nameOf(f)} +${w.toFixed(2)}`).join(", ") + "\n");
+    if (dislikes.length) post("  dislikes: " + dislikes.map(([f, w]) => `${emily.nameOf(f)} ${w.toFixed(2)}`).join(", ") + "\n");
+    if (!db || !useForm || !memory.ratings) {
+      outlet(0, "status", ...("Emily: " + emily.summary(memory)).split(" "));
+      return;
+    }
+    const withTaste = [];
+    const without = [];
+    for (let k = 0; k < 10; k++) {
+      const options = { seed: clampSeed(currentSeed + k), beats: minBeats, signatures: useSignatures };
+      const a = forms.compose(db, { ...options, taste: tasteNow(), temperature: temperatureValue });
+      const b = forms.compose(db, options);
+      if (a.ok && b.ok) {
+        withTaste.push(a.piece);
+        without.push(b.piece);
+      }
+    }
+    if (!withTaste.length) throw new Error("no pieces to compare; try another seed");
+    const result = emily.compare(db, memory, withTaste, without);
+    const last = clampSeed(currentSeed + 9);
+    post(`  seeds ${currentSeed}-${last}, with her taste and without: ${comparisonText(result)}\n`);
+    // The panel's status line: the most liked and most disliked features only.
+    const top = [likes[0], dislikes[0]].filter(Boolean).map(([f]) => result.features.find(([g]) => g === f)).filter(Boolean);
+    const words = top.map(([f, a, b], k) => `${emily.nameOf(f)} ${Math.round(100 * a)}%${k === 0 ? " of beats" : ""} (${Math.round(100 * b)}%${k === 0 ? " without her taste" : ""})`);
+    const text = words.length ? words.join(", ") : comparisonText(result);
+    outlet(0, "status", ...(`Emily, seeds ${currentSeed}-${last}: ${text}; more in the Max window`).split(" "));
+  });
+}
+
+
 // ---- helpers (not messages)
+
+// Rates what is being heard (see like): learns, saves, and says what Emily learned.
+function rateNow(r) {
+  attempt(() => {
+    if (!db) throw new Error("load a corpus first");
+    if (!current || !current.score.provenance) throw new Error("Emily learns from composed music: compose a piece first");
+    const target = ratingTarget();
+    syncTaste();
+    const region = emily.regionOf(db, current.score, target.from, target.to);
+    if (!region.beats.length) throw new Error("nothing composed there to rate");
+    const changes = emily.rate(db, memory, region, r, { piece: current.name, what: target.what, at: new Date().toISOString() });
+    tasteVersion++;
+    saveTaste();
+    const learned = emily.describeChanges(changes);
+    const beats = region.beats.length + (region.beats.length === 1 ? " beat" : " beats");
+    const text = `${r > 0 ? "liked" : "disliked"} ${target.what} (${beats})${learned ? ": " + learned : ""}; ${memory.ratings} ${memory.ratings === 1 ? "rating" : "ratings"}`;
+    outlet(0, "status", ...text.split(" "));
+    outlet(0, "emily", ...emily.summary(memory).split(" "));
+    post(`ml_midi: Emily ${text}\n`);
+  });
+}
+rateNow.local = 1;
+
+// What a rating is for: the selection, or the stream phrase playing (the
+// one before it in its first moments), or the whole piece.
+function ratingTarget() {
+  const score = current.score;
+  if (selection) return { from: selection.from, to: selection.to, what: `${barsOf(score, selection.from, selection.to)} of ${current.name}` };
+  if (flow && flow.state.phrases.length) {
+    let number = Math.min(flow.playing || 1, flow.state.phrases.length);
+    if (number > 1 && Date.now() - (flow.since || 0) < GRACE_MS) number--;
+    const phrase = flow.state.phrases[number - 1];
+    return { from: phrase.startTick, to: phrase.endTick, what: `phrase ${number} of ${current.name}` };
+  }
+  return { from: -Infinity, to: Infinity, what: current.name };
+}
+ratingTarget.local = 1;
+
+// "bars 3-5" (or "bar 3") for the ticks from..to of a score.
+function barsOf(score, from, to) {
+  const barTicks = (score.meter[0] * score.ppq * 4) / score.meter[1];
+  const first = Math.floor(from / barTicks) + 1;
+  const last = Math.floor((to - 1) / barTicks) + 1;
+  return first === last ? `bar ${first}` : `bars ${first}-${last}`;
+}
+barsOf.local = 1;
+
+// Emily's taste, prepared for the current corpus (null: no opinions yet).
+function tasteNow() {
+  if (!db) return null;
+  syncTaste();
+  if (!prepared || prepared.db !== db || prepared.version !== tasteVersion) prepared = { db, version: tasteVersion, value: emily.prepare(db, memory) };
+  return prepared.value;
+}
+tasteNow.local = 1;
+
+// Reads Emily's memory at startup; a new session after one with ratings
+// lets her taste fade a little (emily-assoc's decay).
+function loadTaste(folder) {
+  tastePath = settingsFile.tastePathIn(folder);
+  tasteBackupPath = settingsFile.backupPathIn(folder);
+  tasteText = null;
+  syncTaste();
+  if (emily.decay(memory)) saveTaste();
+  outlet(0, "emily", ...emily.summary(memory).split(" "));
+}
+loadTaste.local = 1;
+
+// The file is the taste's true copy: if the other product (open at the
+// same time) has rated since, its ratings are read in before composing or
+// rating here.
+function syncTaste() {
+  if (!tastePath) return;
+  let text = "";
+  try {
+    text = files.exists(tastePath) ? files.readText(tastePath) : "";
+  } catch (e) {
+    return;
+  }
+  if (text === tasteText) return;
+  tasteText = text;
+  try {
+    memory = emily.normalize(text ? JSON.parse(text) : null);
+  } catch (e) {
+    memory = emily.create();
+  }
+  tasteVersion++;
+}
+syncTaste.local = 1;
+
+function saveTaste() {
+  if (!tastePath) return;
+  const text = JSON.stringify(memory) + "\n";
+  try {
+    files.writeText(tastePath, text);
+    tasteText = text;
+  } catch (e) {
+    outlet(0, "error", "can't", "save", "Emily's", "taste:", ...String(e.message).split(" "));
+  }
+}
+saveTaste.local = 1;
+
+// "her taste +0.41 a beat (+0.05 without); suspensions 11% of beats (5%), ..."
+function comparisonText(result) {
+  const signedFit = (v) => (v >= 0 ? "+" : "") + v.toFixed(2);
+  const parts = [`her taste ${signedFit(result.fit[0])} a beat (${signedFit(result.fit[1])} without)`];
+  result.features.forEach(([f, a, b], k) => parts.push(`${emily.nameOf(f)} ${Math.round(100 * a)}%${k === 0 ? " of beats" : ""} (${Math.round(100 * b)}%)`));
+  return parts.join("; ");
+}
+comparisonText.local = 1;
+
+// For the Max window, after a piece composed with a taste: how it compares
+// with the same seed composed without one.
+function tasteLine(piece, options) {
+  const plain = forms.compose(db, options);
+  if (!plain.ok) return null;
+  return `${piece.id}: ${comparisonText(emily.compare(db, memory, [piece], [plain.piece], 2))}`;
+}
+tasteLine.local = 1;
 
 function clampSeed(n) {
   return Math.max(1, Math.min(99999, Math.round(Number(n)) || 1));
@@ -4432,7 +5182,8 @@ function composeNow(atStartup) {
       return;
     }
     const options = { seed: currentSeed, beats: minBeats, signatures: useSignatures };
-    const result = useForm ? forms.compose(db, options) : composer.compose(db, options);
+    const liked = useForm ? tasteNow() : null;
+    const result = useForm ? forms.compose(db, { ...options, taste: liked, temperature: temperatureValue }) : composer.compose(db, options);
     if (!result.ok) {
       if (useForm && !result.stats.tried.length) {
         outlet(0, "error", "no", "chorale", "is", minBeats + "+", "beats", "long;", "lower", "beats");
@@ -4448,6 +5199,10 @@ function composeNow(atStartup) {
     outlet(0, "status", ...text.split(" "));
     for (const line of signatureLines(piece)) post(line + "\n");
     post(qualityLine(piece) + "\n");
+    if (liked) {
+      const line = tasteLine(piece, options);
+      if (line) post(line + "\n");
+    }
   });
 }
 composeNow.local = 1;
@@ -4461,8 +5216,11 @@ function startStream() {
     provenance: [],
     fermatas: [],
     name: "emi-" + currentSeed,
+    playing: 1, // the phrase playing (M9: what "like" rates)
+    since: Date.now(),
   };
   current = null;
+  selection = null;
   outlet(0, "restart");
   followMeter(db.meter);
   outlet(0, "coll", "clear");
@@ -4476,8 +5234,9 @@ function appendPhrase() {
   const state = flow.state;
   const number = state.phrases.length + 1;
   const last = phrasesWanted > 0 && number >= phrasesWanted;
-  let result = streams.next(db, state, { seed: currentSeed, last, signatures: useSignatures });
-  if (!result.ok && last) result = streams.next(db, state, { seed: currentSeed, signatures: useSignatures }); // end later instead
+  const options = { seed: currentSeed, signatures: useSignatures, taste: tasteNow(), temperature: temperatureValue };
+  let result = streams.next(db, state, { ...options, last });
+  if (!result.ok && last) result = streams.next(db, state, options); // end later instead
   if (!result.ok) {
     outlet(0, "streamat", NO_STEP);
     outlet(0, "error", "the", "stream", "ran", "out", "after", "phrase", number - 1 + ";", "try", "another", "seed", "or", "more", "chorales");
@@ -4576,6 +5335,7 @@ function restore() {
   if (remembered.stream !== undefined) streaming = Boolean(remembered.stream);
   if (remembered.phrases !== undefined) phrasesWanted = Math.max(0, Math.min(64, Math.round(remembered.phrases)));
   if (remembered.transpose !== undefined) transposeBy = Math.max(-12, Math.min(12, Math.round(remembered.transpose)));
+  if (remembered.temperature !== undefined) temperatureValue = Math.max(0, Math.min(3, Number(remembered.temperature) || 0));
   outlet(0, "setting", "seed", currentSeed);
   outlet(0, "setting", "beats", minBeats);
   outlet(0, "setting", "form", useForm ? 1 : 0);
@@ -4584,6 +5344,7 @@ function restore() {
   outlet(0, "setting", "stream", streaming ? 1 : 0);
   outlet(0, "setting", "phrases", phrasesWanted);
   outlet(0, "setting", "transpose", transposeBy);
+  outlet(0, "setting", "temperature", temperatureValue);
   for (const [name, values] of Object.entries(remembered.host || {})) {
     if (Array.isArray(values)) outlet(0, "setting", name, ...values);
   }
@@ -4601,6 +5362,7 @@ function save() {
   remembered.stream = streaming ? 1 : 0;
   remembered.phrases = phrasesWanted;
   remembered.transpose = transposeBy;
+  remembered.temperature = temperatureValue;
   try {
     settingsFile.write(settingsPath, remembered);
   } catch (e) {
@@ -4631,6 +5393,7 @@ showChorale.local = 1;
 // notes hanging and the new music starts on a bar line.
 function show(score, name, chorale) {
   flow = null;
+  selection = null;
   const { work } = ingest.quantize(score);
   const shown = transposed(work, transposeBy);
   current = { base: work, score: shown, name, chorale };
@@ -4816,6 +5579,7 @@ function draw(score, from = 0, to = score.lengthTicks) {
   }
   for (const [tick, fresh] of parallelsFor(score, from, to)) if (tick >= from && tick < to) outlet(0, "view", "parallel", tick, fresh);
   for (const [tick, text] of sourcesFor(score)) if (tick >= from && tick < to) outlet(0, "view", "source", tick, ...text.split(" "));
+  if (selection && selection.to > from && selection.from < to) outlet(0, "view", "selection", selection.from, selection.to);
   outlet(0, "view", "done");
 }
 draw.local = 1;

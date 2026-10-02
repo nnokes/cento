@@ -16,6 +16,7 @@ const queue = require("emi-queue");
 const lexicon = require("emi-lexicon");
 const composer = require("emi-compose");
 const form = require("emi-form");
+const emily = require("emily-assoc");
 const { checkPiece, checkForm } = require("./piece-rules");
 
 const dir = process.env.EMI_CORPUS || path.join(os.homedir(), "Documents", "ml_midi", "corpus");
@@ -233,4 +234,41 @@ test("corpus: pieces stay within the quotation limits, with no new parallel 5ths
     assert.equal(overLimit, 0);
     assert.equal(fresh, 0);
   }
+});
+
+// M9's "done when": after about ten ratings, output shifts toward the liked
+// features. A simulated listener likes one feature: each of ten pieces
+// (seeds 1000-1009, composed with the taste so far) is liked if it has more
+// of the feature than usual (the mean of ten untrained pieces), disliked
+// otherwise. Then 24 new seeds are composed with and without the taste.
+test("corpus: after ten ratings, new pieces have more of what the listener liked (M9)", { skip: skip || (files.length < 100 ? "needs the full corpus" : false) }, (t) => {
+  const db = lexicon.build(files.map((file) => load(file).work));
+  const shareOf = (piece, feature) => emily.shares(db, piece).get(feature) || 0;
+  const plain = new Map();
+  const untrained = (seed) => plain.get(seed) || plain.set(seed, form.compose(db, { seed }).piece).get(seed);
+  const listen = (feature, sign) => {
+    let usual = 0;
+    for (let seed = 500; seed < 510; seed++) usual += shareOf(untrained(seed), feature) / 10;
+    const memory = emily.create();
+    for (let k = 0; k < 10; k++) {
+      const piece = form.compose(db, { seed: 1000 + k, taste: emily.prepare(db, memory) }).piece;
+      emily.rate(db, memory, emily.regionOf(db, piece), shareOf(piece, feature) > usual ? sign : -sign);
+    }
+    const taste = emily.prepare(db, memory);
+    let before = 0;
+    let after = 0;
+    let speac = 0;
+    for (let seed = 1; seed <= 24; seed++) {
+      before += shareOf(untrained(seed), feature) / 24;
+      const piece = form.compose(db, { seed, taste }).piece;
+      after += shareOf(piece, feature) / 24;
+      speac += piece.form.speac / 24;
+    }
+    t.diagnostic(`${sign > 0 ? "likes" : "dislikes"} ${emily.nameOf(feature)}: ${(100 * before).toFixed(1)}% of beats untrained, ${(100 * after).toFixed(1)}% with the taste (SPEAC labels kept ${(100 * speac).toFixed(0)}%)`);
+    return after / before;
+  };
+  assert.ok(listen("f:16ths", 1) >= 1.25, "16th notes");
+  assert.ok(listen("f:melody:leap", 1) >= 1.25, "melodic leaps");
+  assert.ok(listen("f:register:high", 1) >= 1.25, "a high melody");
+  assert.ok(listen("f:register:low", -1) <= 0.8, "fewer low melodies");
 });

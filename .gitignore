@@ -24,3 +24,7 @@ build/
 # Settings the patches remember between sessions (last corpus, seed, output
 # port...). Personal, and they hold absolute paths.
 patchers/ml_midi.settings.json
+
+# Emily's taste (M9): your ratings, also personal.
+patchers/ml_midi.taste.json
+patchers/ml_midi.taste.backup.json

@@ -13,9 +13,10 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M8 code done; waiting on the Max and Live checks
-([M8 checklist](docs/M8-checklist.md)).** Both products load Bach chorales,
-play them in C major or their own key, and compose new chorales by
+**Status: M9 code done; waiting on the Max and Live checks
+([M8 checklist](docs/M8-checklist.md), [M9 checklist](docs/M9-checklist.md)).**
+Both products load Bach chorales, play them in C major or their own key, and
+compose new chorales by
 recombining beats from the whole corpus. Since M3, each new piece takes the
 form of a chorale from the corpus: its phrases, its cadences and its ending.
 They show pieces in a piano roll colored by source chorale, export them as
@@ -36,7 +37,12 @@ shown as gold bands in the piano roll. Since M8, pieces that quote a chorale
 for too long are set aside, the piano roll shows where each beat came from
 when you hover over it, a corpus may mix major and minor chorales, 3/4
 chorales work, and the **A/B** button writes a blind listening test (Bach or
-not?) as a web page. The full plan and milestones are in [PLAN.md](PLAN.md).
+not?) as a web page. Since M9, Emily learns your taste: **like** and
+**dislike** rate the piece, the stream phrase playing or the beats you drag
+across in the piano roll. Later pieces lean toward the features you liked
+(high melodies, 16th notes, modulations, ...), within the same rules, and
+**temp** sets how much chance still plays. The full plan and milestones are
+in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
 
@@ -70,7 +76,8 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **Major and minor, 3/4** (optional, M8) | `~/Documents/ml_midi/corpus-both/`, `corpus-3-4/` | Written with `--mode any` and `--meter 3/4` |
 | **Exported pieces** | `~/Documents/ml_midi/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
 | **Listening tests** | anywhere, e.g. `~/Documents/ml_midi/` | Written by the **A/B** button: one web page, opened in a browser |
-| **Later: databases, Emily's memory** | `~/Documents/ml_midi/db/`, `emily/` | Outside the repo |
+| **Emily's taste** (M9) | `<repo>/patchers/ml_midi.taste.json` | Your ratings, shared by both products; git-ignored. **forget** sets it aside as `ml_midi.taste.backup.json`; delete both to start fresh |
+| **Later: databases, Emily's snapshots** | `~/Documents/ml_midi/db/`, `emily/` | Outside the repo |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
 | **Remembered settings** | `<repo>/patchers/ml_midi.settings.json` | Last corpus, seed and other settings; written by the patches, git-ignored. Delete it to start fresh |
 
@@ -140,7 +147,8 @@ into `~/Documents/Max 9/Packages/` (a real folder, not a link).
 patchers/     everything Max loads, in one folder:
               ml_midi.maxpat (Max version), emi.brain.amxd + emi.voice.amxd
               (Live version), emi.engine, emi.host.max, emi.host.live,
-              emi.panel (the shared controls), emi.view (piano roll), and the
+              emi.panel (the shared controls), emily.panel (Emily's ratings),
+              emi.view (piano roll), and the
               generated *.bundle.js scripts (npm run build; committed)
 code/         [v8] wrappers: glue between Max messages and the engine
               (emi.core.v8.js), and the piano roll (emi.view.v8ui.js)
@@ -151,8 +159,9 @@ tools/        build, path check, git hook, chorale export
 docs/         milestone checklists
 ```
 
-Your working data (corpus, analyzed databases, generated music, Emily's
-memory) lives in `~/Documents/ml_midi/`, outside the repository.
+Your working data (corpus, analyzed databases, generated music) lives in
+`~/Documents/ml_midi/`, outside the repository. The remembered settings and
+Emily's taste are git-ignored files in `patchers/`.
 
 ## Development
 

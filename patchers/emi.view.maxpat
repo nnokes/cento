@@ -59,8 +59,10 @@
 						"autowatch": 1
 					},
 					"numinlets": 1,
-					"numoutlets": 0,
-					"outlettype": [],
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
 					"parameter_enable": 0,
 					"patching_rect": [
 						20.0,
@@ -80,6 +82,22 @@
 			},
 			{
 				"box": {
+					"maxclass": "outlet",
+					"comment": "to emi.engine: select <from> <to> (beats dragged across, for Emily's ratings)",
+					"index": 1,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						20.0,
+						260.0,
+						30.0,
+						30.0
+					],
+					"id": "obj-3"
+				}
+			},
+			{
+				"box": {
 					"maxclass": "comment",
 					"text": "emi.view: piano roll of the current score; colors = source chorale (or voice), bright lines = seams",
 					"numinlets": 1,
@@ -91,7 +109,7 @@
 						260.0,
 						48.0
 					],
-					"id": "obj-3"
+					"id": "obj-4"
 				}
 			}
 		],
@@ -104,6 +122,18 @@
 					],
 					"destination": [
 						"obj-2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-2",
+						0
+					],
+					"destination": [
+						"obj-3",
 						0
 					]
 				}

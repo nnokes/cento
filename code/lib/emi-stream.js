@@ -32,6 +32,10 @@
 // last chord) and finishes the stream. If no phrase can be placed, next()
 // returns ok: false and leaves the stream as it was (a caller can then ask
 // for an ordinary phrase and try the ending again after it).
+//
+// M9: next() also takes Emily's taste and the temperature (see emi-form's
+// compose): they steer each phrase's beats, and which chorale a stream moves
+// on to.
 
 const rng = require("emi-rng");
 const form = require("emi-form");
@@ -89,20 +93,21 @@ function start({ seed = 1 } = {}) {
 
 const phraseSeed = (seed, number) => (Math.imul(seed, 7919) + Math.imul(number, 104729)) >>> 0 || 1;
 
-function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 12, signatures = true, guard = true } = {}) {
+function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 12, signatures = true, guard = true, taste = null, temperature = 1 } = {}) {
   if (stream.finished) return { ok: false, phrase: null };
   const number = stream.phrases.length + 1;
   const random = rng.create(phraseSeed(seed, number));
   const counters = { steps: 0, backtracks: 0 };
   const before = { nextBeat: stream.nextBeat, endsInRest: stream.endsInRest };
+  const prefs = taste || temperature !== 1 ? { taste, temperature } : null;
   for (const fallback of [false, true]) {
     if (fallback) {
       // A breath: one silent beat, then a fresh phrase start.
       stream.nextBeat += 1;
       stream.endsInRest = true;
     }
-    for (const choice of choices(db, stream, random, last).slice(0, tries)) {
-      const attempt = place(db, stream, choice, { random, last, relax, budget, counters, signatures, noise: phraseSeed(seed, number) });
+    for (const choice of choices(db, stream, random, last, prefs).slice(0, tries)) {
+      const attempt = place(db, stream, choice, { random, last, relax, budget, counters, signatures, noise: phraseSeed(seed, number), prefs });
       if (attempt && guard && quotesTooMuch(db, stream, attempt)) {
         for (const p of attempt.placed) stream.used.delete(p.index); // put aside: another phrase
         continue;
@@ -142,8 +147,9 @@ function gapBefore(db, stream, beatInBar) {
 // The phrase templates to try, best first: the walk's next phrase (the same
 // chorale's next phrase, or the first phrase of another chorale), then
 // others, those that need no silent gap first. A stream's first phrase is a
-// chorale's first phrase; a final phrase is a chorale's last.
-function choices(db, stream, random, last) {
+// chorale's first phrase; a final phrase is a chorale's last. Liked
+// chorales' forms move forward (M9, emi-form's byTaste).
+function choices(db, stream, random, last, prefs = null) {
   const works = phraseTemplates(db).filter((w) => w.phrases.length);
   const shuffled = (list) => {
     const out = list.slice();
@@ -158,7 +164,9 @@ function choices(db, stream, random, last) {
     const gap = (c) => (gapBefore(db, stream, c.slots[0].beatInBar) > 0 ? 1 : 0);
     return list.map((c, i) => [gap(c), i, c]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(([, , c]) => c);
   };
-  const indexes = shuffled(works.map((w, i) => i)).filter((w) => !stream.mode || works[w].mode === stream.mode);
+  let indexes = shuffled(works.map((w, i) => i)).filter((w) => !stream.mode || works[w].mode === stream.mode);
+  const liked = prefs && prefs.taste && prefs.taste.templates;
+  if (liked) indexes = form.byTaste(indexes, (w) => liked.get(works[w].work) || 0, prefs.temperature);
 
   if (!stream.phrases.length) return indexes.map((w) => entry(w, 0));
   const walk = stream.walk;
@@ -191,11 +199,11 @@ function prepare(db, stream, choice, { last, cadenceBass, speac }) {
   return [...Array.from({ length: gap }, () => ({ rest: true })), ...slots];
 }
 
-function place(db, stream, choice, { random, last, relax, budget, counters, signatures, noise }) {
+function place(db, stream, choice, { random, last, relax, budget, counters, signatures, noise, prefs = null }) {
   const slotsAt = form.memo((step) => prepare(db, stream, choice, { last, ...form.RELAX[step] }));
   const pinsAt = form.memo((slots) => (signatures ? form.pinsFor(db, slots, choice.work) : null));
   for (let step = 0; step <= relax; step++) {
-    if (step < relax && form.labelsGiveWay(db, step, slotsAt, pinsAt, noise)) continue;
+    if (step < relax && form.labelsGiveWay(db, step, slotsAt, pinsAt, noise, prefs)) continue;
     const { level } = form.RELAX[step];
     const slots = slotsAt(step);
     const placed = form.fill(db, slots, {
@@ -207,6 +215,7 @@ function place(db, stream, choice, { random, last, relax, budget, counters, sign
       used: stream.used,
       pins: pinsAt(slots),
       noise,
+      prefs,
     });
     if (placed) return { slots, placed, relaxed: step };
   }

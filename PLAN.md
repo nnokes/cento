@@ -241,6 +241,10 @@ clip writing), with the logic in `code/lib` and `code/max`. It splits into
 the separate abstractions above when a stage needs its own progress or
 cancelling (analysis in M6, streaming in M5). The piano roll is `emi.view`, a
 `[v8ui]` that the hosts show next to their panels.
+*As built in M9:* `emily.feedback` is `emily.panel`, a bpatcher beside
+`emi.panel` in both products (like, dislike, temperature, taste, forget).
+Selections are dragged in `emi.view`, which now has an outlet to the
+engine. Emily's logic is `code/lib/emily-assoc.js`, used by `emi.core`.
 
 **Conventions**
 
@@ -955,7 +959,7 @@ ml_midi/
 ├── patchers/            EVERYTHING MAX LOADS: ml_midi.maxpat (Max version),
 │                        emi.brain.amxd + emi.voice.amxd (Live version),
 │                        emi.host.max/live, emi.panel, emi.engine, …
-│                        emily.feedback, panels, and the generated
+│                        emily.panel (M9), and the generated
 │                        *.bundle.js scripts (committed, so a clone just works)
 ├── code/
 │   ├── emi.core.v8.js     the engine's [v8] script (glue only)
@@ -1097,6 +1101,57 @@ How it works:
    **T ("temperature" or "adventurousness")** is a `live.dial` that you can
    automate.
 
+*As built in M9* (`code/lib/emily-assoc.js`; [checklist](docs/M9-checklist.md)):
+- **Features**: each beat gets one of each musical kind, from its notes:
+  motion (block chords, one moving voice, busy voices), 16th notes,
+  suspensions, the soprano's step to the next beat (same, step, leap), the
+  chord (major, minor, seventh, diminished, other), chromatic notes, the key
+  area (home, dominant, relative, subdominant, other), the melody's register
+  and Cope's tension (thirds of the corpus), and the mode in a mixed corpus.
+  Exact kinds as planned: `g:`, `t:`, `w:`, `sig:`, `tpl:`. SPEAC labels are
+  left out: they belong to the form.
+- **Learning**: a whole piece is rarely all one feature, so the rule for
+  musical features compares the rated beats with the corpus. Each feature's
+  share of the rated beats becomes a z-score against its share of the
+  corpus's beats, and `w ← w + 0.25 · r · clip(z, ±3) / 3`. The exact kinds
+  use the planned rule, `w ← w + 0.2 · r`. Weights stay within ±3. Decay is
+  `w ← 0.9 · w`, once at startup after a session with ratings.
+- **Selection**: the search is a backward pass that maximizes a score (M7,
+  M8), not a weighted draw, so taste enters that score. Each beat adds 4
+  points per unit of taste (an accidental match is 16), a liked transition
+  where two beats join, and a liked signature where its block ends; each is
+  capped so taste never outweighs a signature block. The template's SPEAC
+  label counts double while a taste is in use. Temperature multiplies the
+  seeded random part of the score: 1 is exactly M8, 0 removes it. Forms are
+  ordered by the planned formula: the seed's shuffle is read as a draw, and
+  each form's taste is added as a Gumbel variable.
+- **Ratings**: **like** and **dislike** (`live.text` buttons, mappable) rate,
+  in this order:
+  - the beats dragged across in the piano roll;
+  - the stream phrase playing (or the one before, within 1.5 s of a new
+    phrase);
+  - the whole piece.
+
+  **taste** lists the weights and compares ten seeds with and without them.
+  **forget** starts again and keeps one backup. They sit in a shared
+  `emily.panel` (130 px) between the panel and the piano roll; the device
+  is now 984 px wide.
+- **Memory**: `patchers/ml_midi.taste.json` next to the settings file
+  (git-ignored), not `~/Documents/ml_midi/emily/`. Max's `File` can't create
+  folders, and the settings file already has a known place shared by both
+  products. Each product re-reads the file when it changes, so both can be
+  open at once.
+- **Results** (full corpus; a simulated listener rates ten pieces, then 24
+  new seeds are measured): high melodies 52% → 81% of beats, melodic leaps
+  15% → 23%, 16th notes 4.3% → 11.2%, and low melodies (disliked) 13% → 2%.
+  Suspensions and repeated notes barely move, because few beats with them
+  fit the voice-leading. Beats keeping their SPEAC label fall from 61% to
+  51–63%.
+- **Variety**: pieces in one form share more beats across seeds with a
+  taste: 44% at temperature 1, against 29% without. At temperature 2 it is
+  33%; at 0, 87%. This is the narrowing the Tier 2 risks warn about;
+  temperature is the control for now.
+
 ### Tier 2: Memory and drift (Emily builds her own corpus)
 
 | | |
@@ -1176,8 +1231,8 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M8 code done; waiting on the Max and Live checks
-([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M9 code done; waiting on the Max and Live checks for M8
+([checklist](docs/M8-checklist.md)) and M9 ([checklist](docs/M9-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.

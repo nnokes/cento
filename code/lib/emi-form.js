@@ -217,8 +217,22 @@ function pinsFor(db, slots, avoid = null) {
 // required), a soprano within the template melody's range, and a small
 // seeded random amount, so that each seed has its own best path and
 // different seeds give different pieces.
-const PIN = 1 << 16;
-const SCORE = { strong: 16, blockChance: 48, accidentals: 16, label: 4, range: 4, chance: 8 };
+//
+// M9: Emily's taste (emily-assoc) adds each beat's taste, a liked
+// transition's where two beats join, and a liked signature's where its block
+// ends; each at most TASTE_MAX either way, so taste chooses among the valid
+// beats and blocks but never outweighs a block. With a taste, a beat's SPEAC
+// label counts double (tasteLabel), so taste rarely pulls beats off their
+// template beat's labels (on the full corpus, 59% of beats keep them after
+// ten ratings, against 61% without a taste; 47% if labels count as before). (Taste is offset by
+// TASTE_MAX, so scores stay positive: every way through the template has the
+// same number of beats and joins, so the offset changes no choice.) The
+// temperature scales the random amounts: 0, none (the best liked path); 1,
+// as before M9; higher, more adventurous.
+const PIN = 1 << 20;
+const SCORE = { strong: 16, blockChance: 48, accidentals: 16, label: 4, tasteLabel: 8, range: 4, chance: 8 };
+const TASTE_MAX = 64;
+const clampTaste = (v) => Math.max(-TASTE_MAX, Math.min(TASTE_MAX, v));
 
 // Each grouping's lowest and highest soprano note (computed once per database).
 const sopranoCache = new WeakMap();
@@ -238,8 +252,11 @@ function sopranoOf(db) {
   return sopranoCache.get(db);
 }
 
-function feasible(db, slots, next, pins = null, noise = 0) {
+function feasible(db, slots, next, pins = null, noise = 0, { taste = null, temperature = 1 } = {}) {
   const n = db.groupings.length;
+  const beatTaste = taste ? taste.beat : null;
+  const edges = taste ? taste.edges : null;
+  const blockEnd = taste ? taste.blockEnd : null;
   const soprano = sopranoOf(db);
   const strongest = db.signatures && db.signatures.length ? db.signatures[0].works : 0;
   const plan = { best: [], free: [], cont: [], roles: [] };
@@ -259,20 +276,28 @@ function feasible(db, slots, next, pins = null, noise = 0) {
       if (!later) return 0;
       if (restBetween) return laterMost;
       let most = -1;
+      const liked = edges && edges.get(i);
+      if (liked) {
+        for (const j of next[i]) if (later[j] >= 0) most = Math.max(most, later[j] + TASTE_MAX + clampTaste(liked.get(j) || 0));
+        return most;
+      }
       for (const j of next[i]) if (later[j] > most) most = later[j];
-      return most;
+      return most >= 0 && edges ? most + TASTE_MAX : most;
     };
     // What a beat scores here (see SCORE).
     const color = slot.accidentals ? slot.accidentals : null;
     const range = slot.sopranoRange || null;
     const label = slot.speac && slot.speacHard === false ? slot.speac : null;
+    const labelPoints = beatTaste ? SCORE.tasteLabel : SCORE.label;
     const inRange = (i) => !range || (soprano.low[i] >= range[0] && soprano.high[i] <= range[1]);
-    const chance = (i) => (noise ? (Math.imul(noise ^ Math.imul(s + 1, 0x9e3779b1), 0x85ebca6b) ^ Math.imul(i + 1, 0xc2b2ae35)) >>> 29 : 0) % (SCORE.chance + 1);
+    // 0 to SCORE.chance - 1 at temperature 1.
+    const chance = (i) => (noise ? Math.floor((((Math.imul(noise ^ Math.imul(s + 1, 0x9e3779b1), 0x85ebca6b) ^ Math.imul(i + 1, 0xc2b2ae35)) >>> 0) * SCORE.chance * temperature) / 4294967296) : 0);
     // Which block a cadence takes varies with the seed too.
-    const blockChance = (i) => (noise ? ((Math.imul(noise ^ 0x5bd1e995, Math.imul(i + 1, 0x27d4eb2f)) ^ Math.imul(s + 7, 0x165667b1)) >>> 0) % (SCORE.blockChance + 1) : 0);
+    const blockChance = (i) => (noise ? Math.floor((((Math.imul(noise ^ 0x5bd1e995, Math.imul(i + 1, 0x27d4eb2f)) ^ Math.imul(s + 7, 0x165667b1)) >>> 0) % (SCORE.blockChance + 1)) * temperature) : 0);
     const reward = (i) => {
       const g = db.groupings[i];
-      return (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? SCORE.label : 0) + (inRange(i) ? SCORE.range : 0) + chance(i);
+      const liked = beatTaste ? TASTE_MAX + clampTaste(beatTaste[i]) : 0;
+      return (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? labelPoints : 0) + (inRange(i) ? SCORE.range : 0) + chance(i) + liked;
     };
     const plus = (v, i) => (v < 0 ? -1 : v + reward(i));
     const free = new Int32Array(n).fill(-1);
@@ -287,7 +312,8 @@ function feasible(db, slots, next, pins = null, noise = 0) {
       for (const i of pins[s].inner) role(i).inner = plus(onward(i), i);
       for (const [i, strength] of pins[s].end) {
         const most = open(i);
-        role(i).end = most < 0 ? -1 : most + PIN + (strength >= STRONG * strongest ? SCORE.strong : 0) + blockChance(i) + reward(i);
+        const liked = blockEnd ? clampTaste(blockEnd.get(i) || 0) : 0;
+        role(i).end = most < 0 ? -1 : most + PIN + (strength >= STRONG * strongest ? SCORE.strong : 0) + blockChance(i) + liked + reward(i);
       }
       best = free.slice();
       cont = new Int32Array(n).fill(-1);
@@ -310,15 +336,18 @@ function feasible(db, slots, next, pins = null, noise = 0) {
 }
 
 // feasible() for these slots at a match level, computed once for the same
-// slots, level and pins (compose asks the same question while choosing a
-// relaxation step and while filling).
+// slots, level, pins and preferences (compose asks the same question while
+// choosing a relaxation step and while filling). prefs: { taste,
+// temperature } (M9), or null.
 const planCache = new WeakMap();
-function planFor(db, slots, level, pins, noise = 0) {
+function planFor(db, slots, level, pins, noise = 0, prefs = null) {
   if (!planCache.has(slots)) planCache.set(slots, []);
-  const known = planCache.get(slots).find((p) => p.db === db && p.level === level && p.pins === pins && p.noise === noise);
+  const taste = prefs ? prefs.taste || null : null;
+  const temperature = prefs && prefs.temperature !== undefined ? prefs.temperature : 1;
+  const known = planCache.get(slots).find((p) => p.db === db && p.level === level && p.pins === pins && p.noise === noise && p.taste === taste && p.temperature === temperature);
   if (known) return known.plan;
-  const plan = feasible(db, slots, successors(db)[level], pins, noise);
-  planCache.get(slots).push({ db, level, pins, noise, plan });
+  const plan = feasible(db, slots, successors(db)[level], pins, noise, { taste, temperature });
+  planCache.get(slots).push({ db, level, pins, noise, taste, temperature, plan });
   return plan;
 }
 
@@ -361,9 +390,10 @@ function voicesFit(db, g, shift) {
 //   used: groupings already used (shared across a stream's phrases); the
 //         ones placed here are added to it
 //   pins: signature blocks that may stand at cadences (pinsFor), or null
-function fill(db, slots, { random, level, budget, counters, prev = null, used = new Set(), pins = null, noise = 0 }) {
-  const plan = planFor(db, slots, level, pins, noise);
-  const plan0 = level > 0 ? planFor(db, slots, 0, pins, noise) : plan;
+//   prefs: Emily's taste and the temperature (M9; see planFor), or null
+function fill(db, slots, { random, level, budget, counters, prev = null, used = new Set(), pins = null, noise = 0, prefs = null }) {
+  const plan = planFor(db, slots, level, pins, noise, prefs);
+  const plan0 = level > 0 ? planFor(db, slots, 0, pins, noise, prefs) : plan;
   const graph = successors(db)[level];
   const at = slots.map((slot, s) => s).filter((s) => !slots[s].rest); // the slots to fill
   if (!at.length || !plan.best[at[0]].some((v) => v >= 0)) return null; // can't be filled at all
@@ -702,8 +732,8 @@ function markRepeats(db, template, slots) {
 
 // The most signature blocks a fill of these slots can place, at this match
 // level (-1: the slots can't be filled).
-function mostBlocks(db, slots, level, pins, noise = 0) {
-  const plan = planFor(db, slots, level, pins, noise);
+function mostBlocks(db, slots, level, pins, noise = 0, prefs = null) {
+  const plan = planFor(db, slots, level, pins, noise, prefs);
   const first = slots.findIndex((slot) => !slot.rest);
   let most = -1;
   if (first >= 0) for (const v of plan.best[first]) if (v > most) most = v;
@@ -715,14 +745,14 @@ function mostBlocks(db, slots, level, pins, noise = 0) {
 // its labels preferred instead of required, can place more blocks.
 // slotsAt(step) gives the slots for a step, pinsAt(slots) their pins (both
 // remembered: see memo); noise as for fill, so the passes are shared.
-function labelsGiveWay(db, step, slotsAt, pinsAt, noise = 0) {
+function labelsGiveWay(db, step, slotsAt, pinsAt, noise = 0, prefs = null) {
   const [here, looser] = [RELAX[step], RELAX[step + 1]];
   if (!looser || here.speac !== true || looser.level !== here.level || looser.cadenceBass !== here.cadenceBass) return false;
   const strict = slotsAt(step);
   const loose = slotsAt(step + 1);
   const pinsStrict = pinsAt(strict);
   if (!pinsStrict) return false;
-  return mostBlocks(db, loose, looser.level, pinsAt(loose), noise) > mostBlocks(db, strict, here.level, pinsStrict, noise);
+  return mostBlocks(db, loose, looser.level, pinsAt(loose), noise, prefs) > mostBlocks(db, strict, here.level, pinsStrict, noise, prefs);
 }
 
 // A function's results remembered by argument, so the same slots and pins
@@ -753,13 +783,19 @@ function templateBeats(db, template) {
 // guard: false skips the check. template: compose in this chorale's form
 // only (the listening test pairs a chorale with a piece in its form).
 // repeats: false composes repeated phrases afresh (as before M8).
-function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true } = {}) {
+//
+// M9: taste (from emily-assoc's prepare, or null) and temperature (default
+// 1) are Emily's: they steer the search toward liked beats (see SCORE), and
+// the choice of form toward liked forms (byTaste).
+function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true, taste = null, temperature = 1 } = {}) {
   const random = rng.create(seed);
-  const templates = db.templates.filter((t) => (only ? t.work === only : templateBeats(db, t) >= beats));
+  const prefs = taste || temperature !== 1 ? { taste, temperature } : null;
+  let templates = db.templates.filter((t) => (only ? t.work === only : templateBeats(db, t) >= beats));
   for (let i = templates.length - 1; i > 0; i--) {
     const j = random.int(i + 1);
     [templates[i], templates[j]] = [templates[j], templates[i]];
   }
+  if (taste && taste.templates) templates = byTaste(templates, (t) => taste.templates.get(t.work) || 0, temperature);
   const tried = [];
   const counters = { steps: 0, backtracks: 0 };
   let quoting = null; // the piece put aside that quotes least: { piece, step }
@@ -770,10 +806,10 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
     const slotsAt = memo((step) => (repeats ? markRepeats(db, template, slotsOf(db, template, RELAX[step])) : slotsOf(db, template, RELAX[step])));
     const pinsAt = memo((slots) => (signatures ? pinsFor(db, slots, template.work) : null));
     for (let step = 0; step <= relax; step++) {
-      if (step < relax && labelsGiveWay(db, step, slotsAt, pinsAt, seed)) continue;
+      if (step < relax && labelsGiveWay(db, step, slotsAt, pinsAt, seed, prefs)) continue;
       const slots = slotsAt(step);
       const pins = pinsAt(slots);
-      const placed = fill(db, slots, { random, level: RELAX[step].level, budget: counters.steps + budget, counters, pins, noise: seed });
+      const placed = fill(db, slots, { random, level: RELAX[step].level, budget: counters.steps + budget, counters, pins, noise: seed, prefs });
       if (!placed) continue;
       const cadences = slots.filter((slot) => slot.cadence).length;
       const matched = placed.filter((p) => {
@@ -802,7 +838,28 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
   return { ok: false, piece: null, stats: stats(null) };
 }
 
+// A list in its seeded order, reordered by taste (M9): liked items move
+// forward, disliked ones back, by how much depending on the temperature. The
+// list's order stands for a random draw (the first item drew the highest
+// number); each item's taste is added to its draw, as a Gumbel variable,
+// so the result is a draw in which an item's chance of coming first grows
+// as exp(weight / temperature). With no taste, the order is unchanged; at
+// temperature 0, liked items come first and disliked ones last, in their
+// seeded order.
+function byTaste(list, weightOf, temperature = 1) {
+  const n = list.length;
+  const keyed = list.map((item, k) => {
+    const draw = -Math.log(-Math.log(1 - (k + 0.5) / n));
+    const w = weightOf(item);
+    return [temperature > 0 ? draw + w / temperature : draw + Math.sign(w) * 1e9, k, item];
+  });
+  return keyed.sort((a, b) => b[0] - a[0] || a[1] - b[1]).map(([, , item]) => item);
+}
+
 exports.compose = compose;
+exports.byTaste = byTaste;
+exports.planFor = planFor;
+exports.TASTE_MAX = TASTE_MAX;
 exports.RELAX = RELAX;
 exports.slotsOf = slotsOf;
 exports.fits = fits;

@@ -15,6 +15,17 @@
 // and octaves (emi-quality) go to the Max window; parallels are marked in the
 // piano roll (grey: Bach's own, red: new).
 //
+// Emily (M9, emily-assoc): "like" and "dislike" rate what you hear: the
+// beats selected in the piano roll (drag across it; a click clears), or
+// else the stream phrase playing (the one before, in its first 1.5 s), or
+// else the whole piece. Emily learns which musical features you like and
+// composing prefers them among the choices the rules allow; "temperature"
+// sets how much chance still plays (0: Emily's favourite choices; 1: as
+// before M9; up to 3: more adventurous). Her taste is kept in
+// ml_midi.taste.json next to the settings file, and fades a little at each
+// startup after a session with ratings. Each piece composed with a taste
+// reports in the Max window how it compares with the same seed without one.
+//
 // Streaming (M5): with "stream 1", compose starts a stream of phrases. Two
 // phrases are queued; when the player reaches the start of the last queued
 // phrase it sends "need", and the next phrase is composed and queued. Changes
@@ -28,6 +39,7 @@
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
 //   meter <numerator> <denominator>                             -> the Max version's transport (M8)
+//   emily <text...>                                             -> the Emily panel: her taste in a line (M9)
 //
 // Messages:
 //   loadmidi <path>        read a chorale (+ its .json) and make it current
@@ -47,6 +59,13 @@
 //                          piece or stream, its provenance as a .json next to it)
 //   abtest <path>          write a blind A/B listening test (M8): a web page of 10
 //                          pairs, each a chorale and a piece in its form
+//   like | dislike         rate the selection, the stream phrase playing, or the piece (M9)
+//   select <from> <to>     (from the piano roll) the beats from tick `from` to `to` are
+//                          selected for rating; "select" alone clears the selection
+//   temperature <0..3>     how much chance plays in composing (M9, default 1)
+//   taste                  Emily's taste in the Max window, and how ten pieces compare
+//                          with and without it
+//   forget                 start a new taste (the old one is kept in ml_midi.taste.backup.json)
 //   writeclips             write the current score as Live clips (Live only)
 //   autoclips 1 | 0        also write clips after every compose (Live only)
 //   testclip               write the test phrase as Live clips (Live only)
@@ -83,10 +102,12 @@ const quality = require("emi-quality");
 const provenanceOf = require("emi-provenance");
 const abtests = require("emi-abtest");
 const abtestPage = require("emi-abtest-page");
+const emily = require("emily-assoc");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
 const WINDOW = 4; // phrases of a stream shown in the piano roll
+const GRACE_MS = 1500; // a rating this soon after a stream phrase starts is for the one before
 
 let loaded = null; // the last chorale read, in its written key
 let keyMode = "c";
@@ -106,6 +127,14 @@ let signaturesById = null; // { db, map }: the corpus's signatures by id, for th
 let settingsPath = null; // known once startup has read the settings
 let host = null; // "max" or "live", known from startup ("startup all" or "startup corpus")
 let remembered = {}; // the settings file's contents
+let memory = emily.create(); // Emily's memory: her taste (M9)
+let tasteVersion = 0; // changes with every rating, so the prepared taste is redone
+let prepared = null; // { db, version, value }: emily.prepare's result for the current corpus
+let tastePath = null; // known once startup has read the settings
+let tasteBackupPath = null;
+let tasteText = null; // the taste file as last read or written: re-read when it changes
+let temperatureValue = 1;
+let selection = null; // { from, to }: ticks of the current score selected in the piano roll
 
 function loadmidi(path) {
   attempt(() => {
@@ -205,6 +234,8 @@ function need() {
       outlet(0, "streamat", NO_STEP);
       return;
     }
+    flow.playing = flow.state.phrases.length; // the last queued phrase has started
+    flow.since = Date.now();
     appendPhrase();
   });
 }
@@ -227,6 +258,7 @@ function startup(mode) {
     settingsPath = settingsFile.pathIn(folder);
     remembered = settingsFile.read(settingsPath);
     if (mode !== "corpus") restore();
+    loadTaste(folder);
     if (!remembered.corpus) return;
     try {
       loadCorpus(remembered.corpus);
@@ -248,7 +280,7 @@ function exportmidi(path) {
       return;
     }
     const sidecar = target.replace(/\.midi?$/i, ".json");
-    const settings = { beats: minBeats, form: useForm, signatures: useSignatures, stream: Boolean(flow), transpose: transposeBy };
+    const settings = { beats: minBeats, form: useForm, signatures: useSignatures, stream: Boolean(flow), transpose: transposeBy, temperature: temperatureValue, tasteRatings: memory.ratings };
     files.writeText(sidecar, JSON.stringify(provenanceOf.record(db, current.score, settings), null, 1) + "\n");
     outlet(0, "status", "exported", files.fileName(target), "and", files.fileName(sidecar));
   });
@@ -295,7 +327,202 @@ function clear() {
   outlet(0, "status", "queue", "cleared");
 }
 
+function like() {
+  rateNow(1);
+}
+
+function dislike() {
+  rateNow(-1);
+}
+
+function select(from, to) {
+  if (from === undefined || to === undefined || !(Number(to) > Number(from)) || !current) {
+    selection = null;
+    return;
+  }
+  selection = { from: Number(from), to: Number(to) };
+  const beats = Math.round((selection.to - selection.from) / current.score.ppq);
+  outlet(0, "status", "selected", ...barsOf(current.score, selection.from, selection.to).split(" "), "(" + beats, beats === 1 ? "beat):" : "beats):", "like", "or", "dislike", "rates", "them");
+}
+
+function temperature(t) {
+  temperatureValue = Math.max(0, Math.min(3, Math.round(Number(t) * 100) / 100 || 0));
+  save();
+  const words = temperatureValue === 0 ? "only Emily's favourite choices" : temperatureValue < 1 ? "less chance, more taste" : temperatureValue === 1 ? "as before Emily" : "more adventurous";
+  outlet(0, "status", "temperature", temperatureValue.toFixed(2) + ":", ...words.split(" "), "(from", "the", "next", "piece", "or", "phrase)");
+}
+
+function forget() {
+  attempt(() => {
+    syncTaste();
+    const was = memory.ratings;
+    if (tastePath) files.writeText(tasteBackupPath, JSON.stringify(memory) + "\n");
+    memory = emily.create();
+    tasteVersion++;
+    saveTaste();
+    outlet(0, "emily", ...emily.summary(memory).split(" "));
+    outlet(0, "status", "Emily", "forgot", "her", "taste", "(" + was, "ratings,", "kept", "in", settingsFile.BACKUP_NAME + ")");
+  });
+}
+
+// Emily's taste in the Max window, and ten pieces (from the current seed)
+// composed with and without it, compared.
+function taste() {
+  attempt(() => {
+    syncTaste();
+    const earlier = memory.sessions ? `; ${memory.sessions} earlier ${memory.sessions === 1 ? "session" : "sessions"}` : "";
+    post(`ml_midi: Emily's taste: ${emily.summary(memory, 6)}${earlier}\n`);
+    const { likes, dislikes } = emily.opinions(memory, 8, 0.05);
+    if (likes.length) post("  likes: " + likes.map(([f, w]) => `${emily.nameOf(f)} +${w.toFixed(2)}`).join(", ") + "\n");
+    if (dislikes.length) post("  dislikes: " + dislikes.map(([f, w]) => `${emily.nameOf(f)} ${w.toFixed(2)}`).join(", ") + "\n");
+    if (!db || !useForm || !memory.ratings) {
+      outlet(0, "status", ...("Emily: " + emily.summary(memory)).split(" "));
+      return;
+    }
+    const withTaste = [];
+    const without = [];
+    for (let k = 0; k < 10; k++) {
+      const options = { seed: clampSeed(currentSeed + k), beats: minBeats, signatures: useSignatures };
+      const a = forms.compose(db, { ...options, taste: tasteNow(), temperature: temperatureValue });
+      const b = forms.compose(db, options);
+      if (a.ok && b.ok) {
+        withTaste.push(a.piece);
+        without.push(b.piece);
+      }
+    }
+    if (!withTaste.length) throw new Error("no pieces to compare; try another seed");
+    const result = emily.compare(db, memory, withTaste, without);
+    const last = clampSeed(currentSeed + 9);
+    post(`  seeds ${currentSeed}-${last}, with her taste and without: ${comparisonText(result)}\n`);
+    // The panel's status line: the most liked and most disliked features only.
+    const top = [likes[0], dislikes[0]].filter(Boolean).map(([f]) => result.features.find(([g]) => g === f)).filter(Boolean);
+    const words = top.map(([f, a, b], k) => `${emily.nameOf(f)} ${Math.round(100 * a)}%${k === 0 ? " of beats" : ""} (${Math.round(100 * b)}%${k === 0 ? " without her taste" : ""})`);
+    const text = words.length ? words.join(", ") : comparisonText(result);
+    outlet(0, "status", ...(`Emily, seeds ${currentSeed}-${last}: ${text}; more in the Max window`).split(" "));
+  });
+}
+
+
 // ---- helpers (not messages)
+
+// Rates what is being heard (see like): learns, saves, and says what Emily learned.
+function rateNow(r) {
+  attempt(() => {
+    if (!db) throw new Error("load a corpus first");
+    if (!current || !current.score.provenance) throw new Error("Emily learns from composed music: compose a piece first");
+    const target = ratingTarget();
+    syncTaste();
+    const region = emily.regionOf(db, current.score, target.from, target.to);
+    if (!region.beats.length) throw new Error("nothing composed there to rate");
+    const changes = emily.rate(db, memory, region, r, { piece: current.name, what: target.what, at: new Date().toISOString() });
+    tasteVersion++;
+    saveTaste();
+    const learned = emily.describeChanges(changes);
+    const beats = region.beats.length + (region.beats.length === 1 ? " beat" : " beats");
+    const text = `${r > 0 ? "liked" : "disliked"} ${target.what} (${beats})${learned ? ": " + learned : ""}; ${memory.ratings} ${memory.ratings === 1 ? "rating" : "ratings"}`;
+    outlet(0, "status", ...text.split(" "));
+    outlet(0, "emily", ...emily.summary(memory).split(" "));
+    post(`ml_midi: Emily ${text}\n`);
+  });
+}
+rateNow.local = 1;
+
+// What a rating is for: the selection, or the stream phrase playing (the
+// one before it in its first moments), or the whole piece.
+function ratingTarget() {
+  const score = current.score;
+  if (selection) return { from: selection.from, to: selection.to, what: `${barsOf(score, selection.from, selection.to)} of ${current.name}` };
+  if (flow && flow.state.phrases.length) {
+    let number = Math.min(flow.playing || 1, flow.state.phrases.length);
+    if (number > 1 && Date.now() - (flow.since || 0) < GRACE_MS) number--;
+    const phrase = flow.state.phrases[number - 1];
+    return { from: phrase.startTick, to: phrase.endTick, what: `phrase ${number} of ${current.name}` };
+  }
+  return { from: -Infinity, to: Infinity, what: current.name };
+}
+ratingTarget.local = 1;
+
+// "bars 3-5" (or "bar 3") for the ticks from..to of a score.
+function barsOf(score, from, to) {
+  const barTicks = (score.meter[0] * score.ppq * 4) / score.meter[1];
+  const first = Math.floor(from / barTicks) + 1;
+  const last = Math.floor((to - 1) / barTicks) + 1;
+  return first === last ? `bar ${first}` : `bars ${first}-${last}`;
+}
+barsOf.local = 1;
+
+// Emily's taste, prepared for the current corpus (null: no opinions yet).
+function tasteNow() {
+  if (!db) return null;
+  syncTaste();
+  if (!prepared || prepared.db !== db || prepared.version !== tasteVersion) prepared = { db, version: tasteVersion, value: emily.prepare(db, memory) };
+  return prepared.value;
+}
+tasteNow.local = 1;
+
+// Reads Emily's memory at startup; a new session after one with ratings
+// lets her taste fade a little (emily-assoc's decay).
+function loadTaste(folder) {
+  tastePath = settingsFile.tastePathIn(folder);
+  tasteBackupPath = settingsFile.backupPathIn(folder);
+  tasteText = null;
+  syncTaste();
+  if (emily.decay(memory)) saveTaste();
+  outlet(0, "emily", ...emily.summary(memory).split(" "));
+}
+loadTaste.local = 1;
+
+// The file is the taste's true copy: if the other product (open at the
+// same time) has rated since, its ratings are read in before composing or
+// rating here.
+function syncTaste() {
+  if (!tastePath) return;
+  let text = "";
+  try {
+    text = files.exists(tastePath) ? files.readText(tastePath) : "";
+  } catch (e) {
+    return;
+  }
+  if (text === tasteText) return;
+  tasteText = text;
+  try {
+    memory = emily.normalize(text ? JSON.parse(text) : null);
+  } catch (e) {
+    memory = emily.create();
+  }
+  tasteVersion++;
+}
+syncTaste.local = 1;
+
+function saveTaste() {
+  if (!tastePath) return;
+  const text = JSON.stringify(memory) + "\n";
+  try {
+    files.writeText(tastePath, text);
+    tasteText = text;
+  } catch (e) {
+    outlet(0, "error", "can't", "save", "Emily's", "taste:", ...String(e.message).split(" "));
+  }
+}
+saveTaste.local = 1;
+
+// "her taste +0.41 a beat (+0.05 without); suspensions 11% of beats (5%), ..."
+function comparisonText(result) {
+  const signedFit = (v) => (v >= 0 ? "+" : "") + v.toFixed(2);
+  const parts = [`her taste ${signedFit(result.fit[0])} a beat (${signedFit(result.fit[1])} without)`];
+  result.features.forEach(([f, a, b], k) => parts.push(`${emily.nameOf(f)} ${Math.round(100 * a)}%${k === 0 ? " of beats" : ""} (${Math.round(100 * b)}%)`));
+  return parts.join("; ");
+}
+comparisonText.local = 1;
+
+// For the Max window, after a piece composed with a taste: how it compares
+// with the same seed composed without one.
+function tasteLine(piece, options) {
+  const plain = forms.compose(db, options);
+  if (!plain.ok) return null;
+  return `${piece.id}: ${comparisonText(emily.compare(db, memory, [piece], [plain.piece], 2))}`;
+}
+tasteLine.local = 1;
 
 function clampSeed(n) {
   return Math.max(1, Math.min(99999, Math.round(Number(n)) || 1));
@@ -328,7 +555,8 @@ function composeNow(atStartup) {
       return;
     }
     const options = { seed: currentSeed, beats: minBeats, signatures: useSignatures };
-    const result = useForm ? forms.compose(db, options) : composer.compose(db, options);
+    const liked = useForm ? tasteNow() : null;
+    const result = useForm ? forms.compose(db, { ...options, taste: liked, temperature: temperatureValue }) : composer.compose(db, options);
     if (!result.ok) {
       if (useForm && !result.stats.tried.length) {
         outlet(0, "error", "no", "chorale", "is", minBeats + "+", "beats", "long;", "lower", "beats");
@@ -344,6 +572,10 @@ function composeNow(atStartup) {
     outlet(0, "status", ...text.split(" "));
     for (const line of signatureLines(piece)) post(line + "\n");
     post(qualityLine(piece) + "\n");
+    if (liked) {
+      const line = tasteLine(piece, options);
+      if (line) post(line + "\n");
+    }
   });
 }
 composeNow.local = 1;
@@ -357,8 +589,11 @@ function startStream() {
     provenance: [],
     fermatas: [],
     name: "emi-" + currentSeed,
+    playing: 1, // the phrase playing (M9: what "like" rates)
+    since: Date.now(),
   };
   current = null;
+  selection = null;
   outlet(0, "restart");
   followMeter(db.meter);
   outlet(0, "coll", "clear");
@@ -372,8 +607,9 @@ function appendPhrase() {
   const state = flow.state;
   const number = state.phrases.length + 1;
   const last = phrasesWanted > 0 && number >= phrasesWanted;
-  let result = streams.next(db, state, { seed: currentSeed, last, signatures: useSignatures });
-  if (!result.ok && last) result = streams.next(db, state, { seed: currentSeed, signatures: useSignatures }); // end later instead
+  const options = { seed: currentSeed, signatures: useSignatures, taste: tasteNow(), temperature: temperatureValue };
+  let result = streams.next(db, state, { ...options, last });
+  if (!result.ok && last) result = streams.next(db, state, options); // end later instead
   if (!result.ok) {
     outlet(0, "streamat", NO_STEP);
     outlet(0, "error", "the", "stream", "ran", "out", "after", "phrase", number - 1 + ";", "try", "another", "seed", "or", "more", "chorales");
@@ -472,6 +708,7 @@ function restore() {
   if (remembered.stream !== undefined) streaming = Boolean(remembered.stream);
   if (remembered.phrases !== undefined) phrasesWanted = Math.max(0, Math.min(64, Math.round(remembered.phrases)));
   if (remembered.transpose !== undefined) transposeBy = Math.max(-12, Math.min(12, Math.round(remembered.transpose)));
+  if (remembered.temperature !== undefined) temperatureValue = Math.max(0, Math.min(3, Number(remembered.temperature) || 0));
   outlet(0, "setting", "seed", currentSeed);
   outlet(0, "setting", "beats", minBeats);
   outlet(0, "setting", "form", useForm ? 1 : 0);
@@ -480,6 +717,7 @@ function restore() {
   outlet(0, "setting", "stream", streaming ? 1 : 0);
   outlet(0, "setting", "phrases", phrasesWanted);
   outlet(0, "setting", "transpose", transposeBy);
+  outlet(0, "setting", "temperature", temperatureValue);
   for (const [name, values] of Object.entries(remembered.host || {})) {
     if (Array.isArray(values)) outlet(0, "setting", name, ...values);
   }
@@ -497,6 +735,7 @@ function save() {
   remembered.stream = streaming ? 1 : 0;
   remembered.phrases = phrasesWanted;
   remembered.transpose = transposeBy;
+  remembered.temperature = temperatureValue;
   try {
     settingsFile.write(settingsPath, remembered);
   } catch (e) {
@@ -527,6 +766,7 @@ showChorale.local = 1;
 // notes hanging and the new music starts on a bar line.
 function show(score, name, chorale) {
   flow = null;
+  selection = null;
   const { work } = ingest.quantize(score);
   const shown = transposed(work, transposeBy);
   current = { base: work, score: shown, name, chorale };
@@ -712,6 +952,7 @@ function draw(score, from = 0, to = score.lengthTicks) {
   }
   for (const [tick, fresh] of parallelsFor(score, from, to)) if (tick >= from && tick < to) outlet(0, "view", "parallel", tick, fresh);
   for (const [tick, text] of sourcesFor(score)) if (tick >= from && tick < to) outlet(0, "view", "source", tick, ...text.split(" "));
+  if (selection && selection.to > from && selection.from < to) outlet(0, "view", "selection", selection.from, selection.to);
   outlet(0, "view", "done");
 }
 draw.local = 1;
