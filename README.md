@@ -13,13 +13,14 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M2 passed in Max; waiting on the Live checks
-([M2 checklist](docs/M2-checklist.md)).** Both products load Bach chorales,
-play them in C major or their own key, and (in Live) write them as clips
-([M0 results](docs/M0-spikes.md), [M1 results](docs/M1-checklist.md)). M2
-composes new chorales by recombining beats from the whole corpus, shows them
-in a piano roll colored by source chorale, and exports them as MIDI files.
-The full plan and milestones are in [PLAN.md](PLAN.md).
+**Status: M2 done.** Both products load Bach chorales, play them in C major
+or their own key, and compose new chorales by recombining beats from the
+whole corpus. They show them in a piano roll colored by source chorale,
+export them as MIDI files, and (in Live) write them as clips
+([M0](docs/M0-spikes.md), [M1](docs/M1-checklist.md),
+[M2](docs/M2-checklist.md) results). Next is M3: phrase structure, so pieces
+have planned cadences instead of wandering. The full plan and milestones are
+in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
 

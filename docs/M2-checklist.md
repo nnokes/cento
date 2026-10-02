@@ -1,6 +1,6 @@
 # M2 checklist: the first recombined chorales
 
-## Result: Max version passed; Live passed, with one bug to re-test
+## Result: M2 passed (macOS, Max 9, Live 12)
 
 | Check | Max version | Live version |
 |---|---|---|
@@ -10,8 +10,12 @@
 | The composed piece plays: no broken voices at seams, ends on a cadence | ✅ | ✅ |
 | **export midi**: `File` writes a `.mid` (Max), which plays in Live | ✅ | ✅ |
 | **writeclips** writes a composed piece as clips | n/a | ✅ |
-| Each voice plays on its own track (see section 3) | n/a | |
+| Each voice plays on its own track (fixed and re-tested; see section 3) | n/a | ✅ |
 | 142 chorales, 20 seeds: every piece keeps every rule | ✅ (`tests/corpus.test.js`) | |
+
+The checklist below is kept as a record and for re-testing. One bug turned up
+in Live (voices doubled onto the wrong tracks); section 3 describes it and its
+fix.
 
 M2 composes new chorales by EMI's simplest method, *naive recombination*:
 
@@ -48,13 +52,13 @@ certain to be a final cadence. That is what M3 (form) fixes.
   keeps the rules. Reading the corpus takes about a quarter of a second in
   Node; composing takes a few milliseconds.
 
-**Not yet verified:**
+**Verified in Max and Live by these checks** (only simulated before):
 
 - Max's `Folder` object listing files inside `[v8]`, and the path
   `[opendialog fold]` produces.
 - Max's `File` object writing bytes, and the path `[savedialog]` produces.
 - The piano roll in `[v8ui]` (Max's drawing calls, not the simulated ones).
-- The wider panels: the Max patch and the Live device now show the piano roll
+- The wider panels: the Max patch and the Live device show the piano roll
   next to the controls.
 
 ---

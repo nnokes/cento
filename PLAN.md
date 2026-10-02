@@ -977,14 +977,17 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M2 passed in Max; waiting on the Live checks
-([checklist](docs/M2-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M2 done; M3 next.** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
-M2 composes 32-beat chorales from the full corpus (all 142 major-key
-chorales in 4/4) for every seed tried, with every rule checked by
-`tests/corpus.test.js`.
+M2 passed in both products ([results](docs/M2-checklist.md)): new chorales
+recombined from all 142 major-key chorales in 4/4 compose for every seed
+tried, keep every rule (`tests/corpus.test.js`), show in the piano roll, play
+in Max and in Live (as clips or through the voice devices), and export as
+`.mid`. The Live checks found one bug, now fixed: voice devices pick their
+voice from the track's name, and the brain plays through them only with
+**Play through voices** on.
 
 | # | Milestone | Done when |
 |---|-----------|-----------|
