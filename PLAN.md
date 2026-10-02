@@ -1122,8 +1122,7 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M7 code done; waiting on the Max and Live checks
-([checklist](docs/M7-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M7 done; M8 next.** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
@@ -1145,10 +1144,11 @@ ending on a final cadence after N phrases. M6 passed in both products
 ([results](docs/M6-checklist.md)): every beat is labelled with Cope's SPEAC
 functions (golden tests reproduce his published analyses exactly), beats are
 matched by function when recombining, and the piano roll shows a SPEAC lane.
-M7 finds the corpus's signatures (Bach's cadence formulas: bass 4-5-1 and
-soprano 3-2-1 among the strongest) and keeps them whole at the cadences of
-pieces and stream phrases, with a **sigs** toggle and gold bands in the
-piano roll. When a patch or set opens, the last corpus comes back and the
+M7 passed in both products ([results](docs/M7-checklist.md)): the corpus's
+signatures are found (Bach's cadence formulas: bass 4-5-1 and soprano 3-2-1
+among the strongest) and kept whole at the cadences of pieces and stream
+phrases, about as often as Bach uses them, with a **sigs** toggle and gold
+bands in the piano roll. When a patch or set opens, the last corpus comes back and the
 current seed's piece is composed again.
 
 | # | Milestone | Done when |

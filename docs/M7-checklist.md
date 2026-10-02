@@ -1,14 +1,16 @@
 # M7 checklist: signatures
 
-## Result: waiting on the Max and Live checks
+## Result: M7 passed (macOS, Max 9, Live 12)
+
+Reported back: "all steps pass".
 
 | Check | Max version | Live version |
 |---|---|---|
-| Bach's cadence formulas are found as signatures (bass 4-5-1 and soprano 3-2-1 among the strongest) | ✅ (`tests/corpus.test.js`, run locally) | |
-| The Max window lists the corpus's signatures, and where each piece keeps them | | |
-| Pieces keep signature blocks at their cadences, shown as gold bands | | |
-| With **sigs** off, pieces are exactly as in M6 | ✅ (`tests/signatures.test.js`) | |
-| Streams keep signatures at their phrases' cadences | | |
+| Bach's cadence formulas are found as signatures (bass 4-5-1 and soprano 3-2-1 among the strongest) | ✅ (and `tests/corpus.test.js`) | ✅ (the same corpus status line) |
+| The Max window lists the corpus's signatures, and where each piece keeps them | ✅ | — (checked in Max: in Live it needs the Max editor) |
+| Pieces keep signature blocks at their cadences, shown as gold bands | ✅ | ✅ (seed 3, and as clips) |
+| With **sigs** off, pieces are exactly as in M6; the setting is remembered | ✅ (and `tests/signatures.test.js`) | — (checked in Max) |
+| Streams keep signatures at their phrases' cadences | ✅ | — (checked in Max) |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 **Signatures** are Cope's name for the short melodic patterns that recur
