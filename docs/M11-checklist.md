@@ -53,8 +53,8 @@ used) builds and composes nothing: `corpus unchanged: 295 chorales`.
 file, shared by both products. Your old corpus becomes the first folder of
 the list the first time you open the patch.
 
-This is the groundwork for M12: a second style (Palestrina) will be another
-folder on the list.
+This is also the groundwork for a second style (Palestrina, M13, on hold): it
+will be another folder on the list.
 
 ---
 

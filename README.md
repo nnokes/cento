@@ -22,7 +22,8 @@ This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
 **Status: M11 code done; waiting on its Max and Live checks
-([M11](docs/M11-checklist.md) checklist). M9 and M10 passed in both
+([M11](docs/M11-checklist.md) checklist). Next, M12: free downloads for
+other people on GitHub's Releases page ([how](docs/releasing.md)). M9 and M10 passed in both
 products ([M9](docs/M9-checklist.md), [M10](docs/M10-checklist.md)
 results); M8 passed in the Max version and waits on its Live checks
 ([M8](docs/M8-checklist.md) checklist).**
@@ -181,7 +182,8 @@ code/max/     Max-only helpers used by the wrappers (files, Live clips)
 tests/        node --test, including the bundles in a simulated [v8] context
 tools/        build, path check, git hook, chorale export, and maxgen.py,
               which writes every patch and device (the master copy)
-docs/         milestone checklists; controls.md: what every control does
+docs/         milestone checklists; controls.md: what every control does;
+              releasing.md: how to publish a version for others
 ```
 
 Your working data (corpus, analyzed databases, generated music) lives in

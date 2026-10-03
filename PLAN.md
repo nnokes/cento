@@ -167,6 +167,9 @@ Emily's memory. Taste Emily learns in one product carries over to the other.
 
 ### Shipping the Max version
 
+*Planned for M12* (§8, "M12 in detail"): the app, in a zip on GitHub
+Releases, unsigned at first.
+
 - **As a patch**: anyone with Max 9 clones the repo and opens
   `patchers/cento.maxpat`. No search-path setup is needed.
 - **As a macOS app**: Max can build a patch into a standalone application
@@ -997,10 +1000,10 @@ there's no porting step at the end. These are the things to handle:
 | **Max version inside Live** | `[v8]` needs Max 9. Recent Live 12 releases bundle Max 9 (12.2.1 onward, according to Ableton's release notes); earlier 12.x releases bundled Max 8.6. **To check yours**, open any device in the Max editor and choose *Max → About Max*. If it shows 8.x, either update Live or point Live at your own Max 9 installation (*Settings → File & Folder → Max Application*). Anyone you share the devices with needs the same. |
 | **Live edition** | Live Suite, or Standard plus the Max for Live add-on. |
 | **Freezing and `require()`** | Frozen devices are known to break when one JS file `require()`s another: Max can miss the nested dependency, and the error only shows when the editor is open. The fix: keep `code/lib` modular for development and tests, but **load only bundles in Max**. `npm run build` (`tools/build.js`, no dependencies) produces one self-contained `patchers/*.bundle.js` per wrapper, and every patch references those, during development too. Max never runs `require()` at all. The M0 spike checks this: freeze the device, copy it to a folder with no project files, and load it in a fresh set with the editor closed. |
-| **Starter database** | Freeze a prebuilt `bach-chorales.json` into `cento.brain`, so the device makes music straight away with no setup. User databases and Emily's memory still live in `~/Documents/cento/`. |
+| **Starter database** | Freeze a prebuilt `bach-chorales.json` into `cento.brain`, so the device makes music straight away with no setup. User databases and Emily's memory still live in `~/Documents/cento/`. *Planned for M12*: the release ships the corpus itself in a `Cento` folder (if its terms allow), and a first run adds it. |
 | **Analysis inside Live** | Analysis runs in chunks (`Task`) with a progress bar. Live's audio isn't affected, but Max device UIs are sluggish while it runs, and the engine can't compose the next phrase, so **don't analyze while performing**. 20 chorales should take seconds; a few hundred works, perhaps a minute. Node stays a development tool for bulk runs and tests. |
 | **Per-set state** | Numeric controls are `live.*` parameters, so they are saved with the set and as device presets (`.adv`). Non-numeric state, such as which database file is loaded, needs a short spike: either store it with the set, or fall back to "last used database" in the user folder. |
-| **Distribution** | Freeze both devices. Put them in a folder, or build a **Live Pack** with a demo set (five tracks, devices already in place). |
+| **Distribution** | Freeze both devices. Put them in a folder, or build a **Live Pack** with a demo set (five tracks, devices already in place). *Planned for M12* (§8, "M12 in detail"): a zip on GitHub Releases with the frozen devices, a demo set and the starter corpus; a Live Pack later. |
 
 In the Live version, Live's instruments, mixer and effects make the sound, and
 the devices only produce MIDI. The Max version hosts its own instruments
@@ -1365,10 +1368,11 @@ milestones raise the quality without changing the plumbing.
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
 **Current status: M11 code done; waiting on its Max and Live checks
-([checklist](docs/M11-checklist.md)). M9 and M10 passed in both products;
-M8 passed in the Max version and waits on its Live checks and the third
+([checklist](docs/M11-checklist.md)). Next: M12, shipping Cento to others
+for free (below); the second style (Palestrina, now M13) is on hold. M9 and
+M10 passed in both products; M8 passed in the Max version and waits on its Live checks and the third
 listening test's score ([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
-its freeze test is deferred to M13 (shipping). M1 passed in both products
+its freeze test is deferred to M12 (shipping). M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
 M2 passed in both products ([results](docs/M2-checklist.md)): new chorales
@@ -1417,9 +1421,67 @@ playhead, the false-start fix and hover help on every control.
 | **M9** | **Emily Tier 1, taste**: rating buttons (mappable), association weights, temperature | After about 10 rating sessions, output measurably shifts toward the liked features |
 | **M10** | **Emily Tier 2, memory and drift**: accept-to-database, variation operators, mix and novelty, snapshots | Accepted variants appear in later output; a rollback restores an earlier taste exactly |
 | **M11** | **Corpora**: a corpus window in both products: folders of chorales, each switched on or off (and **only**, **remove**, **add folder**, **rescan**), combined into one corpus: each chorale once, one meter, in file-name order; remembered between sessions | Switching folders on and off changes what pieces are made from, in both products; two folders compose exactly as one folder holding the same chorales |
-| **M12** | **A second style: Palestrina**: a style profile per folder (voices, beat unit, modes, how cadences are found); export of music21's Palestrina masses; cadences found from their formulas instead of fermatas; modal keys; SPEAC, signatures and quality checks re-tuned; Bach and Palestrina folders on together | Palestrina pieces keep the style's rules (ranges, dissonance prepared and resolved, cadences where the formulas fall), a blind A/B test against real Palestrina, and with both styles on, the joins between them are reported |
-| **M13** | **Ship both (for personal use)**: **Max version** as a Max project and an unsigned macOS app for your own Mac; **Live version** as frozen `cento.brain` + `cento.voice` with the starter database, presets and a demo set. Tag a release on GitHub. *Later, if you share them*: code signing and notarization, a Live Pack, and clean-machine tests. | The app opens and plays through `[vst~]`; the demo set plays when you press Play; the parity checklist passes in both; a fresh clone plus the README steps rebuilds everything; the freeze test deferred from M0 (d) passes. |
+| **M12** | **Ship to others (free)**: two downloads on GitHub Releases, built on your Mac. **Cento for Live**: frozen `cento.brain` + `cento.voice`, a demo set and the starter corpus. **Cento for Mac**: a standalone app (runs without Max), unsigned at first. Each user's files in a user folder, not `patchers/`; a packaging script; a one-page read-me; a release guide ([docs/releasing.md](docs/releasing.md)). Details below. | Someone with a Mac and Live 12 (or no Max at all, for the app) downloads a zip, follows only the read-me, and hears a piece within five minutes, without git, Python, Node or `tools/`; tried on a clean machine; the freeze test deferred from M0 (d) passes. |
+| **M13** | **A second style: Palestrina** *(on hold)*: a style profile per folder (voices, beat unit, modes, how cadences are found); export of music21's Palestrina masses; cadences found from their formulas instead of fermatas; modal keys; SPEAC, signatures and quality checks re-tuned; Bach and Palestrina folders on together | Palestrina pieces keep the style's rules (ranges, dissonance prepared and resolved, cadences where the formulas fall), a blind A/B test against real Palestrina, and with both styles on, the joins between them are reported |
 | **M14** | **Stretch**: Emily Tier 3a (text), Live 12 MIDI Tool (§5.5), Alice-style continuation from a MIDI keyboard | — |
+
+### M12 in detail: shipping Cento to others (free)
+
+**What people download.** Each release on GitHub's Releases page has two zips
+attached (GitHub adds the source code as a zip too; that one is for
+developers). Nobody needs git, Python, Node, or anything in `tools/`.
+
+| Download | Contents | What they do | What they need |
+|---|---|---|---|
+| **Cento for Live** | frozen `cento.brain.amxd` and `cento.voice.amxd`; a demo set (five tracks: the brain, and Soprano, Alto, Tenor and Bass with Live's own instruments and **Play through voices** on); the `Cento` folder (starter corpus); `Read me first`; `LICENSE` | unzip; put the `Cento` folder in Documents; open the demo set; press Play | Live 12 Suite (or Standard + Max for Live), with Max 9 (12.2.1 onward bundles it) |
+| **Cento for Mac** | `Cento.app` (built from `cento.maxpat`; it plays through the Mac's built-in AU DLS Synth); the `Cento` folder; `Read me first`; `LICENSE` | unzip; move the app to Applications and the folder to Documents; open the app (the first time: right-click, Open); press **play** | macOS; no Max |
+
+What isn't shipped: `tools/`, `tests/`, `code/` (frozen devices and the app
+carry the bundles), `docs/`, `PLAN.md`, `.github/`, `package.json`, and your
+own settings and Emily files.
+
+**The work, in order.**
+1. **The starter corpus.** The biggest hurdle today is installing Python and
+   music21 to export the chorales. First confirm that music21's Bach chorale
+   files may be redistributed (§6.1), and record the answer there. If they
+   may, the `Cento` folder ships `corpus/` (the 142 major chorales, MIDI and
+   JSON sidecars) and `corpus-both/`, and a first run with no corpora adds
+   `Documents/Cento/corpus` by itself. If not, find an encoding that may be
+   shared, or keep the export as an optional step and ship without one.
+2. **A user folder.** Settings, Emily's taste, her works and snapshots live
+   in `patchers/` today; a frozen device or an app has no writable
+   `patchers/`. They move to `~/Documents/Cento/`. Max's `File` can't make
+   folders, so the folder comes in the zip (the read-me says where to put
+   it); with no folder there, the status line says so, and nothing is
+   saved. Files in `patchers/` from development carry over once, as the
+   `ml_midi` files did. To decide at the start: whether a "choose your
+   Cento folder" dialog is worth it as a fallback.
+3. **Frozen devices and the freeze test** (M0 (d)): freeze both devices in
+   Max, copy them to a folder with nothing else, load them in a new set
+   with the editor closed. Then the demo set, saved with *Collect All and
+   Save*.
+4. **The app**: *File > Build Collective / Application* in Max, from
+   `cento.maxpat`. Unsigned at first: the read-me explains right-click, Open.
+   Signing and notarization (Apple Developer Program, $99 a year) can come
+   later, so it opens with no warning.
+5. **A packaging script** (`npm run package`, on your Mac): makes
+   `dist/Cento-for-Live-vX.Y.Z.zip` and `dist/Cento-for-Mac-vX.Y.Z.zip` from
+   the frozen devices, the demo set, the app, the `Cento` folder, the read-me
+   and the licence. `dist/` is git-ignored. CI can't do steps 3 and 4 (they
+   need Max on a Mac); everything else it can check.
+6. **The read-me** (one page, for people who aren't developers): what Cento
+   is, what to install, first piece in five steps, where files go, how to
+   remove it, known issues, and that it's independent of David Cope.
+7. **A clean-machine test**: a fresh user account on your Mac (or a friend's
+   Mac), following only the read-me.
+8. **The release**: tag `main` (`v0.1.0`, marked as a pre-release: a beta
+   for a few people first), attach the zips, publish. Then a **Download**
+   link at the top of the README. Every later release follows
+   [docs/releasing.md](docs/releasing.md).
+
+**Later, if it's wanted**: a signed app; a Live Pack (one file that installs
+the devices and the demo set into Live's browser); Windows (Max and Live run
+there, but nothing has been tried); Max's Package Manager.
 
 **First corpus**: about 20 Bach chorales in 4/4, major mode, with each
 voice on its own track. The `music21` corpus has all of them, and

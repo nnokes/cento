@@ -7,7 +7,7 @@
 | (a) `hello` prints `627 2 527 981`, same as `npm test` | ✅ | ✅ |
 | (b) `testclip` writes one 2-bar clip per voice track | n/a | ✅ |
 | (c) `pattern` + Play: in sync, clean stop, no hanging notes | ✅ (AU DLS Synth) | ✅ |
-| (d) frozen device works on its own | n/a | deferred to M13 (shipping; M11 when this was written) |
+| (d) frozen device works on its own | n/a | deferred to M12 (shipping; numbered M11 when this was written) |
 
 Fixed along the way (details in PLAN.md and the commit history):
 
@@ -172,12 +172,12 @@ notes, report it. The fix is to store empty steps in the queue.
 
 ## (d) A frozen device works on its own
 
-**Deferred to M13** (shipping; numbered M11 when this was written), where frozen devices are needed. Until then
-the devices run unfrozen from `patchers/`. The steps below are kept for M13.
+**Deferred to M12** (shipping; numbered M11 when this was written), where frozen devices are needed. Until then
+the devices run unfrozen from `patchers/`. The steps below are kept for M12.
 
 *Freezing* packs everything a device uses (its patches and scripts) into the
 `.amxd` file itself, so it runs without the repo or any search-path setup.
-That's how the Live version will ship (M13). It's tested now because frozen
+That's how the Live version will ship (M12). It's tested now because frozen
 devices are known to miss JavaScript files loaded with `require()`, which is
 why every script is a single bundle.
 
