@@ -113,6 +113,7 @@ test("each bundle exposes exactly its documented messages", () => {
     "cadence", "clear", "done", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "selection", "signature", "source", "speac",
   ]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
+  assert.deepEqual(loadBundle("emi.text").handlers(), ["alert", "clear", "onresize", "paint", "text"]);
 });
 
 // Convention: one inlet and one outlet per [v8] wrapper. If a script fails to
@@ -127,6 +128,7 @@ test("[v8] bundles have one inlet and one outlet (the view's sends selections, M
   assert.deepEqual(counts("emi.core"), [1, 1, 1]);
   assert.deepEqual(counts("emi.view"), [1, 1, 1]);
   assert.deepEqual(counts("emi.voice"), [1, 1, 1]);
+  assert.deepEqual(counts("emi.text"), [1, 0, 1]);
 });
 
 // ---------------------------------------------------------------- voice: the track's name picks the voice
@@ -941,4 +943,41 @@ test("emily: both products open at once share one taste: each reads the other's 
   assert.match(lastStatus(live.send("dislike")).join(" "), /; 2 ratings$/, "the Live version counts the Max version's like");
   assert.match(lastStatus(max.send("like")).join(" "), /; 3 ratings$/);
   assert.equal(tasteIn(folder).ratings, 3);
+});
+
+// ---------------------------------------------------------------- the status boxes
+
+test("text box: draws the words as written (no backslashes, no quoted numbers), wrapped and fitted", () => {
+  const box = loadBundle("emi.text");
+  const g = box.context.mgraphics;
+  g.size = [288, 55]; // as in the panel
+  const lines = () => g.calls.filter(([name]) => name === "show_text").map(([, text]) => text);
+  box.send("text", "liked", "emi-28", "(60", "beats):", "+", "a", "high", "melody,", "-", "a", "low", "melody;", "10", "ratings");
+  g.calls.length = 0;
+  box.send("paint");
+  assert.equal(lines().join(" "), "liked emi-28 (60 beats): + a high melody, - a low melody; 10 ratings");
+  assert.ok(lines().length >= 2, "wrapped to the box's width");
+  const sizes = g.calls.filter(([name]) => name === "set_font_size").map(([, n]) => n);
+  assert.equal(sizes.at(-1), 12, "short enough for the largest size");
+
+  // Too long for 12 px: the font shrinks; far too long: cut with "...".
+  box.send("text", ...Array.from({ length: 60 }, (_, k) => "word" + k));
+  g.calls.length = 0;
+  box.send("paint");
+  assert.ok(g.calls.filter(([name]) => name === "set_font_size").at(-1)[1] < 12);
+  box.send("text", ...Array.from({ length: 400 }, (_, k) => "word" + k));
+  g.calls.length = 0;
+  box.send("paint");
+  assert.match(lines().at(-1), / \.\.\.$/);
+
+  // An error: "error:" first, in red.
+  box.send("alert", "load", "a", "corpus", "first");
+  g.calls.length = 0;
+  box.send("paint");
+  assert.deepEqual(lines(), ["error: load a corpus first"]);
+  assert.ok(g.calls.some(([name, r, gr]) => name === "set_source_rgba" && r === 1 && gr === 0.45));
+  box.send("clear");
+  g.calls.length = 0;
+  box.send("paint");
+  assert.deepEqual(lines(), []);
 });

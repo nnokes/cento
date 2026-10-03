@@ -379,7 +379,7 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "prepend set",
+					"text": "prepend text",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -388,7 +388,7 @@
 					"patching_rect": [
 						20.0,
 						340.0,
-						91.0,
+						98.0,
 						22.0
 					],
 					"id": "obj-15"
@@ -396,19 +396,24 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"fontsize": 9.0,
+					"maxclass": "v8ui",
+					"filename": "emi.text.bundle.js",
+					"textfile": {
+						"filename": "emi.text.bundle.js",
+						"flags": 0,
+						"embed": 0,
+						"autowatch": 1
+					},
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": [],
+					"parameter_enable": 0,
+					"border": 0,
 					"patching_rect": [
 						20.0,
 						380.0,
 						118.0,
-						22.0
+						51.0
 					],
 					"presentation": 1,
 					"presentation_rect": [

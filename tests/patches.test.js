@@ -219,8 +219,9 @@ test("emily.panel (M9): like and dislike are mappable buttons; temperature is sa
   }
   const [route] = p.find("route emily setting");
   const [[setText]] = p.from(route.id, 0);
+  assert.equal(setText.text, "prepend text");
   const [[text]] = p.from(setText.id);
-  assert.equal(text.maxclass, "message", "emily <text> shows in the panel");
+  assert.equal(text.filename, "emi.text.bundle.js", "emily <text> shows in the panel, as written");
   const [[settings]] = p.from(route.id, 1);
   assert.equal(settings.text, "route temperature");
   const [[set]] = p.from(settings.id, 0);
@@ -242,6 +243,20 @@ test("emi.panel: each saved control sends its message, and shows restored values
     assert.equal(set.text, "prepend set", name);
     assert.deepEqual(p.from(set.id).map(([b]) => b.id), [control.id], `setting ${message} reaches ${name}`);
   });
+});
+
+// A message box shows "melody\," and "10" in quotes; the status boxes draw
+// the text as the engine wrote it.
+test("emi.panel: the status line shows status and errors in a text box ([v8ui] emi.text)", () => {
+  const p = patchFile("emi.panel.maxpat");
+  const [route] = p.find("route status error setting");
+  const [[status]] = p.from(route.id, 0);
+  const [[error]] = p.from(route.id, 1);
+  assert.deepEqual([status.text, error.text], ["prepend text", "prepend alert"]);
+  const [[box]] = p.from(status.id);
+  assert.deepEqual([box.maxclass, box.filename], ["v8ui", "emi.text.bundle.js"]);
+  assert.deepEqual(p.from(error.id).map(([b]) => b.id), [box.id]);
+  assert.equal([...p.boxes.values()].filter((b) => b.maxclass === "message" && b.text === "").length, 0, "no empty message box left as a display");
 });
 
 test("startup: Max restores everything after loading; Live only reloads the corpus once the device is ready", () => {

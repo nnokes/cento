@@ -94,6 +94,11 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        The corpus reloads as before:
        `corpus 142 chorales (major), 8578 beats, 18% dead ends, 76 signatures`.
 
+       The status line and Emily's box show text plainly: commas and
+       semicolons without a backslash before them (not `melody\,`), and
+       numbers without quotes (not `"10" ratings`). Both boxes now draw their
+       text themselves; a long line wraps and gets a smaller font.
+
        Nothing plays until you turn **Play** on, even if the patch was
        playing when you last closed it. (Before this fix it could start by
        itself: Max's transport belongs to Max, not to the patch, so it kept
