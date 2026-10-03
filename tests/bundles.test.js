@@ -110,10 +110,11 @@ test("each bundle exposes exactly its documented messages", () => {
     "transpose", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), [
-    "cadence", "clear", "done", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "selection", "signature", "source", "speac",
+    "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "selection", "signature", "source", "speac",
   ]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
   assert.deepEqual(loadBundle("emi.text").handlers(), ["alert", "clear", "onresize", "paint", "text"]);
+  assert.deepEqual(loadBundle("emi.taste").handlers(), ["clear", "compare", "dislike", "done", "like", "onresize", "paint", "pair", "rating"]);
 });
 
 // Convention: one inlet and one outlet per [v8] wrapper. If a script fails to
@@ -129,6 +130,7 @@ test("[v8] bundles have one inlet and one outlet (the view's sends selections, M
   assert.deepEqual(counts("emi.view"), [1, 1, 1]);
   assert.deepEqual(counts("emi.voice"), [1, 1, 1]);
   assert.deepEqual(counts("emi.text"), [1, 0, 1]);
+  assert.deepEqual(counts("emi.taste"), [1, 0, 1]);
 });
 
 // ---------------------------------------------------------------- voice: the track's name picks the voice
@@ -660,6 +662,12 @@ test("core: 'writeclips' writes a composed piece; 'testclip' writes the test phr
 
 // ---------------------------------------------------------------- view
 
+// What a roll drew, leaving out its bar numbers and C labels (and the C
+// lines, 1 px high): the texts, and the rectangles.
+const isLabel = (text) => /^\d+$/.test(text) || /^[A-G]#?-?\d+$/.test(text);
+const texts = (g) => g.calls.filter(([name]) => name === "show_text").map(([, text]) => text).filter((text) => !isLabel(text));
+const boxes = (g) => g.calls.filter(([name, , , , h]) => name === "rectangle" && h !== 1);
+
 test("view: the SPEAC lane, one block per beat with its letter, under the notes", () => {
   const view = loadBundle("emi.view");
   const g = view.context.mgraphics;
@@ -669,8 +677,8 @@ test("view: the SPEAC lane, one block per beat with its letter, under the notes"
   view.send("done");
   g.calls.length = 0;
   view.send("paint");
-  assert.deepEqual(g.calls.filter(([name]) => name === "show_text").map(([, text]) => text), ["P", "E", "A", "C"]);
-  const [, , noteY, , noteHeight] = g.calls.filter(([name]) => name === "rectangle")[1];
+  assert.deepEqual(texts(g), ["P", "E", "A", "C"]);
+  const [, , noteY, , noteHeight] = boxes(g)[1];
   assert.ok(noteY + noteHeight <= 169 - 12, "notes stay above the lane");
 });
 
@@ -684,8 +692,8 @@ test("view: a signature block is a band behind the notes, with its name (shorten
   view.send("done");
   g.calls.length = 0;
   view.send("paint");
-  assert.deepEqual(g.calls.filter(([name]) => name === "show_text").map(([, text]) => text), ["soprano 3-2-1", "B 4-5-1"]);
-  const rectangles = g.calls.filter(([name]) => name === "rectangle");
+  assert.deepEqual(texts(g), ["soprano 3-2-1", "B 4-5-1"]);
+  const rectangles = boxes(g);
   const [, x, , w, h] = rectangles[1];
   assert.ok(Math.abs(x - 45) < 1 && Math.abs(w - 135) < 1 && h === 169, "the first band, over the whole roll");
   const noteAt = g.calls.findIndex((c) => c[0] === "rectangle" && Math.abs(c[1]) < 1 && c[3] < 50);
@@ -736,7 +744,7 @@ test("view: a start tick shows only the end of a long score (a stream's last phr
   view.send("done");
   g.calls.length = 0;
   view.send("paint");
-  const [, x, , w] = g.calls.filter(([name]) => name === "rectangle")[1];
+  const [, x, , w] = boxes(g)[1];
   assert.ok(Math.abs(x) < 1 && Math.abs(w - 179) < 1, "the note fills the left half");
 });
 
@@ -760,7 +768,7 @@ test("view: draws one rectangle per note, plus bar lines and seams", () => {
 
   g.calls.length = 0;
   view.send("paint");
-  const rectangles = g.calls.filter(([name]) => name === "rectangle");
+  const rectangles = boxes(g);
   assert.equal(rectangles.length, 1 + 3); // background + notes
   const [, x, , w] = rectangles[3];
   assert.ok(Math.abs(x - 180) < 1 && Math.abs(w - 179) < 1, "the last note spans the right half");
@@ -768,6 +776,42 @@ test("view: draws one rectangle per note, plus bar lines and seams", () => {
   assert.ok(colors.includes("1,0.6,0.15,0.9"), "an orange seam");
   const triangle = g.calls.filter(([name, cx]) => name === "move_to" && Math.abs(cx - (270 - 4)) < 1);
   assert.equal(triangle.length, 1, "a cadence mark at 3/4 of the width");
+});
+
+test("view: bars are numbered and each C is named, in larger letters in the window's roll", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics;
+  view.send("clear", 8 * Q, 55, 74, 4 * Q, 0, Q); // two bars, G3 to D5
+  view.send("note", 0, Q, 60, 0);
+  view.send("done");
+  g.calls.length = 0;
+  view.send("paint");
+  const labels = g.calls.filter(([name]) => name === "show_text").map(([, text]) => text);
+  assert.deepEqual(labels, ["C4", "C5", "1", "2"]);
+  const sizes = () => g.calls.filter(([name]) => name === "set_font_size").map(([, n]) => n);
+  assert.deepEqual(sizes().slice(0, 2), [8, 8]);
+
+  g.size = [1160, 430]; // the window
+  g.calls.length = 0;
+  view.send("paint");
+  assert.deepEqual(sizes().slice(0, 2), [11, 12]);
+});
+
+test("view: a selection made in the other roll is shown at once ('highlight')", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics;
+  view.send("clear", 4 * Q, 60, 72, 4 * Q, 0, Q);
+  view.send("done");
+  const blue = () => g.calls.some(([name, r, gr, b, a]) => name === "set_source_rgba" && r === 0.35 && a === 0.22);
+  g.calls.length = 0;
+  view.send("highlight", Q, 3 * Q);
+  assert.ok(g.calls.some(([name]) => name === "redraw"));
+  view.send("paint");
+  assert.ok(blue());
+  view.send("highlight");
+  g.calls.length = 0;
+  view.send("paint");
+  assert.ok(!blue());
 });
 
 // ---------------------------------------------------------------- core: Emily (M9)
@@ -980,4 +1024,68 @@ test("text box: draws the words as written (no backslashes, no quoted numbers), 
   g.calls.length = 0;
   box.send("paint");
   assert.deepEqual(lines(), []);
+});
+
+// ---------------------------------------------------------------- the pop-up window
+
+test("emily: the window gets her taste in full whenever it changes, and selections show in both rolls", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  const window = (out) => select(out, "emilyview");
+  const started = core.send("startup", "all");
+  assert.deepEqual(window(started), [["clear", 0, 0, 0, 1], ["done"]], "no ratings yet");
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  const composed = core.send("compose", 1);
+  const ticks = select(composed, "view").filter(([kind]) => kind === "source").map(([, tick]) => tick);
+
+  let out = core.send("like");
+  const rows = window(out);
+  assert.deepEqual(rows[0], ["clear", 1, 1, 0, 1]);
+  assert.deepEqual(rows.find(([kind]) => kind === "rating"), ["rating", 1, ticks.length, "emi-1"]);
+  assert.deepEqual(rows.at(-1), ["done"]);
+
+  out = core.send("taste");
+  const compared = window(out);
+  assert.deepEqual(compared.find(([kind]) => kind === "compare"), ["compare", 1, 10]);
+  out = core.send("dislike");
+  assert.ok(!window(out).some(([kind]) => kind === "compare"), "a comparison made before a rating is dropped");
+  assert.deepEqual(window(out).filter(([kind]) => kind === "rating").map(([, r, , ...what]) => [r, what.join(" ")]), [[-1, "emi-1"], [1, "emi-1"]], "latest first");
+  assert.deepEqual(window(core.send("temperature", 2))[0], ["clear", 2, 1, 0, 2]);
+
+  // A selection made in either roll is drawn in both.
+  assert.deepEqual(select(core.send("select", ticks[1], ticks[3]), "view"), [["highlight", ticks[1], ticks[3]]]);
+  assert.deepEqual(select(core.send("select"), "view"), [["highlight"]]);
+});
+
+test("taste view: likes and dislikes as bars, the last ratings, and the last comparison", () => {
+  const view = loadBundle("emi.taste");
+  const g = view.context.mgraphics;
+  g.size = [1160, 210];
+  const lines = () => g.calls.filter(([name]) => name === "show_text").map(([, text]) => text);
+  view.send("clear", 0, 0, 0, 1);
+  view.send("done");
+  g.calls.length = 0;
+  view.send("paint");
+  assert.ok(lines().some((text) => /^No ratings yet/.test(text)));
+
+  view.send("clear", 12, 9, 1, 1.5);
+  view.send("like", 2.1, "a", "high", "melody");
+  view.send("dislike", -1.75, "a", "low", "melody");
+  view.send("rating", 1, 60, "emi-28");
+  view.send("rating", -1, 8, "bars", "2-3", "of", "emi-1");
+  view.send("compare", 1, 10);
+  view.send("pair", 83, 54, 1, "a", "high", "melody");
+  view.send("done");
+  g.calls.length = 0;
+  view.send("paint");
+  const text = lines();
+  assert.ok(text.includes("12 ratings (9 liked, 3 disliked)  ·  1 earlier session  ·  temperature 1.50"), text.join(" | "));
+  for (const expected of ["a high melody", "+2.10", "a low melody", "-1.75", "emi-28 (60 beats)", "bars 2-3 of emi-1 (8 beats)", "Seeds 1-10: with her taste (without)", "83% (54%)"]) {
+    assert.ok(text.includes(expected), expected);
+  }
+  // The like's bar is 2.1 / 3 of the room for bars.
+  const bars = g.calls.filter(([name, , , , h]) => name === "rectangle" && h === 11);
+  assert.equal(bars.length, 2);
+  assert.ok(bars[0][3] > bars[1][3], "a longer bar for the stronger weight");
 });

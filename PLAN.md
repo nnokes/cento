@@ -245,6 +245,12 @@ cancelling (analysis in M6, streaming in M5). The piano roll is `emi.view`, a
 `emi.panel` in both products (like, dislike, temperature, taste, forget).
 Selections are dragged in `emi.view`, which now has an outlet to the
 engine. Emily's logic is `code/lib/emily-assoc.js`, used by `emi.core`.
+The panel's **window** button opens `emi.window`, the floating window §4.8
+planned. It holds a large `emi.view` (the same script; its lettering grows
+with its size) and `emi.taste`, Emily's taste in full. It is an abstraction
+in the top patch, opened with `[pcontrol]` (from `[s ---emi.window]`), so it
+works the same in Max and in Live. Both rolls get the same `view` messages,
+and a selection made in either is drawn in both (`view highlight`).
 
 **Conventions**
 

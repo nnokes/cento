@@ -41,8 +41,9 @@ not?) as a web page. Since M9, Emily learns your taste: **like** and
 **dislike** rate the piece, the stream phrase playing or the beats you drag
 across in the piano roll. Later pieces lean toward the features you liked
 (high melodies, 16th notes, modulations, ...), within the same rules, and
-**temp** sets how much chance still plays. The full plan and milestones are
-in [PLAN.md](PLAN.md).
+**temp** sets how much chance still plays. The **window** button opens a
+large piano roll with Emily's taste in full, in both products. The full plan
+and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
 
@@ -148,7 +149,7 @@ patchers/     everything Max loads, in one folder:
               ml_midi.maxpat (Max version), emi.brain.amxd + emi.voice.amxd
               (Live version), emi.engine, emi.host.max, emi.host.live,
               emi.panel (the shared controls), emily.panel (Emily's ratings),
-              emi.view (piano roll), and the
+              emi.view (piano roll), emi.window (the pop-up window), and the
               generated *.bundle.js scripts (npm run build; committed)
 code/         [v8] wrappers: glue between Max messages and the engine
               (emi.core.v8.js), and the piano roll (emi.view.v8ui.js)

@@ -11,6 +11,7 @@
 | Rating a selection, and a stream phrase while it plays | | |
 | like and dislike mapped to a key or a MIDI controller | | |
 | The taste carries over between the products, and fades a little each session | | |
+| The pop-up window: a large piano roll and Emily's taste in full | | |
 | Your own taste, by ear | | |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
@@ -174,6 +175,24 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        box shows your 12 ratings. Click **taste**: the Max window's first
        line now ends `; 1 earlier session`. Opening a patch or set after a
        session with ratings makes every weight fade by a tenth.
+9. [ ] **The pop-up window.** Click **window** at the top right of the
+       **Emily** panel. A window titled `ml_midi: piano roll and Emily` opens:
+       - **Top:** the piano roll, about three times larger. Bars are numbered
+         along the top, each C is named on the left (C4 is middle C), and
+         the SPEAC letters and the hover box are larger.
+       - **Below:** Emily's taste in four columns:
+         - **Likes** and **Dislikes:** a bar per feature, longer for a
+           stronger weight;
+         - **Last ratings:** latest first;
+         - **Compared:** empty until you click **taste**. It then shows each
+           feature's share of beats with her taste (bright bar) and without
+           (dim bar). A new rating clears it, since it no longer matches.
+       - **At the bottom:** **like**, **dislike** and **taste** buttons.
+
+       Drag across beats in the large roll: the blue band shows in both
+       rolls, and **like** in either place rates those beats. Compose another
+       seed: both rolls change. Close the window with its close button; the
+       **window** button opens it again.
 
 ## 2. Live version
 
@@ -190,7 +209,10 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        press `D`: `disliked phrase N of ...`. Live saves the mapping with the set.
 4. [ ] **Temperature in Live.** **temp** is an ordinary Live parameter: it can
        be automated, or MIDI-mapped with Cmd+M.
-5. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat` and click **taste**:
+5. [ ] **The pop-up window in Live.** Click **window** on the brain's
+       **Emily** panel: the same window opens over Live, and follows the
+       stream phrase by phrase.
+6. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat` and click **taste**:
        the ratings from Live are counted.
 
 ## 3. Your own taste, by ear
@@ -215,8 +237,10 @@ status line and any red text from the Max window. The parts most likely to
 need a fix:
 - the drag selection in the piano roll (mouse handling in `[v8ui]`);
 - key and MIDI mapping of the buttons in each product;
-- whether Live finds `emily.panel.maxpat` (it lives in `patchers/`, like the
-  other panels).
+- whether Live finds `emily.panel.maxpat` and `emi.window.maxpat` (both in
+  `patchers/`, like the other panels);
+- whether the **window** button opens the window in each product (it uses
+  `[pcontrol]`), and whether its layout fits your screen.
 
 For step 3, paste Emily's lines from the Max window and say in a sentence
 whether her pieces now sound more like what you liked.

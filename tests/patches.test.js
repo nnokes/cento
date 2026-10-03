@@ -247,6 +247,32 @@ test("emi.panel: each saved control sends its message, and shows restored values
 
 // A message box shows "melody\," and "10" in quotes; the status boxes draw
 // the text as the engine wrote it.
+test("emily.panel: the window button sends to the top patch's pop-up window", () => {
+  const p = patchFile("emily.panel.maxpat");
+  const [button] = p.find("window");
+  assert.ok(button.presentation_rect, "shown on the panel");
+  assert.deepEqual(p.from(button.id).map(([b]) => b.text), ["s ---emi.window"]);
+});
+
+test("emi.window: a large piano roll and Emily's taste, fed by the engine; selections and ratings go back", () => {
+  const p = patchFile("emi.window.maxpat");
+  const [inlet] = p.find("inlet");
+  const [outlet] = p.find("outlet");
+  const [route] = p.find("route view emilyview");
+  assert.deepEqual(p.from(inlet.id).map(([b]) => b.id), [route.id]);
+  const [[roll]] = p.from(route.id, 0);
+  const [[taste]] = p.from(route.id, 1);
+  assert.deepEqual([roll.filename, taste.filename], ["emi.view.bundle.js", "emi.taste.bundle.js"]);
+  assert.ok(roll.presentation_rect[2] >= 1000 && roll.presentation_rect[3] >= 400, "the roll is large");
+  assert.deepEqual(p.from(roll.id).map(([b]) => b.id), [outlet.id], "selections go to the engine");
+  for (const word of ["like", "dislike", "taste"]) {
+    const [button] = p.find(word);
+    assert.deepEqual(p.from(button.id).map(([b]) => b.id), [outlet.id], word);
+  }
+  const [title] = [...p.boxes.values()].filter((b) => (b.text || "").startsWith("title "));
+  assert.deepEqual(p.from(title.id).map(([b]) => b.text), ["thispatcher"]);
+});
+
 test("emi.panel: the status line shows status and errors in a text box ([v8ui] emi.text)", () => {
   const p = patchFile("emi.panel.maxpat");
   const [route] = p.find("route status error setting");
@@ -279,10 +305,18 @@ test("top patches: host panel, shared panel, Emily's panel and piano roll, all w
     const [engine] = p.find("emi.engine");
     const bpatchers = [...p.boxes.values()].filter((b) => b.maxclass === "bpatcher").map((b) => b.name);
     assert.deepEqual(bpatchers, [host, "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat"], file);
-    const into = p.into(engine.id).map(([b]) => b.name).sort();
-    assert.deepEqual(into, [host, "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat"].sort(), `${file}: the panels (and the roll's selections) go to the engine`);
+    const into = p.into(engine.id).map(([b]) => b.name || b.text).sort();
+    assert.deepEqual(into, [host, "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.window"].sort(), `${file}: the panels, the roll's selections and the window go to the engine`);
     const from = p.from(engine.id).map(([b]) => b.name || b.text).sort();
-    assert.deepEqual(from, [host, "emi.panel.maxpat", "emily.panel.maxpat", "route view"].sort(), `${file}: the engine answers them`);
+    assert.deepEqual(from, [host, "emi.panel.maxpat", "emily.panel.maxpat", "route view", "emi.window"].sort(), `${file}: the engine answers them`);
+    // The Emily panel's window button opens the pop-up window.
+    const [window] = p.find("emi.window");
+    const [receive] = p.find("r ---emi.window");
+    const [[open]] = p.from(receive.id);
+    assert.equal(open.text, "open");
+    const [[pcontrol]] = p.from(open.id);
+    assert.equal(pcontrol.text, "pcontrol");
+    assert.deepEqual(p.from(pcontrol.id).map(([b, inlet]) => [b.id, inlet]), [[window.id, 0]], file);
   }
   // The device is exactly as wide as its four panels.
   const device = readPatcher(path.join(ROOT, "patchers", "emi.brain.amxd"));

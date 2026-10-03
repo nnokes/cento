@@ -41,6 +41,8 @@
 //   meter <numerator> <denominator>                             -> the Max version's transport (M8)
 //   emily <text...>                                             -> the Emily panel: her taste in a line, with
 //                                                                  only her strongest like and dislike (M9)
+//   emilyview clear|like|dislike|rating|compare|pair|done       -> the pop-up window: her taste in full
+//                                                                  (emi.taste; sent whenever it changes)
 //
 // Messages:
 //   loadmidi <path>        read a chorale (+ its .json) and make it current
@@ -136,6 +138,7 @@ let tasteBackupPath = null;
 let tasteText = null; // the taste file as last read or written: re-read when it changes
 let temperatureValue = 1;
 let selection = null; // { from, to }: ticks of the current score selected in the piano roll
+let comparison = null; // the last "taste" comparison, for the window: { first, last, result }
 
 function loadmidi(path) {
   attempt(() => {
@@ -336,12 +339,15 @@ function dislike() {
   rateNow(-1);
 }
 
+// Both piano rolls (the panels' and the window's) show the selection, made in either.
 function select(from, to) {
   if (from === undefined || to === undefined || !(Number(to) > Number(from)) || !current) {
     selection = null;
+    outlet(0, "view", "highlight");
     return;
   }
   selection = { from: Number(from), to: Number(to) };
+  outlet(0, "view", "highlight", selection.from, selection.to);
   const beats = Math.round((selection.to - selection.from) / current.score.ppq);
   outlet(0, "status", "selected", ...barsOf(current.score, selection.from, selection.to).split(" "), "(" + beats, beats === 1 ? "beat):" : "beats):", "like", "or", "dislike", "rates", "them");
 }
@@ -351,6 +357,7 @@ function temperature(t) {
   save();
   const words = temperatureValue === 0 ? "only Emily's favourite choices" : temperatureValue < 1 ? "less chance, more taste" : temperatureValue === 1 ? "as before Emily" : "more adventurous";
   outlet(0, "status", "temperature", temperatureValue.toFixed(2) + ":", ...words.split(" "), "(from", "the", "next", "piece", "or", "phrase)");
+  showTaste();
 }
 
 function forget() {
@@ -360,8 +367,10 @@ function forget() {
     if (tastePath) files.writeText(tasteBackupPath, JSON.stringify(memory) + "\n");
     memory = emily.create();
     tasteVersion++;
+    comparison = null;
     saveTaste();
     outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
+    showTaste();
     outlet(0, "status", "Emily", "forgot", "her", "taste", "(" + was, "ratings,", "kept", "in", settingsFile.BACKUP_NAME + ")");
   });
 }
@@ -394,6 +403,8 @@ function taste() {
     if (!withTaste.length) throw new Error("no pieces to compare; try another seed");
     const result = emily.compare(db, memory, withTaste, without);
     const last = clampSeed(currentSeed + 9);
+    comparison = { first: currentSeed, last, result };
+    showTaste();
     post(`  seeds ${currentSeed}-${last}, with her taste and without: ${comparisonText(result)}\n`);
     // The panel's status line: the most liked and most disliked features only.
     const top = [likes[0], dislikes[0]].filter(Boolean).map(([f]) => result.features.find(([g]) => g === f)).filter(Boolean);
@@ -417,12 +428,14 @@ function rateNow(r) {
     if (!region.beats.length) throw new Error("nothing composed there to rate");
     const changes = emily.rate(db, memory, region, r, { piece: current.name, what: target.what, at: new Date().toISOString() });
     tasteVersion++;
+    comparison = null; // made before this rating
     saveTaste();
     const learned = emily.describeChanges(changes);
     const beats = region.beats.length + (region.beats.length === 1 ? " beat" : " beats");
     const text = `${r > 0 ? "liked" : "disliked"} ${target.what} (${beats})${learned ? ": " + learned : ""}; ${memory.ratings} ${memory.ratings === 1 ? "rating" : "ratings"}`;
     outlet(0, "status", ...text.split(" "));
     outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
+    showTaste();
     post(`ml_midi: Emily ${text}\n`);
   });
 }
@@ -470,6 +483,7 @@ function loadTaste(folder) {
   syncTaste();
   if (emily.decay(memory)) saveTaste();
   outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
+  showTaste();
 }
 loadTaste.local = 1;
 
@@ -492,8 +506,32 @@ function syncTaste() {
     memory = emily.create();
   }
   tasteVersion++;
+  comparison = null;
 }
 syncTaste.local = 1;
+
+// Emily's taste in full, for the pop-up window (emi.taste): her strongest
+// likes and dislikes, her last ratings, and the last comparison (which goes
+// stale, and is dropped, once she learns something new).
+function showTaste() {
+  const { likes, dislikes } = emily.opinions(memory, 8, 0.05);
+  const words = (text) => String(text).split(" ");
+  outlet(0, "emilyview", "clear", memory.ratings, memory.likes, memory.sessions, temperatureValue);
+  for (const [f, w] of likes) outlet(0, "emilyview", "like", Math.round(w * 100) / 100, ...words(emily.nameOf(f)));
+  for (const [f, w] of dislikes) outlet(0, "emilyview", "dislike", Math.round(w * 100) / 100, ...words(emily.nameOf(f)));
+  for (const entry of memory.log.slice(-8).reverse()) {
+    outlet(0, "emilyview", "rating", entry.rating > 0 ? 1 : -1, entry.beats || 0, ...words(entry.what || entry.piece || "a piece"));
+  }
+  if (comparison) {
+    outlet(0, "emilyview", "compare", comparison.first, comparison.last);
+    const liked = new Set(likes.map(([f]) => f));
+    for (const [f, a, b] of comparison.result.features) {
+      outlet(0, "emilyview", "pair", Math.round(100 * a), Math.round(100 * b), liked.has(f) ? 1 : 0, ...words(emily.nameOf(f)));
+    }
+  }
+  outlet(0, "emilyview", "done");
+}
+showTaste.local = 1;
 
 function saveTaste() {
   if (!tastePath) return;

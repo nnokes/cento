@@ -212,6 +212,78 @@
 			},
 			{
 				"box": {
+					"maxclass": "newobj",
+					"text": "emi.window",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						806.0,
+						229.0,
+						80.0,
+						22.0
+					],
+					"id": "obj-7"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "r ---emi.window",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						806.0,
+						269.0,
+						100.0,
+						22.0
+					],
+					"id": "obj-8"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "open",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						806.0,
+						299.0,
+						40.0,
+						22.0
+					],
+					"id": "obj-9"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "pcontrol",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						806.0,
+						329.0,
+						60.0,
+						22.0
+					],
+					"id": "obj-10"
+				}
+			},
+			{
+				"box": {
 					"maxclass": "comment",
 					"text": "Max version: the Max adapter and the shared panel above, wired both ways to the shared engine.",
 					"numinlets": 1,
@@ -223,11 +295,47 @@
 						480.0,
 						34.0
 					],
-					"id": "obj-7"
+					"id": "obj-11"
 				}
 			}
 		],
 		"lines": [
+			{
+				"patchline": {
+					"source": [
+						"obj-8",
+						0
+					],
+					"destination": [
+						"obj-9",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-9",
+						0
+					],
+					"destination": [
+						"obj-10",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-10",
+						0
+					],
+					"destination": [
+						"obj-7",
+						0
+					]
+				}
+			},
 			{
 				"patchline": {
 					"source": [
@@ -268,6 +376,18 @@
 				"patchline": {
 					"source": [
 						"obj-4",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-7",
 						0
 					],
 					"destination": [
@@ -320,6 +440,18 @@
 					],
 					"destination": [
 						"obj-6",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-5",
+						0
+					],
+					"destination": [
+						"obj-7",
 						0
 					]
 				}

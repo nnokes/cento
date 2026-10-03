@@ -33,8 +33,11 @@ __emi_require.local = 1;
 // mouse over a beat, a box at the top shows where it came from (M8: the
 // provenance view). Dragging across the roll selects whole beats for
 // Emily to rate (M9): a blue band, sent to the engine as "select <from>
-// <to>" (ticks) while dragging; a click clears it ("select"). The engine
-// sends one score as:
+// <to>" (ticks) while dragging; a click clears it ("select"). Bars are
+// numbered along the top and each C is labelled on the left, where there is
+// room. The same script draws the small roll in the panels and the large
+// one in the pop-up window (emi.window); lettering grows with the size.
+// The engine sends one score as:
 //   clear <endTick> <lowPitch> <highPitch> <barTicks> [startTick] [beatTicks]
 //                                        (the ticks shown; a stream shows its last phrases)
 //   note <on> <dur> <pitch> <color>      (one per note)
@@ -46,6 +49,8 @@ __emi_require.local = 1;
 //   source <tick> <text...>              (one per beat: where it came from)
 //   selection <from> <to>                (the beats selected, kept when a stream redraws)
 //   done                                 (draw it)
+// and, at any time:
+//   highlight <from> <to> | highlight    (the selection, made in the other roll; or none)
 
 autowatch = 1;
 inlets = 1;
@@ -58,7 +63,7 @@ mgraphics.autofill = 0;
 // Twelve colors that stay apart on a dark background; they repeat after 12.
 // SPEAC lane colors: tension rising (P, A) warm, resolving (C) cool.
 const SPEAC_COLORS = { S: [0.55, 0.6, 0.7], P: [0.5, 0.8, 0.45], E: [0.35, 0.35, 0.38], A: [0.95, 0.5, 0.3], C: [0.4, 0.65, 0.95] };
-const LANE = 12; // px
+const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const GOLD = [1, 0.82, 0.3];
 
 const PALETTE = [
@@ -107,6 +112,11 @@ function source(tick, ...text) {
 
 function selection(from, to) {
   if (incoming) incoming.selected = [from, to];
+}
+
+function highlight(from, to) {
+  selected = from !== undefined && to !== undefined && to > from ? [from, to] : null;
+  mgraphics.redraw();
 }
 
 function done() {
@@ -205,7 +215,11 @@ function paint() {
     return;
   }
 
-  const rollHeight = shown.labels.length ? height - LANE : height;
+  // Lettering grows with the roll: the panels' roll is 169 px high, the
+  // window's about 430.
+  const big = height >= 300;
+  const lane = Math.max(12, Math.round(height / 20));
+  const rollHeight = shown.labels.length ? height - lane : height;
   const rows = shown.high - shown.low + 3; // one empty row above and below
   const rowHeight = rollHeight / rows;
   const x = (tick) => ((tick - shown.start) / (shown.end - shown.start)) * width;
@@ -219,10 +233,37 @@ function paint() {
   }
   g.stroke();
 
+  // Each C: a faint line and its name on the left (C4 is middle C), where
+  // rows are tall enough to read.
+  if (rowHeight >= 5) {
+    g.select_font_face("Arial");
+    g.set_font_size(big ? 11 : 8);
+    for (let pitch = shown.low - 1; pitch <= shown.high + 1; pitch++) {
+      if (pitch % 12 !== 0) continue;
+      g.set_source_rgba(1, 1, 1, 0.06);
+      g.rectangle(0, y(pitch) + rowHeight - 1, width, 1);
+      g.fill();
+      g.set_source_rgba(1, 1, 1, 0.35);
+      g.move_to(2, y(pitch) + rowHeight - 2);
+      g.show_text(NOTE_NAMES[pitch % 12] + (Math.floor(pitch / 12) - 1));
+    }
+  }
+
+  // Bar numbers along the top, where bars are wide enough.
+  if (x(shown.barTicks) - x(0) >= 18) {
+    g.select_font_face("Arial");
+    g.set_font_size(big ? 12 : 8);
+    g.set_source_rgba(1, 1, 1, 0.45);
+    for (let t = Math.ceil(shown.start / shown.barTicks) * shown.barTicks; t < shown.end; t += shown.barTicks) {
+      g.move_to(Math.round(x(t)) + 3, big ? 13 : 8);
+      g.show_text(String(Math.floor(t / shown.barTicks) + 1));
+    }
+  }
+
   // Signature blocks: a gold band behind the notes, its name at the top
   // ("soprano 3-2-1", or "S 3-2-1" where the band is narrow).
   g.select_font_face("Arial");
-  g.set_font_size(9);
+  g.set_font_size(big ? 12 : 9);
   for (const [start, end, name] of shown.signatures) {
     const left = x(start);
     const w = x(end) - left;
@@ -235,7 +276,7 @@ function paint() {
     const words = name.split(" ");
     const text = w >= 70 ? name : w >= 32 ? words[0].charAt(0).toUpperCase() + " " + words.slice(1).join(" ") : "";
     if (text) {
-      g.move_to(left + 3, 17);
+      g.move_to(left + 3, big ? 28 : 17);
       g.show_text(text);
     }
   }
@@ -262,15 +303,16 @@ function paint() {
   const beat = beatOf(shown);
   const beatWidth = x(beat) - x(0);
   g.select_font_face("Arial");
-  g.set_font_size(9);
+  const laneFont = big ? 13 : 9;
+  g.set_font_size(laneFont);
   for (const [tick, label] of shown.labels) {
     const [r, gr, b] = SPEAC_COLORS[label] || SPEAC_COLORS.E;
     g.set_source_rgba(r, gr, b, 0.9);
-    g.rectangle(x(tick), rollHeight + 1, Math.max(1, beatWidth - 1), LANE - 2);
+    g.rectangle(x(tick), rollHeight + 1, Math.max(1, beatWidth - 1), lane - 2);
     g.fill();
     if (beatWidth >= 9) {
       g.set_source_rgba(0.08, 0.08, 0.09, 1);
-      g.move_to(x(tick) + beatWidth / 2 - 3, rollHeight + LANE - 3);
+      g.move_to(x(tick) + beatWidth / 2 - laneFont / 3, rollHeight + lane / 2 + laneFont / 3);
       g.show_text(label);
     }
   }
@@ -309,14 +351,16 @@ function paint() {
     g.rectangle(left, 0, x(tick + beatOf(shown)) - left, rollHeight);
     g.fill();
     g.select_font_face("Arial");
-    g.set_font_size(10);
-    const boxWidth = Math.min(width - 4, text.length * 5.6 + 10);
+    const font = big ? 14 : 10;
+    g.set_font_size(font);
+    const boxWidth = Math.min(width - 4, text.length * font * 0.56 + 10);
     const boxLeft = Math.max(2, Math.min(left, width - boxWidth - 2));
+    const top = big ? 34 : 8;
     g.set_source_rgba(0.05, 0.05, 0.06, 0.85);
-    g.rectangle(boxLeft, 8, boxWidth, 16);
+    g.rectangle(boxLeft, top, boxWidth, font + 6);
     g.fill();
     g.set_source_rgba(1, 1, 1, 0.95);
-    g.move_to(boxLeft + 5, 20);
+    g.move_to(boxLeft + 5, top + font + 1);
     g.show_text(text);
   }
 
