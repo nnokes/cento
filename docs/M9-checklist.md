@@ -125,7 +125,8 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        | 1009 | bwv318 | **like** | `liked emi-1009 (52 beats): + major chords, + the home key, + a high melody; 10 ratings` |
 
        The **Emily** box now reads
-       `10 ratings; likes a high melody, the home key; dislikes a low melody, seventh chords`.
+       `10 ratings; likes a high melody; dislikes a low melody`
+       (her strongest like and dislike; **taste** lists the rest).
 
        From seed 1001 on, the Max window also gets a comparison after each
        piece. For seed 1009:
@@ -178,7 +179,7 @@ reopening it makes the taste fade (step 7), and the lines below would change.
 
 1. [ ] **Reopen the set.** The brain is wider: the **Emily** panel sits between
        the controls and the piano roll, and shows the taste from the Max
-       version (`12 ratings; likes a high melody, ...`).
+       version (`12 ratings; likes a high melody; dislikes ...`).
 2. [ ] **Rate a phrase while it plays.** Turn **stream** on, compose any seed
        and press Play in Live. During the third phrase, click **like**:
        `liked phrase 3 of emi-<seed> (... beats): ...; 13 ratings`. A click

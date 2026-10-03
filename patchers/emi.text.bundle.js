@@ -41,8 +41,8 @@ mgraphics.autofill = 0;
 
 const MAX_SIZE = 12;
 const MIN_SIZE = 8;
-const PAD = 5;
-const LINE = 1.3; // line height, as a multiple of the font size
+const PAD = 4;
+const LINE = 1.22; // line height, as a multiple of the font size (Emily's box fits four lines at 8 px)
 
 let shown = "";
 let isAlert = false;

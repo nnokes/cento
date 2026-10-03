@@ -4666,7 +4666,8 @@ __emi_require.local = 1;
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
 //   meter <numerator> <denominator>                             -> the Max version's transport (M8)
-//   emily <text...>                                             -> the Emily panel: her taste in a line (M9)
+//   emily <text...>                                             -> the Emily panel: her taste in a line, with
+//                                                                  only her strongest like and dislike (M9)
 //
 // Messages:
 //   loadmidi <path>        read a chorale (+ its .json) and make it current
@@ -4987,7 +4988,7 @@ function forget() {
     memory = emily.create();
     tasteVersion++;
     saveTaste();
-    outlet(0, "emily", ...emily.summary(memory).split(" "));
+    outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
     outlet(0, "status", "Emily", "forgot", "her", "taste", "(" + was, "ratings,", "kept", "in", settingsFile.BACKUP_NAME + ")");
   });
 }
@@ -5048,7 +5049,7 @@ function rateNow(r) {
     const beats = region.beats.length + (region.beats.length === 1 ? " beat" : " beats");
     const text = `${r > 0 ? "liked" : "disliked"} ${target.what} (${beats})${learned ? ": " + learned : ""}; ${memory.ratings} ${memory.ratings === 1 ? "rating" : "ratings"}`;
     outlet(0, "status", ...text.split(" "));
-    outlet(0, "emily", ...emily.summary(memory).split(" "));
+    outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
     post(`ml_midi: Emily ${text}\n`);
   });
 }
@@ -5095,7 +5096,7 @@ function loadTaste(folder) {
   tasteText = null;
   syncTaste();
   if (emily.decay(memory)) saveTaste();
-  outlet(0, "emily", ...emily.summary(memory).split(" "));
+  outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
 }
 loadTaste.local = 1;
 
