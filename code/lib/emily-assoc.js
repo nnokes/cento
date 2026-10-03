@@ -49,10 +49,20 @@
 // (pieces with more of it than usual liked, the others disliked), new pieces
 // have about 1.5 times as much of it as without the taste (tests/corpus).
 //
+// Your own settings (in the pop-up window's "edit weights"):
+//   - a pin holds a musical feature at your value. Composing uses the pin
+//     instead of what she learned; ratings go on teaching her learned weight
+//     underneath, and decay never fades a pin. Releasing it brings back her
+//     learned weight as it is by then.
+//   - strength scales her whole taste: 0 is no taste, 1 as learned (and
+//     pinned), 2 twice as strong.
+//
 // Memory, as saved (JSON; the engine keeps it in ml_midi.taste.json next to
-// the settings file, so both products share it):
-//   { version: 1, weights: { feature: w }, ratings, likes, sessions,
-//     rated (ratings since the last decay), log: [{ at, piece, rating, beats, what }] }
+// the settings file, so both products share it; "store taste" writes the
+// same to a file of your choice):
+//   { version: 1, weights: { feature: w }, pins: { feature: w }, strength,
+//     ratings, likes, sessions, rated (ratings since the last decay),
+//     log: [{ at, piece, rating, beats, what }] }
 
 const lexicon = require("emi-lexicon");
 const signatures = require("emi-signatures");
@@ -64,6 +74,7 @@ const DECAY = 0.1;
 const TASTE = 4; // score points per unit of taste (emi-form's SCORE: an accidental match is 16, a label 4)
 const PRUNE = 0.02; // weights smaller than this are dropped at decay
 const LOG = 200; // ratings kept in the log
+const MAX_STRENGTH = 2;
 
 // In words, for the panel and the Max window.
 const NAMES = {
@@ -96,8 +107,19 @@ const NAMES = {
   "f:mode:minor": "minor",
 };
 
+// The musical features by kind, in the order the weight editor shows them
+// (mode only in a corpus of both modes).
+const GROUPS = [
+  ["Motion", ["f:motion:still", "f:motion:flowing", "f:motion:busy", "f:16ths", "f:susp"]],
+  ["Melody", ["f:melody:same", "f:melody:step", "f:melody:leap", "f:register:low", "f:register:mid", "f:register:high"]],
+  ["Chords", ["f:chord:major", "f:chord:minor", "f:chord:seventh", "f:chord:diminished", "f:chord:other", "f:chromatic"]],
+  ["Key", ["f:key:home", "f:key:dominant", "f:key:relative", "f:key:subdominant", "f:key:other"]],
+  ["Tension", ["f:tension:low", "f:tension:mid", "f:tension:high"]],
+  ["Mode", ["f:mode:major", "f:mode:minor"]],
+];
+
 function create() {
-  return { version: 1, weights: {}, ratings: 0, likes: 0, sessions: 0, rated: 0, log: [] };
+  return { version: 1, weights: {}, pins: {}, strength: 1, ratings: 0, likes: 0, sessions: 0, rated: 0, log: [] };
 }
 
 // A memory as read from a file, made safe to use (unknown or broken parts
@@ -108,9 +130,48 @@ function normalize(memory) {
   if (memory.weights && typeof memory.weights === "object") {
     for (const [name, w] of Object.entries(memory.weights)) if (typeof w === "number" && Number.isFinite(w)) out.weights[name] = clamp(w);
   }
+  if (memory.pins && typeof memory.pins === "object") {
+    for (const [name, w] of Object.entries(memory.pins)) if (NAMES[name] && typeof w === "number" && Number.isFinite(w)) out.pins[name] = clamp(w);
+  }
+  if (typeof memory.strength === "number" && Number.isFinite(memory.strength)) out.strength = Math.max(0, Math.min(MAX_STRENGTH, memory.strength));
   for (const key of ["ratings", "likes", "sessions", "rated"]) if (Number.isFinite(memory[key])) out[key] = Math.max(0, Math.round(memory[key]));
   if (Array.isArray(memory.log)) out.log = memory.log.slice(-LOG);
   return out;
+}
+
+// The weights composing uses: what she learned, with your pins in place
+// (before strength).
+function effective(memory) {
+  const weights = Object.assign({}, memory.weights || {});
+  for (const [name, w] of Object.entries(memory.pins || {})) weights[name] = w;
+  return weights;
+}
+
+// Pins a musical feature at w (-3..3); returns the value pinned, or null
+// for a name that isn't a musical feature.
+function pin(memory, name, w) {
+  if (!NAMES[name] || !Number.isFinite(Number(w))) return null;
+  memory.pins = memory.pins || {};
+  memory.pins[name] = clamp(Math.round(Number(w) * 100) / 100);
+  return memory.pins[name];
+}
+
+// Releases one pin (or every pin, with no name); returns how many.
+function unpin(memory, name = null) {
+  memory.pins = memory.pins || {};
+  if (name === null) {
+    const count = Object.keys(memory.pins).length;
+    memory.pins = {};
+    return count;
+  }
+  if (!(name in memory.pins)) return 0;
+  delete memory.pins[name];
+  return 1;
+}
+
+function setStrength(memory, value) {
+  memory.strength = Math.max(0, Math.min(MAX_STRENGTH, Math.round(Number(value) * 100) / 100 || 0));
+  return memory.strength;
 }
 
 const clamp = (w) => Math.max(-LIMIT, Math.min(LIMIT, w));
@@ -301,7 +362,11 @@ function decay(memory) {
 //   blockEnd: Map(end grouping -> points), a signature block's signatures
 //   templates: Map(work -> weight), the form's weight (with its mode's)
 function prepare(db, memory) {
-  const weights = memory && memory.weights ? memory.weights : {};
+  if (!memory) return null;
+  const strength = typeof memory.strength === "number" ? memory.strength : 1;
+  const learned = effective(memory);
+  const weights = {};
+  for (const [name, w] of Object.entries(learned)) if (w * strength) weights[name] = w * strength;
   const names = Object.keys(weights);
   if (!names.length) return null;
   const { of } = featureTable(db);
@@ -338,13 +403,13 @@ function prepare(db, memory) {
   return { beat, edges: edges.size ? edges : null, blockEnd: blockEnd.size ? blockEnd : null, templates: templates.size ? templates : null };
 }
 
-// How well a piece's beats fit the taste: the mean of their taste, in
-// weight units (0: no opinion).
+// How well a piece's beats fit the taste (with your pins): the mean of their
+// taste, in weight units (0: no opinion).
 function fit(db, memory, piece) {
   const region = regionOf(db, piece);
   if (!region.beats.length) return 0;
   const { of } = featureTable(db);
-  const weights = memory.weights;
+  const weights = effective(memory);
   let sum = 0;
   for (const i of region.beats) {
     const g = db.groupings[i];
@@ -363,10 +428,11 @@ function shares(db, piece) {
   return new Map([...counts].map(([f, c]) => [f, c / Math.max(1, region.beats.length)]));
 }
 
-// The musical features Emily likes and dislikes most: { likes: [[f, w]],
-// dislikes: [[f, w]] }, strongest first, at most `count` of each.
+// The musical features Emily likes and dislikes most (with your pins):
+// { likes: [[f, w]], dislikes: [[f, w]] }, strongest first, at most `count`
+// of each.
 function opinions(memory, count = 3, threshold = 0.1) {
-  const musical = Object.entries(memory.weights).filter(([f]) => f.startsWith("f:"));
+  const musical = Object.entries(effective(memory)).filter(([f]) => f.startsWith("f:"));
   const likes = musical.filter(([, w]) => w >= threshold).sort((a, b) => b[1] - a[1]).slice(0, count);
   const dislikes = musical.filter(([, w]) => w <= -threshold).sort((a, b) => a[1] - b[1]).slice(0, count);
   return { likes, dislikes };
@@ -416,7 +482,13 @@ exports.LIMIT = LIMIT;
 exports.DECAY = DECAY;
 exports.TASTE = TASTE;
 exports.NAMES = NAMES;
+exports.MAX_STRENGTH = MAX_STRENGTH;
+exports.GROUPS = GROUPS;
 exports.create = create;
+exports.effective = effective;
+exports.pin = pin;
+exports.unpin = unpin;
+exports.setStrength = setStrength;
 exports.normalize = normalize;
 exports.featuresOf = featuresOf;
 exports.featureTable = featureTable;

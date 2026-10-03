@@ -12,6 +12,7 @@
 | like and dislike mapped to a key or a MIDI controller | | |
 | The taste carries over between the products, and fades a little each session | | |
 | The pop-up window: a large piano roll and Emily's taste in full | | |
+| Editing her weights (pins, strength), and storing and recalling a taste | | |
 | Your own taste, by ear | | |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
@@ -187,12 +188,49 @@ reopening it makes the taste fade (step 7), and the lines below would change.
          - **Compared:** empty until you click **taste**. It then shows each
            feature's share of beats with her taste (bright bar) and without
            (dim bar). A new rating clears it, since it no longer matches.
-       - **At the bottom:** **like**, **dislike** and **taste** buttons.
+       - **At the bottom:** **like**, **dislike** and **taste** buttons,
+         and the weight buttons (step 10).
 
        Drag across beats in the large roll: the blue band shows in both
        rolls, and **like** in either place rates those beats. Compose another
        seed: both rolls change. Close the window with its close button; the
        **window** button opens it again.
+10. [ ] **Edit her weights.** In the window, click **edit weights**. The
+       lower pane shows a slider for every musical feature, in columns by kind
+       (Motion, Melody, Chords, Key, Tension), from -3 on the left to +3 on
+       the right. On each slider:
+       - the **thin white line** is what Emily learned;
+       - the **handle** is what she uses.
+
+       1. **Pin.** Drag the **16th notes** slider to the right end. Its
+          handle turns amber and reads `+3.0`. The status line says
+          `Emily: 16th notes pinned at +3.00 (she learned ...)`.
+       2. **Hear it.** Compose a few seeds: there are more 16th-note runs.
+          Measured over seeds 1 to 10 with no other taste: 4.8% of beats
+          without the pin, 18.4% with it.
+       3. **Strength.** Drag **strength** (top right) to `2.00`: her whole
+          taste counts double (25% of beats). Double-click it to go back to
+          `1.00`. At 0 she has no taste at all.
+       4. **Rate.** A rating still teaches her: the thin line moves, but a
+          pinned handle stays where you put it. Fading doesn't move pins
+          either.
+       5. **Release.** Double-click the slider: the handle jumps back to the
+          thin line, `Emily: 16th notes released (back to ..., what she
+          learned)`. **release all pins** releases every pin at once.
+
+       Click **edit weights** again to go back to the overview. Its title
+       line now counts the pins, and the strength when it isn't 1.
+11. [ ] **Store and recall a taste.** Pin a feature or two, then click
+       **store taste** and save it, for example as `busy` in
+       `Documents/ml_midi` (the dialog's **New Folder** button can make an
+       `emily` folder there for tastes). The status line says
+       `stored Emily's taste in busy.json (... ratings, ... pins)`.
+       Release all pins and rate something, then click **recall taste** and
+       choose `busy.json`:
+       `recalled Emily's taste from busy.json (...); the one before is in ml_midi.taste.backup.json`.
+       The pins, strength, ratings and learned weights are all back as
+       stored. A stored taste is a plain file: you can keep several and
+       switch between them, in either product.
 
 ## 2. Live version
 

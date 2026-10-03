@@ -251,6 +251,21 @@ with its size) and `emi.taste`, Emily's taste in full. It is an abstraction
 in the top patch, opened with `[pcontrol]` (from `[s ---emi.window]`), so it
 works the same in Max and in Live. Both rolls get the same `view` messages,
 and a selection made in either is drawn in both (`view highlight`).
+The window's **edit weights** button turns its taste pane into a weight
+editor:
+- **A slider per musical feature**, from -3 to +3. Dragging one *pins* the
+  feature at that value (`pin`). Ratings go on teaching her learned weight
+  underneath, and fading never moves a pin. Double-clicking releases the
+  pin (`unpin`).
+- **A strength slider**, from 0 to 2, scales her whole taste (`strength`).
+- **release all pins** releases them all at once.
+- **store taste** and **recall taste** save her whole taste to a file of
+  your choice and bring it back (`storetaste`, `recalltaste`). The taste
+  replaced by a recall is kept in the backup file. This is a first step
+  toward M10's snapshots.
+
+The editor lives only in the pop-up. It draws its own sliders rather than
+using `live.*` objects, so it adds no Live parameters (nor automation).
 
 **Conventions**
 

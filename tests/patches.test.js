@@ -271,6 +271,23 @@ test("emi.window: a large piano roll and Emily's taste, fed by the engine; selec
   }
   const [title] = [...p.boxes.values()].filter((b) => (b.text || "").startsWith("title "));
   assert.deepEqual(p.from(title.id).map(([b]) => b.text), ["thispatcher"]);
+  // The weight editor: "edit weights" goes to the taste pane only; its
+  // sliders (pin, unpin, strength) go to the engine.
+  const [edit] = p.find("edit weights");
+  assert.deepEqual(p.from(edit.id).map(([b]) => b.id), [taste.id]);
+  assert.deepEqual(p.from(taste.id).map(([b]) => b.id), [outlet.id]);
+  const [release] = p.find("release all pins");
+  const [[t]] = p.from(release.id);
+  const [[unpin]] = p.from(t.id);
+  assert.equal(unpin.text, "unpin");
+  assert.deepEqual(p.from(unpin.id).map(([b]) => b.id), [outlet.id]);
+  // Store and recall a whole taste, through file dialogs.
+  for (const [dialog, message] of [["savedialog", "prepend storetaste"], ["opendialog", "prepend recalltaste"]]) {
+    const [box] = p.find(dialog);
+    const [[pre]] = p.from(box.id, 0);
+    assert.equal(pre.text, message);
+    assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
+  }
 });
 
 test("emi.panel: the status line shows status and errors in a text box ([v8ui] emi.text)", () => {

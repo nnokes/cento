@@ -242,3 +242,48 @@ test("emily: pieces with and without a taste, compared on its strongest features
   assert.deepEqual(result.features.map(([f]) => f), ["f:melody:same", "f:melody:step"]);
   for (const [, a, b] of result.features) assert.ok(a >= 0 && a <= 1 && b >= 0 && b <= 1);
 });
+
+test("emily: pins hold a feature at your value, under any rating or fading; strength scales the taste", () => {
+  const db = same;
+  const memory = emily.create();
+  memory.weights["f:chord:major"] = 0.5;
+  assert.equal(emily.pin(memory, "f:chord:major", 2), 2);
+  assert.equal(emily.pin(memory, "f:no-such", 1), null);
+  assert.equal(emily.pin(memory, "f:16ths", 9), emily.LIMIT, "within the limit");
+  assert.deepEqual(emily.effective(memory)["f:chord:major"], 2);
+  const a = db.groupings.findIndex((g) => g.work === "a");
+  assert.equal(emily.prepare(db, memory).beat[a], Math.round(emily.TASTE * 2), "composing uses the pin");
+
+  // A rating teaches the learned weight underneath; decay fades only that.
+  const region = { beats: [0, 1, 2], transitions: [], works: [], signatures: [], template: null };
+  emily.rate(db, memory, region, -1);
+  memory.weights["f:chord:major"] = 0.5;
+  emily.decay(memory);
+  assert.equal(memory.pins["f:chord:major"], 2);
+  assert.equal(memory.weights["f:chord:major"], 0.45);
+
+  // Strength: 0 is no taste at all; 2 doubles it.
+  memory.weights = { "f:chord:major": memory.weights["f:chord:major"] }; // only this one learned
+  emily.setStrength(memory, 0);
+  assert.equal(emily.prepare(db, memory), null);
+  emily.setStrength(memory, 5);
+  assert.equal(memory.strength, emily.MAX_STRENGTH);
+  assert.equal(emily.prepare(db, memory).beat[a], Math.round(emily.TASTE * 2 * 2));
+
+  // Releasing brings back what she learned.
+  assert.equal(emily.unpin(memory, "f:chord:major"), 1);
+  assert.equal(emily.effective(memory)["f:chord:major"], 0.45);
+  assert.equal(emily.unpin(memory), 1, "the other pin");
+  assert.deepEqual(memory.pins, {});
+
+  // Saved and read back.
+  emily.pin(memory, "f:susp", -1);
+  const again = emily.normalize(JSON.parse(JSON.stringify(memory)));
+  assert.deepEqual([again.pins, again.strength], [{ "f:susp": -1 }, emily.MAX_STRENGTH]);
+  assert.deepEqual(emily.normalize({ pins: { "g:x": 1, "f:susp": "a" }, strength: -1 }).pins, {}, "only musical features, as numbers");
+});
+
+test("emily: the weight editor's groups cover every musical feature once", () => {
+  const listed = emily.GROUPS.flatMap(([, features]) => features);
+  assert.deepEqual([...listed].sort(), Object.keys(emily.NAMES).sort());
+});

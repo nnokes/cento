@@ -42,7 +42,9 @@ not?) as a web page. Since M9, Emily learns your taste: **like** and
 across in the piano roll. Later pieces lean toward the features you liked
 (high melodies, 16th notes, modulations, ...), within the same rules, and
 **temp** sets how much chance still plays. The **window** button opens a
-large piano roll with Emily's taste in full, in both products. The full plan
+large piano roll with Emily's taste in full, in both products. There you can
+also pin any feature's weight with a slider, set her taste's strength, and
+store and recall whole tastes as files. The full plan
 and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
@@ -77,7 +79,8 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **Major and minor, 3/4** (optional, M8) | `~/Documents/ml_midi/corpus-both/`, `corpus-3-4/` | Written with `--mode any` and `--meter 3/4` |
 | **Exported pieces** | `~/Documents/ml_midi/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
 | **Listening tests** | anywhere, e.g. `~/Documents/ml_midi/` | Written by the **A/B** button: one web page, opened in a browser |
-| **Emily's taste** (M9) | `<repo>/patchers/ml_midi.taste.json` | Your ratings, shared by both products; git-ignored. **forget** sets it aside as `ml_midi.taste.backup.json`; delete both to start fresh |
+| **Emily's taste** (M9) | `<repo>/patchers/ml_midi.taste.json` | Your ratings, pins and strength, shared by both products; git-ignored. **forget** and **recall taste** set the old one aside as `ml_midi.taste.backup.json`; delete both to start fresh |
+| **Stored tastes** (optional) | e.g. `~/Documents/ml_midi/emily/` | Written by **store taste** in the pop-up window; read back by **recall taste** |
 | **Later: databases, Emily's snapshots** | `~/Documents/ml_midi/db/`, `emily/` | Outside the repo |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
 | **Remembered settings** | `<repo>/patchers/ml_midi.settings.json` | Last corpus, seed and other settings; written by the patches, git-ignored. Delete it to start fresh |

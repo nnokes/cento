@@ -106,15 +106,17 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
     "abtest", "autoclips", "beats", "clear", "compose", "corpus", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
-    "need", "next", "pattern", "phrases", "remember", "seed", "select", "sigs", "startup", "stream", "taste", "temperature", "testclip",
-    "transpose", "writeclips",
+    "need", "next", "pattern", "phrases", "pin", "recalltaste", "remember", "seed", "select", "sigs", "startup", "storetaste", "stream",
+    "strength", "taste", "temperature", "testclip", "transpose", "unpin", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), [
     "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "selection", "signature", "source", "speac",
   ]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
   assert.deepEqual(loadBundle("emi.text").handlers(), ["alert", "clear", "onresize", "paint", "text"]);
-  assert.deepEqual(loadBundle("emi.taste").handlers(), ["clear", "compare", "dislike", "done", "like", "onresize", "paint", "pair", "rating"]);
+  assert.deepEqual(loadBundle("emi.taste").handlers(), [
+    "clear", "compare", "dislike", "done", "edit", "like", "onclick", "ondblclick", "ondrag", "onresize", "paint", "pair", "rating", "strength", "weight",
+  ]);
 });
 
 // Convention: one inlet and one outlet per [v8] wrapper. If a script fails to
@@ -130,7 +132,7 @@ test("[v8] bundles have one inlet and one outlet (the view's sends selections, M
   assert.deepEqual(counts("emi.view"), [1, 1, 1]);
   assert.deepEqual(counts("emi.voice"), [1, 1, 1]);
   assert.deepEqual(counts("emi.text"), [1, 0, 1]);
-  assert.deepEqual(counts("emi.taste"), [1, 0, 1]);
+  assert.deepEqual(counts("emi.taste"), [1, 1, 1]);
 });
 
 // ---------------------------------------------------------------- voice: the track's name picks the voice
@@ -1033,7 +1035,11 @@ test("emily: the window gets her taste in full whenever it changes, and selectio
   const core = engineIn(folder);
   const window = (out) => select(out, "emilyview");
   const started = core.send("startup", "all");
-  assert.deepEqual(window(started), [["clear", 0, 0, 0, 1], ["done"]], "no ratings yet");
+  const first = window(started);
+  assert.deepEqual([first[0], first[1], first.at(-1)], [["clear", 0, 0, 0, 1], ["strength", 1], ["done"]], "no ratings yet");
+  const weights = first.filter(([kind]) => kind === "weight");
+  assert.equal(weights.length, 25, "every musical feature (mode only in a corpus of both modes)");
+  assert.deepEqual(weights[0], ["weight", "Motion", "f:motion:still", 0, 0, 0, "block", "chords"]);
   core.send("corpus", writeCorpus());
   core.send("beats", 8);
   const composed = core.send("compose", 1);
@@ -1088,4 +1094,81 @@ test("taste view: likes and dislikes as bars, the last ratings, and the last com
   const bars = g.calls.filter(([name, , , , h]) => name === "rectangle" && h === 11);
   assert.equal(bars.length, 2);
   assert.ok(bars[0][3] > bars[1][3], "a longer bar for the stronger weight");
+});
+
+// ---------------------------------------------------------------- the weight editor
+
+test("emily: pins, strength, release, and a stored taste recalled (with the one before kept)", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  core.send("compose", 1);
+  core.send("like");
+  let out = core.send("pin", "f:16ths", 1.5);
+  assert.match(lastStatus(out).join(" "), /^status Emily: 16th notes pinned at \+1\.50 \(she learned [-+]?\d\.\d\d\)$/);
+  assert.deepEqual(tasteIn(folder).pins, { "f:16ths": 1.5 });
+  const row = select(out, "emilyview").find(([kind, , f]) => kind === "weight" && f === "f:16ths");
+  assert.deepEqual(row.slice(0, 6), ["weight", "Motion", "f:16ths", row[3], 1, 1.5]);
+  assert.match(lastStatus(core.send("pin", "f:nonsense", 1)).join(" "), /^error not a feature: f:nonsense$/);
+  assert.match(lastStatus(core.send("strength", 1.5)).join(" "), /^status Emily's taste at strength 1\.50: stronger than learned/);
+  assert.equal(tasteIn(folder).strength, 1.5);
+
+  // A rating teaches what she learned, not the pin.
+  core.send("dislike");
+  assert.equal(tasteIn(folder).pins["f:16ths"], 1.5);
+
+  // Store, change, recall.
+  const stored = path.join(folder, "busy");
+  assert.match(lastStatus(core.send("storetaste", stored)).join(" "), /^status stored Emily's taste in busy\.json \(2 ratings, 1 pin, strength 1\.50\)$/);
+  core.send("unpin");
+  core.send("strength", 1);
+  core.send("like");
+  assert.deepEqual(tasteIn(folder).pins, {});
+  out = core.send("recalltaste", stored + ".json");
+  assert.match(lastStatus(out).join(" "), /^status recalled Emily's taste from busy\.json \(2 ratings, 1 pin, strength 1\.50\); the one before is in ml_midi\.taste\.backup\.json$/);
+  assert.deepEqual([tasteIn(folder).pins, tasteIn(folder).strength, tasteIn(folder).ratings], [{ "f:16ths": 1.5 }, 1.5, 2]);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.taste.backup.json"), "utf8")).ratings, 3);
+  assert.match(lastStatus(core.send("recalltaste", path.join(folder, "ml_midi.settings.json"))).join(" "), /^error ml_midi\.settings\.json isn't a stored taste$/);
+
+  // Releasing one pin; then all.
+  assert.match(lastStatus(core.send("unpin", "f:16ths")).join(" "), /^status Emily: 16th notes released \(back to [-+]?\d\.\d\d, what she learned\)$/);
+  assert.match(lastStatus(core.send("unpin")).join(" "), /^status Emily: no pins to release$/);
+});
+
+test("taste view: 'edit' shows a slider per feature; dragging pins, double-clicking releases", () => {
+  const view = loadBundle("emi.taste");
+  const g = view.context.mgraphics;
+  g.size = [1160, 250];
+  view.send("clear", 3, 2, 0, 1);
+  view.send("strength", 1);
+  view.send("weight", "Motion", "f:motion:still", 0.4, 0, 0.4, "block", "chords");
+  view.send("weight", "Motion", "f:16ths", -0.2, 0, -0.2, "16th", "notes");
+  view.send("weight", "Melody", "f:melody:leap", 0, 0, 0, "melodic", "leaps");
+  view.send("done");
+  view.send("edit", "weights");
+  g.calls.length = 0;
+  view.send("paint");
+  const text = g.calls.filter(([name]) => name === "show_text").map(([, t]) => t);
+  for (const expected of ["Edit Emily's weights", "Motion", "Melody", "block chords", "16th notes", "+0.4", "-0.2", "strength", "1.00"]) assert.ok(text.includes(expected), expected);
+
+  // The 16th notes slider: column 0 (568 px wide), second row.
+  const t0 = 12 + 112;
+  const t1 = 12 + (1160 - 24) / 2 - 52;
+  const y = 72 + 18 + 24;
+  const out = [view.send("onclick", t1, y), view.send("ondrag", t1, y, 1), view.send("ondrag", t1, y, 0)].flat();
+  assert.deepEqual(out, [[0, "pin", "f:16ths", 3]], "dragged to the right end: +3, sent once");
+  assert.deepEqual(view.send("onclick", (t0 + t1) / 2, y), [[0, "pin", "f:16ths", 0]]);
+  assert.deepEqual(view.send("ondblclick", (t0 + t1) / 2, y), [[0, "unpin", "f:16ths"]]);
+  assert.deepEqual(view.send("onclick", 5, 5), [], "nothing there");
+
+  // Strength: top right, 0..2.
+  const sx1 = 1160 - 70;
+  assert.deepEqual(view.send("onclick", sx1, 46), [[0, "strength", 2]]);
+  assert.deepEqual(view.send("ondblclick", sx1, 46), [[0, "strength", 1]]);
+
+  // "edit" again: back to the overview; clicks do nothing there.
+  view.send("edit", "weights");
+  assert.deepEqual(view.send("onclick", t1, y), []);
 });

@@ -41,7 +41,9 @@
 //   meter <numerator> <denominator>                             -> the Max version's transport (M8)
 //   emily <text...>                                             -> the Emily panel: her taste in a line, with
 //                                                                  only her strongest like and dislike (M9)
-//   emilyview clear|like|dislike|rating|compare|pair|done       -> the pop-up window: her taste in full
+//   emilyview clear|like|dislike|rating|compare|pair|strength|weight|done
+//                                                               -> the pop-up window: her taste in full, and
+//                                                                  every feature's weight for the editor
 //                                                                  (emi.taste; sent whenever it changes)
 //
 // Messages:
@@ -69,6 +71,11 @@
 //   taste                  Emily's taste in the Max window, and how ten pieces compare
 //                          with and without it
 //   forget                 start a new taste (the old one is kept in ml_midi.taste.backup.json)
+//   pin <feature> <weight> hold a musical feature (f:...) at a weight, -3..3 (the window's
+//                          weight editor); unpin <feature> releases it, unpin alone all
+//   strength <0..2>        how strongly her taste counts (1: as learned)
+//   storetaste <path>      write her taste (weights, pins, strength, ratings) to a file
+//   recalltaste <path>     make a stored taste hers (the one before is kept in the backup)
 //   writeclips             write the current score as Live clips (Live only)
 //   autoclips 1 | 0        also write clips after every compose (Live only)
 //   testclip               write the test phrase as Live clips (Live only)
@@ -375,6 +382,65 @@ function forget() {
   });
 }
 
+function pin(feature, weight) {
+  attempt(() => {
+    syncTaste();
+    const value = emily.pin(memory, String(feature), weight);
+    if (value === null) throw new Error("not a feature: " + feature);
+    const learned = memory.weights[String(feature)] || 0;
+    changedTaste();
+    outlet(0, "status", ...`Emily: ${emily.nameOf(String(feature))} pinned at ${signedWeight(value)} (she learned ${signedWeight(learned)})`.split(" "));
+  });
+}
+
+function unpin(feature) {
+  attempt(() => {
+    syncTaste();
+    if (feature === undefined) {
+      const count = emily.unpin(memory);
+      changedTaste();
+      outlet(0, "status", ...(count ? `Emily: ${count} ${count === 1 ? "pin" : "pins"} released; she uses what she learned` : "Emily: no pins to release").split(" "));
+      return;
+    }
+    const name = String(feature);
+    if (!emily.unpin(memory, name)) return;
+    changedTaste();
+    outlet(0, "status", ...`Emily: ${emily.nameOf(name)} released (back to ${signedWeight(memory.weights[name] || 0)}, what she learned)`.split(" "));
+  });
+}
+
+function strength(value) {
+  attempt(() => {
+    syncTaste();
+    const v = emily.setStrength(memory, value);
+    changedTaste();
+    const words = v === 0 ? "no taste" : v === 1 ? "as learned" : v < 1 ? "weaker than learned" : "stronger than learned";
+    outlet(0, "status", ...`Emily's taste at strength ${v.toFixed(2)}: ${words} (from the next piece or phrase)`.split(" "));
+  });
+}
+
+function storetaste(path) {
+  attempt(() => {
+    syncTaste();
+    const target = /\.json$/i.test(String(path)) ? String(path) : path + ".json";
+    files.writeText(target, JSON.stringify(memory, null, 1) + "\n");
+    outlet(0, "status", ...`stored Emily's taste in ${files.fileName(target)} (${tasteCounts()})`.split(" "));
+  });
+}
+
+function recalltaste(path) {
+  attempt(() => {
+    const stored = settingsFile.read(String(path));
+    if (!stored.weights && !stored.pins && stored.ratings === undefined) throw new Error(files.fileName(path) + " isn't a stored taste");
+    syncTaste();
+    if (tasteBackupPath) files.writeText(tasteBackupPath, JSON.stringify(memory) + "\n");
+    memory = emily.normalize(stored);
+    changedTaste();
+    const backup = tasteBackupPath ? `; the one before is in ${settingsFile.BACKUP_NAME}` : "";
+    outlet(0, "status", ...`recalled Emily's taste from ${files.fileName(path)} (${tasteCounts()})${backup}`.split(" "));
+  });
+}
+
 // Emily's taste in the Max window, and ten pieces (from the current seed)
 // composed with and without it, compared.
 function taste() {
@@ -522,6 +588,16 @@ function showTaste() {
   for (const entry of memory.log.slice(-8).reverse()) {
     outlet(0, "emilyview", "rating", entry.rating > 0 ? 1 : -1, entry.beats || 0, ...words(entry.what || entry.piece || "a piece"));
   }
+  // Every feature's weight, for the editor: learned, pinned, and in use.
+  outlet(0, "emilyview", "strength", memory.strength);
+  for (const [kind, features] of emily.GROUPS) {
+    if (kind === "Mode" && !(db && db.mode === "mixed")) continue;
+    for (const f of features) {
+      const learned = Math.round((memory.weights[f] || 0) * 100) / 100;
+      const pinned = memory.pins && f in memory.pins;
+      outlet(0, "emilyview", "weight", kind, f, learned, pinned ? 1 : 0, pinned ? memory.pins[f] : learned, ...words(emily.nameOf(f)));
+    }
+  }
   if (comparison) {
     outlet(0, "emilyview", "compare", comparison.first, comparison.last);
     const liked = new Set(likes.map(([f]) => f));
@@ -544,6 +620,32 @@ function saveTaste() {
   }
 }
 saveTaste.local = 1;
+
+// After a pin, a release, a strength or a recalled taste: composing uses it
+// from the next piece, it is saved, and both panels show it.
+function changedTaste() {
+  tasteVersion++;
+  comparison = null;
+  saveTaste();
+  outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
+  showTaste();
+}
+changedTaste.local = 1;
+
+function signedWeight(w) {
+  return (w > 0 ? "+" : w < 0 ? "-" : "") + Math.abs(w).toFixed(2);
+}
+signedWeight.local = 1;
+
+// "12 ratings, 3 pins, strength 1.50"
+function tasteCounts() {
+  const pins = Object.keys(memory.pins || {}).length;
+  const parts = [memory.ratings + (memory.ratings === 1 ? " rating" : " ratings")];
+  if (pins) parts.push(pins + (pins === 1 ? " pin" : " pins"));
+  if (memory.strength !== 1) parts.push("strength " + memory.strength.toFixed(2));
+  return parts.join(", ");
+}
+tasteCounts.local = 1;
 
 // "her taste +0.41 a beat (+0.05 without); suspensions 11% of beats (5%), ..."
 function comparisonText(result) {
