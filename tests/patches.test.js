@@ -191,6 +191,23 @@ test("live.* parameters: named, and unique within each product", () => {
   assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Beats", "Form", "Original Key", "Phrases", "Seed", "Signatures", "Stream", "Transpose"]);
   assert.deepEqual(liveParameters("emi.host.live.maxpat").map((p) => p.longname).sort(), ["All Voices Here", "Clips On Compose", "Play Through Voices"]);
   assert.deepEqual(liveParameters("emily.panel.maxpat").map((p) => p.longname).sort(), ["Accept", "Dislike", "Like", "Temperature"]);
+  assert.deepEqual(liveParameters("emi.host.max.maxpat").map((p) => p.longname), ["Play"]);
+});
+
+test("live.text toggles and buttons all have their parameter (an off/on range), or they don't toggle", () => {
+  let count = 0;
+  for (const file of files.filter((f) => f.endsWith(".maxpat"))) {
+    for (const [patcher, where] of patchers(readPatcher(path.join(ROOT, file)), file)) {
+      for (const { box } of patcher.boxes) {
+        if (box.maxclass !== "live.text") continue;
+        count++;
+        const valueof = (box.saved_attribute_attributes || {}).valueof || {};
+        assert.equal(box.parameter_enable, 1, `${where}: ${box.varname}`);
+        assert.deepEqual([valueof.parameter_enum, valueof.parameter_mmax], [["off", "on"], 1], `${where}: ${box.varname}`);
+      }
+    }
+  }
+  assert.ok(count >= 11, `${count} live.text`); // 11 now
 });
 
 test("emily.panel (M9): like and dislike are mappable buttons; temperature is saved and shown when restored", () => {
@@ -798,6 +815,11 @@ test("emi.host.max: one play/stop button, green for play, red for stop; it goes 
   const [play] = [...p.boxes.values()].filter((b) => b.varname === "Play");
   assert.equal(play.maxclass, "live.text");
   assert.deepEqual([play.mode, play.text, play.texton], [1, "play", "stop"], "a toggle: play when off, stop when on");
+  // Without its parameter (an off/on enum) a live.text never turns on: it
+  // stayed "play" in Max. Not restored at load: it starts off.
+  assert.equal(play.parameter_enable, 1);
+  const param = play.saved_attribute_attributes.valueof;
+  assert.deepEqual([param.parameter_enum, param.parameter_mmax, param.parameter_initial_enable], [["off", "on"], 1, 0]);
   const green = play.activebgcolor;
   const red = play.activebgoncolor;
   assert.ok(green[1] > green[0] && green[1] > green[2], "green when off (play)");

@@ -111,7 +111,7 @@
 						"",
 						""
 					],
-					"parameter_enable": 0,
+					"parameter_enable": 1,
 					"varname": "Play",
 					"mode": 1,
 					"text": "play",
@@ -158,6 +158,22 @@
 						1.0,
 						1.0
 					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Play",
+							"parameter_shortname": "play",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0
+						}
+					},
 					"patching_rect": [
 						150.0,
 						70.0,
