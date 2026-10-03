@@ -13,6 +13,45 @@
 //   so a rollback can take works out and put them back exactly.
 //   work: as emi-ingest makes them, plus { gen, from (the piece it came
 //   from), what (in words), at, variants: [[tick, op]] }
+//
+// Snapshots: her whole taste (emily-assoc's memory: weights, pins, strength,
+// ratings, novelty, mix, and which of her works are in use) at a moment.
+// The engine takes one when a session starts (if anything changed since the
+// last), when you ask, and before a rollback; a rollback makes a snapshot's
+// taste hers again, exactly, and so her corpus too (the works it lists).
+//   snapshots file (ml_midi.snapshots.json):
+//   { version: 1, next, list: [{ id, at, label, memory }] }, the last KEEP
+
+const KEEP = 30; // snapshots kept
+
+function createSnapshots() {
+  return { version: 1, next: 1, list: [] };
+}
+
+function normalizeSnapshots(file) {
+  const out = createSnapshots();
+  if (file && Array.isArray(file.list)) out.list = file.list.filter((s) => s && Number.isFinite(s.id) && s.memory && typeof s.memory === "object");
+  out.next = Math.max(1, Number.isFinite(file && file.next) ? file.next : 1, ...out.list.map((s) => s.id + 1));
+  return out;
+}
+
+// Adds a snapshot of memory (a deep copy) unless `onlyIfChanged` and the
+// latest has the same taste; returns it, or null.
+function snapshot(snapshots, memory, { label = "", at = null, onlyIfChanged = false } = {}) {
+  const copy = JSON.parse(JSON.stringify(memory));
+  const latest = snapshots.list[snapshots.list.length - 1];
+  if (onlyIfChanged && latest && JSON.stringify(latest.memory) === JSON.stringify(copy)) return null;
+  const entry = { id: snapshots.next++, at, label, memory: copy };
+  snapshots.list.push(entry);
+  if (snapshots.list.length > KEEP) snapshots.list.splice(0, snapshots.list.length - KEEP);
+  return entry;
+}
+
+// The taste in snapshot `id` (a deep copy), or null.
+function recall(snapshots, id) {
+  const found = snapshots.list.find((s) => s.id === Number(id));
+  return found ? JSON.parse(JSON.stringify(found.memory)) : null;
+}
 
 function createStore() {
   return { version: 1, works: [] };
@@ -87,6 +126,11 @@ function counts(db) {
   return { works: own.length, beats: beats.length, varied: beats.filter((g) => g.variant).length, gens };
 }
 
+exports.KEEP = KEEP;
+exports.createSnapshots = createSnapshots;
+exports.normalizeSnapshots = normalizeSnapshots;
+exports.snapshot = snapshot;
+exports.recall = recall;
 exports.createStore = createStore;
 exports.normalizeStore = normalizeStore;
 exports.workOf = workOf;

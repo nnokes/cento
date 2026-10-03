@@ -106,7 +106,7 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
     "abtest", "accept", "autoclips", "beats", "clear", "compose", "corpus", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
-    "mix", "need", "next", "novelty", "pattern", "phrases", "pin", "recalltaste", "remember", "seed", "select", "sigs", "startup", "storetaste", "stream",
+    "mix", "need", "next", "novelty", "pattern", "phrases", "pin", "recalltaste", "remember", "rollback", "seed", "select", "sigs", "snapshot", "startup", "storetaste", "stream",
     "strength", "taste", "temperature", "testclip", "transpose", "unaccept", "unpin", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), [
@@ -115,7 +115,8 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
   assert.deepEqual(loadBundle("emi.text").handlers(), ["alert", "clear", "onresize", "paint", "text"]);
   assert.deepEqual(loadBundle("emi.taste").handlers(), [
-    "clear", "compare", "dislike", "done", "edit", "like", "onclick", "ondblclick", "ondrag", "onresize", "paint", "pair", "rating", "strength", "weight",
+    "clear", "compare", "dislike", "done", "edit", "like", "memory", "onclick", "ondblclick", "ondrag", "onresize", "own", "paint", "pair", "rating",
+    "snapshot", "strength", "weight", "work",
   ]);
 });
 
@@ -1242,4 +1243,100 @@ test("emily: accepting a stream phrase keeps that phrase", () => {
   core.send("phrases", 0);
   core.send("compose", 4);
   assert.match(lastStatus(core.send("accept")).join(" "), /^status accepted phrase 1 of emi-4 as emily-1 \(generation 1, \d+ beats\); Emily has 1 work of her own$/);
+});
+
+// ---------------------------------------------------------------- M10: snapshots and rollback
+
+test("emily: a rollback restores an earlier taste exactly, her own music included", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  core.send("novelty", 1);
+  core.send("compose", 1);
+  core.send("like");
+  core.send("accept");
+  core.send("mix", 0.75);
+  const kept = lastStatus(core.send("snapshot")).join(" ");
+  assert.match(kept, /^status snapshot #1 kept: 1 rating, 1 work of her own$/);
+  const tasteThen = tasteIn(folder);
+  const pieceThen = lastStatus(core.send("compose", 3)).join(" ");
+
+  // Later: more ratings, another work, a pin, a different mix.
+  core.send("compose", 2);
+  core.send("dislike");
+  core.send("accept");
+  core.send("pin", "f:16ths", 2);
+  core.send("mix", 0.25);
+  assert.notDeepEqual(tasteIn(folder), tasteThen);
+
+  const out = core.send("rollback", 1);
+  assert.match(lastStatus(out).join(" "), /^status rolled back to snapshot #1 \([-0-9]+ [0-9:]+\): 1 rating, 1 work of her own; what was before is snapshot #2$/);
+  assert.deepEqual(tasteIn(folder), tasteThen, "her taste, exactly");
+  assert.equal(lastStatus(core.send("compose", 3)).join(" "), pieceThen, "and so the same piece for the same seed");
+  // The rollback can itself be undone.
+  core.send("rollback", 2);
+  assert.deepEqual(tasteIn(folder).accepted, ["emily-1", "emily-2"]);
+  assert.match(lastStatus(core.send("rollback", 99)).join(" "), /^error no snapshot #99$/);
+
+  // The window lists her works and snapshots, latest first.
+  const rows = select(core.send("snapshot"), "emilyview");
+  assert.equal(rows.find(([kind]) => kind === "own")[1], 2, "two works of her own");
+  assert.deepEqual(rows.filter(([kind]) => kind === "work").map(([, id]) => id), ["emily-2", "emily-1"]);
+  assert.deepEqual(rows.filter(([kind]) => kind === "snapshot").map(([, id]) => id), [4, 3, 2, 1]);
+});
+
+test("emily: a snapshot is kept when a session starts, if her taste changed", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  core.send("compose", 1);
+  core.send("like");
+  const snapshots = () => JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.snapshots.json"), "utf8")).list.map((s) => s.label);
+  engineIn(folder).send("startup", "all");
+  assert.deepEqual(snapshots(), ["session start"]);
+  engineIn(folder).send("startup", "all");
+  assert.deepEqual(snapshots(), ["session start"], "nothing changed: no new one");
+});
+
+test("taste view: the memory view lists her works and snapshots; its buttons and sliders talk to the engine", () => {
+  const view = loadBundle("emi.taste");
+  const g = view.context.mgraphics;
+  g.size = [1160, 250];
+  view.send("clear", 2, 1, 0, 1);
+  view.send("own", 2, 120, 6, 0.5, 0.25, 1);
+  view.send("work", "emily-2", 2, 56, 3, "emi-12");
+  view.send("work", "emily-1", 1, 64, 5, "emi-11");
+  view.send("snapshot", 3, "2026-10-03", "14:12", "kept", "by", "hand:", "2", "ratings");
+  view.send("done");
+  view.send("memory");
+  g.calls.length = 0;
+  view.send("paint");
+  const text = g.calls.filter(([name]) => name === "show_text").map(([, t]) => t);
+  for (const expected of ["Emily's memory", "emily-2", "generation 2 · 56 beats · 3 varied · from emi-12", "#3", "2026-10-03 14:12 · kept by hand: 2 ratings", "put aside", "roll back", "keep a snapshot", "0.50", "0.25"]) {
+    assert.ok(text.includes(expected), expected);
+  }
+  // Click each button: find where it was drawn.
+  const at = (label) => g.calls.find(([name, t]) => name === "show_text" && t === label);
+  const index = (label) => g.calls.indexOf(at(label));
+  const position = (label) => {
+    const moves = g.calls.slice(0, index(label)).filter(([name]) => name === "move_to");
+    return moves[moves.length - 1].slice(1);
+  };
+  const [rx, ry] = position("roll back");
+  assert.deepEqual(view.send("onclick", rx + 4, ry - 4), [[0, "rollback", 3]]);
+  const [ax, ay] = position("put aside");
+  assert.deepEqual(view.send("onclick", ax + 4, ay - 4), [[0, "unaccept", "emily-2"]]);
+  const [kx, ky] = position("keep a snapshot");
+  assert.deepEqual(view.send("onclick", kx + 4, ky - 4), [[0, "snapshot"]]);
+  // Novelty: top right, 0..1; mix to its left, 0..0.75.
+  assert.deepEqual(view.send("onclick", 1160 - 70, 24), [[0, "novelty", 1]]);
+  assert.deepEqual(view.send("ondblclick", 1160 - 70, 24), [[0, "novelty", 0]]);
+  assert.deepEqual(view.send("onclick", 1160 - 380, 24), [[0, "mix", 0.75]]);
+  assert.deepEqual(view.send("ondblclick", 1160 - 380, 24), [[0, "mix", 0.5]]);
+  view.send("memory");
+  assert.deepEqual(view.send("onclick", 1160 - 70, 24), [], "back to the overview");
 });

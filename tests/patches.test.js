@@ -274,6 +274,8 @@ test("emi.window: a large piano roll and Emily's taste, fed by the engine; selec
   // sliders (pin, unpin, strength) go to the engine.
   const [edit] = p.find("edit weights");
   assert.deepEqual(p.from(edit.id).map(([b]) => b.id), [taste.id]);
+  const [memoryView] = p.find("memory");
+  assert.deepEqual(p.from(memoryView.id).map(([b]) => b.id), [taste.id], "M10: the memory view");
   assert.deepEqual(p.from(taste.id).map(([b]) => b.id), [outlet.id]);
   const [release] = p.find("release all pins");
   const [[t]] = p.from(release.id);

@@ -3097,8 +3097,9 @@ exports.setMeter = setMeter;
 // Emily's taste (M9) is kept the same way, in ml_midi.taste.json in the same
 // folder (also git-ignored), so it carries over between the products too:
 //   tastePathIn(folder), backupPathIn(folder) (what "forget" sets aside)
-// and (M10) the music Emily has accepted, in ml_midi.emily.json:
-//   emilyPathIn(folder)
+// and (M10) the music Emily has accepted, in ml_midi.emily.json, and her
+// snapshots, in ml_midi.snapshots.json:
+//   emilyPathIn(folder), snapshotsPathIn(folder)
 
 const files = require("emi-load");
 
@@ -3106,6 +3107,7 @@ const FILE_NAME = "ml_midi.settings.json";
 const TASTE_NAME = "ml_midi.taste.json";
 const BACKUP_NAME = "ml_midi.taste.backup.json";
 const EMILY_NAME = "ml_midi.emily.json";
+const SNAPSHOTS_NAME = "ml_midi.snapshots.json";
 
 function folderOf(patcher) {
   for (let p = patcher; p; p = p.parentpatcher) {
@@ -3132,6 +3134,10 @@ function emilyPathIn(folder) {
   return folder + "/" + EMILY_NAME;
 }
 
+function snapshotsPathIn(folder) {
+  return folder + "/" + SNAPSHOTS_NAME;
+}
+
 function read(path) {
   try {
     if (!files.exists(path)) return {};
@@ -3155,6 +3161,8 @@ exports.tastePathIn = tastePathIn;
 exports.backupPathIn = backupPathIn;
 exports.EMILY_NAME = EMILY_NAME;
 exports.emilyPathIn = emilyPathIn;
+exports.SNAPSHOTS_NAME = SNAPSHOTS_NAME;
+exports.snapshotsPathIn = snapshotsPathIn;
 exports.read = read;
 exports.write = write;
   };
@@ -5007,6 +5015,45 @@ exports.valid = valid;
 //   so a rollback can take works out and put them back exactly.
 //   work: as emi-ingest makes them, plus { gen, from (the piece it came
 //   from), what (in words), at, variants: [[tick, op]] }
+//
+// Snapshots: her whole taste (emily-assoc's memory: weights, pins, strength,
+// ratings, novelty, mix, and which of her works are in use) at a moment.
+// The engine takes one when a session starts (if anything changed since the
+// last), when you ask, and before a rollback; a rollback makes a snapshot's
+// taste hers again, exactly, and so her corpus too (the works it lists).
+//   snapshots file (ml_midi.snapshots.json):
+//   { version: 1, next, list: [{ id, at, label, memory }] }, the last KEEP
+
+const KEEP = 30; // snapshots kept
+
+function createSnapshots() {
+  return { version: 1, next: 1, list: [] };
+}
+
+function normalizeSnapshots(file) {
+  const out = createSnapshots();
+  if (file && Array.isArray(file.list)) out.list = file.list.filter((s) => s && Number.isFinite(s.id) && s.memory && typeof s.memory === "object");
+  out.next = Math.max(1, Number.isFinite(file && file.next) ? file.next : 1, ...out.list.map((s) => s.id + 1));
+  return out;
+}
+
+// Adds a snapshot of memory (a deep copy) unless `onlyIfChanged` and the
+// latest has the same taste; returns it, or null.
+function snapshot(snapshots, memory, { label = "", at = null, onlyIfChanged = false } = {}) {
+  const copy = JSON.parse(JSON.stringify(memory));
+  const latest = snapshots.list[snapshots.list.length - 1];
+  if (onlyIfChanged && latest && JSON.stringify(latest.memory) === JSON.stringify(copy)) return null;
+  const entry = { id: snapshots.next++, at, label, memory: copy };
+  snapshots.list.push(entry);
+  if (snapshots.list.length > KEEP) snapshots.list.splice(0, snapshots.list.length - KEEP);
+  return entry;
+}
+
+// The taste in snapshot `id` (a deep copy), or null.
+function recall(snapshots, id) {
+  const found = snapshots.list.find((s) => s.id === Number(id));
+  return found ? JSON.parse(JSON.stringify(found.memory)) : null;
+}
 
 function createStore() {
   return { version: 1, works: [] };
@@ -5081,6 +5128,11 @@ function counts(db) {
   return { works: own.length, beats: beats.length, varied: beats.filter((g) => g.variant).length, gens };
 }
 
+exports.KEEP = KEEP;
+exports.createSnapshots = createSnapshots;
+exports.normalizeSnapshots = normalizeSnapshots;
+exports.snapshot = snapshot;
+exports.recall = recall;
 exports.createStore = createStore;
 exports.normalizeStore = normalizeStore;
 exports.workOf = workOf;
@@ -5184,6 +5236,9 @@ __emi_require.local = 1;
 //                          as a work of Emily's own (emily-memory); later pieces use it
 //   unaccept <id>          put an accepted work aside (it stays in ml_midi.emily.json)
 //   mix <0..0.75>          how much her own music counts against Bach's (0: Bach only)
+//   snapshot               keep her whole taste as it is now (one is also kept when a
+//                          session starts, if it changed, and before a rollback)
+//   rollback <id>          make snapshot <id>'s taste hers again, exactly (and so her corpus)
 //   storetaste <path>      write her taste (weights, pins, strength, ratings) to a file
 //   recalltaste <path>     make a stored taste hers (the one before is kept in the backup)
 //   writeclips             write the current score as Live clips (Live only)
@@ -5267,6 +5322,9 @@ let builtFor = null; // what herDb was built from: accepted ids and the store
 let store = emilyMemory.createStore(); // every work ever accepted (ml_midi.emily.json)
 let storePath = null;
 let storeText = null;
+let snapshots = emilyMemory.createSnapshots(); // ml_midi.snapshots.json
+let snapshotsPath = null;
+let snapshotsText = null;
 
 function loadmidi(path) {
   attempt(() => {
@@ -5599,6 +5657,30 @@ function mix(value) {
   });
 }
 
+function snapshot() {
+  attempt(() => {
+    syncTaste();
+    const entry = takeSnapshot("kept by hand", false);
+    outlet(0, "status", ...`snapshot #${entry.id} kept: ${tasteCounts()}`.split(" "));
+    showTaste();
+  });
+}
+
+function rollback(id) {
+  attempt(() => {
+    syncTaste();
+    syncSnapshots();
+    const restored = emilyMemory.recall(snapshots, id);
+    if (!restored) throw new Error(`no snapshot #${id}`);
+    const was = takeSnapshot(`before rolling back to #${id}`, false);
+    memory = emily.normalize(restored);
+    changedTaste();
+    ensureCorpus();
+    const found = snapshots.list.find((s) => s.id === Number(id));
+    outlet(0, "status", ...`rolled back to snapshot #${id} (${whenOf(found.at)}): ${tasteCounts()}; what was before is snapshot #${was.id}`.split(" "));
+  });
+}
+
 function storetaste(path) {
   attempt(() => {
     syncTaste();
@@ -5842,8 +5924,12 @@ function loadTaste(folder) {
   storePath = settingsFile.emilyPathIn(folder);
   storeText = null;
   syncStore();
+  snapshotsPath = settingsFile.snapshotsPathIn(folder);
+  snapshotsText = null;
+  syncSnapshots();
   syncTaste();
   if (emily.decay(memory)) saveTaste();
+  if (memory.ratings || memory.accepted.length) takeSnapshot("session start", true);
   outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
   showTaste();
 }
@@ -5894,6 +5980,19 @@ function showTaste() {
       outlet(0, "emilyview", "weight", kind, f, learned, pinned ? 1 : 0, pinned ? memory.pins[f] : learned, ...words(emily.nameOf(f)));
     }
   }
+  // Her memory (M10): her own works in use, latest first, and her snapshots.
+  const counted = herDb ? emilyMemory.counts(herDb) : { works: 0, beats: 0, varied: 0 };
+  outlet(0, "emilyview", "own", counted.works, counted.beats, counted.varied, memory.mix, memory.novelty, herDb && db === herDb ? 1 : 0);
+  const byId = new Map(store.works.map((w) => [w.id, w]));
+  for (const id of memory.accepted.slice().reverse()) {
+    const w = byId.get(id);
+    if (!w) continue;
+    const beats = Math.round((Math.max(0, ...w.events.map((e) => e[0] + e[2])) - w.padTicks) / w.ppq);
+    outlet(0, "emilyview", "work", w.id, w.gen, beats, (w.variants || []).length, ...words(w.what || w.from || ""));
+  }
+  for (const snap of snapshots.list.slice(-10).reverse()) {
+    outlet(0, "emilyview", "snapshot", snap.id, ...words(whenOf(snap.at)), ...words(`${snap.label}: ${tasteCounts(snap.memory)}`));
+  }
   if (comparison) {
     outlet(0, "emilyview", "compare", comparison.first, comparison.last);
     const liked = new Set(likes.map(([f]) => f));
@@ -5933,14 +6032,62 @@ function signedWeight(w) {
 }
 signedWeight.local = 1;
 
-// "12 ratings, 3 pins, strength 1.50"
-function tasteCounts() {
-  const pins = Object.keys(memory.pins || {}).length;
-  const parts = [memory.ratings + (memory.ratings === 1 ? " rating" : " ratings")];
+// "12 ratings, 3 pins, strength 1.50, 2 works of her own"
+function tasteCounts(m = memory) {
+  const pins = Object.keys(m.pins || {}).length;
+  const parts = [m.ratings + (m.ratings === 1 ? " rating" : " ratings")];
   if (pins) parts.push(pins + (pins === 1 ? " pin" : " pins"));
-  if (memory.strength !== 1) parts.push("strength " + memory.strength.toFixed(2));
+  if (m.strength !== 1) parts.push("strength " + m.strength.toFixed(2));
+  const works = (m.accepted || []).length;
+  if (works) parts.push(works + (works === 1 ? " work of her own" : " works of her own"));
   return parts.join(", ");
 }
+
+// Keeps a snapshot of her taste (M10); with onlyIfChanged, only if it
+// differs from the last one. Returns it (or null).
+function takeSnapshot(label, onlyIfChanged) {
+  syncSnapshots();
+  const entry = emilyMemory.snapshot(snapshots, memory, { label, at: new Date().toISOString(), onlyIfChanged });
+  if (entry) saveSnapshots();
+  return entry;
+}
+takeSnapshot.local = 1;
+
+// "2026-10-03 14:12" from an ISO time.
+function whenOf(at) {
+  return at ? String(at).slice(0, 16).replace("T", " ") : "?";
+}
+whenOf.local = 1;
+
+function syncSnapshots() {
+  if (!snapshotsPath) return;
+  let text = "";
+  try {
+    text = files.exists(snapshotsPath) ? files.readText(snapshotsPath) : "";
+  } catch (e) {
+    return;
+  }
+  if (text === snapshotsText) return;
+  snapshotsText = text;
+  try {
+    snapshots = emilyMemory.normalizeSnapshots(text ? JSON.parse(text) : null);
+  } catch (e) {
+    snapshots = emilyMemory.createSnapshots();
+  }
+}
+syncSnapshots.local = 1;
+
+function saveSnapshots() {
+  if (!snapshotsPath) return;
+  const text = JSON.stringify(snapshots) + "\n";
+  try {
+    files.writeText(snapshotsPath, text);
+    snapshotsText = text;
+  } catch (e) {
+    outlet(0, "error", "can't", "save", "Emily's", "snapshots:", ...String(e.message).split(" "));
+  }
+}
+saveSnapshots.local = 1;
 tasteCounts.local = 1;
 
 // "her taste +0.41 a beat (+0.05 without); suspensions 11% of beats (5%), ..."

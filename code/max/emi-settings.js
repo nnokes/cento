@@ -13,8 +13,9 @@
 // Emily's taste (M9) is kept the same way, in ml_midi.taste.json in the same
 // folder (also git-ignored), so it carries over between the products too:
 //   tastePathIn(folder), backupPathIn(folder) (what "forget" sets aside)
-// and (M10) the music Emily has accepted, in ml_midi.emily.json:
-//   emilyPathIn(folder)
+// and (M10) the music Emily has accepted, in ml_midi.emily.json, and her
+// snapshots, in ml_midi.snapshots.json:
+//   emilyPathIn(folder), snapshotsPathIn(folder)
 
 const files = require("emi-load");
 
@@ -22,6 +23,7 @@ const FILE_NAME = "ml_midi.settings.json";
 const TASTE_NAME = "ml_midi.taste.json";
 const BACKUP_NAME = "ml_midi.taste.backup.json";
 const EMILY_NAME = "ml_midi.emily.json";
+const SNAPSHOTS_NAME = "ml_midi.snapshots.json";
 
 function folderOf(patcher) {
   for (let p = patcher; p; p = p.parentpatcher) {
@@ -48,6 +50,10 @@ function emilyPathIn(folder) {
   return folder + "/" + EMILY_NAME;
 }
 
+function snapshotsPathIn(folder) {
+  return folder + "/" + SNAPSHOTS_NAME;
+}
+
 function read(path) {
   try {
     if (!files.exists(path)) return {};
@@ -71,5 +77,7 @@ exports.tastePathIn = tastePathIn;
 exports.backupPathIn = backupPathIn;
 exports.EMILY_NAME = EMILY_NAME;
 exports.emilyPathIn = emilyPathIn;
+exports.SNAPSHOTS_NAME = SNAPSHOTS_NAME;
+exports.snapshotsPathIn = snapshotsPathIn;
 exports.read = read;
 exports.write = write;

@@ -12,6 +12,13 @@
 // engine); double-clicking releases it to what she learned, shown as a thin
 // line on its slider ("unpin <feature>"). A strength slider (0..2) scales her
 // whole taste ("strength <v>"); double-click it for 1. "edit" again goes
+// back.
+//
+// "memory" (M10, the window's "memory" button) shows her memory: her own
+// works in use (each with "put aside": "unaccept <id>"), her snapshots
+// (each with "roll back": "rollback <id>"; "keep a snapshot": "snapshot"),
+// and sliders for mix (0..0.75: "mix <v>"; double-click for 0.5) and
+// novelty (0..1: "novelty <v>"; double-click for 0). "memory" again goes
 // back. The engine sends it all at once, whenever it changes:
 //   clear <ratings> <likes> <sessions> <temperature>
 //   like <weight> <name...>               (strongest first)
@@ -21,6 +28,9 @@
 //   pair <% with> <% without> <liked 1|0> <name...>
 //   strength <v>
 //   weight <kind> <feature> <learned> <pinned 1|0> <in use> <name...>
+//   own <works> <beats> <varied> <mix> <novelty> <in use 1|0>
+//   work <id> <gen> <beats> <varied> <what...>     (latest first)
+//   snapshot <id> <date> <time> <label...>         (latest first)
 //   done                                  (draw it)
 
 autowatch = 1;
@@ -37,16 +47,36 @@ const LIMIT = 3; // weights stay within -3..+3 (emily-assoc)
 const ROW = 20;
 const AMBER = [1, 0.75, 0.25];
 const STEP = 0.1; // a pinned weight's resolution
-const MAX_STRENGTH = 2;
+const PURPLE = [0.75, 0.45, 1];
+// The sliders other than the weights: their range, step, and value on a double-click.
+const SLIDERS = {
+  strength: { min: 0, max: 2, step: 0.05, reset: 1 },
+  mix: { min: 0, max: 0.75, step: 0.05, reset: 0.5 },
+  novelty: { min: 0, max: 1, step: 0.05, reset: 0 },
+};
 
 let shown = null;
 let incoming = null;
-let editing = false;
-let hits = []; // the sliders as last drawn: { kind: "weight" | "strength", feature, x0, x1, y0, y1 }
+let mode = "overview"; // or "weights" (the editor) or "memory" (M10)
+// The sliders and buttons as last drawn: { kind: "weight" | "slider" | "button",
+// feature (a weight's), name (a slider's), message (a button's), x0, x1, y0, y1 }
+let hits = [];
 let dragging = null; // the slider being dragged (its hit)
 
 function clear(ratings, likes, sessions, temperature) {
-  incoming = { ratings, likes, sessions, temperature, liked: [], disliked: [], recent: [], compare: null, pairs: [], strength: 1, weights: [] };
+  incoming = { ratings, likes, sessions, temperature, liked: [], disliked: [], recent: [], compare: null, pairs: [], strength: 1, weights: [], own: null, works: [], snapshots: [] };
+}
+
+function own(works, beats, varied, mix, novelty, inUse) {
+  if (incoming) incoming.own = { works, beats, varied, mix, novelty, inUse: Boolean(inUse) };
+}
+
+function work(id, gen, beats, varied, ...what) {
+  if (incoming) incoming.works.push({ id: String(id), gen, beats, varied, what: what.join(" ") });
+}
+
+function snapshot(id, date, time, ...label) {
+  if (incoming) incoming.snapshots.push({ id, when: `${date} ${time}`, label: label.join(" ") });
 }
 
 function strength(v) {
@@ -58,7 +88,13 @@ function weight(kind, feature, learned, pinned, value, ...name) {
 }
 
 function edit() {
-  editing = !editing;
+  mode = mode === "weights" ? "overview" : "weights";
+  dragging = null;
+  mgraphics.redraw();
+}
+
+function memory() {
+  mode = mode === "memory" ? "overview" : "memory";
   dragging = null;
   mgraphics.redraw();
 }
@@ -96,8 +132,13 @@ function onresize() {
 // ---- the weight editor: mouse
 
 function onclick(x, y) {
-  if (!editing || !shown) return;
-  dragging = hitAt(x, y);
+  if (mode === "overview" || !shown) return;
+  const hit = hitAt(x, y);
+  if (hit && hit.kind === "button") {
+    outlet(0, ...hit.message);
+    return;
+  }
+  dragging = hit;
   if (dragging) moveTo(x);
 }
 
@@ -107,13 +148,13 @@ function ondrag(x, y, button) {
 }
 
 function ondblclick(x, y) {
-  if (!editing || !shown) return;
+  if (mode === "overview" || !shown) return;
   const hit = hitAt(x, y);
   dragging = null;
-  if (!hit) return;
-  if (hit.kind === "strength") {
-    shown.strength = 1;
-    outlet(0, "strength", 1);
+  if (!hit || hit.kind === "button") return;
+  if (hit.kind === "slider") {
+    setSlider(hit.name, SLIDERS[hit.name].reset);
+    outlet(0, hit.name, SLIDERS[hit.name].reset);
   } else {
     const row = shown.weights.find((w) => w.feature === hit.feature);
     if (row) {
@@ -130,15 +171,28 @@ function hitAt(x, y) {
 }
 hitAt.local = 1;
 
+function sliderValue(name) {
+  if (name === "strength") return Number(shown.strength);
+  return shown.own ? Number(shown.own[name]) : 0;
+}
+sliderValue.local = 1;
+
+function setSlider(name, v) {
+  if (name === "strength") shown.strength = v;
+  else if (shown.own) shown.own[name] = v;
+}
+setSlider.local = 1;
+
 // The dragged slider follows the mouse; the engine hears each new value.
 function moveTo(x) {
   const h = dragging;
   const share = Math.max(0, Math.min(1, (x - h.x0) / (h.x1 - h.x0)));
-  if (h.kind === "strength") {
-    const v = Math.round(share * MAX_STRENGTH * 20) / 20;
-    if (v === shown.strength) return;
-    shown.strength = v;
-    outlet(0, "strength", v);
+  if (h.kind === "slider") {
+    const range = SLIDERS[h.name];
+    const v = Math.round(Math.round((range.min + share * (range.max - range.min)) / range.step) * range.step * 100) / 100;
+    if (v === sliderValue(h.name)) return;
+    setSlider(h.name, v);
+    outlet(0, h.name, v);
   } else {
     const v = Math.round((share * 2 * LIMIT - LIMIT) / STEP) * STEP;
     const value = Math.round(v * 100) / 100;
@@ -160,8 +214,12 @@ function paint() {
   g.fill();
   g.select_font_face("Arial");
   hits = [];
-  if (editing) {
+  if (mode === "weights") {
     paintEditor(width, height);
+    return;
+  }
+  if (mode === "memory") {
+    paintMemory(width, height);
     return;
   }
 
@@ -291,21 +349,7 @@ function paintEditor(width, height) {
   if (!shown) return;
 
   // Strength: 0..2, top right.
-  const sx0 = width - 230;
-  const sx1 = width - 70;
-  g.set_source_rgba(1, 1, 1, 0.8);
-  g.move_to(sx0 - 58, 50);
-  g.show_text("strength");
-  sliderTrack(sx0, sx1, 46);
-  const sx = sx0 + (Number(shown.strength) / MAX_STRENGTH) * (sx1 - sx0);
-  g.set_source_rgba(1, 1, 1, 0.5);
-  g.rectangle(sx0 + (sx1 - sx0) / 2, 41, 1, 10);
-  g.fill();
-  handle(sx, 46, Number(shown.strength) === 1 ? [0.75, 0.75, 0.78] : AMBER, true);
-  g.set_source_rgba(1, 1, 1, 0.8);
-  g.move_to(sx1 + 8, 50);
-  g.show_text(Number(shown.strength).toFixed(2));
-  hits.push({ kind: "strength", feature: null, x0: sx0, x1: sx1, y0: 36, y1: 56 });
+  namedSlider("strength", "strength", width - 230, width - 70, 46);
 
   const kinds = [];
   for (const w of shown.weights) if (!kinds.includes(w.kind)) kinds.push(w.kind);
@@ -344,6 +388,113 @@ function paintEditor(width, height) {
   });
 }
 paintEditor.local = 1;
+
+// A slider for a setting (SLIDERS), with its label to the left and its value
+// to the right; a mark at its double-click value.
+function namedSlider(name, label, x0, x1, y) {
+  const g = mgraphics;
+  const range = SLIDERS[name];
+  const value = sliderValue(name);
+  const at = (v) => x0 + ((v - range.min) / (range.max - range.min)) * (x1 - x0);
+  g.set_font_size(12);
+  g.set_source_rgba(1, 1, 1, 0.8);
+  g.move_to(x0 - 8 - label.length * 6.2, y + 4);
+  g.show_text(label);
+  sliderTrack(x0, x1, y);
+  g.set_source_rgba(1, 1, 1, 0.5);
+  g.rectangle(at(range.reset), y - 5, 1, 10);
+  g.fill();
+  handle(at(value), y, value === range.reset ? [0.75, 0.75, 0.78] : AMBER, true);
+  g.set_source_rgba(1, 1, 1, 0.8);
+  g.move_to(x1 + 8, y + 4);
+  g.show_text(value.toFixed(2));
+  hits.push({ kind: "slider", name, x0, x1, y0: y - 10, y1: y + 10 });
+}
+namedSlider.local = 1;
+
+// A small drawn button: text in a rounded box; clicking sends `message`.
+function button(text, x, y, message, color = [1, 1, 1]) {
+  const g = mgraphics;
+  g.set_font_size(11);
+  const w = text.length * 6 + 12;
+  g.set_source_rgba(color[0], color[1], color[2], 0.18);
+  g.rectangle_rounded(x, y - 12, w, 16, 6, 6);
+  g.fill();
+  g.set_source_rgba(color[0], color[1], color[2], 0.95);
+  g.move_to(x + 6, y);
+  g.show_text(text);
+  hits.push({ kind: "button", message, x0: x, x1: x + w, y0: y - 12, y1: y + 4 });
+  return w;
+}
+button.local = 1;
+
+// Her memory (M10): her own works, her snapshots, mix and novelty.
+function paintMemory(width, height) {
+  const g = mgraphics;
+  g.set_font_size(16);
+  g.set_source_rgba(1, 1, 1, 0.95);
+  g.move_to(12, 24);
+  g.show_text("Emily's memory");
+  if (!shown || !shown.own) return;
+  const o = shown.own;
+  g.set_font_size(12);
+  g.set_source_rgba(1, 1, 1, 0.6);
+  g.move_to(140, 24);
+  const summary = o.works
+    ? `${o.works} ${o.works === 1 ? "work" : "works"} of her own, ${o.beats} beats, ${o.varied} with notes she varied${o.inUse ? "" : " (not in use at mix 0)"}`
+    : "No music of her own yet: accept a piece, a stream phrase, or beats you select.";
+  g.show_text(summary);
+  namedSlider("mix", "mix", width - 520, width - 380, 24);
+  namedSlider("novelty", "novelty", width - 230, width - 70, 24);
+
+  const column = (width - 24) / 2;
+  const top = 58;
+  const rows = Math.max(1, Math.floor((height - top - 10) / ROW));
+  g.set_font_size(12);
+  g.set_source_rgba(1, 1, 1, 0.85);
+  g.move_to(12, top);
+  g.show_text("Her own works (latest first)");
+  shown.works.slice(0, rows).forEach((w, i) => {
+    const y = top + 8 + (i + 1) * ROW - 6;
+    g.set_font_size(12);
+    g.set_source_rgba(PURPLE[0], PURPLE[1], PURPLE[2], 0.95);
+    g.move_to(12, y);
+    g.show_text(w.id);
+    g.set_source_rgba(1, 1, 1, 0.75);
+    g.move_to(80, y);
+    g.show_text(`generation ${w.gen} · ${w.beats} beats${w.varied ? ` · ${w.varied} varied` : ""} · from ${w.what}`);
+    button("put aside", 12 + column - 90, y, ["unaccept", w.id], RED);
+  });
+  if (!shown.works.length) {
+    g.set_source_rgba(1, 1, 1, 0.4);
+    g.move_to(12, top + 22);
+    g.show_text("none yet");
+  }
+
+  const x0 = 12 + column;
+  g.set_font_size(12);
+  g.set_source_rgba(1, 1, 1, 0.85);
+  g.move_to(x0, top);
+  g.show_text("Snapshots (latest first)");
+  button("keep a snapshot", x0 + 170, top, ["snapshot"], AMBER);
+  shown.snapshots.slice(0, rows).forEach((snap, i) => {
+    const y = top + 8 + (i + 1) * ROW - 6;
+    g.set_font_size(12);
+    g.set_source_rgba(1, 1, 1, 0.9);
+    g.move_to(x0, y);
+    g.show_text(`#${snap.id}`);
+    g.set_source_rgba(1, 1, 1, 0.65);
+    g.move_to(x0 + 36, y);
+    g.show_text(`${snap.when} · ${snap.label}`);
+    button("roll back", x0 + column - 90, y, ["rollback", snap.id], GREEN);
+  });
+  if (!shown.snapshots.length) {
+    g.set_source_rgba(1, 1, 1, 0.4);
+    g.move_to(x0, top + 22);
+    g.show_text("none yet: one is kept each time a session starts");
+  }
+}
+paintMemory.local = 1;
 
 function sliderTrack(x0, x1, y) {
   mgraphics.set_source_rgba(1, 1, 1, 0.15);

@@ -74,3 +74,20 @@ test("memory: usable works match the corpus's meter and modes, and are in use", 
   assert.deepEqual(memory.usable(store, [], bach), []);
   assert.deepEqual(memory.normalizeStore({ works: [w, { id: 3 }, null] }).works.map((x) => x.id), ["emily-1"]);
 });
+
+test("memory: snapshots keep a deep copy of her taste; recall gives it back exactly", () => {
+  const snaps = memory.createSnapshots();
+  const taste = { weights: { "f:susp": 1 }, accepted: ["emily-1"], ratings: 3 };
+  const first = memory.snapshot(snaps, taste, { label: "session start", at: "2026-10-03T10:00:00Z" });
+  taste.weights["f:susp"] = 2;
+  taste.accepted.push("emily-2");
+  assert.deepEqual(memory.recall(snaps, first.id), { weights: { "f:susp": 1 }, accepted: ["emily-1"], ratings: 3 }, "unchanged by later changes");
+  assert.equal(memory.snapshot(snaps, taste, { onlyIfChanged: true }).id, 2);
+  assert.equal(memory.snapshot(snaps, taste, { onlyIfChanged: true }), null, "nothing changed since");
+  assert.equal(memory.recall(snaps, 99), null);
+  for (let k = 0; k < memory.KEEP + 5; k++) memory.snapshot(snaps, { k });
+  assert.equal(snaps.list.length, memory.KEEP, "only the last ones are kept");
+  const again = memory.normalizeSnapshots(JSON.parse(JSON.stringify(snaps)));
+  assert.equal(again.next, snaps.next);
+  assert.deepEqual(memory.normalizeSnapshots({ list: [{ id: 4, memory: {} }, { id: "x" }] }), { version: 1, next: 5, list: [{ id: 4, memory: {} }] });
+});
