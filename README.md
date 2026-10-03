@@ -5,13 +5,6 @@ Cope's *Experiments in Musical Intelligence* (EMI) and his later program
 *Emily Howell*. A *cento* is a poem made entirely of lines from other poems;
 Cento makes music the same way, from beats of the works it has learned.
 
-(Cento was called ml_midi until after M11. The Max patch is now
-`cento.maxpat` and the Live devices `cento.brain.amxd` and `cento.voice.amxd`;
-the settings, Emily's taste, her works and snapshots in `patchers/` carry over
-from their old names, `ml_midi.*.json`, by themselves. The working data
-folder is now `~/Documents/cento`: rename `~/Documents/ml_midi` to it in
-Finder, and the corpus window's folders follow.)
-
 It analyzes a corpus of music in one style (Bach chorales first) and writes
 new pieces in that style by recombining beats from different works. Each
 recombination must preserve the voice-leading, the structural function of the
