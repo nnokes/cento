@@ -208,6 +208,20 @@ brings it back.
        pin it. Click **memory** and rest on **mix**, **novelty**, **put
        aside** and **roll back**: each explains itself.
        [docs/controls.md](controls.md) has every control's text.
+13. [ ] **taste, memory and reload seed in the window.**
+       1. With the window open and a piece playing, click **taste**. The
+          pane shows its overview at once, with `Comparing...` and a bar
+          that fills (`3 of 10 seeds, ...`); the music, the playhead and
+          the other buttons keep working while it runs. Then the comparison
+          appears in the overview's right-hand column.
+       2. Click the **weights** and **memory** tabs at the pane's top
+          right, then **overview**: each shows its view at once, and the lit
+          tab says which you're in. The **memory** and **edit weights**
+          buttons below do the same; clicking one twice keeps its view.
+       3. In **memory**, drag **novelty** to 1 and **mix** to 0.75, then
+          click **reload seed**: the seed shown is composed again, and the
+          roll shows the new piece (purple dots where she varied notes).
+          Drag both back, **reload seed**: the first piece again.
 
 ## 2. Live version
 

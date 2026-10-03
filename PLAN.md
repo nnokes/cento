@@ -847,6 +847,15 @@ the transport:
   taste pane draws its own: resting on a weight slider, a setting slider or a
   button shows a box saying what it does (each musical feature with what it
   means).
+- *As built (after M10):* the window's taste pane has tabs (overview,
+  weights, memory); its buttons select a view rather than toggle one. The
+  taste comparison (twenty pieces: 1.6 s on 142 chorales, 3.4 s on 295, all
+  on Max's main thread) now runs a piece at a time: the engine sends
+  `later tastestep <id>`, which comes back through `[deferlow]`, so the
+  patch stays responsive between pieces; the pane shows its progress
+  (`emilyview comparing <done> <pairs>`). A rating or a new corpus stops it.
+  **reload seed** in the window composes the seed shown again, to hear what
+  a change to mix, novelty or the weights did.
 - **Click to inspect a grouping**: its source, tension, labels and the
   alternative candidates that were available at that point. This is the main
   debugging tool and later the selection tool for Emily's ratings.

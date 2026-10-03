@@ -169,8 +169,8 @@
 						250.0
 					],
 					"id": "obj-6",
-					"hint": "What Emily likes and dislikes most, her latest ratings, and the last taste comparison. edit weights and memory change this pane; there, hover over a slider or button for what it does.",
-					"annotation": "What Emily likes and dislikes most, her latest ratings, and the last taste comparison. edit weights and memory change this pane; there, hover over a slider or button for what it does.",
+					"hint": "Emily's taste in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does.",
+					"annotation": "Emily's taste in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does.",
 					"annotation_name": "Emily's taste"
 				}
 			},
@@ -281,37 +281,73 @@
 						24.0
 					],
 					"id": "obj-10",
-					"hint": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature (also shown in the pop-up window). It changes nothing.",
-					"annotation": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature (also shown in the pop-up window). It changes nothing.",
+					"hint": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
+					"annotation": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
 					"annotation_name": "taste"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "edit weights",
+					"text": "reload seed",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
 						""
 					],
 					"patching_rect": [
-						320.0,
-						820.0,
-						100.0,
+						260.0,
+						760.0,
+						90.0,
 						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						320.0,
+						256.0,
 						710.0,
-						100.0,
+						90.0,
 						24.0
 					],
 					"id": "obj-11",
-					"hint": "Show (or hide) the weight editor: a slider per musical feature. Drag one to pin Emily's weight there; double-click it to release it. strength scales her whole taste.",
-					"annotation": "Show (or hide) the weight editor: a slider per musical feature. Drag one to pin Emily's weight there; double-click it to release it. strength scales her whole taste.",
-					"annotation_name": "edit weights"
+					"hint": "Compose the seed shown again, with Emily's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
+					"annotation": "Compose the seed shown again, with Emily's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
+					"annotation_name": "reload seed"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "t b",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					],
+					"patching_rect": [
+						260.0,
+						790.0,
+						35.0,
+						22.0
+					],
+					"id": "obj-12"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "compose",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						260.0,
+						820.0,
+						60.0,
+						22.0
+					],
+					"id": "obj-13"
 				}
 			},
 			{
@@ -324,22 +360,50 @@
 						""
 					],
 					"patching_rect": [
-						320.0,
+						360.0,
 						790.0,
 						70.0,
 						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						250.0,
+						356.0,
 						710.0,
 						64.0,
 						24.0
 					],
-					"id": "obj-12",
-					"hint": "Show (or hide) Emily's memory: her own works in use (put one aside), snapshots of her taste (roll back to one), and the mix and novelty sliders.",
-					"annotation": "Show (or hide) Emily's memory: her own works in use (put one aside), snapshots of her taste (roll back to one), and the mix and novelty sliders.",
+					"id": "obj-14",
+					"hint": "Show Emily's memory in the pane above (its memory tab): her own works in use (put one aside), snapshots of her taste (roll back to one), and the mix and novelty sliders.",
+					"annotation": "Show Emily's memory in the pane above (its memory tab): her own works in use (put one aside), snapshots of her taste (roll back to one), and the mix and novelty sliders.",
 					"annotation_name": "memory"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "edit weights",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						360.0,
+						820.0,
+						100.0,
+						22.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						426.0,
+						710.0,
+						100.0,
+						24.0
+					],
+					"id": "obj-15",
+					"hint": "Show the weight editor in the pane above (its weights tab): a slider per musical feature. Drag one to pin Emily's weight there; double-click it to release it. strength scales her whole taste.",
+					"annotation": "Show the weight editor in the pane above (its weights tab): a slider per musical feature. Drag one to pin Emily's weight there; double-click it to release it. strength scales her whole taste.",
+					"annotation_name": "edit weights"
 				}
 			},
 			{
@@ -359,12 +423,12 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						430.0,
+						536.0,
 						710.0,
 						120.0,
 						24.0
 					],
-					"id": "obj-13",
+					"id": "obj-16",
 					"hint": "Release every pinned weight: each goes back to what Emily learned from your ratings.",
 					"annotation": "Release every pinned weight: each goes back to what Emily learned from your ratings.",
 					"annotation_name": "release all pins"
@@ -385,7 +449,7 @@
 						35.0,
 						22.0
 					],
-					"id": "obj-14"
+					"id": "obj-17"
 				}
 			},
 			{
@@ -403,7 +467,7 @@
 						50.0,
 						22.0
 					],
-					"id": "obj-15"
+					"id": "obj-18"
 				}
 			},
 			{
@@ -423,12 +487,12 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						570.0,
+						666.0,
 						710.0,
 						95.0,
 						24.0
 					],
-					"id": "obj-16",
+					"id": "obj-19",
 					"hint": "Save Emily's whole taste (weights, pins, strength, ratings) to a file you choose.",
 					"annotation": "Save Emily's whole taste (weights, pins, strength, ratings) to a file you choose.",
 					"annotation_name": "store taste"
@@ -450,7 +514,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-17"
+					"id": "obj-20"
 				}
 			},
 			{
@@ -468,7 +532,7 @@
 						35.0,
 						22.0
 					],
-					"id": "obj-18"
+					"id": "obj-21"
 				}
 			},
 			{
@@ -487,7 +551,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-19"
+					"id": "obj-22"
 				}
 			},
 			{
@@ -505,7 +569,7 @@
 						120.0,
 						22.0
 					],
-					"id": "obj-20"
+					"id": "obj-23"
 				}
 			},
 			{
@@ -525,12 +589,12 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						675.0,
+						767.0,
 						710.0,
 						95.0,
 						24.0
 					],
-					"id": "obj-21",
+					"id": "obj-24",
 					"hint": "Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot.",
 					"annotation": "Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot.",
 					"annotation_name": "recall taste"
@@ -552,7 +616,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-22"
+					"id": "obj-25"
 				}
 			},
 			{
@@ -570,7 +634,7 @@
 						35.0,
 						22.0
 					],
-					"id": "obj-23"
+					"id": "obj-26"
 				}
 			},
 			{
@@ -589,7 +653,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-24"
+					"id": "obj-27"
 				}
 			},
 			{
@@ -607,7 +671,7 @@
 						120.0,
 						22.0
 					],
-					"id": "obj-25"
+					"id": "obj-28"
 				}
 			},
 			{
@@ -627,12 +691,12 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						780.0,
+						868.0,
 						710.0,
 						60.0,
 						24.0
 					],
-					"id": "obj-26",
+					"id": "obj-29",
 					"hint": "Start a new taste from nothing. The old one is kept as a backup and as a snapshot, so you can roll back to it.",
 					"annotation": "Start a new taste from nothing. The old one is kept as a backup and as a snapshot, so you can roll back to it.",
 					"annotation_name": "forget"
@@ -641,25 +705,25 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "Drag across the roll to select beats for like, dislike and accept. Hover over a beat to see where it came from, and over any button or slider for what it does.",
+					"text": "Drag across the roll to select beats. Hover over anything for what it does.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
 					"fontsize": 10.0,
 					"patching_rect": [
-						900.0,
+						940.0,
 						820.0,
-						310.0,
-						34.0
+						232.0,
+						30.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						850.0,
+						938.0,
 						708.0,
-						310.0,
+						232.0,
 						30.0
 					],
-					"id": "obj-27"
+					"id": "obj-30"
 				}
 			},
 			{
@@ -677,7 +741,7 @@
 						70.0,
 						22.0
 					],
-					"id": "obj-28"
+					"id": "obj-31"
 				}
 			},
 			{
@@ -695,7 +759,7 @@
 						230.0,
 						22.0
 					],
-					"id": "obj-29"
+					"id": "obj-32"
 				}
 			},
 			{
@@ -714,7 +778,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-30"
+					"id": "obj-33"
 				}
 			}
 		],
@@ -834,7 +898,7 @@
 						0
 					],
 					"destination": [
-						"obj-6",
+						"obj-12",
 						0
 					]
 				}
@@ -846,7 +910,7 @@
 						0
 					],
 					"destination": [
-						"obj-6",
+						"obj-13",
 						0
 					]
 				}
@@ -858,31 +922,31 @@
 						0
 					],
 					"destination": [
-						"obj-14",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-14",
-						0
-					],
-					"destination": [
-						"obj-15",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-15",
-						0
-					],
-					"destination": [
 						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-14",
+						0
+					],
+					"destination": [
+						"obj-6",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-15",
+						0
+					],
+					"destination": [
+						"obj-6",
 						0
 					]
 				}
@@ -918,31 +982,31 @@
 						0
 					],
 					"destination": [
-						"obj-19",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-19",
-						0
-					],
-					"destination": [
-						"obj-20",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-20",
-						0
-					],
-					"destination": [
 						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-19",
+						0
+					],
+					"destination": [
+						"obj-20",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-20",
+						0
+					],
+					"destination": [
+						"obj-21",
 						0
 					]
 				}
@@ -978,31 +1042,31 @@
 						0
 					],
 					"destination": [
-						"obj-24",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-24",
-						0
-					],
-					"destination": [
-						"obj-25",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-25",
-						0
-					],
-					"destination": [
 						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-24",
+						0
+					],
+					"destination": [
+						"obj-25",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-25",
+						0
+					],
+					"destination": [
+						"obj-26",
 						0
 					]
 				}
@@ -1014,7 +1078,19 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-27",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-27",
+						0
+					],
+					"destination": [
+						"obj-28",
 						0
 					]
 				}
@@ -1026,7 +1102,7 @@
 						0
 					],
 					"destination": [
-						"obj-29",
+						"obj-3",
 						0
 					]
 				}
@@ -1038,7 +1114,31 @@
 						0
 					],
 					"destination": [
-						"obj-30",
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-31",
+						0
+					],
+					"destination": [
+						"obj-32",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-32",
+						0
+					],
+					"destination": [
+						"obj-33",
 						0
 					]
 				}

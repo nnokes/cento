@@ -289,6 +289,18 @@ test("emi.window: a large piano roll and Emily's taste, fed by the engine; selec
     assert.equal(pre.text, message);
     assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
   }
+  // Reload seed: compose the seed shown again (after changing mix, novelty or weights).
+  const [reload] = p.find("reload seed");
+  const [[rt]] = p.from(reload.id);
+  assert.equal(rt.text, "t b");
+  const [[compose]] = p.from(rt.id);
+  assert.deepEqual([compose.maxclass, compose.text], ["message", "compose"]);
+  assert.deepEqual(p.from(compose.id).map(([b]) => b.id), [outlet.id]);
+  // The buttons sit in one row, none overlapping, inside the window.
+  const row = [...p.boxes.values()].filter((b) => b.presentation && b.maxclass === "message").map((b) => b.presentation_rect).sort((a, b) => a[0] - b[0]);
+  assert.ok(row.length >= 11);
+  row.slice(1).forEach((r, k) => assert.ok(r[0] >= row[k][0] + row[k][2], `button at ${r[0]} overlaps the one before`));
+  assert.ok(row.at(-1)[0] + row.at(-1)[2] <= roll.presentation_rect[0] + roll.presentation_rect[2]);
 });
 
 test("emi.panel: the status line shows status and errors in a text box ([v8ui] emi.text)", () => {
@@ -745,8 +757,8 @@ test("emi.host.max: the engine's meter sets the transport's time signature (M8: 
 test("emi.engine: the core feeds the queue and the player, and 'need' comes back on the main thread", () => {
   const p = patchFile("emi.engine.maxpat");
   const [core] = p.find("v8 emi.core.bundle.js");
-  const [route] = p.find("route coll restart streamat");
-  assert.deepEqual(p.from(core.id).map(([b]) => b.text), ["route coll restart streamat"]);
+  const [route] = p.find("route coll restart streamat later");
+  assert.deepEqual(p.from(core.id).map(([b]) => b.text), ["route coll restart streamat later"]);
   const [player] = p.find("p grid-player");
   assert.deepEqual(p.from(route.id, 1).map(([b, inlet]) => [b.text, inlet]), [["p grid-player", 2]]);
   assert.deepEqual(p.from(route.id, 2).map(([b, inlet]) => [b.text, inlet]), [["p grid-player", 3]]);
@@ -755,4 +767,12 @@ test("emi.engine: the core feeds the queue and the player, and 'need' comes back
   const [[need]] = p.from(defer.id);
   assert.equal(need.text, "need");
   assert.deepEqual(p.from(need.id).map(([b]) => b.id), [core.id]);
+  // later <message> comes back to the core through [deferlow]: long work
+  // (taste's comparison) a step at a time, the patch responsive in between.
+  const [[later]] = p.from(route.id, 3);
+  assert.equal(later.text, "deferlow");
+  assert.deepEqual(p.from(later.id).map(([b, inlet]) => [b.id, inlet]), [[core.id, 0]]);
+  // Everything else goes out.
+  const [out] = p.find("outlet");
+  assert.ok(p.from(route.id, 4).some(([b]) => b.id === out.id));
 });

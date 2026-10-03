@@ -142,11 +142,25 @@ function build(works) {
 // (emi-form), so pieces modulate where their templates do.
 function areas(work, groupings, beatTicks) {
   const reach = 4 * beatTicks;
+  // The notes by onset, so each beat looks only at the notes near it, not at
+  // every note of the work: a note starting more than the longest note's
+  // length before the window can't reach into it. The same notes, so the
+  // same keys (the key estimate only sums durations).
+  const notes = work.events.slice().sort((a, b) => a[0] - b[0]);
+  const longest = notes.reduce((most, e) => Math.max(most, e[2]), 0);
   for (const g of groupings) {
     const from = g.index * beatTicks - reach;
     const to = (g.index + 1) * beatTicks + reach;
     const window = [];
-    for (const [on, pitch, dur] of work.events) {
+    let lo = 0;
+    let hi = notes.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (notes[mid][0] < from - longest) lo = mid + 1;
+      else hi = mid;
+    }
+    for (let k = lo; k < notes.length && notes[k][0] < to; k++) {
+      const [on, pitch, dur] = notes[k];
       const start = Math.max(on, from);
       const end = Math.min(on + dur, to);
       if (end > start) window.push([start, pitch, end - start]);

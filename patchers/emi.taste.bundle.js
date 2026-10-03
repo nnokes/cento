@@ -27,20 +27,22 @@ __emi_require.local = 1;
 // "taste" (each feature's share of beats in ten pieces with her taste, and
 // without).
 //
-// "edit" (the window's "edit weights" button) switches to the weight
-// editor: a slider per musical feature, grouped by kind, from -3 to +3.
+// Three views, chosen by the tabs at the top right (overview, weights,
+// memory) or by the window's buttons: "edit" (edit weights) shows the
+// weights, "memory" the memory, and a taste comparison starting the
+// overview, where its result appears ("comparing <pairs done> <pairs>" while
+// it runs, -1 when it ends).
+//
+// The weight editor: a slider per musical feature, grouped by kind, from -3 to +3.
 // Dragging one pins the feature at that value ("pin <feature> <w>" to the
 // engine); double-clicking releases it to what she learned, shown as a thin
 // line on its slider ("unpin <feature>"). A strength slider (0..2) scales her
-// whole taste ("strength <v>"); double-click it for 1. "edit" again goes
-// back.
+// whole taste ("strength <v>"); double-click it for 1.
 //
-// "memory" (M10, the window's "memory" button) shows her memory: her own
-// works in use (each with "put aside": "unaccept <id>"), her snapshots
+// The memory (M10): her own works in use (each with "put aside": "unaccept <id>"), her snapshots
 // (each with "roll back": "rollback <id>"; "keep a snapshot": "snapshot"),
 // and sliders for mix (0..0.75: "mix <v>"; double-click for 0.5) and
-// novelty (0..1: "novelty <v>"; double-click for 0). "memory" again goes
-// back.
+// novelty (0..1: "novelty <v>"; double-click for 0).
 //
 // Hover help: resting the mouse on a slider or button in the editor or the
 // memory view shows what it does in a box beside it (each musical feature
@@ -59,6 +61,7 @@ __emi_require.local = 1;
 //   work <id> <gen> <beats> <varied> <what...>     (latest first)
 //   snapshot <id> <date> <time> <label...>         (latest first)
 //   done                                  (draw it)
+// and, on its own, comparing <pairs done | -1> <pairs>.
 
 autowatch = 1;
 inlets = 1;
@@ -121,6 +124,12 @@ const FEATURES = {
   "f:mode:major": "pieces in a major key",
   "f:mode:minor": "pieces in a minor key",
 };
+// The views, as tabs at the top right: name, hover help.
+const TABS = [
+  ["overview", "overview: what she likes and dislikes most, her latest ratings, and the last taste comparison."],
+  ["weights", "weights: a slider per musical feature, to pin her weight for it, and strength."],
+  ["memory", "memory: her own works, snapshots of her taste to roll back to, and the mix and novelty sliders."],
+];
 // The drawn buttons' hover help, by message.
 const BUTTONS = {
   unaccept: "put aside: stop composing from this work of hers. It stays in her memory file: roll back to a snapshot from when it was in use to bring it back.",
@@ -136,6 +145,7 @@ let mode = "overview"; // or "weights" (the editor) or "memory" (M10)
 let hits = [];
 let dragging = null; // the slider being dragged (its hit)
 let hovered = null; // the slider or button under the mouse (its key), for its help
+let progress = null; // a taste comparison under way: [pairs done, pairs]
 
 function clear(ratings, likes, sessions, temperature) {
   incoming = { ratings, likes, sessions, temperature, liked: [], disliked: [], recent: [], compare: null, pairs: [], strength: 1, weights: [], own: null, works: [], snapshots: [] };
@@ -162,18 +172,27 @@ function weight(kind, feature, learned, pinned, value, ...name) {
 }
 
 function edit() {
-  mode = mode === "weights" ? "overview" : "weights";
-  dragging = null;
-  hovered = null;
-  mgraphics.redraw();
+  show("weights");
 }
 
 function memory() {
-  mode = mode === "memory" ? "overview" : "memory";
+  show("memory");
+}
+
+// A taste comparison's progress; when one starts, the overview shows it.
+function comparing(done, pairs) {
+  progress = done < 0 ? null : [done, pairs];
+  if (done === 0) show("overview");
+  else mgraphics.redraw();
+}
+
+function show(view) {
+  mode = view;
   dragging = null;
   hovered = null;
   mgraphics.redraw();
 }
+show.local = 1;
 
 function like(weight, ...name) {
   if (incoming) incoming.liked.push([weight, name.join(" ")]);
@@ -208,8 +227,12 @@ function onresize() {
 // ---- the weight editor: mouse
 
 function onclick(x, y) {
-  if (mode === "overview" || !shown) return;
   const hit = hitAt(x, y);
+  if (hit && hit.kind === "tab") {
+    show(hit.name);
+    return;
+  }
+  if (mode === "overview" || !shown) return;
   if (hit && hit.kind === "button") {
     outlet(0, ...hit.message);
     return;
@@ -227,7 +250,7 @@ function ondblclick(x, y) {
   if (mode === "overview" || !shown) return;
   const hit = hitAt(x, y);
   dragging = null;
-  if (!hit || hit.kind === "button") return;
+  if (!hit || hit.kind === "button" || hit.kind === "tab") return;
   if (hit.kind === "slider") {
     setSlider(hit.name, SLIDERS[hit.name].reset);
     outlet(0, hit.name, SLIDERS[hit.name].reset);
@@ -250,7 +273,7 @@ hitAt.local = 1;
 // ---- hover help
 
 function onidle(x, y) {
-  const hit = mode === "overview" || !shown ? null : hitAt(x, y);
+  const hit = hitAt(x, y);
   const key = hit ? keyOf(hit) : null;
   if (key !== hovered) {
     hovered = key;
@@ -355,17 +378,16 @@ function paint() {
   g.fill();
   g.select_font_face("Arial");
   hits = [];
-  if (mode === "weights") {
-    paintEditor(width, height);
-    paintHelp(width, height);
-    return;
-  }
-  if (mode === "memory") {
-    paintMemory(width, height);
-    paintHelp(width, height);
-    return;
-  }
+  paintTabs(width);
+  if (mode === "weights") paintEditor(width, height);
+  else if (mode === "memory") paintMemory(width, height);
+  else paintOverview(width, height);
+  paintHelp(width, height);
+}
 
+// The overview: likes, dislikes, ratings, and the last comparison.
+function paintOverview(width, height) {
+  const g = mgraphics;
   // The title line.
   g.set_font_size(16);
   g.set_source_rgba(1, 1, 1, 0.95);
@@ -444,8 +466,21 @@ function paint() {
   });
 
   // The last comparison: two bars per feature, with her taste (bright) and
-  // without (dim).
+  // without (dim). While one is under way, how far it has got.
   const x3 = 12 + 3 * column;
+  if (progress) {
+    const [done, pairs] = progress;
+    header(3, "Comparing...");
+    g.set_font_size(12);
+    g.set_source_rgba(1, 1, 1, 0.75);
+    g.move_to(x3, top + 20);
+    g.show_text(`${done} of ${pairs} seeds, with her taste and without`);
+    sliderTrack(x3, x3 + column - 40, top + 36);
+    g.set_source_rgba(AMBER[0], AMBER[1], AMBER[2], 0.9);
+    g.rectangle(x3, top + 34, Math.max(2, (done / pairs) * (column - 40)), 4);
+    g.fill();
+    return;
+  }
   if (!shown.compare) {
     header(3, "Compared");
     g.set_font_size(12);
@@ -477,6 +512,27 @@ function paint() {
     g.show_text(`${withTaste}% (${without}%)`);
   });
 }
+paintOverview.local = 1;
+
+// The tabs at the top right: the view shown is lit.
+function paintTabs(width) {
+  const g = mgraphics;
+  g.set_font_size(11);
+  let x = width - 12 - TABS.reduce((sum, [name]) => sum + name.length * 6 + 18, 0);
+  for (const [name, help] of TABS) {
+    const w = name.length * 6 + 12;
+    const on = name === mode;
+    g.set_source_rgba(1, 1, 1, on ? 0.85 : 0.12);
+    g.rectangle_rounded(x, 10, w, 18, 6, 6);
+    g.fill();
+    g.set_source_rgba(on ? 0.1 : 1, on ? 0.1 : 1, on ? 0.12 : 1, on ? 1 : 0.75);
+    g.move_to(x + 6, 23);
+    g.show_text(name);
+    hits.push({ kind: "tab", name, help, x0: x, x1: x + w, y0: 10, y1: 28 });
+    x += w + 6;
+  }
+}
+paintTabs.local = 1;
 
 // The weight editor: a column per kind of feature, a slider per feature.
 function paintEditor(width, height) {
@@ -588,11 +644,12 @@ function paintMemory(width, height) {
     ? `${o.works} ${o.works === 1 ? "work" : "works"} of her own, ${o.beats} beats, ${o.varied} with notes she varied${o.inUse ? "" : " (not in use at mix 0)"}`
     : "No music of her own yet: accept a piece, a stream phrase, or beats you select.";
   g.show_text(summary);
-  namedSlider("mix", "mix", width - 520, width - 380, 24);
-  namedSlider("novelty", "novelty", width - 230, width - 70, 24);
+  // On the second line, as strength is in the editor (the tabs are on the first).
+  namedSlider("mix", "mix", width - 520, width - 380, 46);
+  namedSlider("novelty", "novelty", width - 230, width - 70, 46);
 
   const column = (width - 24) / 2;
-  const top = 58;
+  const top = 72;
   const rows = Math.max(1, Math.floor((height - top - 10) / ROW));
   g.set_font_size(12);
   g.set_source_rgba(1, 1, 1, 0.85);

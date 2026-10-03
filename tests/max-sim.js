@@ -129,4 +129,4 @@ function loadBundle(name, { LiveAPI, File = FsFile, Folder = FsFolder, mgraphics
   };
 }
 
-module.exports = { loadBundle };
+module.exports = { loadBundle, FsFile, FsFolder };

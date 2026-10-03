@@ -62,7 +62,7 @@ This page is written from the same table as the hover text (the patch generator)
 | **Like** | Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **Dislike** | Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **Temperature** | How much chance still plays when composing. 0: only Emily's favourite choices; 1: as before Emily (the default); up to 3: more adventurous. |
-| **taste** | Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature (also shown in the pop-up window). It changes nothing. |
+| **taste** | Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing. |
 | **Accept** | Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory view). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **Emily** | Emily in a line: how many ratings she has had, and what she likes and dislikes most. |
 
@@ -77,13 +77,14 @@ This page is written from the same table as the hover text (the patch generator)
 | Control | What it does |
 | --- | --- |
 | **Piano roll** | The current piece, large. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from. |
-| **Emily's taste** | What Emily likes and dislikes most, her latest ratings, and the last taste comparison. edit weights and memory change this pane; there, hover over a slider or button for what it does. |
+| **Emily's taste** | Emily's taste in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does. |
 | **like** | Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. |
 | **dislike** | Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. |
 | **accept** | Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory view). |
-| **taste** | Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature (also shown in the pop-up window). It changes nothing. |
-| **edit weights** | Show (or hide) the weight editor: a slider per musical feature. Drag one to pin Emily's weight there; double-click it to release it. strength scales her whole taste. |
-| **memory** | Show (or hide) Emily's memory: her own works in use (put one aside), snapshots of her taste (roll back to one), and the mix and novelty sliders. |
+| **taste** | Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing. |
+| **reload seed** | Compose the seed shown again, with Emily's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again. |
+| **edit weights** | Show the weight editor in the pane above (its weights tab): a slider per musical feature. Drag one to pin Emily's weight there; double-click it to release it. strength scales her whole taste. |
+| **memory** | Show Emily's memory in the pane above (its memory tab): her own works in use (put one aside), snapshots of her taste (roll back to one), and the mix and novelty sliders. |
 | **release all pins** | Release every pinned weight: each goes back to what Emily learned from your ratings. |
 | **store taste** | Save Emily's whole taste (weights, pins, strength, ratings) to a file you choose. |
 | **recall taste** | Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot. |
@@ -95,12 +96,15 @@ This page is written from the same table as the hover text (the patch generator)
 | --- | --- |
 | **Voice** | The voice this device plays, from its track's name: Soprano, Alto, Tenor or Bass. Rename the track to change it. |
 
-## In the pop-up window's weight editor and memory view
+## In the pop-up window's taste pane
 
 These are drawn by the window's taste pane (`code/emi.taste.v8ui.js`), so their help is drawn there too: rest the mouse on a slider or button and a box beside it says what it does. Each weight slider also says what its musical feature means (for example, *suspensions: an upper voice held over from the beat before, then stepping down*).
 
 | Control | What it does |
 | --- | --- |
+| **overview** (tab) | What she likes and dislikes most, her latest ratings, and the last taste comparison. |
+| **weights** (tab) | A slider per musical feature, to pin her weight for it, and strength. |
+| **memory** (tab) | Her own works, snapshots of her taste to roll back to, and the mix and novelty sliders. |
 | **a feature's slider** | Drag to pin Emily's weight for that feature (-3: she avoids it, +3: she seeks it); double-click to release it to what she learned (the thin line). |
 | **strength** | How much her whole taste counts when composing. 0: not at all; 1: as she learned it; 2: twice as much. Double-click for 1. |
 | **mix** | How much her own works (the ones you accepted) count against Bach's when composing. 0: Bach only; 0.75: mostly hers. Double-click for 0.5. |

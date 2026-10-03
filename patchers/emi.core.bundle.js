@@ -1373,11 +1373,25 @@ function build(works) {
 // (emi-form), so pieces modulate where their templates do.
 function areas(work, groupings, beatTicks) {
   const reach = 4 * beatTicks;
+  // The notes by onset, so each beat looks only at the notes near it, not at
+  // every note of the work: a note starting more than the longest note's
+  // length before the window can't reach into it. The same notes, so the
+  // same keys (the key estimate only sums durations).
+  const notes = work.events.slice().sort((a, b) => a[0] - b[0]);
+  const longest = notes.reduce((most, e) => Math.max(most, e[2]), 0);
   for (const g of groupings) {
     const from = g.index * beatTicks - reach;
     const to = (g.index + 1) * beatTicks + reach;
     const window = [];
-    for (const [on, pitch, dur] of work.events) {
+    let lo = 0;
+    let hi = notes.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (notes[mid][0] < from - longest) lo = mid + 1;
+      else hi = mid;
+    }
+    for (let k = lo; k < notes.length && notes[k][0] < to; k++) {
+      const [on, pitch, dur] = notes[k];
       const start = Math.max(on, from);
       const end = Math.min(on + dur, to);
       if (end > start) window.push([start, pitch, end - start]);
@@ -5191,6 +5205,7 @@ __emi_require.local = 1;
 // One inlet, one outlet; every output starts with a selector:
 //   coll clear | coll store <step> <voice pitch velocity>...   -> [coll ---emi.queue]
 //   restart                    -> the player: notes off; the queue starts again at the next bar
+//   later <message>            -> back to this script through [deferlow]: long work in steps
 //   streamat <step>            -> the player: send "need" when this step is reached
 //   view clear|note|seam|cadence|speac|signature|parallel|source|done -> the piano roll
 //   status <text...> | error <text...>                          -> the panel's status line
@@ -5199,6 +5214,7 @@ __emi_require.local = 1;
 //   emily <text...>                                             -> the Emily panel: her taste in a line, with
 //                                                                  only her strongest like and dislike (M9)
 //   emilyview clear|like|dislike|rating|compare|pair|strength|weight|done
+//             comparing <pairs done|-1> <pairs>                 (a taste comparison's progress)
 //                                                               -> the pop-up window: her taste in full, and
 //                                                                  every feature's weight for the editor
 //                                                                  (emi.taste; sent whenever it changes)
@@ -5226,7 +5242,8 @@ __emi_require.local = 1;
 //                          selected for rating; "select" alone clears the selection
 //   temperature <0..3>     how much chance plays in composing (M9, default 1)
 //   taste                  Emily's taste in the Max window, and how ten pieces compare
-//                          with and without it
+//                          with and without it (composed a piece at a time: tastestep)
+//   tastestep <id>         (from the engine itself, via later) the comparison's next piece
 //   forget                 start a new taste (the old one is kept in ml_midi.taste.backup.json,
 //                          and, M10, as a snapshot)
 //   pin <feature> <weight> hold a musical feature (f:...) at a weight, -3..3 (the window's
@@ -5314,6 +5331,9 @@ let tasteText = null; // the taste file as last read or written: re-read when it
 let temperatureValue = 1;
 let selection = null; // { from, to }: ticks of the current score selected in the piano roll
 let comparison = null; // the last "taste" comparison, for the window: { first, last, result }
+let comparing = null; // a "taste" comparison under way, a piece at a time (tastestep)
+let comparisons = 0; // comparisons started: each one's id
+const COMPARE_PAIRS = 10; // seeds compared, each with her taste and without
 // M10: the corpus as read (Bach's works), its database, and the database with
 // Emily's own works too (null when she has none in use). db is the one in use.
 let bachWorks = null;
@@ -5720,31 +5740,73 @@ function taste() {
       outlet(0, "status", ...("Emily: " + emily.summary(memory)).split(" "));
       return;
     }
-    const withTaste = [];
-    const without = [];
-    for (let k = 0; k < 10; k++) {
-      const options = { seed: clampSeed(currentSeed + k), beats: minBeats, signatures: useSignatures };
-      const a = forms.compose(db, { ...options, taste: tasteNow(), temperature: temperatureValue });
-      const b = forms.compose(db, options);
-      if (a.ok && b.ok) {
-        withTaste.push(a.piece);
-        without.push(b.piece);
-      }
-    }
-    if (!withTaste.length) throw new Error("no pieces to compare; try another seed");
-    const result = emily.compare(db, memory, withTaste, without);
-    const last = clampSeed(currentSeed + 9);
-    comparison = { first: currentSeed, last, result };
-    showTaste();
-    post(`  seeds ${currentSeed}-${last}, with her taste and without: ${comparisonText(result)}\n`);
-    // The panel's status line: the most liked and most disliked features only.
-    const top = [likes[0], dislikes[0]].filter(Boolean).map(([f]) => result.features.find(([g]) => g === f)).filter(Boolean);
-    const words = top.map(([f, a, b], k) => `${emily.nameOf(f)} ${Math.round(100 * a)}%${k === 0 ? " of beats" : ""} (${Math.round(100 * b)}%${k === 0 ? " without her taste" : ""})`);
-    const text = words.length ? words.join(", ") : comparisonText(result);
-    outlet(0, "status", ...(`Emily, seeds ${currentSeed}-${last}: ${text}; more in the Max window`).split(" "));
+    // Twenty pieces take a few seconds: composed one at a time, each on its
+    // own turn of Max's low-priority queue (later -> [deferlow] -> tastestep),
+    // so the patch stays responsive and the window shows the progress.
+    comparing = {
+      id: ++comparisons, first: currentSeed, k: 0, pairs: [], db, version: tasteVersion, taste: tasteNow(), temperature: temperatureValue,
+      options: { beats: minBeats, signatures: useSignatures }, likes, dislikes,
+    };
+    outlet(0, "emilyview", "comparing", 0, COMPARE_PAIRS);
+    outlet(0, "status", ...`Emily: comparing ${COMPARE_PAIRS} pieces with her taste and without...`.split(" "));
+    outlet(0, "later", "tastestep", comparing.id);
   });
 }
 
+// One piece of the comparison "taste" started (with her taste, then the
+// same seed without); the last one reports. A rating, a change to her
+// taste or a new corpus makes the comparison stale: it stops. Clicking taste
+// again starts a new one (the old one's next step is then ignored).
+function tastestep(id) {
+  const job = comparing;
+  if (!job || job.id !== id) return; // a comparison since replaced by another
+  attempt(() => {
+    try {
+      compareStep(job);
+    } finally {
+      // Stopped, failed or finished: the window's progress goes.
+      if (comparing === job && !job.scheduled) {
+        comparing = null;
+        outlet(0, "emilyview", "comparing", -1, COMPARE_PAIRS);
+      }
+    }
+  });
+}
+
+function compareStep(job) {
+  job.scheduled = false;
+  syncTaste();
+  if (job.version !== tasteVersion || job.db !== db) {
+    outlet(0, "status", ...`Emily: comparison stopped (her taste or the corpus changed); click taste again`.split(" "));
+    return;
+  }
+  const pair = Math.floor(job.k / 2);
+  const options = { ...job.options, seed: clampSeed(job.first + pair) };
+  const result = job.k % 2 === 0 ? forms.compose(job.db, { ...options, taste: job.taste, temperature: job.temperature }) : forms.compose(job.db, options);
+  (job.pairs[pair] = job.pairs[pair] || []).push(result);
+  job.k++;
+  if (job.k < 2 * COMPARE_PAIRS) {
+    if (job.k % 2 === 0) outlet(0, "emilyview", "comparing", job.k / 2, COMPARE_PAIRS);
+    job.scheduled = true;
+    outlet(0, "later", "tastestep", job.id);
+    return;
+  }
+  comparing = null;
+  outlet(0, "emilyview", "comparing", -1, COMPARE_PAIRS);
+  const done = job.pairs.filter(([a, b]) => a.ok && b.ok);
+  if (!done.length) throw new Error("no pieces to compare; try another seed");
+  const compared = emily.compare(db, memory, done.map(([a]) => a.piece), done.map(([, b]) => b.piece));
+  const last = clampSeed(job.first + COMPARE_PAIRS - 1);
+  comparison = { first: job.first, last, result: compared };
+  showTaste();
+  post(`  seeds ${job.first}-${last}, with her taste and without: ${comparisonText(compared)}\n`);
+  // The panel's status line: the most liked and most disliked features only.
+  const top = [job.likes[0], job.dislikes[0]].filter(Boolean).map(([f]) => compared.features.find(([g]) => g === f)).filter(Boolean);
+  const words = top.map(([f, a, b], k) => `${emily.nameOf(f)} ${Math.round(100 * a)}%${k === 0 ? " of beats" : ""} (${Math.round(100 * b)}%${k === 0 ? " without her taste" : ""})`);
+  const text = words.length ? words.join(", ") : comparisonText(compared);
+  outlet(0, "status", ...(`Emily, seeds ${job.first}-${last}: ${text}; more in the Max window`).split(" "));
+}
+compareStep.local = 1;
 
 // ---- helpers (not messages)
 

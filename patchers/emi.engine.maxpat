@@ -170,10 +170,11 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "route coll restart streamat",
+					"text": "route coll restart streamat later",
 					"numinlets": 2,
-					"numoutlets": 4,
+					"numoutlets": 5,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -182,7 +183,7 @@
 					"patching_rect": [
 						420.0,
 						185.0,
-						180.0,
+						210.0,
 						22.0
 					],
 					"id": "obj-8"
@@ -195,7 +196,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						610.0,
+						640.0,
 						185.0,
 						330.0,
 						20.0
@@ -2625,6 +2626,39 @@
 					],
 					"id": "obj-16"
 				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "deferlow",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						640.0,
+						260.0,
+						65.0,
+						22.0
+					],
+					"id": "obj-17"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "comment",
+					"text": "later: back to the script, after whatever else is waiting",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						715.0,
+						260.0,
+						330.0,
+						20.0
+					],
+					"id": "obj-18"
+				}
 			}
 		],
 		"lines": [
@@ -2800,10 +2834,34 @@
 				"patchline": {
 					"source": [
 						"obj-8",
-						3
+						4
 					],
 					"destination": [
 						"obj-16",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-8",
+						3
+					],
+					"destination": [
+						"obj-17",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						0
+					],
+					"destination": [
+						"obj-6",
 						0
 					]
 				}

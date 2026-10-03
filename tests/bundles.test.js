@@ -107,7 +107,7 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.core").handlers(), [
     "abtest", "accept", "autoclips", "beats", "clear", "compose", "corpus", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
     "mix", "need", "next", "novelty", "pattern", "phrases", "pin", "recalltaste", "remember", "rollback", "seed", "select", "sigs", "snapshot", "startup", "storetaste", "stream",
-    "strength", "taste", "temperature", "testclip", "transpose", "unaccept", "unpin", "writeclips",
+    "strength", "taste", "tastestep", "temperature", "testclip", "transpose", "unaccept", "unpin", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), [
     "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "playhead", "seam", "selection", "signature", "source", "speac", "variant",
@@ -115,7 +115,7 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
   assert.deepEqual(loadBundle("emi.text").handlers(), ["alert", "clear", "onresize", "paint", "text"]);
   assert.deepEqual(loadBundle("emi.taste").handlers(), [
-    "clear", "compare", "dislike", "done", "edit", "like", "memory", "onclick", "ondblclick", "ondrag", "onidle", "onidleout", "onresize", "own", "paint", "pair", "rating",
+    "clear", "compare", "comparing", "dislike", "done", "edit", "like", "memory", "onclick", "ondblclick", "ondrag", "onidle", "onidleout", "onresize", "own", "paint", "pair", "rating",
     "snapshot", "strength", "weight", "work",
   ]);
 });
@@ -535,6 +535,20 @@ function engineIn(folder, options) {
   core.context.patcher = { filepath: path.join(folder, "emi.engine.maxpat"), parentpatcher: null };
   return core;
 }
+// Runs the engine's "later" loop as [deferlow] does in emi.engine: each
+// "later <message>" goes back in once the message before has finished.
+// Returns everything sent, the first message's outputs included.
+function settle(core, out) {
+  const all = out.slice();
+  const queue = out.filter((o) => o[1] === "later");
+  while (queue.length) {
+    const [, , ...message] = queue.shift();
+    const next = core.send(...message);
+    all.push(...next);
+    queue.push(...next.filter((o) => o[1] === "later"));
+  }
+  return all;
+}
 const settingsIn = (folder) => JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.settings.json"), "utf8"));
 
 test("settings: nothing is saved before startup, or when the patch has no folder", () => {
@@ -942,10 +956,33 @@ test("emily: 'taste' lists her opinions and compares ten pieces with and without
     core.send(seed === 2 ? "dislike" : "like");
   }
   core.posted.length = 0;
-  const out = core.send("taste");
+  const first = core.send("taste");
   assert.match(core.posted[0], /^ml_midi: Emily's taste: 3 ratings/);
+  // The twenty pieces come a piece at a time, each on its own turn (later ->
+  // [deferlow] -> tastestep), so Max stays responsive; the window shows how
+  // far it has got.
+  assert.deepEqual(lastStatus(first), ["status", "Emily:", "comparing", "10", "pieces", "with", "her", "taste", "and", "without..."]);
+  assert.deepEqual(first.filter((o) => o[1] === "later"), [[0, "later", "tastestep", 1]]);
+  const out = settle(core, first);
+  assert.equal(out.filter((o) => o[1] === "later").length, 20, "a step for each piece");
+  assert.deepEqual(out.filter((o) => o[1] === "emilyview" && o[2] === "comparing").map((o) => o[3]), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1]);
   assert.ok(core.posted.some((line) => /^ {2}seeds 3-12, with her taste and without: her taste /.test(line)), core.posted.join(""));
   assert.match(lastStatus(out).join(" "), /^status Emily, seeds 3-12: her taste [-+]\d\.\d\d a beat/);
+
+  // A rating while it runs makes it stale: it stops, and says so.
+  const started = core.send("taste");
+  let step = core.send(...started.find((o) => o[1] === "later").slice(2));
+  core.send("like");
+  step = core.send(...step.find((o) => o[1] === "later").slice(2));
+  assert.match(lastStatus(step).join(" "), /^status Emily: comparison stopped \(her taste or the corpus changed\); click taste again$/);
+  assert.ok(step.some((o) => o[1] === "emilyview" && o[2] === "comparing" && o[3] === -1));
+  assert.ok(!step.some((o) => o[1] === "later"), "no more steps");
+
+  // Clicking taste again starts a new comparison; the old one's steps are ignored.
+  const old = core.send("taste");
+  const fresh = core.send("taste");
+  assert.deepEqual(core.send(...old.find((o) => o[1] === "later").slice(2)), []);
+  assert.match(lastStatus(settle(core, fresh)).join(" "), /^status Emily, seeds 3-12: /);
 });
 
 // ---------------------------------------------------------------- view: selecting beats (M9)
@@ -1052,7 +1089,7 @@ test("emily: the window gets her taste in full whenever it changes, and selectio
   assert.deepEqual(rows.find(([kind]) => kind === "rating"), ["rating", 1, ticks.length, "emi-1"]);
   assert.deepEqual(rows.at(-1), ["done"]);
 
-  out = core.send("taste");
+  out = settle(core, core.send("taste"));
   const compared = window(out);
   assert.deepEqual(compared.find(([kind]) => kind === "compare"), ["compare", 1, 10]);
   out = core.send("dislike");
@@ -1169,8 +1206,14 @@ test("taste view: 'edit' shows a slider per feature; dragging pins, double-click
   assert.deepEqual(view.send("onclick", sx1, 46), [[0, "strength", 2]]);
   assert.deepEqual(view.send("ondblclick", sx1, 46), [[0, "strength", 1]]);
 
-  // "edit" again: back to the overview; clicks do nothing there.
+  // "edit" again keeps the editor; the overview tab goes back, where clicks do nothing.
   view.send("edit", "weights");
+  assert.deepEqual(view.send("onclick", t1, y), [[0, "pin", "f:16ths", 3]]);
+  g.calls.length = 0;
+  view.send("paint");
+  const k = g.calls.findIndex(([name, t]) => name === "show_text" && t === "overview");
+  const [, ox, oy] = g.calls.slice(0, k).filter(([name]) => name === "move_to").at(-1);
+  view.send("onclick", ox + 4, oy - 4);
   assert.deepEqual(view.send("onclick", t1, y), []);
 });
 
@@ -1191,7 +1234,8 @@ test("taste view: hovering over a slider or button shows what it does", () => {
     view.send("paint");
     return g.calls.filter(([name]) => name === "show_text").map(([, t]) => t).join(" ");
   };
-  // In the overview there is nothing to explain.
+  // In the overview there is nothing to explain but the tabs.
+  helpShown();
   view.send("onidle", 200, 100);
   assert.doesNotMatch(helpShown(), /Drag to pin/);
 
@@ -1210,17 +1254,17 @@ test("taste view: hovering over a slider or button shows what it does", () => {
 
   view.send("memory");
   helpShown();
-  view.send("onidle", 1160 - 150, 24);
+  view.send("onidle", 1160 - 150, 46);
   assert.match(helpShown(), /novelty: the chance that each phrase gets a variant/);
-  view.send("onidle", 1160 - 450, 24);
+  view.send("onidle", 1160 - 450, 46);
   assert.match(helpShown(), /mix: how much her own works/);
   // The buttons: put aside, keep a snapshot, roll back.
   const column = (1160 - 24) / 2;
-  view.send("onidle", 12 + column - 80, 58 + 8 + 20 - 6 - 4);
+  view.send("onidle", 12 + column - 80, 72 + 8 + 20 - 6 - 4);
   assert.match(helpShown(), /put aside: stop composing from this work/);
-  view.send("onidle", 12 + column + 180, 58 - 4);
+  view.send("onidle", 12 + column + 180, 72 - 4);
   assert.match(helpShown(), /keep a snapshot: keep her whole taste/);
-  view.send("onidle", 12 + column + column - 80, 58 + 8 + 20 - 6 - 4);
+  view.send("onidle", 12 + column + column - 80, 72 + 8 + 20 - 6 - 4);
   text = helpShown();
   assert.match(text, /roll back: make this snapshot's taste hers again/);
   // Wrapped to fit: no line wider than the box allows.
@@ -1238,6 +1282,11 @@ test("taste view: every musical feature Emily knows has hover help; docs/control
   assert.equal(helps.length, 6, "strength, mix, novelty; put aside, roll back, keep a snapshot");
   for (const [, name, text] of helps) {
     assert.ok(doc.includes(`| **${name}** | ${text[0].toUpperCase()}${text.slice(1)} |`), name);
+  }
+  const tabs = [...source.matchAll(/\["(\w+)", "\1: ([^"]+)"\]/g)];
+  assert.deepEqual(tabs.map(([, name]) => name), ["overview", "weights", "memory"]);
+  for (const [, name, text] of tabs) {
+    assert.ok(doc.includes(`| **${name}** (tab) | ${text[0].toUpperCase()}${text.slice(1)} |`), name);
   }
 });
 
@@ -1399,13 +1448,61 @@ test("taste view: the memory view lists her works and snapshots; its buttons and
   assert.deepEqual(view.send("onclick", ax + 4, ay - 4), [[0, "unaccept", "emily-2"]]);
   const [kx, ky] = position("keep a snapshot");
   assert.deepEqual(view.send("onclick", kx + 4, ky - 4), [[0, "snapshot"]]);
-  // Novelty: top right, 0..1; mix to its left, 0..0.75.
-  assert.deepEqual(view.send("onclick", 1160 - 70, 24), [[0, "novelty", 1]]);
-  assert.deepEqual(view.send("ondblclick", 1160 - 70, 24), [[0, "novelty", 0]]);
-  assert.deepEqual(view.send("onclick", 1160 - 380, 24), [[0, "mix", 0.75]]);
-  assert.deepEqual(view.send("ondblclick", 1160 - 380, 24), [[0, "mix", 0.5]]);
+  // Novelty: right, under the tabs, 0..1; mix to its left, 0..0.75.
+  assert.deepEqual(view.send("onclick", 1160 - 70, 46), [[0, "novelty", 1]]);
+  assert.deepEqual(view.send("ondblclick", 1160 - 70, 46), [[0, "novelty", 0]]);
+  assert.deepEqual(view.send("onclick", 1160 - 380, 46), [[0, "mix", 0.75]]);
+  assert.deepEqual(view.send("ondblclick", 1160 - 380, 46), [[0, "mix", 0.5]]);
+  // "memory" again keeps the memory (a second click, or a late one, changes nothing).
   view.send("memory");
-  assert.deepEqual(view.send("onclick", 1160 - 70, 24), [], "back to the overview");
+  assert.deepEqual(view.send("onclick", 1160 - 70, 46), [[0, "novelty", 1]]);
+  // The overview tab goes back.
+  const [ox, oy] = position("overview");
+  assert.deepEqual(view.send("onclick", ox + 4, oy - 4), [], "a tab sends nothing to the engine");
+  assert.deepEqual(view.send("onclick", 1160 - 70, 46), [], "the overview: no sliders");
+});
+
+test("taste view: tabs choose the view; a taste comparison shows the overview and its progress", () => {
+  const view = loadBundle("emi.taste");
+  const g = view.context.mgraphics;
+  g.size = [1160, 250];
+  view.send("clear", 2, 1, 0, 1);
+  view.send("like", 0.8, "16th", "notes");
+  view.send("rating", 1, 32, "emi-1");
+  view.send("done");
+  const draw = () => {
+    g.calls.length = 0;
+    view.send("paint");
+    return g.calls.filter(([name]) => name === "show_text").map(([, t]) => t);
+  };
+  const tab = (name) => {
+    const k = g.calls.findIndex(([n, t]) => n === "show_text" && t === name);
+    const [, x, y] = g.calls.slice(0, k).filter(([n]) => n === "move_to").at(-1);
+    return [x + 4, y - 4];
+  };
+  let text = draw();
+  for (const name of ["overview", "weights", "memory"]) assert.ok(text.includes(name), name);
+  assert.ok(text.includes("Emily's taste"));
+  view.send("onclick", ...tab("weights"));
+  assert.ok(draw().includes("Edit Emily's weights"));
+  view.send("onclick", ...tab("memory"));
+  assert.ok(draw().includes("Emily's memory"));
+  view.send("onidle", ...tab("memory"));
+  assert.ok(draw().some((t) => /^memory: her own works/.test(t)), "a tab's hover help");
+
+  // A comparison starting (from either taste button) shows the overview, with its progress.
+  view.send("comparing", 0, 10);
+  text = draw();
+  assert.ok(text.includes("Emily's taste") && text.includes("Comparing...") && text.includes("0 of 10 seeds, with her taste and without"));
+  view.send("comparing", 4, 10);
+  assert.ok(draw().includes("4 of 10 seeds, with her taste and without"));
+  view.send("onclick", ...tab("weights"));
+  view.send("comparing", 5, 10);
+  assert.ok(draw().includes("Edit Emily's weights"), "progress doesn't pull you out of another view");
+  view.send("onclick", ...tab("overview"));
+  view.send("comparing", -1, 10);
+  text = draw();
+  assert.ok(!text.includes("Comparing...") && text.includes("click taste to compare ten pieces"));
 });
 
 // ---------------------------------------------------------------- the playhead
