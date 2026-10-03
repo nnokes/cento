@@ -105,9 +105,9 @@ test("bundles in patchers/ are up to date with code/", () => {
 test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
-    "abtest", "autoclips", "beats", "clear", "compose", "corpus", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
-    "need", "next", "novelty", "pattern", "phrases", "pin", "recalltaste", "remember", "seed", "select", "sigs", "startup", "storetaste", "stream",
-    "strength", "taste", "temperature", "testclip", "transpose", "unpin", "writeclips",
+    "abtest", "accept", "autoclips", "beats", "clear", "compose", "corpus", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
+    "mix", "need", "next", "novelty", "pattern", "phrases", "pin", "recalltaste", "remember", "seed", "select", "sigs", "startup", "storetaste", "stream",
+    "strength", "taste", "temperature", "testclip", "transpose", "unaccept", "unpin", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), [
     "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "selection", "signature", "source", "speac", "variant",
@@ -1201,4 +1201,45 @@ test("emily: novelty varies pieces and stream phrases; variants are marked and n
   assert.ok(select(stream, "status").some((words) => words.join(" ").includes(", varied: ")));
   core.send("novelty", 0);
   assert.doesNotMatch(lastStatus(core.send("need")).join(" "), /varied/);
+});
+
+// ---------------------------------------------------------------- M10: accept and mix
+
+test("emily: accept keeps a piece as her own; mix uses it; mix 0 is Bach alone, as before", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  assert.match(lastStatus(core.send("accept")).join(" "), /^error load a corpus first$/);
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  const before = lastStatus(core.send("compose", 2)).join(" ");
+  core.send("novelty", 1);
+  core.send("compose", 1);
+  const accepted = lastStatus(core.send("accept")).join(" ");
+  assert.match(accepted, /^status accepted emi-1 as emily-1 \(generation 1, \d+ beats, \d+ varied\); Emily has 1 work of her own$/);
+  const stored = JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.emily.json"), "utf8"));
+  assert.deepEqual(stored.works.map((w) => [w.id, w.gen, w.from]), [["emily-1", 1, "emi-1"]]);
+  assert.deepEqual([tasteIn(folder).accepted, tasteIn(folder).mix], [["emily-1"], 0.5]);
+
+  core.send("novelty", 0);
+  core.send("mix", 0.75);
+  const own = [2, 3, 4, 5].map((seed) => lastStatus(core.send("compose", seed)).join(" "));
+  assert.ok(own.some((s) => /of Emily's own beats?/.test(s)), own.join("\n"));
+  assert.match(lastStatus(core.send("mix", 0)).join(" "), /^status mix 0\.00: Bach only/);
+  assert.equal(lastStatus(core.send("compose", 2)).join(" "), before, "mix 0: exactly as before she had music of her own");
+
+  assert.match(lastStatus(core.send("unaccept", "emily-1")).join(" "), /^status emily-1 put aside: Emily no longer uses it/);
+  assert.deepEqual(tasteIn(folder).accepted, []);
+  assert.match(lastStatus(core.send("unaccept", "emily-1")).join(" "), /^error emily-1 isn't one of Emily's works in use$/);
+});
+
+test("emily: accepting a stream phrase keeps that phrase", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  core.send("corpus", writeStreamCorpus());
+  core.send("stream", 1);
+  core.send("phrases", 0);
+  core.send("compose", 4);
+  assert.match(lastStatus(core.send("accept")).join(" "), /^status accepted phrase 1 of emi-4 as emily-1 \(generation 1, \d+ beats\); Emily has 1 work of her own$/);
 });

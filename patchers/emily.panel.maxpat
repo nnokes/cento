@@ -32,7 +32,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emily.panel: Emily's taste (M9), shared by both products. like and dislike rate the beats selected in the piano roll, or the stream phrase playing, or the piece; temperature sets how much chance still plays. like, dislike and temperature are live.* parameters, so they can be MIDI- or key-mapped. Panel 130 x 169 px.",
+					"text": "emily.panel: Emily's taste (M9), shared by both products. like and dislike rate the beats selected in the piano roll, or the stream phrase playing, or the piece; temperature sets how much chance still plays; accept keeps what is playing as music of her own (M10). like, dislike, accept and temperature are live.* parameters, so they can be MIDI- or key-mapped. Panel 130 x 169 px.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 3,
@@ -358,18 +358,39 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "forget",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Accept",
+					"mode": 0,
+					"text": "accept",
+					"texton": "accept",
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Accept",
+							"parameter_shortname": "accept",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0
+						}
+					},
 					"patching_rect": [
 						460.0,
 						140.0,
-						58.0,
-						22.0
+						64.0,
+						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
@@ -383,8 +404,26 @@
 			},
 			{
 				"box": {
+					"maxclass": "message",
+					"text": "accept",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						460.0,
+						185.0,
+						55.0,
+						22.0
+					],
+					"id": "obj-15"
+				}
+			},
+			{
+				"box": {
 					"maxclass": "comment",
-					"text": "temperature: 0 Emily's favourite choices only, 1 as before Emily, 3 adventurous. taste: her taste in the Max window and ten pieces compared; forget: start again (the old taste is kept)",
+					"text": "temperature: 0 Emily's favourite choices only, 1 as before Emily, 3 adventurous. taste: her taste in the Max window and ten pieces compared; accept: keep it (M10)",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 3,
@@ -394,7 +433,7 @@
 						330.0,
 						48.0
 					],
-					"id": "obj-15"
+					"id": "obj-16"
 				}
 			},
 			{
@@ -414,7 +453,7 @@
 						120.0,
 						22.0
 					],
-					"id": "obj-16"
+					"id": "obj-17"
 				}
 			},
 			{
@@ -432,7 +471,7 @@
 						98.0,
 						22.0
 					],
-					"id": "obj-17"
+					"id": "obj-18"
 				}
 			},
 			{
@@ -463,7 +502,7 @@
 						118.0,
 						51.0
 					],
-					"id": "obj-18"
+					"id": "obj-19"
 				}
 			},
 			{
@@ -482,7 +521,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-19"
+					"id": "obj-20"
 				}
 			},
 			{
@@ -500,7 +539,7 @@
 						91.0,
 						22.0
 					],
-					"id": "obj-20"
+					"id": "obj-21"
 				}
 			},
 			{
@@ -515,7 +554,7 @@
 						300.0,
 						20.0
 					],
-					"id": "obj-21"
+					"id": "obj-22"
 				}
 			}
 		],
@@ -623,6 +662,18 @@
 						0
 					],
 					"destination": [
+						"obj-15",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-15",
+						0
+					],
+					"destination": [
 						"obj-3",
 						0
 					]
@@ -632,18 +683,6 @@
 				"patchline": {
 					"source": [
 						"obj-2",
-						0
-					],
-					"destination": [
-						"obj-16",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-16",
 						0
 					],
 					"destination": [
@@ -667,11 +706,23 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-16",
+						"obj-18",
+						0
+					],
+					"destination": [
+						"obj-19",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
 						1
 					],
 					"destination": [
-						"obj-19",
+						"obj-20",
 						0
 					]
 				}
@@ -679,11 +730,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-19",
+						"obj-20",
 						0
 					],
 					"destination": [
-						"obj-20",
+						"obj-21",
 						0
 					]
 				}
@@ -691,7 +742,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-20",
+						"obj-21",
 						0
 					],
 					"destination": [

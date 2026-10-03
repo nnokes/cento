@@ -1254,6 +1254,14 @@ exports.VOICES = VOICES;
 //   openings: [grouping index], finals: [grouping index],
 //   signatures: [signature]           // (M7) cadence patterns found in many works (emi-signatures)
 // }
+//
+// M10: works may also be Emily's own, accepted from her output
+// (emily-memory): such a work has gen (its generation, 1 or more) and
+// variants ([[tick, op]]: notes she varied). Its groupings carry gen, and
+// variant (the ops) where a varied note falls in them; db.works entries
+// carry gen too. Signatures are found in Bach's works alone, so hers never
+// change his; patterns that recur across her own works and aren't Bach's
+// are her own signatures (emily: true, ids "esig1", ...).
 // Plain JSON, so a database can be saved and loaded later.
 
 const ingest = require("emi-ingest");
@@ -1309,13 +1317,20 @@ function build(works) {
     modes.add(inC.key.mode);
     const groupings = segment(inC, db.beatTicks);
     for (const g of groupings) g.mode = inC.key.mode; // M8: a mixed corpus composes each piece in one mode
+    if (work.gen) {
+      for (const g of groupings) {
+        g.gen = work.gen;
+        const ops = (work.variants || []).filter(([tick]) => tick >= g.index * db.beatTicks && tick < (g.index + 1) * db.beatTicks).map(([, op]) => op);
+        if (ops.length) g.variant = ops;
+      }
+    }
     areas(inC, groupings, db.beatTicks);
     const beatsPerBar = Math.round((db.meter[0] * 4) / db.meter[1]);
     speac.analyze(groupings, beatsPerBar).forEach(({ tension, beat, bar, phrase }, k) => {
       groupings[k].tension = tension;
       groupings[k].speac = { beat, bar, phrase };
     });
-    db.works.push({ id: work.id, title: work.title, key: work.key, transposedBy: inC.transposedBy, groupings: groupings.length, pickup: (work.padTicks || 0) > 0, mode: inC.key.mode });
+    db.works.push({ id: work.id, title: work.title, key: work.key, transposedBy: inC.transposedBy, groupings: groupings.length, pickup: (work.padTicks || 0) > 0, mode: inC.key.mode, gen: work.gen || 0 });
     if (groupings.length) db.templates.push({ work: work.id, start: db.groupings.length, count: groupings.length });
     for (const g of groupings) {
       const i = db.groupings.length;
@@ -1333,7 +1348,18 @@ function build(works) {
     }
   }
   db.mode = modes.size === 1 ? [...modes][0] : "mixed";
-  db.signatures = signatures.detect(db, normalized);
+  const own = normalized.filter((w, i) => works[i].gen);
+  db.signatures = signatures.detect(db, own.length ? normalized.filter((w, i) => !works[i].gen) : normalized);
+  if (own.length >= 3) {
+    const pattern = (sig) => `${sig.mode}:${sig.voice}:${sig.intervals.join(",")}`;
+    const bach = new Set(db.signatures.map(pattern));
+    const hers = signatures.detect(db, own).filter((sig) => !bach.has(pattern(sig)));
+    hers.forEach((sig, i) => {
+      sig.id = "esig" + (i + 1);
+      sig.emily = true;
+    });
+    db.signatures.push(...hers);
+  }
   return db;
 }
 
@@ -2086,9 +2112,17 @@ function pinsFor(db, slots, avoid = null) {
 // same number of beats and joins, so the offset changes no choice.) The
 // temperature scales the random amounts: 0, none (the best liked path); 1,
 // as before M9; higher, more adventurous.
+//
+// M10: in a corpus with Emily's own music (emily-memory), mix (0..0.75)
+// says how much her beats count against Bach's: 0.5 as much, more above
+// (up to MIX_POINTS a beat at 0.75), less below. (At mix 0 the engine leaves
+// her music out of the corpus altogether.) Her forms move forward or back
+// in the same way when the form is chosen.
 const PIN = 1 << 20;
 const SCORE = { strong: 16, blockChance: 48, accidentals: 16, label: 4, tasteLabel: 8, range: 4, chance: 8 };
 const TASTE_MAX = 64;
+const MIX_POINTS = 8;
+const mixPoints = (mix) => Math.max(-2 * MIX_POINTS, Math.min(2 * MIX_POINTS, Math.round((MIX_POINTS * (mix - 0.5)) / 0.25)));
 const clampTaste = (v) => Math.max(-TASTE_MAX, Math.min(TASTE_MAX, v));
 
 // Each grouping's lowest and highest soprano note (computed once per database).
@@ -2109,8 +2143,9 @@ function sopranoOf(db) {
   return sopranoCache.get(db);
 }
 
-function feasible(db, slots, next, pins = null, noise = 0, { taste = null, temperature = 1 } = {}) {
+function feasible(db, slots, next, pins = null, noise = 0, { taste = null, temperature = 1, mix = null } = {}) {
   const n = db.groupings.length;
+  const hers = mix === null ? 0 : mixPoints(mix); // Emily's own beats, against Bach's (offset by 2 * MIX_POINTS)
   const beatTaste = taste ? taste.beat : null;
   const edges = taste ? taste.edges : null;
   const blockEnd = taste ? taste.blockEnd : null;
@@ -2154,7 +2189,8 @@ function feasible(db, slots, next, pins = null, noise = 0, { taste = null, tempe
     const reward = (i) => {
       const g = db.groupings[i];
       const liked = beatTaste ? TASTE_MAX + clampTaste(beatTaste[i]) : 0;
-      return (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? labelPoints : 0) + (inRange(i) ? SCORE.range : 0) + chance(i) + liked;
+      const own = mix === null ? 0 : 2 * MIX_POINTS + (g.gen ? hers : 0);
+      return own + (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? labelPoints : 0) + (inRange(i) ? SCORE.range : 0) + chance(i) + liked;
     };
     const plus = (v, i) => (v < 0 ? -1 : v + reward(i));
     const free = new Int32Array(n).fill(-1);
@@ -2201,10 +2237,11 @@ function planFor(db, slots, level, pins, noise = 0, prefs = null) {
   if (!planCache.has(slots)) planCache.set(slots, []);
   const taste = prefs ? prefs.taste || null : null;
   const temperature = prefs && prefs.temperature !== undefined ? prefs.temperature : 1;
-  const known = planCache.get(slots).find((p) => p.db === db && p.level === level && p.pins === pins && p.noise === noise && p.taste === taste && p.temperature === temperature);
+  const mix = prefs && typeof prefs.mix === "number" ? prefs.mix : null;
+  const known = planCache.get(slots).find((p) => p.db === db && p.level === level && p.pins === pins && p.noise === noise && p.taste === taste && p.temperature === temperature && p.mix === mix);
   if (known) return known.plan;
-  const plan = feasible(db, slots, successors(db)[level], pins, noise, { taste, temperature });
-  planCache.get(slots).push({ db, level, pins, noise, taste, temperature, plan });
+  const plan = feasible(db, slots, successors(db)[level], pins, noise, { taste, temperature, mix });
+  planCache.get(slots).push({ db, level, pins, noise, taste, temperature, mix, plan });
   return plan;
 }
 
@@ -2644,15 +2681,15 @@ function templateBeats(db, template) {
 // M9: taste (from emily-assoc's prepare, or null) and temperature (default
 // 1) are Emily's: they steer the search toward liked beats (see SCORE), and
 // the choice of form toward liked forms (byTaste).
-function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true, taste = null, temperature = 1 } = {}) {
+function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true, taste = null, temperature = 1, mix = null } = {}) {
   const random = rng.create(seed);
-  const prefs = taste || temperature !== 1 ? { taste, temperature } : null;
+  const prefs = taste || temperature !== 1 || mix !== null ? { taste, temperature, mix } : null;
   let templates = db.templates.filter((t) => (only ? t.work === only : templateBeats(db, t) >= beats));
   for (let i = templates.length - 1; i > 0; i--) {
     const j = random.int(i + 1);
     [templates[i], templates[j]] = [templates[j], templates[i]];
   }
-  if (taste && taste.templates) templates = byTaste(templates, (t) => taste.templates.get(t.work) || 0, temperature);
+  if ((taste && taste.templates) || mix !== null) templates = byTaste(templates, (t) => formWeight(db, t.work, taste, mix), temperature);
   const tried = [];
   const counters = { steps: 0, backtracks: 0 };
   let quoting = null; // the piece put aside that quotes least: { piece, step }
@@ -2695,6 +2732,15 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
   return { ok: false, piece: null, stats: stats(null) };
 }
 
+// How much a form is liked (M9: Emily's taste) and, for one of her own
+// works (M10), how much her music counts (mix).
+const genCache = new WeakMap();
+function formWeight(db, work, taste, mix) {
+  if (!genCache.has(db)) genCache.set(db, new Map(db.works.map((w) => [w.id, w.gen || 0])));
+  const own = mix !== null && genCache.get(db).get(work) ? (4 * (mix - 0.5)) : 0;
+  return (taste && taste.templates ? taste.templates.get(work) || 0 : 0) + own;
+}
+
 // A list in its seeded order, reordered by taste (M9): liked items move
 // forward, disliked ones back, by how much depending on the temperature. The
 // list's order stands for a random draw (the first item drew the highest
@@ -2715,6 +2761,8 @@ function byTaste(list, weightOf, temperature = 1) {
 
 exports.compose = compose;
 exports.byTaste = byTaste;
+exports.formWeight = formWeight;
+exports.MIX_POINTS = MIX_POINTS;
 exports.planFor = planFor;
 exports.TASTE_MAX = TASTE_MAX;
 exports.RELAX = RELAX;
@@ -3049,12 +3097,15 @@ exports.setMeter = setMeter;
 // Emily's taste (M9) is kept the same way, in ml_midi.taste.json in the same
 // folder (also git-ignored), so it carries over between the products too:
 //   tastePathIn(folder), backupPathIn(folder) (what "forget" sets aside)
+// and (M10) the music Emily has accepted, in ml_midi.emily.json:
+//   emilyPathIn(folder)
 
 const files = require("emi-load");
 
 const FILE_NAME = "ml_midi.settings.json";
 const TASTE_NAME = "ml_midi.taste.json";
 const BACKUP_NAME = "ml_midi.taste.backup.json";
+const EMILY_NAME = "ml_midi.emily.json";
 
 function folderOf(patcher) {
   for (let p = patcher; p; p = p.parentpatcher) {
@@ -3075,6 +3126,10 @@ function tastePathIn(folder) {
 
 function backupPathIn(folder) {
   return folder + "/" + BACKUP_NAME;
+}
+
+function emilyPathIn(folder) {
+  return folder + "/" + EMILY_NAME;
 }
 
 function read(path) {
@@ -3098,6 +3153,8 @@ exports.TASTE_NAME = TASTE_NAME;
 exports.BACKUP_NAME = BACKUP_NAME;
 exports.tastePathIn = tastePathIn;
 exports.backupPathIn = backupPathIn;
+exports.EMILY_NAME = EMILY_NAME;
+exports.emilyPathIn = emilyPathIn;
 exports.read = read;
 exports.write = write;
   };
@@ -3199,13 +3256,13 @@ function start({ seed = 1 } = {}) {
 
 const phraseSeed = (seed, number) => (Math.imul(seed, 7919) + Math.imul(number, 104729)) >>> 0 || 1;
 
-function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 12, signatures = true, guard = true, taste = null, temperature = 1 } = {}) {
+function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 12, signatures = true, guard = true, taste = null, temperature = 1, mix = null } = {}) {
   if (stream.finished) return { ok: false, phrase: null };
   const number = stream.phrases.length + 1;
   const random = rng.create(phraseSeed(seed, number));
   const counters = { steps: 0, backtracks: 0 };
   const before = { nextBeat: stream.nextBeat, endsInRest: stream.endsInRest };
-  const prefs = taste || temperature !== 1 ? { taste, temperature } : null;
+  const prefs = taste || temperature !== 1 || mix !== null ? { taste, temperature, mix } : null;
   for (const fallback of [false, true]) {
     if (fallback) {
       // A breath: one silent beat, then a fresh phrase start.
@@ -3271,8 +3328,9 @@ function choices(db, stream, random, last, prefs = null) {
     return list.map((c, i) => [gap(c), i, c]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(([, , c]) => c);
   };
   let indexes = shuffled(works.map((w, i) => i)).filter((w) => !stream.mode || works[w].mode === stream.mode);
-  const liked = prefs && prefs.taste && prefs.taste.templates;
-  if (liked) indexes = form.byTaste(indexes, (w) => liked.get(works[w].work) || 0, prefs.temperature);
+  if (prefs && ((prefs.taste && prefs.taste.templates) || prefs.mix !== null)) {
+    indexes = form.byTaste(indexes, (w) => form.formWeight(db, works[w].work, prefs.taste, prefs.mix), prefs.temperature);
+  }
 
   if (!stream.phrases.length) return indexes.map((w) => entry(w, 0));
   const walk = stream.walk;
@@ -3418,7 +3476,7 @@ function describeBeat(db, entry, groupings = new Map(db.groupings.map((g) => [g.
   if (entry.block) parts.push("signature block");
   if (entry.signatures && entry.signatures.length) parts.push(nameOf(db, entry.signatures[0]));
   if (entry.variant && entry.variant.length) parts.push("varied: " + entry.variant.join(", ")); // M10 (emily-vary)
-  if (g.gen) parts.push("Emily's own, generation " + g.gen); // M10 (emily-memory)
+  if (g.gen) parts.push("Emily's own, generation " + g.gen + (g.variant ? " (her " + g.variant.join(", ") + ")" : "")); // M10 (emily-memory)
   return parts.join(" · ");
 }
 
@@ -4932,6 +4990,104 @@ exports.candidatesIn = candidatesIn;
 exports.valid = valid;
   };
 
+  // ---- emily-memory.js
+  factories["emily-memory"] = function (exports, module, require) {
+"use strict";
+// M10: Emily's memory (Tier 2 of the Emily layer, PLAN §7). Music you
+// *accept* (a piece, a stream phrase, or beats you select) becomes a work of
+// her own, and the next corpus she composes from has it alongside Bach's:
+// its beats, the joins between them, its form, and the notes she varied
+// (emily-vary) are all new material. A work built from her own earlier
+// works is a generation later: gen = 1 + the highest generation of the beats
+// it is made of (Bach's beats are generation 0).
+//
+//   accepted file (the engine keeps it in ml_midi.emily.json next to the
+//   taste): { version: 1, works: [work] }, every work ever accepted, in
+//   order; her taste (emily-assoc's memory.accepted) lists the ones in use,
+//   so a rollback can take works out and put them back exactly.
+//   work: as emi-ingest makes them, plus { gen, from (the piece it came
+//   from), what (in words), at, variants: [[tick, op]] }
+
+function createStore() {
+  return { version: 1, works: [] };
+}
+
+function normalizeStore(store) {
+  const out = createStore();
+  if (store && Array.isArray(store.works)) out.works = store.works.filter((w) => w && typeof w.id === "string" && Array.isArray(w.events));
+  return out;
+}
+
+// A region of a composed score (ticks from..to) as a work of Emily's own.
+// score: untransposed, with provenance (and variants, if varied); db: the
+// corpus it was composed from (for the generations of its beats).
+function workOf(db, score, { from = -Infinity, to = Infinity, id, what = null, at = null } = {}) {
+  const beat = score.ppq;
+  const barTicks = (score.meter[0] * beat * 4) / score.meter[1];
+  const notes = score.events.filter((e) => e[0] < to && e[0] + e[2] > from);
+  if (!notes.length) return null;
+  const first = Math.max(from, Math.min(...notes.map((e) => e[0])));
+  const last = Math.min(to, Math.max(...notes.map((e) => e[0] + e[2])));
+  const start = Math.floor(first / barTicks) * barTicks; // time 0 is a barline
+  const events = notes
+    .map(([on, pitch, dur, voice, vel]) => {
+      const a = Math.max(on, first);
+      const b = Math.min(on + dur, last);
+      return [a - start, pitch, b - a, voice, vel];
+    })
+    .filter((e) => e[2] > 0);
+  const inside = (tick) => tick >= first && tick < last;
+  const gens = new Map(db.groupings.map((g) => [g.id, g.gen || 0]));
+  const used = (score.provenance || []).filter((p) => inside(p.tick));
+  const gen = 1 + Math.max(0, ...used.map((p) => gens.get(p.grouping) || 0));
+  return {
+    id,
+    title: what,
+    gen,
+    from: score.id || null,
+    what,
+    at,
+    ppq: beat,
+    meter: score.meter.slice(),
+    key: { tonic: score.key.tonic, mode: score.key.mode, from: "Emily" },
+    transposedBy: 0,
+    voices: 4,
+    voiceNames: ["Soprano", "Alto", "Tenor", "Bass"],
+    padTicks: first - start,
+    fermatas: (score.fermatas || []).filter(inside).map((t) => t - start),
+    lengthTicks: Math.ceil((last - start) / barTicks) * barTicks,
+    events,
+    warnings: [],
+    variants: (score.variants || []).filter((v) => inside(v.tick)).map((v) => [v.tick - start, v.op]),
+  };
+}
+
+// The works of hers that can join a corpus of these works: in use, in the
+// same meter, and in a mode the corpus has.
+function usable(store, accepted, corpusWorks) {
+  if (!corpusWorks.length) return [];
+  const meter = corpusWorks[0].meter.join("/");
+  const modes = new Set(corpusWorks.map((w) => w.key && w.key.mode).filter(Boolean));
+  const inUse = new Set(accepted);
+  return store.works.filter((w) => inUse.has(w.id) && w.meter.join("/") === meter && (!modes.size || modes.has(w.key.mode)));
+}
+
+// Her works in a database, in numbers: { works, beats, varied, gens: Map(gen -> works) }.
+function counts(db) {
+  const own = db.works.filter((w) => w.gen);
+  const gens = new Map();
+  for (const w of own) gens.set(w.gen, (gens.get(w.gen) || 0) + 1);
+  const beats = db.groupings.filter((g) => g.gen);
+  return { works: own.length, beats: beats.length, varied: beats.filter((g) => g.variant).length, gens };
+}
+
+exports.createStore = createStore;
+exports.normalizeStore = normalizeStore;
+exports.workOf = workOf;
+exports.usable = usable;
+exports.counts = counts;
+  };
+
   var cache = {};
   function load(name) {
     if (!Object.prototype.hasOwnProperty.call(cache, name)) {
@@ -5024,6 +5180,10 @@ __emi_require.local = 1;
 //                          weight editor); unpin <feature> releases it, unpin alone all
 //   strength <0..2>        how strongly her taste counts (1: as learned)
 //   novelty <0..1>         M10: the chance that each phrase gets a variant (emily-vary)
+//   accept                 M10: keep the selection, the stream phrase playing or the piece
+//                          as a work of Emily's own (emily-memory); later pieces use it
+//   unaccept <id>          put an accepted work aside (it stays in ml_midi.emily.json)
+//   mix <0..0.75>          how much her own music counts against Bach's (0: Bach only)
 //   storetaste <path>      write her taste (weights, pins, strength, ratings) to a file
 //   recalltaste <path>     make a stored taste hers (the one before is kept in the backup)
 //   writeclips             write the current score as Live clips (Live only)
@@ -5064,6 +5224,7 @@ const abtests = __emi_require("emi-abtest");
 const abtestPage = __emi_require("emi-abtest-page");
 const emily = __emi_require("emily-assoc");
 const variation = __emi_require("emily-vary");
+const emilyMemory = __emi_require("emily-memory");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
@@ -5097,6 +5258,15 @@ let tasteText = null; // the taste file as last read or written: re-read when it
 let temperatureValue = 1;
 let selection = null; // { from, to }: ticks of the current score selected in the piano roll
 let comparison = null; // the last "taste" comparison, for the window: { first, last, result }
+// M10: the corpus as read (Bach's works), its database, and the database with
+// Emily's own works too (null when she has none in use). db is the one in use.
+let bachWorks = null;
+let bachDb = null;
+let herDb = null;
+let builtFor = null; // what herDb was built from: accepted ids and the store
+let store = emilyMemory.createStore(); // every work ever accepted (ml_midi.emily.json)
+let storePath = null;
+let storeText = null;
 
 function loadmidi(path) {
   attempt(() => {
@@ -5380,6 +5550,55 @@ function novelty(value) {
   });
 }
 
+function accept() {
+  attempt(() => {
+    if (!db) throw new Error("load a corpus first");
+    if (!current || !current.score.provenance) throw new Error("Emily keeps composed music: compose a piece first");
+    syncTaste();
+    syncStore();
+    const target = ratingTarget();
+    const id = "emily-" + (store.works.length + 1);
+    const work = emilyMemory.workOf(db, sourceScore(), { from: target.from, to: target.to, id, what: target.what, at: new Date().toISOString() });
+    if (!work) throw new Error("nothing composed there to keep");
+    store.works.push(work);
+    saveStore();
+    memory.accepted.push(id);
+    if (memory.mix === 0) emily.setMix(memory, 0.5); // she can't use it at 0
+    changedTaste();
+    ensureCorpus();
+    const beats = Math.round(work.events.reduce((end, e) => Math.max(end, e[0] + e[2]), 0) / work.ppq - work.padTicks / work.ppq);
+    const varied = work.variants.length ? `, ${work.variants.length} varied` : "";
+    const counted = herDb ? emilyMemory.counts(herDb).works : 0;
+    outlet(0, "status", ...`accepted ${target.what} as ${id} (generation ${work.gen}, ${beats} beats${varied}); Emily has ${counted} ${counted === 1 ? "work" : "works"} of her own`.split(" "));
+    const own = ownLine();
+    if (own) post(own + "\n");
+  });
+}
+
+function unaccept(id) {
+  attempt(() => {
+    syncTaste();
+    const before = memory.accepted.length;
+    memory.accepted = memory.accepted.filter((a) => a !== String(id));
+    if (memory.accepted.length === before) throw new Error(`${id} isn't one of Emily's works in use`);
+    changedTaste();
+    ensureCorpus();
+    outlet(0, "status", ...`${id} put aside: Emily no longer uses it (it stays in ${settingsFile.EMILY_NAME})`.split(" "));
+  });
+}
+
+function mix(value) {
+  attempt(() => {
+    syncTaste();
+    const v = emily.setMix(memory, value);
+    changedTaste();
+    ensureCorpus();
+    const words = v === 0 ? "Bach only" : v === 0.5 ? "her own music counts as much as Bach's" : v < 0.5 ? "her own music counts less than Bach's" : "her own music counts more than Bach's";
+    const none = memory.accepted.length ? "" : "; she has no music of her own yet: accept some";
+    outlet(0, "status", ...`mix ${v.toFixed(2)}: ${words} (from the next piece or phrase)${none}`.split(" "));
+  });
+}
+
 function storetaste(path) {
   attempt(() => {
     syncTaste();
@@ -5492,6 +5711,103 @@ function barsOf(score, from, to) {
 }
 barsOf.local = 1;
 
+// The corpus in use (M10): with her own works in use when there are any and
+// mix is above 0, rebuilt when what she has accepted changes; Bach's alone
+// otherwise.
+function ensureCorpus() {
+  if (!bachWorks) return;
+  syncTaste();
+  syncStore();
+  const key = memory.accepted.join(",") + "|" + store.works.length;
+  if (key !== builtFor) {
+    builtFor = key;
+    const mine = emilyMemory.usable(store, memory.accepted, bachWorks);
+    herDb = mine.length ? lexicon.build([...bachWorks, ...mine]) : null;
+  }
+  const next = herDb && memory.mix > 0 ? herDb : bachDb;
+  if (next !== db) db = next;
+}
+ensureCorpus.local = 1;
+
+// Emily's mix, when the corpus in use has her own works (null otherwise).
+function mixNow() {
+  return herDb && db === herDb ? memory.mix : null;
+}
+mixNow.local = 1;
+
+// How many beats of a piece are Emily's own, and how many of those carry
+// notes she varied: { beats, varied }.
+function ownBeats(piece) {
+  if (!herDb || db !== herDb || !piece.provenance) return { beats: 0, varied: 0 };
+  if (!groupingsById || groupingsById.db !== db) groupingsById = { db, map: new Map(db.groupings.map((g) => [g.id, g])) };
+  const own = piece.provenance.map((p) => groupingsById.map.get(p.grouping) || {}).filter((g) => g.gen);
+  return { beats: own.length, varied: own.filter((g) => g.variant).length };
+}
+ownBeats.local = 1;
+
+// "ml_midi: Emily's own music: 3 works (generation 1: 2, generation 2: 1), 160 beats, 12 varied; 1 signature of her own"
+function ownLine() {
+  if (!herDb) return null;
+  const c = emilyMemory.counts(herDb);
+  const gens = [...c.gens].sort((a, b) => a[0] - b[0]).map(([g, n]) => `generation ${g}: ${n}`).join(", ");
+  const sigs = herDb.signatures.filter((sig) => sig.emily).length;
+  let text = `ml_midi: Emily's own music: ${c.works} ${c.works === 1 ? "work" : "works"} (${gens}), ${c.beats} beats, ${c.varied} varied`;
+  if (sigs) text += `; ${sigs} ${sigs === 1 ? "signature" : "signatures"} of her own`;
+  if (db !== herDb) text += "; not in use at mix 0";
+  return text;
+}
+ownLine.local = 1;
+
+// The music now current, untransposed, with its provenance and variants:
+// the piece, or the whole stream so far.
+function sourceScore() {
+  if (flow && flow.state.phrases.length) {
+    const phrases = flow.state.phrases;
+    return {
+      ...phrases[0].piece,
+      id: flow.name,
+      events: phrases.flatMap((p) => p.piece.events),
+      provenance: phrases.flatMap((p) => p.piece.provenance),
+      fermatas: phrases.flatMap((p) => p.piece.fermatas),
+      variants: phrases.flatMap((p) => p.piece.variants || []),
+    };
+  }
+  return current.base || current.score;
+}
+sourceScore.local = 1;
+
+// The accepted works file: read when it changes (the other product may have
+// accepted something), written after each acceptance.
+function syncStore() {
+  if (!storePath) return;
+  let text = "";
+  try {
+    text = files.exists(storePath) ? files.readText(storePath) : "";
+  } catch (e) {
+    return;
+  }
+  if (text === storeText) return;
+  storeText = text;
+  try {
+    store = emilyMemory.normalizeStore(text ? JSON.parse(text) : null);
+  } catch (e) {
+    store = emilyMemory.createStore();
+  }
+}
+syncStore.local = 1;
+
+function saveStore() {
+  if (!storePath) return;
+  const text = JSON.stringify(store) + "\n";
+  try {
+    files.writeText(storePath, text);
+    storeText = text;
+  } catch (e) {
+    outlet(0, "error", "can't", "save", "Emily's", "music:", ...String(e.message).split(" "));
+  }
+}
+saveStore.local = 1;
+
 // A composed piece or phrase with Emily's variants (M10), as often as her
 // novelty asks (none at 0).
 function varied(piece, seed) {
@@ -5523,6 +5839,9 @@ function loadTaste(folder) {
   tastePath = settingsFile.tastePathIn(folder);
   tasteBackupPath = settingsFile.backupPathIn(folder);
   tasteText = null;
+  storePath = settingsFile.emilyPathIn(folder);
+  storeText = null;
+  syncStore();
   syncTaste();
   if (emily.decay(memory)) saveTaste();
   outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
@@ -5650,15 +5969,21 @@ clampSeed.local = 1;
 function loadCorpus(folder) {
   const { works, skipped } = files.loadFolder(folder);
   if (!works.length) throw new Error("no .mid files in " + files.fileName(folder));
-  db = lexicon.build(works);
+  bachWorks = works;
+  bachDb = lexicon.build(works);
+  db = bachDb;
+  builtFor = null;
   remembered.corpus = String(folder);
-  const s = lexicon.stats(db);
+  const s = lexicon.stats(bachDb);
   const counted = (m) => db.works.filter((w) => w.mode === m).length;
   const mode = db.mode === "mixed" ? `${counted("major")} major, ${counted("minor")} minor` : db.mode;
   const words = ["corpus", s.works, "chorales", ...("(" + mode + "),").split(" "), s.groupings, "beats,", Math.round(100 * s.deadEndShare) + "%", "dead", "ends,", db.signatures.length, "signatures"];
   if (skipped.length) words.push("(" + skipped.length, "skipped)");
   outlet(0, "status", ...words);
   listSignatures();
+  ensureCorpus();
+  const own = ownLine();
+  if (own) post(own + "\n");
 }
 loadCorpus.local = 1;
 
@@ -5668,13 +5993,14 @@ loadCorpus.local = 1;
 function composeNow(atStartup) {
   attempt(() => {
     if (!db) throw new Error("load a corpus first");
+    ensureCorpus();
     if (streaming) {
       startStream();
       return;
     }
     const options = { seed: currentSeed, beats: minBeats, signatures: useSignatures };
     const liked = useForm ? tasteNow() : null;
-    const result = useForm ? forms.compose(db, { ...options, taste: liked, temperature: temperatureValue }) : composer.compose(db, options);
+    const result = useForm ? forms.compose(db, { ...options, taste: liked, temperature: temperatureValue, mix: mixNow() }) : composer.compose(db, options);
     if (!result.ok) {
       if (useForm && !result.stats.tried.length) {
         outlet(0, "error", "no", "chorale", "is", minBeats + "+", "beats", "long;", "lower", "beats");
@@ -5726,7 +6052,8 @@ function appendPhrase() {
   const state = flow.state;
   const number = state.phrases.length + 1;
   const last = phrasesWanted > 0 && number >= phrasesWanted;
-  const options = { seed: currentSeed, signatures: useSignatures, taste: tasteNow(), temperature: temperatureValue };
+  ensureCorpus();
+  const options = { seed: currentSeed, signatures: useSignatures, taste: tasteNow(), temperature: temperatureValue, mix: mixNow() };
   let result = streams.next(db, state, { ...options, last });
   if (!result.ok && last) result = streams.next(db, state, options); // end later instead
   if (!result.ok) {
@@ -5810,6 +6137,8 @@ function describePiece(piece) {
   text += ", SPEAC " + Math.round(100 * piece.form.speac) + "%";
   if (piece.form.signatures !== undefined) text += ", " + piece.form.signatures + (piece.form.signatures === 1 ? " signature" : " signatures");
   if (piece.variants && piece.variants.length) text += ", " + piece.variants.length + (piece.variants.length === 1 ? " variant" : " variants");
+  const own = ownBeats(piece);
+  if (own.beats) text += `, ${own.beats} of Emily's own ${own.beats === 1 ? "beat" : "beats"}` + (own.varied ? ` (${own.varied} with her variants)` : "");
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
   if (piece.form.relaxed === 3) relaxed.push("any cadence bass");

@@ -190,14 +190,14 @@ test("live.* parameters: named, and unique within each product", () => {
   }
   assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Beats", "Form", "Original Key", "Phrases", "Seed", "Signatures", "Stream", "Transpose"]);
   assert.deepEqual(liveParameters("emi.host.live.maxpat").map((p) => p.longname).sort(), ["All Voices Here", "Clips On Compose", "Play Through Voices"]);
-  assert.deepEqual(liveParameters("emily.panel.maxpat").map((p) => p.longname).sort(), ["Dislike", "Like", "Temperature"]);
+  assert.deepEqual(liveParameters("emily.panel.maxpat").map((p) => p.longname).sort(), ["Accept", "Dislike", "Like", "Temperature"]);
 });
 
 test("emily.panel (M9): like and dislike are mappable buttons; temperature is saved and shown when restored", () => {
   const p = patchFile("emily.panel.maxpat");
   const [outlet] = p.find("outlet");
   const control = (name) => [...p.boxes.values()].find((b) => b.varname === name);
-  for (const [name, message] of [["Like", "like"], ["Dislike", "dislike"]]) {
+  for (const [name, message] of [["Like", "like"], ["Dislike", "dislike"], ["Accept", "accept"]]) {
     const button = control(name);
     assert.equal(button.maxclass, "live.text", name);
     assert.equal(button.mode, 0, `${name} is a button (it sends a bang)`);
@@ -213,10 +213,9 @@ test("emily.panel (M9): like and dislike are mappable buttons; temperature is sa
   const [[pre]] = p.from(dial.id, 0);
   assert.equal(pre.text, "prepend temperature");
   assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
-  for (const word of ["taste", "forget"]) {
-    const [msg] = p.find(word);
-    assert.deepEqual(p.from(msg.id).map(([b]) => b.id), [outlet.id], word);
-  }
+  const [taste] = p.find("taste");
+  assert.deepEqual(p.from(taste.id).map(([b]) => b.id), [outlet.id], "taste");
+  assert.deepEqual(p.find("forget"), [], "forget is in the pop-up window (M10)");
   const [route] = p.find("route emily setting");
   const [[setText]] = p.from(route.id, 0);
   assert.equal(setText.text, "prepend text");
@@ -265,7 +264,7 @@ test("emi.window: a large piano roll and Emily's taste, fed by the engine; selec
   assert.deepEqual([roll.filename, taste.filename], ["emi.view.bundle.js", "emi.taste.bundle.js"]);
   assert.ok(roll.presentation_rect[2] >= 1000 && roll.presentation_rect[3] >= 400, "the roll is large");
   assert.deepEqual(p.from(roll.id).map(([b]) => b.id), [outlet.id], "selections go to the engine");
-  for (const word of ["like", "dislike", "taste"]) {
+  for (const word of ["like", "dislike", "accept", "taste", "forget"]) {
     const [button] = p.find(word);
     assert.deepEqual(p.from(button.id).map(([b]) => b.id), [outlet.id], word);
   }

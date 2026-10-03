@@ -23,6 +23,14 @@
 //   openings: [grouping index], finals: [grouping index],
 //   signatures: [signature]           // (M7) cadence patterns found in many works (emi-signatures)
 // }
+//
+// M10: works may also be Emily's own, accepted from her output
+// (emily-memory): such a work has gen (its generation, 1 or more) and
+// variants ([[tick, op]]: notes she varied). Its groupings carry gen, and
+// variant (the ops) where a varied note falls in them; db.works entries
+// carry gen too. Signatures are found in Bach's works alone, so hers never
+// change his; patterns that recur across her own works and aren't Bach's
+// are her own signatures (emily: true, ids "esig1", ...).
 // Plain JSON, so a database can be saved and loaded later.
 
 const ingest = require("emi-ingest");
@@ -78,13 +86,20 @@ function build(works) {
     modes.add(inC.key.mode);
     const groupings = segment(inC, db.beatTicks);
     for (const g of groupings) g.mode = inC.key.mode; // M8: a mixed corpus composes each piece in one mode
+    if (work.gen) {
+      for (const g of groupings) {
+        g.gen = work.gen;
+        const ops = (work.variants || []).filter(([tick]) => tick >= g.index * db.beatTicks && tick < (g.index + 1) * db.beatTicks).map(([, op]) => op);
+        if (ops.length) g.variant = ops;
+      }
+    }
     areas(inC, groupings, db.beatTicks);
     const beatsPerBar = Math.round((db.meter[0] * 4) / db.meter[1]);
     speac.analyze(groupings, beatsPerBar).forEach(({ tension, beat, bar, phrase }, k) => {
       groupings[k].tension = tension;
       groupings[k].speac = { beat, bar, phrase };
     });
-    db.works.push({ id: work.id, title: work.title, key: work.key, transposedBy: inC.transposedBy, groupings: groupings.length, pickup: (work.padTicks || 0) > 0, mode: inC.key.mode });
+    db.works.push({ id: work.id, title: work.title, key: work.key, transposedBy: inC.transposedBy, groupings: groupings.length, pickup: (work.padTicks || 0) > 0, mode: inC.key.mode, gen: work.gen || 0 });
     if (groupings.length) db.templates.push({ work: work.id, start: db.groupings.length, count: groupings.length });
     for (const g of groupings) {
       const i = db.groupings.length;
@@ -102,7 +117,18 @@ function build(works) {
     }
   }
   db.mode = modes.size === 1 ? [...modes][0] : "mixed";
-  db.signatures = signatures.detect(db, normalized);
+  const own = normalized.filter((w, i) => works[i].gen);
+  db.signatures = signatures.detect(db, own.length ? normalized.filter((w, i) => !works[i].gen) : normalized);
+  if (own.length >= 3) {
+    const pattern = (sig) => `${sig.mode}:${sig.voice}:${sig.intervals.join(",")}`;
+    const bach = new Set(db.signatures.map(pattern));
+    const hers = signatures.detect(db, own).filter((sig) => !bach.has(pattern(sig)));
+    hers.forEach((sig, i) => {
+      sig.id = "esig" + (i + 1);
+      sig.emily = true;
+    });
+    db.signatures.push(...hers);
+  }
   return db;
 }
 

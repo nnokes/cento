@@ -229,9 +229,17 @@ function pinsFor(db, slots, avoid = null) {
 // same number of beats and joins, so the offset changes no choice.) The
 // temperature scales the random amounts: 0, none (the best liked path); 1,
 // as before M9; higher, more adventurous.
+//
+// M10: in a corpus with Emily's own music (emily-memory), mix (0..0.75)
+// says how much her beats count against Bach's: 0.5 as much, more above
+// (up to MIX_POINTS a beat at 0.75), less below. (At mix 0 the engine leaves
+// her music out of the corpus altogether.) Her forms move forward or back
+// in the same way when the form is chosen.
 const PIN = 1 << 20;
 const SCORE = { strong: 16, blockChance: 48, accidentals: 16, label: 4, tasteLabel: 8, range: 4, chance: 8 };
 const TASTE_MAX = 64;
+const MIX_POINTS = 8;
+const mixPoints = (mix) => Math.max(-2 * MIX_POINTS, Math.min(2 * MIX_POINTS, Math.round((MIX_POINTS * (mix - 0.5)) / 0.25)));
 const clampTaste = (v) => Math.max(-TASTE_MAX, Math.min(TASTE_MAX, v));
 
 // Each grouping's lowest and highest soprano note (computed once per database).
@@ -252,8 +260,9 @@ function sopranoOf(db) {
   return sopranoCache.get(db);
 }
 
-function feasible(db, slots, next, pins = null, noise = 0, { taste = null, temperature = 1 } = {}) {
+function feasible(db, slots, next, pins = null, noise = 0, { taste = null, temperature = 1, mix = null } = {}) {
   const n = db.groupings.length;
+  const hers = mix === null ? 0 : mixPoints(mix); // Emily's own beats, against Bach's (offset by 2 * MIX_POINTS)
   const beatTaste = taste ? taste.beat : null;
   const edges = taste ? taste.edges : null;
   const blockEnd = taste ? taste.blockEnd : null;
@@ -297,7 +306,8 @@ function feasible(db, slots, next, pins = null, noise = 0, { taste = null, tempe
     const reward = (i) => {
       const g = db.groupings[i];
       const liked = beatTaste ? TASTE_MAX + clampTaste(beatTaste[i]) : 0;
-      return (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? labelPoints : 0) + (inRange(i) ? SCORE.range : 0) + chance(i) + liked;
+      const own = mix === null ? 0 : 2 * MIX_POINTS + (g.gen ? hers : 0);
+      return own + (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? labelPoints : 0) + (inRange(i) ? SCORE.range : 0) + chance(i) + liked;
     };
     const plus = (v, i) => (v < 0 ? -1 : v + reward(i));
     const free = new Int32Array(n).fill(-1);
@@ -344,10 +354,11 @@ function planFor(db, slots, level, pins, noise = 0, prefs = null) {
   if (!planCache.has(slots)) planCache.set(slots, []);
   const taste = prefs ? prefs.taste || null : null;
   const temperature = prefs && prefs.temperature !== undefined ? prefs.temperature : 1;
-  const known = planCache.get(slots).find((p) => p.db === db && p.level === level && p.pins === pins && p.noise === noise && p.taste === taste && p.temperature === temperature);
+  const mix = prefs && typeof prefs.mix === "number" ? prefs.mix : null;
+  const known = planCache.get(slots).find((p) => p.db === db && p.level === level && p.pins === pins && p.noise === noise && p.taste === taste && p.temperature === temperature && p.mix === mix);
   if (known) return known.plan;
-  const plan = feasible(db, slots, successors(db)[level], pins, noise, { taste, temperature });
-  planCache.get(slots).push({ db, level, pins, noise, taste, temperature, plan });
+  const plan = feasible(db, slots, successors(db)[level], pins, noise, { taste, temperature, mix });
+  planCache.get(slots).push({ db, level, pins, noise, taste, temperature, mix, plan });
   return plan;
 }
 
@@ -787,15 +798,15 @@ function templateBeats(db, template) {
 // M9: taste (from emily-assoc's prepare, or null) and temperature (default
 // 1) are Emily's: they steer the search toward liked beats (see SCORE), and
 // the choice of form toward liked forms (byTaste).
-function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true, taste = null, temperature = 1 } = {}) {
+function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true, taste = null, temperature = 1, mix = null } = {}) {
   const random = rng.create(seed);
-  const prefs = taste || temperature !== 1 ? { taste, temperature } : null;
+  const prefs = taste || temperature !== 1 || mix !== null ? { taste, temperature, mix } : null;
   let templates = db.templates.filter((t) => (only ? t.work === only : templateBeats(db, t) >= beats));
   for (let i = templates.length - 1; i > 0; i--) {
     const j = random.int(i + 1);
     [templates[i], templates[j]] = [templates[j], templates[i]];
   }
-  if (taste && taste.templates) templates = byTaste(templates, (t) => taste.templates.get(t.work) || 0, temperature);
+  if ((taste && taste.templates) || mix !== null) templates = byTaste(templates, (t) => formWeight(db, t.work, taste, mix), temperature);
   const tried = [];
   const counters = { steps: 0, backtracks: 0 };
   let quoting = null; // the piece put aside that quotes least: { piece, step }
@@ -838,6 +849,15 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
   return { ok: false, piece: null, stats: stats(null) };
 }
 
+// How much a form is liked (M9: Emily's taste) and, for one of her own
+// works (M10), how much her music counts (mix).
+const genCache = new WeakMap();
+function formWeight(db, work, taste, mix) {
+  if (!genCache.has(db)) genCache.set(db, new Map(db.works.map((w) => [w.id, w.gen || 0])));
+  const own = mix !== null && genCache.get(db).get(work) ? (4 * (mix - 0.5)) : 0;
+  return (taste && taste.templates ? taste.templates.get(work) || 0 : 0) + own;
+}
+
 // A list in its seeded order, reordered by taste (M9): liked items move
 // forward, disliked ones back, by how much depending on the temperature. The
 // list's order stands for a random draw (the first item drew the highest
@@ -858,6 +878,8 @@ function byTaste(list, weightOf, temperature = 1) {
 
 exports.compose = compose;
 exports.byTaste = byTaste;
+exports.formWeight = formWeight;
+exports.MIX_POINTS = MIX_POINTS;
 exports.planFor = planFor;
 exports.TASTE_MAX = TASTE_MAX;
 exports.RELAX = RELAX;

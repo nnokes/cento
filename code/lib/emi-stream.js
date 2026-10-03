@@ -93,13 +93,13 @@ function start({ seed = 1 } = {}) {
 
 const phraseSeed = (seed, number) => (Math.imul(seed, 7919) + Math.imul(number, 104729)) >>> 0 || 1;
 
-function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 12, signatures = true, guard = true, taste = null, temperature = 1 } = {}) {
+function next(db, stream, { seed = stream.seed, last = false, relax = form.RELAX.length - 1, budget = 20000, tries = 12, signatures = true, guard = true, taste = null, temperature = 1, mix = null } = {}) {
   if (stream.finished) return { ok: false, phrase: null };
   const number = stream.phrases.length + 1;
   const random = rng.create(phraseSeed(seed, number));
   const counters = { steps: 0, backtracks: 0 };
   const before = { nextBeat: stream.nextBeat, endsInRest: stream.endsInRest };
-  const prefs = taste || temperature !== 1 ? { taste, temperature } : null;
+  const prefs = taste || temperature !== 1 || mix !== null ? { taste, temperature, mix } : null;
   for (const fallback of [false, true]) {
     if (fallback) {
       // A breath: one silent beat, then a fresh phrase start.
@@ -165,8 +165,9 @@ function choices(db, stream, random, last, prefs = null) {
     return list.map((c, i) => [gap(c), i, c]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(([, , c]) => c);
   };
   let indexes = shuffled(works.map((w, i) => i)).filter((w) => !stream.mode || works[w].mode === stream.mode);
-  const liked = prefs && prefs.taste && prefs.taste.templates;
-  if (liked) indexes = form.byTaste(indexes, (w) => liked.get(works[w].work) || 0, prefs.temperature);
+  if (prefs && ((prefs.taste && prefs.taste.templates) || prefs.mix !== null)) {
+    indexes = form.byTaste(indexes, (w) => form.formWeight(db, works[w].work, prefs.taste, prefs.mix), prefs.temperature);
+  }
 
   if (!stream.phrases.length) return indexes.map((w) => entry(w, 0));
   const walk = stream.walk;

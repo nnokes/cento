@@ -35,7 +35,7 @@ function describeBeat(db, entry, groupings = new Map(db.groupings.map((g) => [g.
   if (entry.block) parts.push("signature block");
   if (entry.signatures && entry.signatures.length) parts.push(nameOf(db, entry.signatures[0]));
   if (entry.variant && entry.variant.length) parts.push("varied: " + entry.variant.join(", ")); // M10 (emily-vary)
-  if (g.gen) parts.push("Emily's own, generation " + g.gen); // M10 (emily-memory)
+  if (g.gen) parts.push("Emily's own, generation " + g.gen + (g.variant ? " (her " + g.variant.join(", ") + ")" : "")); // M10 (emily-memory)
   return parts.join(" · ");
 }
 

@@ -28,3 +28,6 @@ patchers/ml_midi.settings.json
 # Emily's taste (M9): your ratings, also personal.
 patchers/ml_midi.taste.json
 patchers/ml_midi.taste.backup.json
+# Emily's own music (M10): what you accepted, and her snapshots.
+patchers/ml_midi.emily.json
+patchers/ml_midi.snapshots.json

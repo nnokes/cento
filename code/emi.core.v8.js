@@ -75,6 +75,10 @@
 //                          weight editor); unpin <feature> releases it, unpin alone all
 //   strength <0..2>        how strongly her taste counts (1: as learned)
 //   novelty <0..1>         M10: the chance that each phrase gets a variant (emily-vary)
+//   accept                 M10: keep the selection, the stream phrase playing or the piece
+//                          as a work of Emily's own (emily-memory); later pieces use it
+//   unaccept <id>          put an accepted work aside (it stays in ml_midi.emily.json)
+//   mix <0..0.75>          how much her own music counts against Bach's (0: Bach only)
 //   storetaste <path>      write her taste (weights, pins, strength, ratings) to a file
 //   recalltaste <path>     make a stored taste hers (the one before is kept in the backup)
 //   writeclips             write the current score as Live clips (Live only)
@@ -115,6 +119,7 @@ const abtests = require("emi-abtest");
 const abtestPage = require("emi-abtest-page");
 const emily = require("emily-assoc");
 const variation = require("emily-vary");
+const emilyMemory = require("emily-memory");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
@@ -148,6 +153,15 @@ let tasteText = null; // the taste file as last read or written: re-read when it
 let temperatureValue = 1;
 let selection = null; // { from, to }: ticks of the current score selected in the piano roll
 let comparison = null; // the last "taste" comparison, for the window: { first, last, result }
+// M10: the corpus as read (Bach's works), its database, and the database with
+// Emily's own works too (null when she has none in use). db is the one in use.
+let bachWorks = null;
+let bachDb = null;
+let herDb = null;
+let builtFor = null; // what herDb was built from: accepted ids and the store
+let store = emilyMemory.createStore(); // every work ever accepted (ml_midi.emily.json)
+let storePath = null;
+let storeText = null;
 
 function loadmidi(path) {
   attempt(() => {
@@ -431,6 +445,55 @@ function novelty(value) {
   });
 }
 
+function accept() {
+  attempt(() => {
+    if (!db) throw new Error("load a corpus first");
+    if (!current || !current.score.provenance) throw new Error("Emily keeps composed music: compose a piece first");
+    syncTaste();
+    syncStore();
+    const target = ratingTarget();
+    const id = "emily-" + (store.works.length + 1);
+    const work = emilyMemory.workOf(db, sourceScore(), { from: target.from, to: target.to, id, what: target.what, at: new Date().toISOString() });
+    if (!work) throw new Error("nothing composed there to keep");
+    store.works.push(work);
+    saveStore();
+    memory.accepted.push(id);
+    if (memory.mix === 0) emily.setMix(memory, 0.5); // she can't use it at 0
+    changedTaste();
+    ensureCorpus();
+    const beats = Math.round(work.events.reduce((end, e) => Math.max(end, e[0] + e[2]), 0) / work.ppq - work.padTicks / work.ppq);
+    const varied = work.variants.length ? `, ${work.variants.length} varied` : "";
+    const counted = herDb ? emilyMemory.counts(herDb).works : 0;
+    outlet(0, "status", ...`accepted ${target.what} as ${id} (generation ${work.gen}, ${beats} beats${varied}); Emily has ${counted} ${counted === 1 ? "work" : "works"} of her own`.split(" "));
+    const own = ownLine();
+    if (own) post(own + "\n");
+  });
+}
+
+function unaccept(id) {
+  attempt(() => {
+    syncTaste();
+    const before = memory.accepted.length;
+    memory.accepted = memory.accepted.filter((a) => a !== String(id));
+    if (memory.accepted.length === before) throw new Error(`${id} isn't one of Emily's works in use`);
+    changedTaste();
+    ensureCorpus();
+    outlet(0, "status", ...`${id} put aside: Emily no longer uses it (it stays in ${settingsFile.EMILY_NAME})`.split(" "));
+  });
+}
+
+function mix(value) {
+  attempt(() => {
+    syncTaste();
+    const v = emily.setMix(memory, value);
+    changedTaste();
+    ensureCorpus();
+    const words = v === 0 ? "Bach only" : v === 0.5 ? "her own music counts as much as Bach's" : v < 0.5 ? "her own music counts less than Bach's" : "her own music counts more than Bach's";
+    const none = memory.accepted.length ? "" : "; she has no music of her own yet: accept some";
+    outlet(0, "status", ...`mix ${v.toFixed(2)}: ${words} (from the next piece or phrase)${none}`.split(" "));
+  });
+}
+
 function storetaste(path) {
   attempt(() => {
     syncTaste();
@@ -543,6 +606,103 @@ function barsOf(score, from, to) {
 }
 barsOf.local = 1;
 
+// The corpus in use (M10): with her own works in use when there are any and
+// mix is above 0, rebuilt when what she has accepted changes; Bach's alone
+// otherwise.
+function ensureCorpus() {
+  if (!bachWorks) return;
+  syncTaste();
+  syncStore();
+  const key = memory.accepted.join(",") + "|" + store.works.length;
+  if (key !== builtFor) {
+    builtFor = key;
+    const mine = emilyMemory.usable(store, memory.accepted, bachWorks);
+    herDb = mine.length ? lexicon.build([...bachWorks, ...mine]) : null;
+  }
+  const next = herDb && memory.mix > 0 ? herDb : bachDb;
+  if (next !== db) db = next;
+}
+ensureCorpus.local = 1;
+
+// Emily's mix, when the corpus in use has her own works (null otherwise).
+function mixNow() {
+  return herDb && db === herDb ? memory.mix : null;
+}
+mixNow.local = 1;
+
+// How many beats of a piece are Emily's own, and how many of those carry
+// notes she varied: { beats, varied }.
+function ownBeats(piece) {
+  if (!herDb || db !== herDb || !piece.provenance) return { beats: 0, varied: 0 };
+  if (!groupingsById || groupingsById.db !== db) groupingsById = { db, map: new Map(db.groupings.map((g) => [g.id, g])) };
+  const own = piece.provenance.map((p) => groupingsById.map.get(p.grouping) || {}).filter((g) => g.gen);
+  return { beats: own.length, varied: own.filter((g) => g.variant).length };
+}
+ownBeats.local = 1;
+
+// "ml_midi: Emily's own music: 3 works (generation 1: 2, generation 2: 1), 160 beats, 12 varied; 1 signature of her own"
+function ownLine() {
+  if (!herDb) return null;
+  const c = emilyMemory.counts(herDb);
+  const gens = [...c.gens].sort((a, b) => a[0] - b[0]).map(([g, n]) => `generation ${g}: ${n}`).join(", ");
+  const sigs = herDb.signatures.filter((sig) => sig.emily).length;
+  let text = `ml_midi: Emily's own music: ${c.works} ${c.works === 1 ? "work" : "works"} (${gens}), ${c.beats} beats, ${c.varied} varied`;
+  if (sigs) text += `; ${sigs} ${sigs === 1 ? "signature" : "signatures"} of her own`;
+  if (db !== herDb) text += "; not in use at mix 0";
+  return text;
+}
+ownLine.local = 1;
+
+// The music now current, untransposed, with its provenance and variants:
+// the piece, or the whole stream so far.
+function sourceScore() {
+  if (flow && flow.state.phrases.length) {
+    const phrases = flow.state.phrases;
+    return {
+      ...phrases[0].piece,
+      id: flow.name,
+      events: phrases.flatMap((p) => p.piece.events),
+      provenance: phrases.flatMap((p) => p.piece.provenance),
+      fermatas: phrases.flatMap((p) => p.piece.fermatas),
+      variants: phrases.flatMap((p) => p.piece.variants || []),
+    };
+  }
+  return current.base || current.score;
+}
+sourceScore.local = 1;
+
+// The accepted works file: read when it changes (the other product may have
+// accepted something), written after each acceptance.
+function syncStore() {
+  if (!storePath) return;
+  let text = "";
+  try {
+    text = files.exists(storePath) ? files.readText(storePath) : "";
+  } catch (e) {
+    return;
+  }
+  if (text === storeText) return;
+  storeText = text;
+  try {
+    store = emilyMemory.normalizeStore(text ? JSON.parse(text) : null);
+  } catch (e) {
+    store = emilyMemory.createStore();
+  }
+}
+syncStore.local = 1;
+
+function saveStore() {
+  if (!storePath) return;
+  const text = JSON.stringify(store) + "\n";
+  try {
+    files.writeText(storePath, text);
+    storeText = text;
+  } catch (e) {
+    outlet(0, "error", "can't", "save", "Emily's", "music:", ...String(e.message).split(" "));
+  }
+}
+saveStore.local = 1;
+
 // A composed piece or phrase with Emily's variants (M10), as often as her
 // novelty asks (none at 0).
 function varied(piece, seed) {
@@ -574,6 +734,9 @@ function loadTaste(folder) {
   tastePath = settingsFile.tastePathIn(folder);
   tasteBackupPath = settingsFile.backupPathIn(folder);
   tasteText = null;
+  storePath = settingsFile.emilyPathIn(folder);
+  storeText = null;
+  syncStore();
   syncTaste();
   if (emily.decay(memory)) saveTaste();
   outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
@@ -701,15 +864,21 @@ clampSeed.local = 1;
 function loadCorpus(folder) {
   const { works, skipped } = files.loadFolder(folder);
   if (!works.length) throw new Error("no .mid files in " + files.fileName(folder));
-  db = lexicon.build(works);
+  bachWorks = works;
+  bachDb = lexicon.build(works);
+  db = bachDb;
+  builtFor = null;
   remembered.corpus = String(folder);
-  const s = lexicon.stats(db);
+  const s = lexicon.stats(bachDb);
   const counted = (m) => db.works.filter((w) => w.mode === m).length;
   const mode = db.mode === "mixed" ? `${counted("major")} major, ${counted("minor")} minor` : db.mode;
   const words = ["corpus", s.works, "chorales", ...("(" + mode + "),").split(" "), s.groupings, "beats,", Math.round(100 * s.deadEndShare) + "%", "dead", "ends,", db.signatures.length, "signatures"];
   if (skipped.length) words.push("(" + skipped.length, "skipped)");
   outlet(0, "status", ...words);
   listSignatures();
+  ensureCorpus();
+  const own = ownLine();
+  if (own) post(own + "\n");
 }
 loadCorpus.local = 1;
 
@@ -719,13 +888,14 @@ loadCorpus.local = 1;
 function composeNow(atStartup) {
   attempt(() => {
     if (!db) throw new Error("load a corpus first");
+    ensureCorpus();
     if (streaming) {
       startStream();
       return;
     }
     const options = { seed: currentSeed, beats: minBeats, signatures: useSignatures };
     const liked = useForm ? tasteNow() : null;
-    const result = useForm ? forms.compose(db, { ...options, taste: liked, temperature: temperatureValue }) : composer.compose(db, options);
+    const result = useForm ? forms.compose(db, { ...options, taste: liked, temperature: temperatureValue, mix: mixNow() }) : composer.compose(db, options);
     if (!result.ok) {
       if (useForm && !result.stats.tried.length) {
         outlet(0, "error", "no", "chorale", "is", minBeats + "+", "beats", "long;", "lower", "beats");
@@ -777,7 +947,8 @@ function appendPhrase() {
   const state = flow.state;
   const number = state.phrases.length + 1;
   const last = phrasesWanted > 0 && number >= phrasesWanted;
-  const options = { seed: currentSeed, signatures: useSignatures, taste: tasteNow(), temperature: temperatureValue };
+  ensureCorpus();
+  const options = { seed: currentSeed, signatures: useSignatures, taste: tasteNow(), temperature: temperatureValue, mix: mixNow() };
   let result = streams.next(db, state, { ...options, last });
   if (!result.ok && last) result = streams.next(db, state, options); // end later instead
   if (!result.ok) {
@@ -861,6 +1032,8 @@ function describePiece(piece) {
   text += ", SPEAC " + Math.round(100 * piece.form.speac) + "%";
   if (piece.form.signatures !== undefined) text += ", " + piece.form.signatures + (piece.form.signatures === 1 ? " signature" : " signatures");
   if (piece.variants && piece.variants.length) text += ", " + piece.variants.length + (piece.variants.length === 1 ? " variant" : " variants");
+  const own = ownBeats(piece);
+  if (own.beats) text += `, ${own.beats} of Emily's own ${own.beats === 1 ? "beat" : "beats"}` + (own.varied ? ` (${own.varied} with her variants)` : "");
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
   if (piece.form.relaxed === 3) relaxed.push("any cadence bass");
