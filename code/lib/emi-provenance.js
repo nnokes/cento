@@ -34,6 +34,8 @@ function describeBeat(db, entry, groupings = new Map(db.groupings.map((g) => [g.
   }
   if (entry.block) parts.push("signature block");
   if (entry.signatures && entry.signatures.length) parts.push(nameOf(db, entry.signatures[0]));
+  if (entry.variant && entry.variant.length) parts.push("varied: " + entry.variant.join(", ")); // M10 (emily-vary)
+  if (g.gen) parts.push("Emily's own, generation " + g.gen); // M10 (emily-memory)
   return parts.join(" · ");
 }
 
@@ -74,6 +76,7 @@ function record(db, piece, settings = {}) {
       if (entry.shift) out.shift = entry.shift;
       if (entry.block) out.block = entry.block;
       if (entry.signatures) out.signatures = entry.signatures.map((id) => nameOf(db, id));
+      if (entry.variant) out.variant = entry.variant;
       return out;
     }),
   };

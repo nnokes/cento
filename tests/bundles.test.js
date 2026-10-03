@@ -106,11 +106,11 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
     "abtest", "autoclips", "beats", "clear", "compose", "corpus", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
-    "need", "next", "pattern", "phrases", "pin", "recalltaste", "remember", "seed", "select", "sigs", "startup", "storetaste", "stream",
+    "need", "next", "novelty", "pattern", "phrases", "pin", "recalltaste", "remember", "seed", "select", "sigs", "startup", "storetaste", "stream",
     "strength", "taste", "temperature", "testclip", "transpose", "unpin", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), [
-    "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "selection", "signature", "source", "speac",
+    "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "selection", "signature", "source", "speac", "variant",
   ]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
   assert.deepEqual(loadBundle("emi.text").handlers(), ["alert", "clear", "onresize", "paint", "text"]);
@@ -1171,4 +1171,34 @@ test("taste view: 'edit' shows a slider per feature; dragging pins, double-click
   // "edit" again: back to the overview; clicks do nothing there.
   view.send("edit", "weights");
   assert.deepEqual(view.send("onclick", t1, y), []);
+});
+
+// ---------------------------------------------------------------- M10: variants
+
+test("emily: novelty varies pieces and stream phrases; variants are marked and named", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  const plain = lastStatus(core.send("compose", 1)).join(" ");
+  assert.doesNotMatch(plain, /variant/);
+  assert.match(lastStatus(core.send("novelty", 1)).join(" "), /^status novelty 1\.00: a variant in every phrase/);
+  assert.equal(tasteIn(folder).novelty, 1);
+  core.posted.length = 0;
+  const out = core.send("compose", 1);
+  assert.match(lastStatus(out).join(" "), /, 1 variant$|, \d variants$/);
+  assert.ok(core.posted.some((line) => /^emi-1: varied: [a-z -]+ \(bar \d+, (soprano|alto|tenor|bass)\)/.test(line)), core.posted.join(""));
+  const view = select(out, "view");
+  const marks = view.filter(([kind]) => kind === "variant");
+  assert.ok(marks.length >= 1);
+  const sources = view.filter(([kind]) => kind === "source").map(([, tick, ...text]) => [tick, text.join(" ")]);
+  assert.ok(sources.some(([tick, text]) => tick === marks[0][1] && / · varied: /.test(text)), "the hover box names it");
+
+  core.send("stream", 1);
+  core.send("phrases", 0);
+  const stream = core.send("compose", 2);
+  assert.ok(select(stream, "status").some((words) => words.join(" ").includes(", varied: ")));
+  core.send("novelty", 0);
+  assert.doesNotMatch(lastStatus(core.send("need")).join(" "), /varied/);
 });

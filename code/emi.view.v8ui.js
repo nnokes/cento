@@ -27,6 +27,7 @@
 //   parallel <tick> <new>                (one per parallel 5th/8ve; new: 1, Bach's own: 0)
 //   source <tick> <text...>              (one per beat: where it came from)
 //   selection <from> <to>                (the beats selected, kept when a stream redraws)
+//   variant <tick> <names...>            (M10: a beat Emily varied: a purple dot over it)
 //   done                                 (draw it)
 // and, at any time:
 //   highlight <from> <to> | highlight    (the selection, made in the other roll; or none)
@@ -58,7 +59,7 @@ let selected = null; // [from, to]: the ticks selected (whole beats)
 let dragFrom = null; // the tick of the beat where a drag started
 
 function clear(endTick, low, high, barTicks, startTick, beatTicks) {
-  incoming = { selected: null, start: startTick || 0, end: endTick, low, high, barTicks, beatTicks: beatTicks || barTicks / 4, notes: [], seams: [], cadences: [], labels: [], signatures: [], parallels: [], sources: [] };
+  incoming = { selected: null, variants: [], start: startTick || 0, end: endTick, low, high, barTicks, beatTicks: beatTicks || barTicks / 4, notes: [], seams: [], cadences: [], labels: [], signatures: [], parallels: [], sources: [] };
 }
 
 function note(on, dur, pitch, color) {
@@ -91,6 +92,10 @@ function source(tick, ...text) {
 
 function selection(from, to) {
   if (incoming) incoming.selected = [from, to];
+}
+
+function variant(tick, ...names) {
+  if (incoming) incoming.variants.push([tick, names.join(" ")]);
 }
 
 function highlight(from, to) {
@@ -305,6 +310,14 @@ function paint() {
     g.line_to(px + 4, rollHeight - 1);
     g.line_to(px, rollHeight - 8);
     g.close_path();
+    g.fill();
+  }
+
+  // Beats Emily varied (M10): a purple dot over each.
+  for (const [tick] of shown.variants || []) {
+    const r = big ? 5 : 3;
+    g.set_source_rgba(0.75, 0.45, 1, 0.95);
+    g.ellipse(x(tick) + beatWidth / 2 - r, (big ? 18 : 11) - r, 2 * r, 2 * r);
     g.fill();
   }
 

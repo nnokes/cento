@@ -62,7 +62,8 @@
 // same to a file of your choice):
 //   { version: 1, weights: { feature: w }, pins: { feature: w }, strength,
 //     ratings, likes, sessions, rated (ratings since the last decay),
-//     log: [{ at, piece, rating, beats, what }] }
+//     log: [{ at, piece, rating, beats, what }],
+//     novelty, mix, accepted: [id] }       (M10: see emily-vary, emily-memory)
 
 const lexicon = require("emi-lexicon");
 const signatures = require("emi-signatures");
@@ -75,6 +76,7 @@ const TASTE = 4; // score points per unit of taste (emi-form's SCORE: an acciden
 const PRUNE = 0.02; // weights smaller than this are dropped at decay
 const LOG = 200; // ratings kept in the log
 const MAX_STRENGTH = 2;
+const MAX_MIX = 0.75; // her own music never counts for more than this against Bach's (M10)
 
 // In words, for the panel and the Max window.
 const NAMES = {
@@ -119,7 +121,7 @@ const GROUPS = [
 ];
 
 function create() {
-  return { version: 1, weights: {}, pins: {}, strength: 1, ratings: 0, likes: 0, sessions: 0, rated: 0, log: [] };
+  return { version: 1, weights: {}, pins: {}, strength: 1, ratings: 0, likes: 0, sessions: 0, rated: 0, log: [], novelty: 0, mix: 0.5, accepted: [] };
 }
 
 // A memory as read from a file, made safe to use (unknown or broken parts
@@ -134,6 +136,9 @@ function normalize(memory) {
     for (const [name, w] of Object.entries(memory.pins)) if (NAMES[name] && typeof w === "number" && Number.isFinite(w)) out.pins[name] = clamp(w);
   }
   if (typeof memory.strength === "number" && Number.isFinite(memory.strength)) out.strength = Math.max(0, Math.min(MAX_STRENGTH, memory.strength));
+  if (typeof memory.novelty === "number" && Number.isFinite(memory.novelty)) out.novelty = Math.max(0, Math.min(1, memory.novelty));
+  if (typeof memory.mix === "number" && Number.isFinite(memory.mix)) out.mix = Math.max(0, Math.min(MAX_MIX, memory.mix));
+  if (Array.isArray(memory.accepted)) out.accepted = memory.accepted.filter((id) => typeof id === "string");
   for (const key of ["ratings", "likes", "sessions", "rated"]) if (Number.isFinite(memory[key])) out[key] = Math.max(0, Math.round(memory[key]));
   if (Array.isArray(memory.log)) out.log = memory.log.slice(-LOG);
   return out;
@@ -167,6 +172,18 @@ function unpin(memory, name = null) {
   if (!(name in memory.pins)) return 0;
   delete memory.pins[name];
   return 1;
+}
+
+// M10: how often she varies a phrase (0..1), and how much her own accepted
+// music counts against Bach's (0: not at all; 0.5: as much; at most MAX_MIX).
+function setNovelty(memory, value) {
+  memory.novelty = Math.max(0, Math.min(1, Math.round(Number(value) * 100) / 100 || 0));
+  return memory.novelty;
+}
+
+function setMix(memory, value) {
+  memory.mix = Math.max(0, Math.min(MAX_MIX, Math.round(Number(value) * 100) / 100 || 0));
+  return memory.mix;
 }
 
 function setStrength(memory, value) {
@@ -489,6 +506,9 @@ exports.effective = effective;
 exports.pin = pin;
 exports.unpin = unpin;
 exports.setStrength = setStrength;
+exports.setNovelty = setNovelty;
+exports.setMix = setMix;
+exports.MAX_MIX = MAX_MIX;
 exports.normalize = normalize;
 exports.featuresOf = featuresOf;
 exports.featureTable = featureTable;

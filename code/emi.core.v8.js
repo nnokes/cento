@@ -74,6 +74,7 @@
 //   pin <feature> <weight> hold a musical feature (f:...) at a weight, -3..3 (the window's
 //                          weight editor); unpin <feature> releases it, unpin alone all
 //   strength <0..2>        how strongly her taste counts (1: as learned)
+//   novelty <0..1>         M10: the chance that each phrase gets a variant (emily-vary)
 //   storetaste <path>      write her taste (weights, pins, strength, ratings) to a file
 //   recalltaste <path>     make a stored taste hers (the one before is kept in the backup)
 //   writeclips             write the current score as Live clips (Live only)
@@ -113,6 +114,7 @@ const provenanceOf = require("emi-provenance");
 const abtests = require("emi-abtest");
 const abtestPage = require("emi-abtest-page");
 const emily = require("emily-assoc");
+const variation = require("emily-vary");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
@@ -419,6 +421,16 @@ function strength(value) {
   });
 }
 
+function novelty(value) {
+  attempt(() => {
+    syncTaste();
+    const v = emily.setNovelty(memory, value);
+    changedTaste();
+    const words = v === 0 ? "no variants" : v === 1 ? "a variant in every phrase" : `a variant in about ${Math.round(v * 100)}% of phrases`;
+    outlet(0, "status", ...`novelty ${v.toFixed(2)}: ${words} (from the next piece or phrase)`.split(" "));
+  });
+}
+
 function storetaste(path) {
   attempt(() => {
     syncTaste();
@@ -530,6 +542,22 @@ function barsOf(score, from, to) {
   return first === last ? `bar ${first}` : `bars ${first}-${last}`;
 }
 barsOf.local = 1;
+
+// A composed piece or phrase with Emily's variants (M10), as often as her
+// novelty asks (none at 0).
+function varied(piece, seed) {
+  if (!memory.novelty || !db) return piece;
+  return variation.vary(db, piece, { seed, novelty: memory.novelty }).piece;
+}
+varied.local = 1;
+
+// "emi-3: varied: anticipation (bar 3, soprano), suspension (bar 4, alto)"
+function variantLine(piece) {
+  const barTicks = (piece.meter[0] * piece.ppq * 4) / piece.meter[1];
+  const voices = ["soprano", "alto", "tenor", "bass"];
+  return `${piece.id}: varied: ` + piece.variants.map((v) => `${v.op} (bar ${Math.floor(v.tick / barTicks) + 1}, ${voices[v.voice - 1]})`).join(", ");
+}
+variantLine.local = 1;
 
 // Emily's taste, prepared for the current corpus (null: no opinions yet).
 function tasteNow() {
@@ -706,13 +734,14 @@ function composeNow(atStartup) {
       }
       return;
     }
-    const piece = result.piece;
+    const piece = varied(result.piece, currentSeed);
     show(piece, piece.id, false);
     let text = describePiece(piece);
     if (autoClips && !atStartup) text += "; " + clips.writeScore(piece, piece.id);
     outlet(0, "status", ...text.split(" "));
     for (const line of signatureLines(piece)) post(line + "\n");
     post(qualityLine(piece) + "\n");
+    if (piece.variants && piece.variants.length) post(variantLine(piece) + "\n");
     if (liked) {
       const line = tasteLine(piece, options);
       if (line) post(line + "\n");
@@ -757,6 +786,7 @@ function appendPhrase() {
     return null;
   }
   const phrase = result.phrase;
+  phrase.piece = varied(phrase.piece, (Math.imul(currentSeed, 1000) + number) >>> 0);
   const shown = transposed(ingest.quantize(phrase.piece).work, transposeBy);
   const changed = [];
   for (const { step, events } of queue.toSteps(shown, STEPS_PER_BEAT)) {
@@ -777,6 +807,7 @@ function appendPhrase() {
   const names = blocksOf(phrase.piece.provenance, db.beatTicks).map((b) => b.name);
   if (names.length) text += ", signature " + names.join(" and ");
   if (phrase.fallback) text += ", after a breath";
+  if (phrase.piece.variants && phrase.piece.variants.length) text += ", varied: " + [...new Set(phrase.piece.variants.map((v) => v.op))].join(" and ");
   if (phrase.final) text += ", the last";
   if (transposeBy) text += ", transposed " + signed(transposeBy);
   outlet(0, "status", ...(text + ")").split(" "));
@@ -829,6 +860,7 @@ function describePiece(piece) {
   let text = `${piece.id}: form of ${piece.form.template}${key}, ${phrases}, ${piece.form.beats} beats, ${s.sources} chorales`;
   text += ", SPEAC " + Math.round(100 * piece.form.speac) + "%";
   if (piece.form.signatures !== undefined) text += ", " + piece.form.signatures + (piece.form.signatures === 1 ? " signature" : " signatures");
+  if (piece.variants && piece.variants.length) text += ", " + piece.variants.length + (piece.variants.length === 1 ? " variant" : " variants");
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
   if (piece.form.relaxed === 3) relaxed.push("any cadence bass");
@@ -1093,6 +1125,7 @@ function draw(score, from = 0, to = score.lengthTicks) {
   }
   for (const [tick, fresh] of parallelsFor(score, from, to)) if (tick >= from && tick < to) outlet(0, "view", "parallel", tick, fresh);
   for (const [tick, text] of sourcesFor(score)) if (tick >= from && tick < to) outlet(0, "view", "source", tick, ...text.split(" "));
+  for (const p of prov || []) if (p.variant && p.tick >= from && p.tick < to) outlet(0, "view", "variant", p.tick, ...p.variant.join(", ").split(" "));
   if (selection && selection.to > from && selection.from < to) outlet(0, "view", "selection", selection.from, selection.to);
   outlet(0, "view", "done");
 }

@@ -197,5 +197,6 @@ exports.LIMITS = LIMITS;
 exports.quotes = quotes;
 exports.guard = guard;
 exports.parallels = parallels;
+exports.parallelsIn = parallelsIn;
 exports.corpusLines = corpusLines;
 exports.eventsOfGroupings = eventsOfGroupings;
