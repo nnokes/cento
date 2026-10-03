@@ -14,6 +14,7 @@
 | Hover help on the window's controls | | |
 | Max: one play/stop button (green play, red stop) that goes back to play when the piece ends | ✅ (reported: "Play stop colors and actions seem fixed") | — (Max only) |
 | The SPEAC lane explains its letters on hover; the panels' roll is 400 px wide | | |
+| Cento's own chorales (`corpus/`) are listed by themselves, and compose | ✅ (`npm test`) | |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M11 lets the corpus be more than one folder. Until now, **load corpus** read
@@ -53,8 +54,8 @@ used) builds and composes nothing: `corpus unchanged: 295 chorales`.
 file, shared by both products. Your old corpus becomes the first folder of
 the list the first time you open the patch.
 
-This is the groundwork for M12: a second style (Palestrina) will be another
-folder on the list.
+This is also the groundwork for a second style (Palestrina, M13, on hold): it
+will be another folder on the list.
 
 ---
 
@@ -76,18 +77,25 @@ once:
 3. **Live:** on each track, delete `emi.brain` and `emi.voice`, and drag in
    `cento.brain.amxd` and `cento.voice.amxd` from `patchers/`. Map
    **like**, **dislike** and **accept** to their keys again.
-4. **GitHub (when convenient):** rename the repository to `cento` (on
-   github.com: the repository's Settings, General, Repository name).
-   GitHub Desktop follows it. If you also rename your local folder, point
-   Max's and Live's File Preferences at the new `<repo>/patchers`.
+4. **GitHub:** done. The repository is now `nnokes/cento` (the old address
+   forwards to it), and GitHub Desktop follows it. Your local folder can
+   keep its name. If you rename it, call it exactly `cento`: then the
+   corpus window's folders inside it follow by themselves. In GitHub
+   Desktop, click **Locate...** to find it again, and point Max's and
+   Live's File Preferences at the new `<repo>/patchers`.
 
 ## 1. Max version (`patchers/cento.maxpat`)
 
 1. [ ] **Open the patch.** The corpus reloads as before. The panel's second
        row starts with **corpora** where **load corpus** was.
 2. [ ] **The corpus window.** Click **corpora**. A window, `Cento: corpora`,
-       opens. It lists one folder, `corpus`, with a filled green box:
-       `142 chorales · 4/4 · major`, then `in use`. The line under the list:
+       opens. Its first folder is `corpus`, with a filled green box:
+       `142 chorales · 4/4 · major`, then `in use`. Below it, switched off
+       (empty boxes), Cento's own chorales, added by themselves the first
+       time the patch opened (the Max window said `cento: Cento's own
+       chorales are in the corpus window`): `bach-figured-bass`
+       (`118 chorales · 4/4 · major and minor`) and `bach-figured-bass-3-4`
+       (`13 chorales · 3/4 · major and minor`). The line under the list:
        `In use: 142 chorales (major) from 1 folder, in 4/4: 8578 beats, 76 signatures.`
 3. [ ] **Add a folder.** Click **add folder** and choose
        `Documents/cento/corpus-both`.
@@ -97,6 +105,9 @@ once:
          and the seed shown is composed again.
        - `corpus-both`'s row: `295 chorales · 4/4 · major and minor`, then
          `in use; 142 already in a folder above`.
+       - (295 is for a `corpus-both` exported before this version. Exported
+         again now, it holds 296, with BWV 277, and the numbers in this
+         checklist are one higher.)
        - Write down the piece's status line (`emi-<seed>: form of ...`).
 4. [ ] **The same chorales, the same piece** (the "done when"). On
        `corpus-both`'s row, click **only**. `corpus` turns off, and the seed
@@ -150,6 +161,14 @@ once:
        next one...`, followed by a line on what SPEAC is. The same in the
        pop-up window's large roll. Moving up into the notes, the box goes
        (and the source box at the top shows, as before).
+14. [ ] **Cento's own chorales.** On `bach-figured-bass`'s row, click
+       **only**: `corpus 118 chorales (51 major, 67 minor), 7067 beats, 20%
+       dead ends, 158 signatures`, and the seed is composed again. Compose a
+       few seeds and listen. Then switch `corpus` back on as well: the row
+       for `bach-figured-bass`, now second, says
+       `in use; 31 already in a folder above` (the chorales in both are
+       counted once: 229 chorales in all). Click **only** on `corpus` to go
+       back.
 
 ## 2. Live version
 

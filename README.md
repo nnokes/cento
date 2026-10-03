@@ -22,7 +22,8 @@ This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
 **Status: M11 code done; waiting on its Max and Live checks
-([M11](docs/M11-checklist.md) checklist). M9 and M10 passed in both
+([M11](docs/M11-checklist.md) checklist). Next, M12: free downloads for
+other people on GitHub's Releases page ([how](docs/releasing.md)). M9 and M10 passed in both
 products ([M9](docs/M9-checklist.md), [M10](docs/M10-checklist.md)
 results); M8 passed in the Max version and waits on its Live checks
 ([M8](docs/M8-checklist.md) checklist).**
@@ -60,7 +61,10 @@ notes Bach never wrote (**novelty**), **accept** keeps what you like as music
 of her own that later pieces draw on (**mix**), and snapshots let you roll
 her back to any earlier state. Since M11, the **corpora** window lists folders
 of chorales, each switched on or off: composing uses every folder that is on,
-as one corpus (major and minor, or a 3/4 folder alone). Every control explains itself when you hover
+as one corpus (major and minor, or a 3/4 folder alone). Cento comes with
+131 Bach chorales of its own ([`corpus/`](corpus/README.md), freely
+licensed), so it composes straight away; music21's are an optional extra
+([step by step](#more-chorales-from-music21)). Every control explains itself when you hover
 over it (a tooltip in Max, the Info View in Live); [docs/controls.md](docs/controls.md)
 lists them all. The full plan
 and milestones are in [PLAN.md](PLAN.md).
@@ -82,7 +86,8 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
   bundle Max 9; with an earlier version, point Live at your Max 9
   installation.
 - **Node 20+**, for tests and building the bundles (development only).
-- **Python 3 + music21**, to export the chorale corpus (run once).
+- **Python 3 + music21** (optional), for more chorales than the 131 that come
+  with Cento: [More chorales from music21](#more-chorales-from-music21).
 
 ## Setup (macOS)
 
@@ -91,10 +96,9 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | What | Where | Notes |
 |---|---|---|
 | **The repo** (your clone) | wherever you cloned it, e.g. `~/Documents/GitHub/cento` | Run every command below from this folder |
-| **Python for music21** | `<repo>/.venv/` | Made by `python3 -m venv .venv`. About 300 MB, git-ignored, delete it to uninstall |
-| **Chorale corpus** | `~/Documents/cento/corpus/` | Written by `tools/export-chorales.py`; outside the repo |
-| **Minor-key corpus** (optional) | `~/Documents/cento/corpus-minor/` | Written with `--mode minor`; add it in the **corpora** window, on its own or with `corpus` |
-| **Major and minor, 3/4** (optional, M8) | `~/Documents/cento/corpus-both/`, `corpus-3-4/` | Written with `--mode any` and `--meter 3/4` |
+| **Cento's chorales** | `<repo>/corpus/bach-figured-bass/`, `bach-figured-bass-3-4/` | 118 chorales in 4/4 and 13 in 3/4 that come with Cento (CC BY 4.0: [corpus/README.md](corpus/README.md)). Listed in the **corpora** window the first time Cento opens; the 4/4 folder is switched on if the list was empty |
+| **Python for music21** (optional) | `<repo>/.venv/` | Made in [step 4](#more-chorales-from-music21) below. About 300 MB, git-ignored, delete it to uninstall |
+| **music21's chorales** (optional) | `~/Documents/cento/corpus/`, `corpus-both/`, `corpus-minor/`, `corpus-3-4/` | Written by `tools/export-chorales.py` ([step 5](#more-chorales-from-music21)); outside the repo, because they're for your own use only |
 | **Exported pieces** | `~/Documents/cento/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
 | **Listening tests** | anywhere, e.g. `~/Documents/cento/` | Written by the **A/B** button: one web page, opened in a browser |
 | **Emily's taste** (M9) | `<repo>/patchers/cento.taste.json` | Your ratings, pins and strength, shared by both products; git-ignored. **forget** and **recall taste** set the old one aside as `cento.taste.backup.json`; delete both to start fresh |
@@ -118,19 +122,10 @@ cd cento                    # <repo>: all commands below run from here
 
 npm test                    # engine tests
 npm run hooks               # pre-commit check: no personal paths, bundles up to date
-
-# Chorale corpus: installs music21 into <repo>/.venv, then writes all 142
-# major-key chorales in 4/4 to ~/Documents/cento/corpus/
-python3 -m venv .venv
-.venv/bin/pip install music21
-.venv/bin/python tools/export-chorales.py
-
-# Optional: the 153 minor-key chorales, as a corpus of their own
-.venv/bin/python tools/export-chorales.py --mode minor --out ~/Documents/cento/corpus-minor
-# Optional (M8): major and minor together (295), and the 20 major chorales in 3/4
-.venv/bin/python tools/export-chorales.py --mode any --out ~/Documents/cento/corpus-both
-.venv/bin/python tools/export-chorales.py --meter 3/4 --out ~/Documents/cento/corpus-3-4
 ```
+
+Cento's own chorales are already in the repo (`corpus/`). For music21's, see
+[More chorales from music21](#more-chorales-from-music21).
 
 Tip: in Terminal, type `cd ` (with a space), then drag the repo folder from
 Finder into the window to paste its exact path.
@@ -164,6 +159,91 @@ How Max finds files (learned the hard way in M0):
 The alternative to the File Preferences step is to clone the repo directly
 into `~/Documents/Max 9/Packages/` (a real folder, not a link).
 
+## More chorales from music21
+
+Cento comes with 131 Bach chorales ([`corpus/`](corpus/README.md)). The free
+[music21](https://www.music21.org) toolkit has more: 296 in 4/4 and 32 in
+3/4. Their encodings are for **your own use only**: keep them on your
+computer, and don't share them or add them to the repository. (That's why
+Cento can't include them: [PLAN.md](PLAN.md#61-working-in-a-public-repository),
+§6.1.)
+
+You do this once. It takes about 10 minutes, mostly downloading. You need an
+internet connection and about 400 MB of free space. You type every command
+into **Terminal**, then press Return.
+
+**1. Open Terminal.** Press **⌘ Space**, type `Terminal`, press Return.
+
+**2. Check Python.** Type:
+
+```sh
+python3 --version
+```
+
+- It prints `Python 3.` and a number (e.g. `Python 3.9.6`): go to step 3.
+- macOS asks to install the **command line developer tools** instead: click
+  **Install**, agree, wait for it to finish (a few minutes), then type
+  `python3 --version` again.
+
+**3. Go to the Cento folder.** Type `cd` and a space, then drag Cento's
+folder (the repo, e.g. `Documents/GitHub/cento`) from Finder onto the
+Terminal window, and press Return. To check, type `ls`: the list should
+include `patchers` and `tools`.
+
+**4. Install music21.** This makes a private Python just for Cento, in a
+hidden folder `.venv` inside the Cento folder, and installs music21 there
+(nothing else on your Mac changes):
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install music21
+```
+
+The second command prints a lot and ends with
+`Successfully installed ... music21-...`. A yellow notice that "a new release
+of pip is available" is harmless.
+
+**5. Export the chorales.** Choose any of these, one command each (each
+takes a minute or two and lists every chorale it writes):
+
+```sh
+# All 296 chorales in 4/4, major and minor (the one most people want)
+.venv/bin/python tools/export-chorales.py --mode any --out ~/Documents/cento/corpus-both
+
+# Only the 142 major ones (the default), or only the 154 minor ones
+.venv/bin/python tools/export-chorales.py --out ~/Documents/cento/corpus
+.venv/bin/python tools/export-chorales.py --mode minor --out ~/Documents/cento/corpus-minor
+
+# The 32 chorales in 3/4 (20 major, 12 minor)
+.venv/bin/python tools/export-chorales.py --meter 3/4 --mode any --out ~/Documents/cento/corpus-3-4
+```
+
+Each ends with `wrote N chorales to /Users/<you>/Documents/cento/...`. Each
+chorale is a `.mid` file and a `.json` file. (`--count 20` writes only the
+first 20, for a quick try.)
+
+**6. Add them in Cento.** In the Max patch or the Live device, click
+**corpora**, then **add folder**, and choose the folder you exported to
+(e.g. `Documents/cento/corpus-both`). It's added switched on. Leave Cento's
+own `bach-figured-bass` on too, or use **only** for one folder alone: a
+chorale that's in two folders counts once. Use 3/4 folders on their own
+(**only**): the corpus has one meter.
+
+**To uninstall:** delete the `.venv` folder inside the Cento folder (in
+Finder, **⌘ Shift .** shows hidden folders), and the folders you exported in
+`Documents/cento`.
+
+**If something goes wrong:**
+
+- `No such file or directory: tools/export-chorales.py`: Terminal isn't in
+  the Cento folder. Repeat step 3.
+- `.venv/bin/pip: No such file or directory`: step 4's first command didn't
+  run, or ran in another folder. Repeat steps 3 and 4.
+- `ModuleNotFoundError: No module named 'music21'`: you typed `python3`
+  instead of `.venv/bin/python` in step 5.
+- A few lines start with `skip`: those chorales can't be used (no four
+  voices, or chords in one voice). That's expected.
+
 ## Repository layout
 
 ```
@@ -181,7 +261,8 @@ code/max/     Max-only helpers used by the wrappers (files, Live clips)
 tests/        node --test, including the bundles in a simulated [v8] context
 tools/        build, path check, git hook, chorale export, and maxgen.py,
               which writes every patch and device (the master copy)
-docs/         milestone checklists; controls.md: what every control does
+docs/         milestone checklists; controls.md: what every control does;
+              releasing.md: how to publish a version for others
 ```
 
 Your working data (corpus, analyzed databases, generated music) lives in
@@ -211,4 +292,5 @@ Emily's taste are git-ignored files in `patchers/`.
 
 ## License
 
-[MIT](LICENSE)
+The code: [MIT](LICENSE). The chorales in `corpus/`: CC BY 4.0, from the
+Bach Chorales Figured Bass dataset ([corpus/README.md](corpus/README.md)).
