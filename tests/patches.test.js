@@ -379,6 +379,35 @@ test("grid player: the step comes from the transport's position, and the queue s
   }
 });
 
+test("emi.host.max: nothing plays until Play is on, even if Max's transport is already running", () => {
+  const p = patchFile("emi.host.max.maxpat");
+  const [transport] = p.find("transport");
+  const [outlet] = p.find("outlet");
+  const [playGate] = p.find("gate 1 0");
+  // When the patch opens, the transport is stopped (it is global to Max, and
+  // may have been left running by a patch closed while playing).
+  const stops = p.find("loadbang").flatMap((lb) => p.from(lb.id).map(([b]) => b)).filter((b) => b.text === "0");
+  assert.equal(stops.length, 1);
+  assert.deepEqual(p.from(stops[0].id).map(([b, inlet]) => [b.id, inlet]), [[transport.id, 0]]);
+  // Voices reach the outputs only through the play gate.
+  const [route] = p.find("route voice setting meter");
+  assert.deepEqual(p.from(route.id, 0).map(([b, inlet]) => [b.id, inlet]), [[playGate.id, 1]]);
+  assert.deepEqual(p.from(playGate.id).map(([b, inlet]) => [b.text, inlet]), [["gate 2 1", 1]]);
+  // Play: open the gate, tell the engine, start the transport (right to left).
+  // Stop: stop the transport, tell the engine (its note-offs still pass), close the gate.
+  const [sel] = p.find("sel 1 0");
+  const steps = (outletIndex) => {
+    const [[t]] = p.from(sel.id, outletIndex);
+    return [2, 1, 0].map((k) => {
+      const [[msg]] = p.from(t.id, k);
+      const [[to, inlet]] = p.from(msg.id);
+      return [msg.text, to.id === playGate.id ? "play gate" : to.id === transport.id ? "transport" : to.id === outlet.id ? "engine" : to.text, inlet];
+    });
+  };
+  assert.deepEqual(steps(0), [["1", "play gate", 0], ["play", "engine", 0], ["1", "transport", 0]]);
+  assert.deepEqual(steps(1), [["0", "transport", 0], ["stop", "engine", 0], ["0", "play gate", 0]]);
+});
+
 test("emi.host.max: the engine's meter sets the transport's time signature (M8: 3/4)", () => {
   const p = patchFile("emi.host.max.maxpat");
   const [route] = p.find("route voice setting meter");

@@ -93,6 +93,11 @@ reopening it makes the taste fade (step 7), and the lines below would change.
 
        The corpus reloads as before:
        `corpus 142 chorales (major), 8578 beats, 18% dead ends, 76 signatures`.
+
+       Nothing plays until you turn **Play** on, even if the patch was
+       playing when you last closed it. (Before this fix it could start by
+       itself: Max's transport belongs to Max, not to the patch, so it kept
+       running after the patch closed.)
 2. [ ] **No taste, no change.** Turn **stream** off and set **seed** to 3:
        `emi-3: form of bwv260, 5 phrases, 56 beats, 23 chorales, SPEAC 68%, 3 signatures`,
        exactly as in M8.
