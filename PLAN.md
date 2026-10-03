@@ -1400,8 +1400,8 @@ in §2). Work day to day in the Max version, then confirm the result in Live.
 **Current status: M11 code done; waiting on its Max and Live checks
 ([checklist](docs/M11-checklist.md)). Next: M12, shipping Cento to others
 for free (below); the second style (Palestrina, now M13) is on hold. M9 and
-M10 passed in both products; M8 passed in the Max version and waits on its Live checks and the third
-listening test's score ([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
+M10 passed in both products; M8 passed in the Max version and waits on its Live checks (its third
+listening test was taken off the checklist) ([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M12 (shipping). M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
