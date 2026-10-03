@@ -819,6 +819,10 @@ the transport:
 
 - A piano roll in `[v8ui]` (or `[jsui]`), with **notes colored by source work**,
   a **SPEAC lane** under the roll, and **seam markers** that flag relaxed rules.
+- *As built (after M10):* a playhead. The grid player sends its step in the
+  queue (`view playhead <step>`, -1 when stopped or before a restarted queue
+  begins) to both rolls, which draw a line there. It follows Max's or Live's
+  transport, and in a stream it follows each phrase as the roll moves on.
 - **Click to inspect a grouping**: its source, tension, labels and the
   alternative candidates that were available at that point. This is the main
   debugging tool and later the selection tool for Emily's ratings.

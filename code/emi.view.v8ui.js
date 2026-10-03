@@ -31,6 +31,7 @@
 //   done                                 (draw it)
 // and, at any time:
 //   highlight <from> <to> | highlight    (the selection, made in the other roll; or none)
+//   playhead <step>                      (where the player is, in 16ths from tick 0; -1: hidden)
 
 autowatch = 1;
 inlets = 1;
@@ -56,6 +57,7 @@ let shown = null; // the score being drawn
 let incoming = null; // the score being received
 let hover = null; // the beat under the mouse: an index into shown.sources
 let selected = null; // [from, to]: the ticks selected (whole beats)
+let playTick = null; // where the player is (a tick), or null when it isn't playing
 let dragFrom = null; // the tick of the beat where a drag started
 
 function clear(endTick, low, high, barTicks, startTick, beatTicks) {
@@ -96,6 +98,18 @@ function selection(from, to) {
 
 function variant(tick, ...names) {
   if (incoming) incoming.variants.push([tick, names.join(" ")]);
+}
+
+// The playhead: a line where the player is. Redrawn only when it moves by a
+// pixel or more, so the roll isn't repainted needlessly.
+function playhead(step) {
+  const tick = step >= 0 && shown ? (step * beatOf(shown)) / 4 : null;
+  if (tick === playTick) return;
+  const [width] = size();
+  const px = (t) => (t === null || !shown ? null : Math.round(((t - shown.start) / (shown.end - shown.start)) * width));
+  const moved = px(tick) !== px(playTick);
+  playTick = tick;
+  if (moved) mgraphics.redraw();
 }
 
 function highlight(from, to) {
@@ -354,6 +368,22 @@ function paint() {
     g.set_source_rgba(1, 1, 1, 0.95);
     g.move_to(boxLeft + 5, top + font + 1);
     g.show_text(text);
+  }
+
+  // The playhead: a bright line where the player is, with a small marker on top.
+  if (playTick !== null && playTick >= shown.start && playTick <= shown.end) {
+    const px = Math.round(x(playTick)) + 0.5;
+    g.set_source_rgba(1, 0.92, 0.55, 0.9);
+    g.set_line_width(big ? 2 : 1.5);
+    g.move_to(px, 0);
+    g.line_to(px, rollHeight);
+    g.stroke();
+    g.move_to(px - 4, rollHeight);
+    g.line_to(px + 4, rollHeight);
+    g.line_to(px, rollHeight - 6);
+    g.close_path();
+    g.fill();
+    g.set_line_width(1);
   }
 
   g.set_source_rgba(1, 1, 1, 0.85);

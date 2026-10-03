@@ -110,7 +110,7 @@ test("each bundle exposes exactly its documented messages", () => {
     "strength", "taste", "temperature", "testclip", "transpose", "unaccept", "unpin", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), [
-    "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "seam", "selection", "signature", "source", "speac", "variant",
+    "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "playhead", "seam", "selection", "signature", "source", "speac", "variant",
   ]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
   assert.deepEqual(loadBundle("emi.text").handlers(), ["alert", "clear", "onresize", "paint", "text"]);
@@ -1339,4 +1339,34 @@ test("taste view: the memory view lists her works and snapshots; its buttons and
   assert.deepEqual(view.send("ondblclick", 1160 - 380, 24), [[0, "mix", 0.5]]);
   view.send("memory");
   assert.deepEqual(view.send("onclick", 1160 - 70, 24), [], "back to the overview");
+});
+
+// ---------------------------------------------------------------- the playhead
+
+test("view: the playhead is a line where the player is; it moves with the steps and hides at -1", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics;
+  view.send("clear", 4 * Q, 60, 72, 4 * Q, 0, Q); // 4 beats, 90 px each
+  view.send("done");
+  const line = () => {
+    g.calls.length = 0;
+    view.send("paint");
+    const k = g.calls.findIndex(([name, r, gr, b]) => name === "set_source_rgba" && r === 1 && gr === 0.92 && b === 0.55);
+    return k < 0 ? null : g.calls.slice(k).find(([name]) => name === "move_to")[1];
+  };
+  assert.equal(line(), null, "not playing");
+  g.calls.length = 0;
+  view.send("playhead", 8); // step 8: beat 3 (16ths)
+  assert.equal(g.calls.filter(([name]) => name === "redraw").length, 1);
+  assert.equal(line(), 180.5);
+  g.calls.length = 0;
+  view.send("playhead", 8);
+  assert.equal(g.calls.filter(([name]) => name === "redraw").length, 0, "the same step: no redraw");
+  view.send("playhead", 9);
+  assert.equal(line(), 203.5);
+  view.send("clear", 4 * Q, 60, 72, 4 * Q, 0, Q); // a stream's next phrase: the playhead stays
+  view.send("done");
+  assert.equal(line(), 203.5);
+  view.send("playhead", -1);
+  assert.equal(line(), null, "stopped");
 });

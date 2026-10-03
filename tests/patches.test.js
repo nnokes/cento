@@ -441,9 +441,31 @@ test("grid player: the step comes from the transport's position, and the queue s
   assert.ok(targets.some((b) => b.maxclass === "message" && b.text === "0" && p.from(b.id).some(([to, inlet]) => to.id === lead.id && inlet === 1)), "a jump sets lead 0");
   for (const comment of ["stop (bang): note-offs for sounding notes", "restart (bang): note-offs; the queue starts again at the bar after this one"]) {
     const [inlet] = [...p.boxes.values()].filter((b) => b.maxclass === "inlet" && b.comment === comment);
-    const [[trigger]] = p.from(inlet.id);
+    const trigger = p.from(inlet.id).map(([b]) => b).find((b) => (b.text || "").startsWith("t "));
     assert.ok(p.from(trigger.id).some(([to]) => to.id === flushAll.id), comment);
   }
+});
+
+test("grid player: the step in the queue goes to the piano rolls as a playhead, hidden when stopped", () => {
+  const p = playerPatch();
+  const [relative] = p.find("- 0").filter((b) => p.from(b.id).some(([to]) => to.text === "t i i"));
+  const [clamp] = p.find("maximum -1");
+  assert.ok(p.from(relative.id).some(([to]) => to.id === clamp.id), "the step in the queue (negative before it starts: -1)");
+  const [[change]] = p.from(clamp.id);
+  assert.equal(change.text, "change -2", "only changes");
+  const [[prepend]] = p.from(change.id, 0);
+  assert.equal(prepend.text, "prepend view playhead");
+  const [[outlet]] = p.from(prepend.id);
+  assert.equal(outlet.maxclass, "outlet");
+  const [stop] = [...p.boxes.values()].filter((b) => b.maxclass === "inlet" && /^stop/.test(b.comment));
+  const hide = p.from(stop.id).map(([b]) => b).find((b) => b.maxclass === "message");
+  assert.equal(hide.text, "-1");
+  assert.deepEqual(p.from(hide.id).map(([b]) => b.id), [change.id]);
+  // In emi.engine, the player's third outlet goes out with everything else.
+  const engine = patchFile("emi.engine.maxpat");
+  const [player] = engine.find("p grid-player");
+  const [out] = engine.find("outlet");
+  assert.deepEqual(engine.from(player.id, 2).map(([b]) => b.id), [out.id]);
 });
 
 test("emi.host.max: nothing plays until Play is on, even if Max's transport is already running", () => {

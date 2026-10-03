@@ -10,6 +10,7 @@
 | Accepted variants appear in later output (the milestone's "done when") | ✅ simulated (`tests/corpus.test.js`, run locally) | |
 | A rollback restores an earlier taste exactly (the "done when") | ✅ (`npm test`) | |
 | The memory view in the pop-up window | | |
+| A playhead in both piano rolls | | |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M10 is the second part of Emily Howell. In M9 Emily learned what you like.
@@ -184,6 +185,14 @@ brings it back.
        snapshot #4, `before recalling my-taste.json`. Roll back to it to
        return to the checklist's state, with her six works.
 
+10. [ ] **The playhead.** Press **Play**. A pale yellow line moves across
+       the piano roll, and across the pop-up window's large roll, with the
+       music. It lines up with the notes sounding.
+       - Compose another seed while playing: the line disappears until the
+         new piece starts on the next barline, then runs from its start.
+       - In a stream, it follows each phrase as the roll moves on.
+       - Turn **Play** off: the line goes.
+
 ## 2. Live version
 
 1. [ ] **Reopen the set.** The brain's **Emily** panel has **accept**. Its
@@ -196,7 +205,10 @@ brings it back.
           `accepted phrase 3 of emi-<seed> as emily-N (generation ..., ... beats...)`.
 3. [ ] **Map accept.** Press Cmd+K, click **accept**, press `A`, then Cmd+K
        again. While the stream plays, press `A`: the phrase is kept.
-4. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat`, and open the
+4. [ ] **The playhead in Live.** Press Play in Live: the line moves across
+       the brain's piano roll (and the pop-up window's), following Live's
+       transport; stop Live and it goes.
+5. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat`, and open the
        memory view: the phrase accepted in Live is listed.
 
 ## 3. Your own Emily
