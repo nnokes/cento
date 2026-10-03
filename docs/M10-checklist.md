@@ -1,16 +1,23 @@
 # M10 checklist: Emily's memory and drift
 
-## Result: waiting on the Max and Live checks
+## Result: M10 passed (macOS, Max 9, Live 12)
+
+Reported back: "M10.1 success, M10.2 success, M10.3 Max and Live": every step in both
+products, and your own Emily (section 3) in both.
 
 | Check | Max version | Live version |
 |---|---|---|
-| Variants: **novelty** varies pieces and stream phrases; varied beats are marked and named | | |
-| **accept** keeps a piece or a stream phrase as a work of her own | | |
-| **mix**: later pieces use her music; mix 0 is Bach alone, exactly as before | | |
-| Accepted variants appear in later output (the milestone's "done when") | ✅ simulated (`tests/corpus.test.js`, run locally) | |
-| A rollback restores an earlier taste exactly (the "done when") | ✅ (`npm test`) | |
-| The memory view in the pop-up window | | |
-| A playhead in both piano rolls | | |
+| Variants: **novelty** varies pieces and stream phrases; varied beats are marked and named | ✅ | ✅ (a stream phrase) |
+| **accept** keeps a piece or a stream phrase as a work of her own | ✅ | ✅ (and mapped to a key) |
+| **mix**: later pieces use her music; mix 0 is Bach alone, exactly as before | ✅ | — (checked in Max; the same engine) |
+| Accepted variants appear in later output (the milestone's "done when") | ✅ (and simulated: `tests/corpus.test.js`, run locally) | — (checked in Max; the same engine) |
+| A rollback restores an earlier taste exactly (the "done when") | ✅ (and `npm test`) | — (checked in Max; the snapshots are shared) |
+| The memory view in the pop-up window | ✅ | ✅ |
+| A playhead in both piano rolls | ✅ | ✅ |
+| No false start: a piece plays straight on through transport jumps | ✅ | ✅ |
+| Hover help on every control (tooltips; Live's Info View) | ✅ | ✅ |
+| The window: **taste** without freezing, the pane's tabs, **reload seed** | ✅ | — (checked in Max; the same window) |
+| Your own Emily, over a few sessions | ✅ | ✅ |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M10 is the second part of Emily Howell. In M9 Emily learned what you like.
@@ -101,21 +108,21 @@ Do steps 1 to 9 in one sitting, without closing the patch. The lines below
 assume her taste starts empty, so step 2 puts yours aside first and step 9
 brings it back.
 
-1. [ ] **Open the patch.** The corpus reloads as before:
+1. [x] **Open the patch.** The corpus reloads as before:
        `corpus 142 chorales (major), 8578 beats, 18% dead ends, 76 signatures`.
        On the **Emily** panel, **accept** has taken **forget**'s place.
        **forget** is now at the bottom of the pop-up window.
-2. [ ] **Keep your taste, then start fresh.**
+2. [x] **Keep your taste, then start fresh.**
        1. Make sure **temp** reads `1.00`; drag slowly to set it exactly.
        2. Click **window**. At the bottom of the window, click
           **store taste** and save as `my-taste` in `Documents/ml_midi`:
           `stored Emily's taste in my-taste.json (... ratings)`.
        3. Click **forget**:
           `Emily forgot her taste (... ratings, kept in ml_midi.taste.backup.json)`.
-3. [ ] **No novelty, no change.** Set **seed** to 3:
+3. [x] **No novelty, no change.** Set **seed** to 3:
        `emi-3: form of bwv260, 5 phrases, 56 beats, 23 chorales, SPEAC 68%, 3 signatures`,
        as in M8.
-4. [ ] **Variants.**
+4. [x] **Variants.**
        1. In the window, click **memory**. The pane shows **Emily's
           memory**, with **mix** and **novelty** sliders at the top right.
        2. Drag **novelty** to the right end:
@@ -130,7 +137,7 @@ brings it back.
           beat. Hover over the first:
           `bwv245.14, bar 2 beat 2 · E · signature block · varied: anticipation`.
           Listen for the soprano arriving early at the cadence.
-5. [ ] **Accept five pieces.** For each row, set **seed**, then click
+5. [x] **Accept five pieces.** For each row, set **seed**, then click
        **accept**. Max pauses a moment each time.
 
        | Seed | Status line after **seed** | After **accept** |
@@ -146,7 +153,7 @@ brings it back.
        the fifth, the Max window says
        `ml_midi: Emily's own music: 5 works (generation 1: 2, generation 2: 1, generation 3: 1, generation 4: 1), 295 beats, 31 varied`.
        The memory view lists emily-5 to emily-1, each with **put aside**.
-6. [ ] **Mix.** Drag **mix** to its right end:
+6. [x] **Mix.** Drag **mix** to its right end:
        `mix 0.75: her own music counts more than Bach's (from the next piece or phrase)`.
        Then seeds 1 to 3:
        - `emi-1: form of bwv264, 5 phrases, 40 beats, 21 chorales, SPEAC 73%, 5 signatures, 5 variants, 9 of Emily's own beats`
@@ -158,7 +165,7 @@ brings it back.
        `emily-4, bar 3 beat 2 · A · Emily's own, generation 3`. The one
        with her variant is
        `emily-4, bar 3 beat 1 · E · Emily's own, generation 3 (her chromatic passing tone)`.
-7. [ ] **Snapshot and rollback.** This is the second "done when".
+7. [x] **Snapshot and rollback.** This is the second "done when".
        1. In the memory view, click **keep a snapshot**:
           `snapshot #2 kept: 0 ratings, 5 works of her own`. (#1 is
           `session start`, your own taste, kept when the patch opened.)
@@ -173,11 +180,11 @@ brings it back.
 
        (Snapshot numbers are higher if you've opened the patch more than
        once since pulling this code, or rated something before step 2.)
-8. [ ] **Bach alone again.** Drag **mix** and **novelty** to their left ends
+8. [x] **Bach alone again.** Drag **mix** and **novelty** to their left ends
        (`mix 0.00: Bach only ...`, `novelty 0.00: no variants ...`).
        Compose seed 3: `emi-3: form of bwv260, 5 phrases, 56 beats, 23 chorales, SPEAC 68%, 3 signatures`,
        step 3's line exactly.
-9. [ ] **Your taste back.** Click **recall taste** and choose
+9. [x] **Your taste back.** Click **recall taste** and choose
        `my-taste.json`:
        `recalled Emily's taste from my-taste.json (... ratings); the one before is in ml_midi.taste.backup.json`.
        Your taste comes back as you stored it, before she had music of her
@@ -185,21 +192,21 @@ brings it back.
        snapshot #4, `before recalling my-taste.json`. Roll back to it to
        return to the checklist's state, with her six works.
 
-10. [ ] **The playhead.** Press **Play**. A pale yellow line moves across
+10. [x] **The playhead.** Press **Play**. A pale yellow line moves across
        the piano roll, and across the pop-up window's large roll, with the
        music. It lines up with the notes sounding.
        - Compose another seed while playing: the line disappears until the
          new piece starts on the next barline, then runs from its start.
        - In a stream, it follows each phrase as the roll moves on.
        - Turn **Play** off: the line goes.
-11. [ ] **No false start.** Turn **Play** off, compose a seed, and turn
+11. [x] **No false start.** Turn **Play** off, compose a seed, and turn
        **Play** on. The piece starts on the next barline and plays straight
        through: it never plays its first chords and then goes back to the
        beginning. Do this five times, with **stream** off and on. If you use
        Ableton Link (the Link button in Max's Global Transport window), do it
        once with Link on too: the piece still plays straight on, though Link
        may move it off the barline by a little.
-12. [ ] **Hover help.** Rest the mouse on any control for a moment: a
+12. [x] **Hover help.** Rest the mouse on any control for a moment: a
        yellow hint says what it does. Try **taste** in the Emily panel:
        `Report Emily's taste: ...`. With **Window > Clue Window** open, the
        same text appears there as you move over controls. In the pop-up
@@ -208,7 +215,7 @@ brings it back.
        pin it. Click **memory** and rest on **mix**, **novelty**, **put
        aside** and **roll back**: each explains itself.
        [docs/controls.md](controls.md) has every control's text.
-13. [ ] **taste, memory and reload seed in the window.**
+13. [x] **taste, memory and reload seed in the window.**
        1. With the window open and a piece playing, click **taste**. The
           pane shows its overview at once, with `Comparing...` and a bar
           that fills (`3 of 10 seeds, ...`); the music, the playhead and
@@ -225,40 +232,40 @@ brings it back.
 
 ## 2. Live version
 
-1. [ ] **Reopen the set.** The brain's **Emily** panel has **accept**. Its
+1. [x] **Reopen the set.** The brain's **Emily** panel has **accept**. Its
        pop-up window's memory view shows the same works and snapshots: the
        files are shared.
-2. [ ] **Accept a stream phrase.**
+2. [x] **Accept a stream phrase.**
        1. Set **novelty** to about 0.5 and **mix** to 0.5.
        2. Turn **stream** on and press Play.
        3. During the third phrase, click **accept**:
           `accepted phrase 3 of emi-<seed> as emily-N (generation ..., ... beats...)`.
-3. [ ] **Map accept.** Press Cmd+K, click **accept**, press `A`, then Cmd+K
+3. [x] **Map accept.** Press Cmd+K, click **accept**, press `A`, then Cmd+K
        again. While the stream plays, press `A`: the phrase is kept.
-4. [ ] **The playhead in Live.** Press Play in Live: the line moves across
+4. [x] **The playhead in Live.** Press Play in Live: the line moves across
        the brain's piano roll (and the pop-up window's), following Live's
        transport; stop Live and it goes.
-5. [ ] **No false start in Live.** Stop Live, return to bar 1, and press
+5. [x] **No false start in Live.** Stop Live, return to bar 1, and press
        Play, five times, with **stream** off and on. Each time the piece
        starts on bar 1 and plays straight through, without going back to its
        beginning after the first chords. Move Live's playhead while it plays:
        the piece plays on from where it was.
-6. [ ] **Hover help in Live.** Open the Info View (**View > Info**, or the
+6. [x] **Hover help in Live.** Open the Info View (**View > Info**, or the
        **?** at the bottom left). Move the mouse over the brain's controls
        (**writeclips**, **Play Through Voices**, **like**, **temp**, ...) and
        the emi.voice device's voice name: the Info View names each and says
        what it does. In the pop-up window, the taste pane's sliders and
        buttons show their help in a box, as in Max.
-7. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat`, and open the
+7. [x] **Back in Max.** Close Live, open `ml_midi.maxpat`, and open the
        memory view: the phrase accepted in Live is listed.
 
 ## 3. Your own Emily
 
-1. [ ] With your own taste back (step 1.9), set **novelty** to about 0.25
+1. [x] With your own taste back (step 1.9), set **novelty** to about 0.25
        and **mix** to 0.5.
-2. [ ] Over a few sessions, **accept** the pieces and phrases you like, and
+2. [x] Over a few sessions, **accept** the pieces and phrases you like, and
        rate as before.
-3. [ ] Listen to how later pieces change. Open the memory view now and then.
+3. [x] Listen to how later pieces change. Open the memory view now and then.
        If she drifts somewhere you don't like, roll back.
 
 ---

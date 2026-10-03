@@ -1329,9 +1329,9 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M10 code done; waiting on the Max and Live checks for M8
-([checklist](docs/M8-checklist.md)), M9 ([checklist](docs/M9-checklist.md))
-and M10 ([checklist](docs/M10-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M9 and M10 passed in both products; M8 passed in the Max
+version and waits on its Live checks and the third listening test's score
+([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
@@ -1358,7 +1358,14 @@ signatures are found (Bach's cadence formulas: bass 4-5-1 and soprano 3-2-1
 among the strongest) and kept whole at the cadences of pieces and stream
 phrases, about as often as Bach uses them, with a **sigs** toggle and gold
 bands in the piano roll. When a patch or set opens, the last corpus comes back and the
-current seed's piece is composed again.
+current seed's piece is composed again. M9 passed in both products
+([results](docs/M9-checklist.md)): **like** and **dislike** (mappable) teach
+Emily which musical features you like, later pieces lean toward them, and the
+pop-up window shows and edits her taste. M10 passed in both products
+([results](docs/M10-checklist.md)): **accept** keeps music as her own, she
+varies it (**novelty**) and composes from it alongside Bach (**mix**), and a
+rollback restores an earlier taste exactly; the same checks covered the
+playhead, the false-start fix and hover help on every control.
 
 | # | Milestone | Done when |
 |---|-----------|-----------|

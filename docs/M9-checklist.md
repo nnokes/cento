@@ -1,19 +1,21 @@
 # M9 checklist: Emily's taste
 
-## Result: waiting on the Max and Live checks
+## Result: M9 passed (macOS, Max 9, Live 12)
+
+Reported back: "M9 all success".
 
 | Check | Max version | Live version |
 |---|---|---|
-| Emily's panel: **like**, **dislike**, **temp**, **taste** (and, since M10, **accept**; **forget** is in the pop-up window) | | |
+| Emily's panel: **like**, **dislike**, **temp**, **taste** (and, since M10, **accept**; **forget** is in the pop-up window) | ✅ | ✅ |
 | With no ratings, pieces are exactly as in M8 | ✅ (`tests/emily.test.js`) | ✅ (the same engine) |
-| Ten scripted ratings give the expected taste | | |
-| After ten ratings, new pieces have more of the liked features | ✅ simulated (`tests/corpus.test.js`, run locally) | |
-| Rating a selection, and a stream phrase while it plays | | |
-| like and dislike mapped to a key or a MIDI controller | | |
-| The taste carries over between the products, and fades a little each session | | |
-| The pop-up window: a large piano roll and Emily's taste in full | | |
-| Editing her weights (pins, strength), and storing and recalling a taste | | |
-| Your own taste, by ear | | |
+| Ten scripted ratings give the expected taste | ✅ | — (checked in Max; the same engine) |
+| After ten ratings, new pieces have more of the liked features | ✅ (and simulated: `tests/corpus.test.js`, run locally) | — (checked in Max; the same engine) |
+| Rating a selection, and a stream phrase while it plays | ✅ | ✅ (a stream phrase) |
+| like and dislike mapped to a key or a MIDI controller | ✅ | ✅ |
+| The taste carries over between the products, and fades a little each session | ✅ | ✅ |
+| The pop-up window: a large piano roll and Emily's taste in full | ✅ | ✅ |
+| Editing her weights (pins, strength), and storing and recalling a taste | ✅ | — (checked in Max; the files are shared) |
+| Your own taste, by ear | ✅ | ✅ |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M9 adds the first part of Emily Howell, Cope's second program: it learns
@@ -86,7 +88,7 @@ Pull the latest code in GitHub Desktop.
 Do steps 1 to 6 in one sitting, without closing the patch: closing and
 reopening it makes the taste fade (step 7), and the lines below would change.
 
-1. [ ] **Open the patch.** A new panel, **Emily**, sits between the controls
+1. [x] **Open the patch.** A new panel, **Emily**, sits between the controls
        and the piano roll:
        - **like** and **dislike**, two large buttons;
        - **temp**, a dial showing `1.00`;
@@ -106,10 +108,10 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        playing when you last closed it. (Before this fix it could start by
        itself: Max's transport belongs to Max, not to the patch, so it kept
        running after the patch closed.)
-2. [ ] **No taste, no change.** Turn **stream** off and set **seed** to 3:
+2. [x] **No taste, no change.** Turn **stream** off and set **seed** to 3:
        `emi-3: form of bwv260, 5 phrases, 56 beats, 23 chorales, SPEAC 68%, 3 signatures`,
        exactly as in M8.
-3. [ ] **Ten ratings, scripted.** This teaches Emily a known taste, so the
+3. [x] **Ten ratings, scripted.** This teaches Emily a known taste, so the
        results can be checked: a listener who likes high melodies. For each
        row, set **seed** (it composes), listen if you like, then click the
        button shown. The status line after each click starts as shown.
@@ -137,7 +139,7 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        emi-1009: her taste +5.74 a beat (+3.38 without); a high melody 92% of beats (75%); the home key 85% (54%); a low melody 0% (0%); seventh chords 0% (0%)
        ```
        The numbers in brackets are for the same seed without the taste.
-4. [ ] **The shift (the milestone's "done when").** Set **seed** to 1, then
+4. [x] **The shift (the milestone's "done when").** Set **seed** to 1, then
        click **taste**. Max pauses for a few seconds while it composes seeds 1
        to 10 twice, with and without the taste. The status line:
        `Emily, seeds 1-10: a high melody 83% of beats (54% without her taste), a low melody 1% (14%); more in the Max window`.
@@ -150,7 +152,7 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        ```
        Listen to seed 2: its melody sits high
        (`a high melody 86% of beats (67%)` in its line).
-5. [ ] **Temperature.** Set **seed** back to 1. Drag **temp** all the way
+5. [x] **Temperature.** Set **seed** back to 1. Drag **temp** all the way
        down to `0.00`. The status line:
        `temperature 0.00: only Emily's favourite choices (from the next piece or phrase)`.
        Click **compose**:
@@ -158,7 +160,7 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        Drag it all the way up to `3.00` and compose again:
        `emi-1: form of bwv248.12-2, 6 phrases, 64 beats, 30 chorales, SPEAC 61%, 4 signatures`.
        Then turn it back to about 1 (the exact value doesn't matter from here on).
-6. [ ] **Rating a selection.** In the piano roll, press the mouse at the
+6. [x] **Rating a selection.** In the piano roll, press the mouse at the
        start of bar 2 and drag to the end of bar 3. A blue band covers those
        beats, and the status line says
        `selected bars 2-3 (8 beats): like or dislike rates them`
@@ -166,18 +168,18 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        `disliked bars 2-3 of emi-1 (8 beats): ...; 11 ratings`.
        Click once anywhere in the roll: the band goes. The next rating is for
        the whole piece again.
-7. [ ] **Map like to a key.** In the Max window's bottom toolbar, click
+7. [x] **Map like to a key.** In the Max window's bottom toolbar, click
        **Assign Key Map** (the patch gets an orange border). Click **like**,
        press `L`, then click **Assign Key Map** again to leave. Now press
        `L`: the status line says `liked emi-1 (...); 12 ratings`. (MIDI works
        the same way: right-click **like** and choose **Assign MIDI Map**,
        then press a pad or key.) When you close the patch, Max asks whether
        to save: choose **Don't Save**, unless you want to keep the mapping.
-8. [ ] **A new session.** Close the patch and open it again. The **Emily**
+8. [x] **A new session.** Close the patch and open it again. The **Emily**
        box shows your 12 ratings. Click **taste**: the Max window's first
        line now ends `; 1 earlier session`. Opening a patch or set after a
        session with ratings makes every weight fade by a tenth.
-9. [ ] **The pop-up window.** Click **window** at the top right of the
+9. [x] **The pop-up window.** Click **window** at the top right of the
        **Emily** panel. A window titled `ml_midi: piano roll and Emily` opens:
        - **Top:** the piano roll, about three times larger. Bars are numbered
          along the top, each C is named on the left (C4 is middle C), and
@@ -196,7 +198,7 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        rolls, and **like** in either place rates those beats. Compose another
        seed: both rolls change. Close the window with its close button; the
        **window** button opens it again.
-10. [ ] **Edit her weights.** In the window, click **edit weights**. The
+10. [x] **Edit her weights.** In the window, click **edit weights**. The
        lower pane shows a slider for every musical feature, in columns by kind
        (Motion, Melody, Chords, Key, Tension), from -3 on the left to +3 on
        the right. On each slider:
@@ -221,7 +223,7 @@ reopening it makes the taste fade (step 7), and the lines below would change.
 
        Click **edit weights** again to go back to the overview. Its title
        line now counts the pins, and the strength when it isn't 1.
-11. [ ] **Store and recall a taste.** Pin a feature or two, then click
+11. [x] **Store and recall a taste.** Pin a feature or two, then click
        **store taste** and save it, for example as `busy` in
        `Documents/ml_midi` (the dialog's **New Folder** button can make an
        `emily` folder there for tastes). The status line says
@@ -235,35 +237,35 @@ reopening it makes the taste fade (step 7), and the lines below would change.
 
 ## 2. Live version
 
-1. [ ] **Reopen the set.** The brain is wider: the **Emily** panel sits between
+1. [x] **Reopen the set.** The brain is wider: the **Emily** panel sits between
        the controls and the piano roll, and shows the taste from the Max
        version (`12 ratings; likes a high melody; dislikes ...`).
-2. [ ] **Rate a phrase while it plays.** Turn **stream** on, compose any seed
+2. [x] **Rate a phrase while it plays.** Turn **stream** on, compose any seed
        and press Play in Live. During the third phrase, click **like**:
        `liked phrase 3 of emi-<seed> (... beats): ...; 13 ratings`. A click
        in the first second and a half of a phrase rates the one before it
        (you're reacting to what just ended).
-3. [ ] **Map dislike to a key.** Press Cmd+K (Live's key map mode), click
+3. [x] **Map dislike to a key.** Press Cmd+K (Live's key map mode), click
        **dislike**, press `D`, then Cmd+K again. While the stream plays,
        press `D`: `disliked phrase N of ...`. Live saves the mapping with the set.
-4. [ ] **Temperature in Live.** **temp** is an ordinary Live parameter: it can
+4. [x] **Temperature in Live.** **temp** is an ordinary Live parameter: it can
        be automated, or MIDI-mapped with Cmd+M.
-5. [ ] **The pop-up window in Live.** Click **window** on the brain's
+5. [x] **The pop-up window in Live.** Click **window** on the brain's
        **Emily** panel: the same window opens over Live, and follows the
        stream phrase by phrase.
-6. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat` and click **taste**:
+6. [x] **Back in Max.** Close Live, open `ml_midi.maxpat` and click **taste**:
        the ratings from Live are counted.
 
 ## 3. Your own taste, by ear
 
-1. [ ] In the pop-up window, click **forget**. The status line says
+1. [x] In the pop-up window, click **forget**. The status line says
        `Emily forgot her taste (N ratings, kept in ml_midi.taste.backup.json)`
        and the box `no ratings yet`. (The backup is the scripted taste. Only
        the last one forgotten is kept.)
-2. [ ] Rate about ten pieces, or phrases of a stream, by ear: whatever you
+2. [x] Rate about ten pieces, or phrases of a stream, by ear: whatever you
        like or dislike, in either product. Selecting beats teaches Emily
        about just those beats.
-3. [ ] Click **taste**, and copy the four lines from the Max window into
+3. [x] Click **taste**, and copy the four lines from the Max window into
        your report. Then listen to a few new seeds: do they lean your way?
        Try **temp** at 0 and at 2.
 

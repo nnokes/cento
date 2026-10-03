@@ -13,9 +13,9 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M10 code done; waiting on the Max and Live checks
-([M8](docs/M8-checklist.md), [M9](docs/M9-checklist.md) and
-[M10](docs/M10-checklist.md) checklists).**
+**Status: M9 and M10 passed in both products ([M9](docs/M9-checklist.md),
+[M10](docs/M10-checklist.md) results); M8 passed in the Max version and
+waits on its Live checks ([M8](docs/M8-checklist.md) checklist).**
 Both products load Bach chorales, play them in C major or their own key, and
 compose new chorales by
 recombining beats from the whole corpus. Since M3, each new piece takes the

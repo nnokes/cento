@@ -1,15 +1,19 @@
 # M8 checklist: hardening
 
-## Result: waiting on the Max and Live checks
+## Result: the Max version passed; waiting on the Live checks and the listening test's score
+
+Reported back: "M8.1 success, M8.2 success": the two corpora exported, and every step in the Max
+version passed (macOS, Max 9). Still to come: the Live steps (section 3), and the score of the
+seed-5 listening test (step 2.10).
 
 | Check | Max version | Live version |
 |---|---|---|
 | Pieces stay under the quotation limits (16 notes of a voice, 8 beats in a row) | ✅ (`tests/corpus.test.js`, run locally) | ✅ (the same engine) |
 | Parallel fifths and octaves are reported; none are new | ✅ (`tests/corpus.test.js`) | ✅ (the same engine) |
-| The provenance view: hovering shows each beat's source; export writes a `.json` | | |
-| Minor mode: a corpus of major and minor chorales composes each piece in one mode | | |
-| 3/4: pieces in 3/4 bars, played from a barline | | |
-| A blind A/B listening test against real chorales | ❌ first test: 9 of 10 right (chance by guessing 0.011); retest after the changes below, 10 new chorales: 9 of 10 right again (0.011). Both taken by the developer, who knows Bach well; together 18 of 20 (0.0002) | |
+| The provenance view: hovering shows each beat's source; export writes a `.json` | ✅ | |
+| Minor mode: a corpus of major and minor chorales composes each piece in one mode | ✅ | — (checked in Max; the same engine) |
+| 3/4: pieces in 3/4 bars, played from a barline | ✅ | |
+| A blind A/B listening test against real chorales | ❌ first test: 9 of 10 right (chance by guessing 0.011); retest after the changes below, 10 new chorales: 9 of 10 right again (0.011). Both taken by the developer, who knows Bach well; together 18 of 20 (0.0002). A third test (seed 5) written and played; its score not yet reported | |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M8 makes the composer harder to fool and easier to check.
@@ -141,38 +145,38 @@ picked the wrong folder (see the M2 checklist for recreating `.venv`).
 
 ## 2. Max version (`patchers/ml_midi.maxpat`)
 
-1. [ ] **Open the patch.** The corpus reloads as before:
+1. [x] **Open the patch.** The corpus reloads as before:
        `corpus 142 chorales (major), 8578 beats, 18% dead ends, 76 signatures`.
        A new **A/B** button sits at the right end of the second row.
-2. [ ] **Quality in the Max window.** Turn **stream** off and set **seed** to 3:
+2. [x] **Quality in the Max window.** Turn **stream** off and set **seed** to 3:
        `emi-3: form of bwv260, 5 phrases, 56 beats, 23 chorales, SPEAC 68%, 3 signatures`.
        The Max window (**Window ▸ Max Console**) now ends with one more line:
        ```
        emi-3: longest quote 10 notes (soprano, as in bwv260), 4 beats in a row from bwv245.14; no parallel 5ths or 8ves
        ```
-3. [ ] **Where each beat came from.** Move the mouse slowly over the piano
+3. [x] **Where each beat came from.** Move the mouse slowly over the piano
        roll. The beat under it lights up, and a dark box at the top names
        its source.
        - The first beat: `bwv322, bar 0 beat 4 · P`.
        - The second: `bwv260, bar 4 beat 1 · E`.
        - Over a gold band, the box adds `signature block`, and on its last
          beat the signature's name.
-4. [ ] **Parallels.** Set **seed** to 2. The Max window's last line ends
+4. [x] **Parallels.** Set **seed** to 2. The Max window's last line ends
        with `parallel 5ths/8ves: 2, all Bach's own`. In the piano roll, two
        small grey carets sit just above the SPEAC lane, in bars 3 and 7.
        Grey means Bach wrote the same motion; none should be red.
-5. [ ] **Repeats.** Still on seed 2 (`form of bwv248.12-2`): its template
+5. [x] **Repeats.** Still on seed 2 (`form of bwv248.12-2`): its template
        repeats its first two phrases, and so does the piece. From the
        pickup on beat 4 of bar 5, the piano roll shows the same 16 beats as
        from beat 4 of bar 1. Hovering over a beat in bar 6 names the same
        source as the matching beat in bar 2.
-6. [ ] **Export with provenance.** Set **seed** back to 3. Click
+6. [x] **Export with provenance.** Set **seed** back to 3. Click
        **export midi** and save as `emi-3` in `Documents/ml_midi/out`.
        - The status line says `exported emi-3.mid and emi-3.json`.
        - Open `emi-3.json` in TextEdit. Near the bottom, under `"beats"`,
          each beat names its `"grouping"` (such as `"bwv322:3"`), its
          `"bar"`, `"beat"` and `"speac"`.
-7. [ ] **Major and minor together.** Click **load corpus** and choose
+7. [x] **Major and minor together.** Click **load corpus** and choose
        `Documents/ml_midi/corpus-both`:
        `corpus 295 chorales (142 major, 153 minor), 17746 beats, 14% dead ends, 154 signatures`.
        Then seeds 1 and 2:
@@ -184,16 +188,16 @@ picked the wrong folder (see the M2 checklist for recreating `.venv`).
        `emi-1 stream: phrase 2 queued (bwv145-a phrase 2, C major, signature soprano 4-2-1)`,
        and every phrase stays in C major. Seed 2's stream stays in A minor.
        Turn **stream** off.
-8. [ ] **3/4.** **load corpus** `Documents/ml_midi/corpus-3-4`:
+8. [x] **3/4.** **load corpus** `Documents/ml_midi/corpus-3-4`:
        `corpus 20 chorales (major), 1522 beats, 48% dead ends, 41 signatures`.
        Seed 1: `emi-1: form of bwv194.12, 4 phrases, 49 beats, 10 chorales, SPEAC 47%, 2 signatures`.
        - The piano roll's bar lines are three beats apart.
        - Press Play: the piece starts on a barline and moves in three.
        - Seed 2 shows the small corpus at work: `(25 octave moves)` at the
          end of its status line.
-9. [ ] **Back to the main corpus.** **load corpus** `Documents/ml_midi/corpus`
+9. [x] **Back to the main corpus.** **load corpus** `Documents/ml_midi/corpus`
        and compose any seed: playback is in four again.
-10. [ ] **The listening test.** Set **seed** to 5 (so the pairs differ from
+10. [x] **The listening test.** Set **seed** to 5 (so the pairs differ from
        the test you took), click **A/B** and save as `listening-test` in
        `Documents/ml_midi`. The status line says
        `wrote listening-test.html: 10 pairs; open it in a web browser`.
