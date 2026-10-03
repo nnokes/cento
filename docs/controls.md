@@ -63,7 +63,7 @@ This page is written from the same table as the hover text (the patch generator)
 | **Dislike** | Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **Temperature** | How much chance still plays when composing. 0: only Emily's favourite choices; 1: as before Emily (the default); up to 3: more adventurous. |
 | **taste** | Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing. |
-| **Accept** | Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory view). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
+| **Accept** | Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **Emily** | Emily in a line: how many ratings she has had, and what she likes and dislikes most. |
 
 ## Piano roll (both versions)
@@ -80,11 +80,9 @@ This page is written from the same table as the hover text (the patch generator)
 | **Emily's taste** | Emily's taste in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does. |
 | **like** | Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. |
 | **dislike** | Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. |
-| **accept** | Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory view). |
+| **accept** | Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). |
 | **taste** | Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing. |
 | **reload seed** | Compose the seed shown again, with Emily's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again. |
-| **edit weights** | Show the weight editor in the pane above (its weights tab): a slider per musical feature. Drag one to pin Emily's weight there; double-click it to release it. strength scales her whole taste. |
-| **memory** | Show Emily's memory in the pane above (its memory tab): her own works in use (put one aside), snapshots of her taste (roll back to one), and the mix and novelty sliders. |
 | **release all pins** | Release every pinned weight: each goes back to what Emily learned from your ratings. |
 | **store taste** | Save Emily's whole taste (weights, pins, strength, ratings) to a file you choose. |
 | **recall taste** | Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot. |

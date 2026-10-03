@@ -4,6 +4,10 @@
 
 Reported back: "M9 all success".
 
+Since these checks, the pop-up window's **edit weights** button is gone: the taste pane's own
+**weights** tab (top right) does the same. Where a step says to click **edit weights**, click the
+tab; to go back, click **overview**.
+
 | Check | Max version | Live version |
 |---|---|---|
 | Emily's panel: **like**, **dislike**, **temp**, **taste** (and, since M10, **accept**; **forget** is in the pop-up window) | ✅ | ✅ |

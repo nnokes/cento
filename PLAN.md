@@ -251,8 +251,8 @@ with its size) and `emi.taste`, Emily's taste in full. It is an abstraction
 in the top patch, opened with `[pcontrol]` (from `[s ---emi.window]`), so it
 works the same in Max and in Live. Both rolls get the same `view` messages,
 and a selection made in either is drawn in both (`view highlight`).
-The window's **edit weights** button turns its taste pane into a weight
-editor:
+The taste pane's **weights** tab (an **edit weights** button at first) is a
+weight editor:
 - **A slider per musical feature**, from -3 to +3. Dragging one *pins* the
   feature at that value (`pin`). Ratings go on teaching her learned weight
   underneath, and fading never moves a pin. Double-clicking releases the
@@ -839,7 +839,7 @@ the transport:
   queue (`view playhead <step>`, -1 when stopped or before a restarted queue
   begins) to both rolls, which draw a line there. It follows Max's or Live's
   transport, and in a stream it follows each phrase as the roll moves on.
-- *As built (after M10):* hover help. Every control a player sees (56 in the
+- *As built (after M10):* hover help. Every control a player sees (55 in the
   patches) has `hint` (Max's tooltip), and `annotation` with
   `annotation_name` (Max's Clue window, Live's Info View), from one table in
   the patch generator, which also writes `docs/controls.md`; a patch test
@@ -848,7 +848,8 @@ the transport:
   button shows a box saying what it does (each musical feature with what it
   means).
 - *As built (after M10):* the window's taste pane has tabs (overview,
-  weights, memory); its buttons select a view rather than toggle one. The
+  weights, memory), which replaced the window's **edit weights** and
+  **memory** buttons. The
   taste comparison (twenty pieces: 1.6 s on 142 chorales, 3.4 s on 295, all
   on Max's main thread) now runs a piece at a time: the engine sends
   `later tastestep <id>`, which comes back through `[deferlow]`, so the

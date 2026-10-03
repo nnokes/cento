@@ -115,7 +115,7 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
   assert.deepEqual(loadBundle("emi.text").handlers(), ["alert", "clear", "onresize", "paint", "text"]);
   assert.deepEqual(loadBundle("emi.taste").handlers(), [
-    "clear", "compare", "comparing", "dislike", "done", "edit", "like", "memory", "onclick", "ondblclick", "ondrag", "onidle", "onidleout", "onresize", "own", "paint", "pair", "rating",
+    "clear", "compare", "comparing", "dislike", "done", "like", "onclick", "ondblclick", "ondrag", "onidle", "onidleout", "onresize", "own", "paint", "pair", "rating",
     "snapshot", "strength", "weight", "work",
   ]);
 });
@@ -1175,7 +1175,18 @@ test("emily: pins, strength, release, and a stored taste recalled (with the one 
   assert.match(lastStatus(core.send("unpin")).join(" "), /^status Emily: no pins to release$/);
 });
 
-test("taste view: 'edit' shows a slider per feature; dragging pins, double-clicking releases", () => {
+// Clicks one of the taste pane's tabs (overview, weights, memory) where it
+// was drawn, as a player does.
+function clickTab(view, name) {
+  const g = view.context.mgraphics;
+  g.calls.length = 0;
+  view.send("paint");
+  const k = g.calls.findIndex(([call, text]) => call === "show_text" && text === name);
+  const [, x, y] = g.calls.slice(0, k).filter(([call]) => call === "move_to").at(-1);
+  return view.send("onclick", x + 4, y - 4);
+}
+
+test("taste view: the weights tab shows a slider per feature; dragging pins, double-clicking releases", () => {
   const view = loadBundle("emi.taste");
   const g = view.context.mgraphics;
   g.size = [1160, 250];
@@ -1185,7 +1196,7 @@ test("taste view: 'edit' shows a slider per feature; dragging pins, double-click
   view.send("weight", "Motion", "f:16ths", -0.2, 0, -0.2, "16th", "notes");
   view.send("weight", "Melody", "f:melody:leap", 0, 0, 0, "melodic", "leaps");
   view.send("done");
-  view.send("edit", "weights");
+  clickTab(view, "weights");
   g.calls.length = 0;
   view.send("paint");
   const text = g.calls.filter(([name]) => name === "show_text").map(([, t]) => t);
@@ -1206,14 +1217,10 @@ test("taste view: 'edit' shows a slider per feature; dragging pins, double-click
   assert.deepEqual(view.send("onclick", sx1, 46), [[0, "strength", 2]]);
   assert.deepEqual(view.send("ondblclick", sx1, 46), [[0, "strength", 1]]);
 
-  // "edit" again keeps the editor; the overview tab goes back, where clicks do nothing.
-  view.send("edit", "weights");
+  // The weights tab again keeps the editor; the overview tab goes back, where clicks do nothing.
+  assert.deepEqual(clickTab(view, "weights"), [], "a tab sends nothing to the engine");
   assert.deepEqual(view.send("onclick", t1, y), [[0, "pin", "f:16ths", 3]]);
-  g.calls.length = 0;
-  view.send("paint");
-  const k = g.calls.findIndex(([name, t]) => name === "show_text" && t === "overview");
-  const [, ox, oy] = g.calls.slice(0, k).filter(([name]) => name === "move_to").at(-1);
-  view.send("onclick", ox + 4, oy - 4);
+  clickTab(view, "overview");
   assert.deepEqual(view.send("onclick", t1, y), []);
 });
 
@@ -1239,7 +1246,7 @@ test("taste view: hovering over a slider or button shows what it does", () => {
   view.send("onidle", 200, 100);
   assert.doesNotMatch(helpShown(), /Drag to pin/);
 
-  view.send("edit", "weights");
+  clickTab(view, "weights");
   helpShown(); // drawn, as Max does after a change, before the mouse moves
   const t0 = 12 + 112;
   const t1 = 12 + (1160 - 24) / 2 - 52;
@@ -1252,7 +1259,7 @@ test("taste view: hovering over a slider or button shows what it does", () => {
   view.send("onidleout");
   assert.doesNotMatch(helpShown(), /strength: how much/);
 
-  view.send("memory");
+  clickTab(view, "memory");
   helpShown();
   view.send("onidle", 1160 - 150, 46);
   assert.match(helpShown(), /novelty: the chance that each phrase gets a variant/);
@@ -1428,7 +1435,7 @@ test("taste view: the memory view lists her works and snapshots; its buttons and
   view.send("work", "emily-1", 1, 64, 5, "emi-11");
   view.send("snapshot", 3, "2026-10-03", "14:12", "kept", "by", "hand:", "2", "ratings");
   view.send("done");
-  view.send("memory");
+  clickTab(view, "memory");
   g.calls.length = 0;
   view.send("paint");
   const text = g.calls.filter(([name]) => name === "show_text").map(([, t]) => t);
@@ -1453,8 +1460,8 @@ test("taste view: the memory view lists her works and snapshots; its buttons and
   assert.deepEqual(view.send("ondblclick", 1160 - 70, 46), [[0, "novelty", 0]]);
   assert.deepEqual(view.send("onclick", 1160 - 380, 46), [[0, "mix", 0.75]]);
   assert.deepEqual(view.send("ondblclick", 1160 - 380, 46), [[0, "mix", 0.5]]);
-  // "memory" again keeps the memory (a second click, or a late one, changes nothing).
-  view.send("memory");
+  // The memory tab again keeps the memory (a second click, or a late one, changes nothing).
+  clickTab(view, "memory");
   assert.deepEqual(view.send("onclick", 1160 - 70, 46), [[0, "novelty", 1]]);
   // The overview tab goes back.
   const [ox, oy] = position("overview");

@@ -5,6 +5,10 @@
 Reported back: "M10.1 success, M10.2 success, M10.3 Max and Live": every step in both
 products, and your own Emily (section 3) in both.
 
+Since these checks, the pop-up window's **edit weights** and **memory** buttons are gone: the
+taste pane's own **weights** and **memory** tabs (top right) do the same. Where a step says to
+click one of those buttons, click the tab.
+
 | Check | Max version | Live version |
 |---|---|---|
 | Variants: **novelty** varies pieces and stream phrases; varied beats are marked and named | ✅ | ✅ (a stream phrase) |

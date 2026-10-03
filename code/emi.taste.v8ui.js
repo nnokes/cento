@@ -6,11 +6,9 @@
 // "taste" (each feature's share of beats in ten pieces with her taste, and
 // without).
 //
-// Three views, chosen by the tabs at the top right (overview, weights,
-// memory) or by the window's buttons: "edit" (edit weights) shows the
-// weights, "memory" the memory, and a taste comparison starting the
-// overview, where its result appears ("comparing <pairs done> <pairs>" while
-// it runs, -1 when it ends).
+// Three views, chosen by the tabs at the top right: overview, weights and
+// memory. A taste comparison starting shows the overview, where its result
+// appears ("comparing <pairs done> <pairs>" while it runs, -1 when it ends).
 //
 // The weight editor: a slider per musical feature, grouped by kind, from -3 to +3.
 // Dragging one pins the feature at that value ("pin <feature> <w>" to the
@@ -18,14 +16,15 @@
 // line on its slider ("unpin <feature>"). A strength slider (0..2) scales her
 // whole taste ("strength <v>"); double-click it for 1.
 //
-// The memory (M10): her own works in use (each with "put aside": "unaccept <id>"), her snapshots
+// The memory (M10): her own works in use (each with "put aside":
+// "unaccept <id>"), her snapshots
 // (each with "roll back": "rollback <id>"; "keep a snapshot": "snapshot"),
 // and sliders for mix (0..0.75: "mix <v>"; double-click for 0.5) and
 // novelty (0..1: "novelty <v>"; double-click for 0).
 //
-// Hover help: resting the mouse on a slider or button in the editor or the
-// memory view shows what it does in a box beside it (each musical feature
-// with what it means), as Max's hints do for the window's own controls.
+// Hover help: resting the mouse on a tab, slider or button shows what it does
+// in a box beside it (each musical feature with what it means), as Max's
+// hints do for the window's own controls.
 //
 // The engine sends it all at once, whenever it changes:
 //   clear <ratings> <likes> <sessions> <temperature>
@@ -148,14 +147,6 @@ function strength(v) {
 
 function weight(kind, feature, learned, pinned, value, ...name) {
   if (incoming) incoming.weights.push({ kind: String(kind), feature: String(feature), learned, pinned: Boolean(pinned), value, name: name.join(" ") });
-}
-
-function edit() {
-  show("weights");
-}
-
-function memory() {
-  show("memory");
 }
 
 // A taste comparison's progress; when one starts, the overview shows it.

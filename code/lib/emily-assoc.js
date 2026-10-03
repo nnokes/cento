@@ -49,7 +49,7 @@
 // (pieces with more of it than usual liked, the others disliked), new pieces
 // have about 1.5 times as much of it as without the taste (tests/corpus).
 //
-// Your own settings (in the pop-up window's "edit weights"):
+// Your own settings (in the pop-up window's weights tab):
 //   - a pin holds a musical feature at your value. Composing uses the pin
 //     instead of what she learned; ratings go on teaching her learned weight
 //     underneath, and decay never fades a pin. Releasing it brings back her

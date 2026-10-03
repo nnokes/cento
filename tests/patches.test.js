@@ -270,12 +270,10 @@ test("emi.window: a large piano roll and Emily's taste, fed by the engine; selec
   }
   const [title] = [...p.boxes.values()].filter((b) => (b.text || "").startsWith("title "));
   assert.deepEqual(p.from(title.id).map(([b]) => b.text), ["thispatcher"]);
-  // The weight editor: "edit weights" goes to the taste pane only; its
-  // sliders (pin, unpin, strength) go to the engine.
-  const [edit] = p.find("edit weights");
-  assert.deepEqual(p.from(edit.id).map(([b]) => b.id), [taste.id]);
-  const [memoryView] = p.find("memory");
-  assert.deepEqual(p.from(memoryView.id).map(([b]) => b.id), [taste.id], "M10: the memory view");
+  // The taste pane chooses its own views (tabs): no window buttons for them.
+  // Its sliders and buttons (pin, unpin, strength, mix, ...) go to the engine.
+  assert.deepEqual([...p.find("edit weights"), ...p.find("memory")], []);
+  assert.deepEqual(p.into(taste.id).map(([b]) => b.id), [route.id], "only the engine's emilyview feeds it");
   assert.deepEqual(p.from(taste.id).map(([b]) => b.id), [outlet.id]);
   const [release] = p.find("release all pins");
   const [[t]] = p.from(release.id);
@@ -298,7 +296,7 @@ test("emi.window: a large piano roll and Emily's taste, fed by the engine; selec
   assert.deepEqual(p.from(compose.id).map(([b]) => b.id), [outlet.id]);
   // The buttons sit in one row, none overlapping, inside the window.
   const row = [...p.boxes.values()].filter((b) => b.presentation && b.maxclass === "message").map((b) => b.presentation_rect).sort((a, b) => a[0] - b[0]);
-  assert.ok(row.length >= 11);
+  assert.ok(row.length >= 9);
   row.slice(1).forEach((r, k) => assert.ok(r[0] >= row[k][0] + row[k][2], `button at ${r[0]} overlaps the one before`));
   assert.ok(row.at(-1)[0] + row.at(-1)[2] <= roll.presentation_rect[0] + roll.presentation_rect[2]);
 });
@@ -377,7 +375,7 @@ test("every visible control has hover text, and docs/controls.md gives the same"
       }
     }
   }
-  assert.ok(controls >= 56, `${controls} controls`); // 56 when written
+  assert.ok(controls >= 55, `${controls} controls`); // 55 now
   // The Taste button, in both places, says what it does.
   for (const file of ["emily.panel.maxpat", "emi.window.maxpat"]) {
     const [taste] = patchFile(file).find("taste");
