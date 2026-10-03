@@ -77,10 +77,12 @@ once:
 3. **Live:** on each track, delete `emi.brain` and `emi.voice`, and drag in
    `cento.brain.amxd` and `cento.voice.amxd` from `patchers/`. Map
    **like**, **dislike** and **accept** to their keys again.
-4. **GitHub (when convenient):** rename the repository to `cento` (on
-   github.com: the repository's Settings, General, Repository name).
-   GitHub Desktop follows it. If you also rename your local folder, point
-   Max's and Live's File Preferences at the new `<repo>/patchers`.
+4. **GitHub:** done. The repository is now `nnokes/cento` (the old address
+   forwards to it), and GitHub Desktop follows it. Your local folder can
+   keep its name. If you rename it, call it exactly `cento`: then the
+   corpus window's folders inside it follow by themselves. In GitHub
+   Desktop, click **Locate...** to find it again, and point Max's and
+   Live's File Preferences at the new `<repo>/patchers`.
 
 ## 1. Max version (`patchers/cento.maxpat`)
 

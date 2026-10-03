@@ -19,9 +19,7 @@ can't be done. See PLAN.md, §8, "M12 in detail".
   are for developers. The files you attach are the ones people want:
   `Cento-for-Live-vX.Y.Z.zip` and `Cento-for-Mac-vX.Y.Z.zip`.
 - `https://github.com/nnokes/cento/releases/latest` always points to the
-  newest release, so the README's Download link never needs changing. (That
-  address works once the repository is renamed to `cento`; until then it is
-  `nnokes/ml_midi`.)
+  newest release, so the README's Download link never needs changing.
 
 **Version numbers**: `v0.1.0` for the first beta. Then `v0.1.1` for fixes
 only, `v0.2.0` for new features, and `v1.0.0` when you consider it finished.
