@@ -1063,10 +1063,13 @@ ml_midi/
 ├── tests/               node --test, incl. bundles in a simulated [v8] context;
 │                        fixtures/ for tiny inputs (Cope's book examples)
 ├── tools/               build.js (bundler), check-paths.js, hooks/pre-commit,
-│                        export-chorales.py (music21, run once); later
+│                        export-chorales.py (music21, run once), maxgen.py
+│                        (writes every patch and device: the master copy of
+│                        the patches; development only, not shipped); later
 │                        analyze-corpus, compose-batch
 ├── docs/                milestone checklists (M0-spikes.md, M1-…, M2-…)
-└── .github/workflows/   CI: tests, bundle freshness, path check on every push
+└── .github/workflows/   CI: tests, bundle freshness, path check, patches
+                         match maxgen.py, on every push
 
 ~/Documents/ml_midi/     working data, OUTSIDE the repo (shared by both products)
 ├── corpus/              your source .mid files

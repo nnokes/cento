@@ -18,3 +18,5 @@ jobs:
         run: npm run build:check
       - name: No personal paths in tracked files
         run: npm run check:paths
+      - name: Patches in patchers/ match tools/maxgen.py
+        run: npm run patches:check

@@ -171,7 +171,8 @@ code/         [v8] wrappers: glue between Max messages and the engine
 code/lib/     the engine: plain JavaScript, no Max APIs, tested in Node
 code/max/     Max-only helpers used by the wrappers (files, Live clips)
 tests/        node --test, including the bundles in a simulated [v8] context
-tools/        build, path check, git hook, chorale export
+tools/        build, path check, git hook, chorale export, and maxgen.py,
+              which writes every patch and device (the master copy)
 docs/         milestone checklists; controls.md: what every control does
 ```
 
@@ -186,6 +187,11 @@ Emily's taste are git-ignored files in `patchers/`.
   their bundles automatically.
 - Never edit `patchers/*.bundle.js` by hand. CI fails if the bundles don't
   match `code/`.
+- The patches and devices in `patchers/` (and `docs/controls.md`) are written
+  by `tools/maxgen.py`, the master copy: change a patch there and run
+  `npm run patches` (Python 3, standard library only), then commit both. A
+  change made in Max alone is overwritten by the next run; CI fails if the
+  patches don't match the script (`npm run patches:check`).
 - Patches always load the bundles, never `code/` directly, so what you test in
   Max is exactly what gets frozen into a device.
 - Some tests need data that isn't in the repository, and skip without it:
