@@ -1132,7 +1132,8 @@ function run() {
   to stay open source.
 - **Corpus files.** The Bach chorales themselves are public domain, but a given
   digital *encoding* (MIDI, MusicXML or kern file) may carry its own license.
-  Don't commit corpus files. Commit `tools/export-chorales.py`, which recreates
+  Don't commit corpus files, except an openly licensed one (below:
+  `corpus/`). Commit `tools/export-chorales.py`, which recreates
   them from the `music21` corpus. Commit the **starter database** only after
   checking that the source's terms allow redistribution; until then, the
   script rebuilds it locally.
@@ -1144,7 +1145,9 @@ function run() {
     open licence, and it doesn't extend to other projects.
   - The other three are CCARH Humdrum files that reserve "rights to all
     derivative electronic formats". For BWV 277, 281 and 366, music21 finds
-    the CCARH file first, so the exporter currently reads those.
+    the CCARH file first, so the exporter read those until it was told to
+    take the MusicXML (with it, BWV 277 now passes the filter: 296 chorales
+    in 4/4, major and minor, instead of 295).
   - music21's `corpus/license.txt`: the software is BSD, and the corpus keeps
     each encoder's own terms.
 
@@ -1155,6 +1158,14 @@ function run() {
   - **DCML Bach chorales** (Ulrich Kaiser's engravings, released by the DCML
     lab): CC0, 370 chorales, MuseScore files. Its own README warns of "many
     incorrect accidentals", so it needs correcting first.
+
+  *Done:* Cento ships BCFB as `corpus/bach-figured-bass` (118 chorales in
+  4/4) and `corpus/bach-figured-bass-3-4` (13 in 3/4), exported with
+  `tools/export-chorales.py --from`, with the credit, the licence and what
+  was changed in `corpus/README.md`. The first time the engine starts, it
+  lists both in the corpus window (the 4/4 one on, if the list was empty).
+  The music21 export stays, as an optional personal step (README, "More
+  chorales from music21").
 - **Reference code.** The SPEAC Python port has **no license**: read it, but
   don't copy from it. Cope's own Lisp code ships with his books and is under his
   copyright. Implement from the published descriptions.
@@ -1460,13 +1471,12 @@ carry the bundles), `docs/`, `PLAN.md`, `.github/`, `package.json`, and your
 own settings and Emily files.
 
 **The work, in order.**
-1. **The starter corpus.** The biggest hurdle today is installing Python and
-   music21 to export the chorales. First confirm that music21's Bach chorale
-   files may be redistributed (§6.1), and record the answer there. If they
-   may, the `Cento` folder ships `corpus/` (the 142 major chorales, MIDI and
-   JSON sidecars) and `corpus-both/`, and a first run with no corpora adds
-   `Documents/Cento/corpus` by itself. If not, find an encoding that may be
-   shared, or keep the export as an optional step and ship without one.
+1. **The starter corpus.** *Done (§6.1):* music21's chorales may not be
+   shared, so Cento ships the Bach Chorales Figured Bass dataset's (CC BY
+   4.0) as `corpus/`: 118 chorales in 4/4 and 13 in 3/4, listed in the
+   corpus window by themselves the first time. Left for packaging: the zip
+   carries `corpus/` with its README and licence, and the engine finds it
+   in the user folder (item 2) as well as next to `patchers/`.
 2. **A user folder.** Settings, Emily's taste, her works and snapshots live
    in `patchers/` today; a frozen device or an app has no writable
    `patchers/`. They move to `~/Documents/Cento/`. Max's `File` can't make

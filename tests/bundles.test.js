@@ -865,6 +865,43 @@ test("rename: files saved as ml_midi.* carry over to cento.*, and a renamed Docu
   assert.ok(!again.posted.some((line) => /carried over|new name/.test(line)));
 });
 
+test("bundled corpus: the first startup lists Cento's own chorales, and composes from them if there's no other corpus", () => {
+  // A repository: patchers/ (the engine's folder) and corpus/ beside it.
+  const root = tempDir();
+  const patchers = path.join(root, "patchers");
+  fs.mkdirSync(patchers);
+  fs.mkdirSync(path.join(root, "corpus"));
+  fs.renameSync(writeCorpus(), path.join(root, "corpus", "bach-figured-bass"));
+  fs.renameSync(writeCorpus({ ids: ["t", "u"], meter: [3, 4] }), path.join(root, "corpus", "bach-figured-bass-3-4"));
+  const core = engineIn(patchers);
+  core.send("beats", 8);
+  const out = core.send("startup", "all");
+  assert.ok(core.posted.includes("cento: Cento's own chorales are in the corpus window (Bach Chorales Figured Bass, switched on)\n"), core.posted.join(""));
+  assert.deepEqual(folderRows(out).map(([n, on, used, works, meter, , name]) => [n, on, used, works, meter, name]), [
+    [1, 1, 1, 3, "4/4", "bach-figured-bass"], [2, 0, 0, -1, "?", "bach-figured-bass-3-4"],
+  ]);
+  assert.ok(select(out, "status").some((words) => words.join(" ").startsWith("corpus 3 chorales")));
+  assert.equal(settingsIn(patchers).bundled, 1);
+  assert.equal(settingsIn(patchers).corpora.length, 2);
+
+  // Offered once: taken off the list, they stay off it.
+  core.send("corpusremove", 2);
+  const again = engineIn(patchers);
+  again.send("startup", "all");
+  assert.ok(!again.posted.some((line) => /own chorales/.test(line)));
+  assert.equal(settingsIn(patchers).corpora.length, 1);
+
+  // Someone with folders of their own: listed, switched off.
+  const other = tempDir();
+  const theirs = writeCorpus({ ids: ["x", "y", "z"] });
+  fs.writeFileSync(path.join(patchers, "cento.settings.json"), JSON.stringify({ corpora: [{ path: theirs, on: true }], beats: 8 }));
+  const later = engineIn(patchers);
+  const mine = later.send("startup", "all");
+  assert.ok(later.posted.includes("cento: Cento's own chorales are in the corpus window\n"));
+  assert.deepEqual(folderRows(mine).map(([n, on, , , , , name]) => [n, on, name]), [[1, 1, path.basename(theirs)], [2, 0, "bach-figured-bass"], [3, 0, "bach-figured-bass-3-4"]]);
+  void other;
+});
+
 // ---------------------------------------------------------------- core: Live clips
 
 test("core: loading the script doesn't touch the Live API", () => {

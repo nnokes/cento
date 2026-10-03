@@ -20,6 +20,8 @@ build/
 *.mid
 *.midi
 !tests/fixtures/**/*.mid
+# Cento's own corpus (corpus/README.md): openly licensed, so it ships.
+!corpus/**/*.mid
 
 # Settings the patches remember between sessions (corpora, seed, output
 # port...). Personal, and they hold absolute paths.

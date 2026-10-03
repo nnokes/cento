@@ -5754,16 +5754,13 @@ function startup(mode) {
     remembered = settingsFile.read(settingsPath);
     folders = corpora.normalize(remembered.corpora, remembered.corpus); // before anything saves
     // A corpus folder under ~/Documents/ml_midi that was renamed to cento.
-    const moved = corpora.followRename(folders, (path) => {
-      try {
-        return files.listMidi(path).length > 0;
-      } catch (e) {
-        return false;
-      }
-    });
-    if (moved) {
-      post(`cento: ${moved} corpus ${moved === 1 ? "folder" : "folders"} found under the new name (Documents/cento)\n`);
-      remembered.corpora = folders.map((f) => ({ ...f })); // the file as read, with the new paths
+    const moved = corpora.followRename(folders, hasChorales);
+    if (moved) post(`cento: ${moved} corpus ${moved === 1 ? "folder" : "folders"} found under the new name (Documents/cento)\n`);
+    // Cento's own chorales (corpus/, next to patchers/): listed once, the
+    // first time; the first switched on if there's no other corpus.
+    const offered = remembered.bundled ? 0 : offerBundled(folder);
+    if (moved || offered) {
+      remembered.corpora = folders.map((f) => ({ ...f })); // the file as read, with the list as now
       try {
         settingsFile.write(settingsPath, remembered);
       } catch (e) {
@@ -6173,6 +6170,38 @@ barsOf.local = 1;
 // The corpus in use (M10): with her own works in use when there are any and
 // mix is above 0, rebuilt when what she has accepted changes; Bach's alone
 // otherwise.
+// Cento's own corpus folders (corpus/ in the repository: corpus/README.md).
+const BUNDLED = ["bach-figured-bass", "bach-figured-bass-3-4"];
+
+function hasChorales(path) {
+  try {
+    return files.listMidi(path).length > 0;
+  } catch (e) {
+    return false;
+  }
+}
+hasChorales.local = 1;
+
+// Lists Cento's own folders (once: remembered.bundled, set when they were
+// found), off, or the first one on if the list was empty. `patchers` is the
+// engine's folder. Returns how many were listed.
+function offerBundled(patchers) {
+  const root = patchers.slice(0, patchers.lastIndexOf("/"));
+  const empty = !folders.length;
+  let listed = 0;
+  for (const [k, name] of BUNDLED.entries()) {
+    const path = root + "/corpus/" + name;
+    if (!hasChorales(path) || folders.some((f) => f.path === path)) continue;
+    const index = corpora.add(folders, path);
+    folders[index].on = empty && k === 0;
+    listed++;
+  }
+  if (listed) remembered.bundled = 1; // not offered again, even if taken off the list
+  if (listed) post(`cento: Cento's own chorales are in the corpus window${empty ? " (Bach Chorales Figured Bass, switched on)" : ""}\n`);
+  return listed;
+}
+offerBundled.local = 1;
+
 // Builds the corpus from the folders that are on (emi-corpora) and reports
 // it: "built", "same" (the same chorales as the corpus in use: nothing to
 // build or compose again), or false when they give none (no corpus then).

@@ -1,0 +1,31 @@
+{
+  "source": "Bach Chorales Figured Bass (CC BY 4.0): BWV_495_FB.musicxml",
+  "title": null,
+  "parts": [
+    "Soprano",
+    "Alto",
+    "Tenor",
+    "Bass"
+  ],
+  "meter": "4/4",
+  "key": {
+    "tonic": "D",
+    "mode": "minor"
+  },
+  "midi": {
+    "ppq": 960,
+    "voiceTracks": [
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "padQuarters": 0.0,
+  "fermatasQuarters": [
+    10.0,
+    22.0,
+    30.0,
+    42.0
+  ]
+}
