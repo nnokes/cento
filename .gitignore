@@ -37,3 +37,7 @@ patchers/cento.snapshots.json
 # The same files under the project's old name (ml_midi, until after M11):
 # copied to the names above the first time, then left as they were.
 patchers/ml_midi.*.json
+
+# Since M12 they live in your Cento folder, ~/Documents/Cento. If the
+# repository itself is that folder, they're here: personal too.
+/cento.*.json

@@ -1397,9 +1397,11 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M11 code done; waiting on its Max and Live checks
-([checklist](docs/M11-checklist.md)). Next: M12, shipping Cento to others
-for free (below); the second style (Palestrina, now M13) is on hold. M9 and
+**Current status: M12 under way, shipping Cento to others for free (below;
+[checklist](docs/M12-checklist.md)): the user folder is built and waits on
+its Mac checks. M11 code done; waiting on its Max and Live checks
+([checklist](docs/M11-checklist.md)). The second style (Palestrina, now
+M13) is on hold. M9 and
 M10 passed in both products; M8 passed in the Max version and waits on its Live checks (its third
 listening test was taken off the checklist) ([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M12 (shipping). M1 passed in both products
@@ -1481,10 +1483,23 @@ own settings and Emily files.
    in `patchers/` today; a frozen device or an app has no writable
    `patchers/`. They move to `~/Documents/Cento/`. Max's `File` can't make
    folders, so the folder comes in the zip (the read-me says where to put
-   it); with no folder there, the status line says so, and nothing is
-   saved. Files in `patchers/` from development carry over once, as the
-   `ml_midi` files did. To decide at the start: whether a "choose your
-   Cento folder" dialog is worth it as a fallback.
+   it); with no folder there, the status line says so. Files in
+   `patchers/` from development carry over once, as the `ml_midi` files
+   did.
+   *Built* (`emi-userfolder`): Max's JavaScript can't ask for the home
+   folder, so it's worked out from the paths Cento knows: the patch's own
+   folder if it's in a home folder (`/Users/<name>/...`), then Max's or
+   Live's (`max.apppath`), then each folder in `/Users` on Max's volume
+   (only your own Documents can be read: the app's case), then `~`. The
+   folder is seen in the list of Documents, or by a file known to be in it
+   (`About this folder.txt`, which the download brings, or the settings).
+   Decided: **no folder dialog**. Without the folder, the files stay in
+   `patchers/` (the patch's folder) as before, and outside a clone of the
+   repository the status line says to put the Cento folder in Documents.
+   Cento's own chorales are found in the Cento folder's `corpus/` as well
+   as the repository's. To confirm on a Mac (M12 checklist): that Max's
+   `Folder` lists folders, `max.apppath` in `[v8]`, and the paths Max and
+   Live give.
 3. **Frozen devices and the freeze test** (M0 (d)): freeze both devices in
    Max, copy them to a folder with nothing else, load them in a new set
    with the editor closed. Then the demo set, saved with *Collect All and
