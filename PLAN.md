@@ -1220,7 +1220,8 @@ How it works:
   **taste** lists the weights and compares ten seeds with and without them.
   **forget** starts again and keeps one backup. They sit in a shared
   `emily.panel` (130 px) between the panel and the piano roll; the device
-  is now 984 px wide.
+  is now 984 px wide (1014 px since the piano roll grew to 390 px, after
+  M11).
 - **Memory**: `patchers/ml_midi.taste.json` next to the settings file
   (git-ignored), not `~/Documents/ml_midi/emily/`. Max's `File` can't create
   folders, and the settings file already has a known place shared by both
