@@ -4,7 +4,7 @@
 
 | Check | Max version | Live version |
 |---|---|---|
-| Emily's panel: **like**, **dislike**, **temp**, **taste**, **forget** | | |
+| Emily's panel: **like**, **dislike**, **temp**, **taste** (and, since M10, **accept**; **forget** is in the pop-up window) | | |
 | With no ratings, pieces are exactly as in M8 | ✅ (`tests/emily.test.js`) | ✅ (the same engine) |
 | Ten scripted ratings give the expected taste | | |
 | After ten ratings, new pieces have more of the liked features | ✅ simulated (`tests/corpus.test.js`, run locally) | |
@@ -90,7 +90,8 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        and the piano roll:
        - **like** and **dislike**, two large buttons;
        - **temp**, a dial showing `1.00`;
-       - **taste** and **forget**;
+       - **taste** and **accept** (M10; **forget** is now in the pop-up
+         window, step 9);
        - a small text box: `no ratings yet`.
 
        The corpus reloads as before:
@@ -255,7 +256,7 @@ reopening it makes the taste fade (step 7), and the lines below would change.
 
 ## 3. Your own taste, by ear
 
-1. [ ] Click **forget**. The status line says
+1. [ ] In the pop-up window, click **forget**. The status line says
        `Emily forgot her taste (N ratings, kept in ml_midi.taste.backup.json)`
        and the box `no ratings yet`. (The backup is the scripted taste. Only
        the last one forgotten is kept.)

@@ -17,6 +17,8 @@ const lexicon = require("emi-lexicon");
 const composer = require("emi-compose");
 const form = require("emi-form");
 const emily = require("emily-assoc");
+const vary = require("emily-vary");
+const emilyMemory = require("emily-memory");
 const { checkPiece, checkForm } = require("./piece-rules");
 
 const dir = process.env.EMI_CORPUS || path.join(os.homedir(), "Documents", "ml_midi", "corpus");
@@ -271,4 +273,43 @@ test("corpus: after ten ratings, new pieces have more of what the listener liked
   assert.ok(listen("f:melody:leap", 1) >= 1.25, "melodic leaps");
   assert.ok(listen("f:register:high", 1) >= 1.25, "a high melody");
   assert.ok(listen("f:register:low", -1) <= 0.8, "fewer low melodies");
+});
+
+// M10's "done when": accepted variants appear in later output, and a
+// rollback restores an earlier taste exactly. Five pieces (seeds 1001-1005)
+// are varied at novelty 1 and accepted; then 20 new seeds are composed from
+// Bach's chorales and her works.
+test("corpus: accepted variants appear in later pieces; rolling back gives the same pieces exactly (M10)", { skip: skip || (files.length < 100 ? "needs the full corpus" : false) }, (t) => {
+  const bach = files.map((file) => load(file).work);
+  const db = lexicon.build(bach);
+  const accepted = [];
+  for (let k = 0; k < 5; k++) {
+    const seed = 1001 + k;
+    const piece = vary.vary(db, form.compose(db, { seed }).piece, { seed, novelty: 1 }).piece;
+    accepted.push(emilyMemory.workOf(db, piece, { id: "emily-" + (k + 1), what: piece.id }));
+  }
+  const both = lexicon.build([...bach, ...accepted]);
+  const byId = new Map(both.groupings.map((g) => [g.id, g]));
+  for (const mix of [0.5, 0.75]) {
+    let own = 0;
+    let varied = 0;
+    let withVariants = 0;
+    let beats = 0;
+    for (let seed = 1; seed <= 20; seed++) {
+      const piece = form.compose(both, { seed, mix }).piece;
+      const used = piece.provenance.map((p) => byId.get(p.grouping));
+      own += used.filter((g) => g.gen).length;
+      const v = used.filter((g) => g.gen && g.variant).length;
+      varied += v;
+      if (v) withVariants++;
+      beats += used.length;
+    }
+    t.diagnostic(`mix ${mix}: ${Math.round((100 * own) / beats)}% of beats are Emily's own; ${varied} beats carry notes she varied, in ${withVariants} of 20 pieces`);
+    assert.ok(withVariants >= 10, `mix ${mix}: her variants in ${withVariants} of 20 pieces`);
+  }
+  // Rolling back to the first three works: exactly what those three give.
+  const three = lexicon.build([...bach, ...accepted.slice(0, 3)]);
+  const before = form.compose(three, { seed: 7, mix: 0.5 }).piece;
+  const again = lexicon.build([...bach, ...accepted.slice(0, 3)]);
+  assert.deepEqual(form.compose(again, { seed: 7, mix: 0.5 }).piece.events, before.events);
 });

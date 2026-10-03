@@ -5227,7 +5227,8 @@ __emi_require.local = 1;
 //   temperature <0..3>     how much chance plays in composing (M9, default 1)
 //   taste                  Emily's taste in the Max window, and how ten pieces compare
 //                          with and without it
-//   forget                 start a new taste (the old one is kept in ml_midi.taste.backup.json)
+//   forget                 start a new taste (the old one is kept in ml_midi.taste.backup.json,
+//                          and, M10, as a snapshot)
 //   pin <feature> <weight> hold a musical feature (f:...) at a weight, -3..3 (the window's
 //                          weight editor); unpin <feature> releases it, unpin alone all
 //   strength <0..2>        how strongly her taste counts (1: as learned)
@@ -5550,6 +5551,7 @@ function forget() {
   attempt(() => {
     syncTaste();
     const was = memory.ratings;
+    takeSnapshot("before forgetting", true); // M10: a rollback can bring it back
     if (tastePath) files.writeText(tasteBackupPath, JSON.stringify(memory) + "\n");
     memory = emily.create();
     tasteVersion++;
@@ -5695,6 +5697,7 @@ function recalltaste(path) {
     const stored = settingsFile.read(String(path));
     if (!stored.weights && !stored.pins && stored.ratings === undefined) throw new Error(files.fileName(path) + " isn't a stored taste");
     syncTaste();
+    takeSnapshot("before recalling " + files.fileName(path), true); // M10: a rollback can bring it back
     if (tasteBackupPath) files.writeText(tasteBackupPath, JSON.stringify(memory) + "\n");
     memory = emily.normalize(stored);
     changedTaste();

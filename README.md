@@ -13,8 +13,9 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M9 code done; waiting on the Max and Live checks
-([M8 checklist](docs/M8-checklist.md), [M9 checklist](docs/M9-checklist.md)).**
+**Status: M10 code done; waiting on the Max and Live checks
+([M8](docs/M8-checklist.md), [M9](docs/M9-checklist.md) and
+[M10](docs/M10-checklist.md) checklists).**
 Both products load Bach chorales, play them in C major or their own key, and
 compose new chorales by
 recombining beats from the whole corpus. Since M3, each new piece takes the
@@ -44,7 +45,10 @@ across in the piano roll. Later pieces lean toward the features you liked
 **temp** sets how much chance still plays. The **window** button opens a
 large piano roll with Emily's taste in full, in both products. There you can
 also pin any feature's weight with a slider, set her taste's strength, and
-store and recall whole tastes as files. The full plan
+store and recall whole tastes as files. Since M10, Emily varies pieces with
+notes Bach never wrote (**novelty**), **accept** keeps what you like as music
+of her own that later pieces draw on (**mix**), and snapshots let you roll
+her back to any earlier state. The full plan
 and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
@@ -81,6 +85,7 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **Listening tests** | anywhere, e.g. `~/Documents/ml_midi/` | Written by the **A/B** button: one web page, opened in a browser |
 | **Emily's taste** (M9) | `<repo>/patchers/ml_midi.taste.json` | Your ratings, pins and strength, shared by both products; git-ignored. **forget** and **recall taste** set the old one aside as `ml_midi.taste.backup.json`; delete both to start fresh |
 | **Stored tastes** (optional) | e.g. `~/Documents/ml_midi/emily/` | Written by **store taste** in the pop-up window; read back by **recall taste** |
+| **Emily's own music and snapshots** (M10) | `<repo>/patchers/ml_midi.emily.json`, `ml_midi.snapshots.json` | Every piece or phrase you **accept**, and her last 30 snapshots; git-ignored, shared by both products |
 | **Later: databases, Emily's snapshots** | `~/Documents/ml_midi/db/`, `emily/` | Outside the repo |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
 | **Remembered settings** | `<repo>/patchers/ml_midi.settings.json` | Last corpus, seed and other settings; written by the patches, git-ignored. Delete it to start fresh |

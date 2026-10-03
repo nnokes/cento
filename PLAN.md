@@ -992,6 +992,7 @@ ml_midi/
 │                          emi-segment.js  emi-tension.js  emi-speac.js
 │                          emi-signatures.js  emi-lexicon.js  emi-compose.js
 │                          emi-form.js  emi-stream.js  emi-rng.js  emily-assoc.js
+│                          emily-vary.js  emily-memory.js (M10)
 ├── data/starter/        bach-chorales.json: the prebuilt starter database (§6.1)
 ├── tests/               node --test, incl. bundles in a simulated [v8] context;
 │                        fixtures/ for tiny inputs (Cope's book examples)
@@ -1208,6 +1209,45 @@ accept it.
 you liked last week. Decay, the mix floor and the novelty quota guard against
 this.
 
+*As built in M10* (`code/lib/emily-vary.js`, `code/lib/emily-memory.js`;
+[checklist](docs/M10-checklist.md)):
+- **Variation operators**: seven, all at the note level, each at one place
+  in one or two voices:
+  - passing tone, neighbor tone and chromatic passing tone;
+  - anticipation (soprano, at cadences);
+  - suspension (a dissonance against the bass, resolving down);
+  - simplified line;
+  - re-voiced chord (alto and tenor swap chord tones).
+
+  A change is kept only if ranges hold, no voices cross, no leap passes an
+  octave, and no parallel fifths or octaves appear. Novelty is the chance
+  per phrase of one variant: an operator first (each as likely), then a
+  place, from the seed. Not built yet: the rhythmic augmentation and
+  diminution, and the phrase operators (extend, compress, sequence). They
+  change the form, which recombination keeps fixed.
+- **Accept** keeps the selection, the stream phrase playing, or the piece
+  as a work, with its generation and its variants. Her works join Bach's in
+  the lexicon:
+  - their beats carry `gen` and `variant`;
+  - varied beats keep the entry and exit of the beat they came from, so
+    they hook in where it did;
+  - Bach's signatures are found in his works alone. Patterns that recur
+    across hers but not his are her own signatures.
+- **Mix** is a score term in the search, like taste, and a weight on the
+  choice of form. At mix 0 the engine composes from a Bach-only database,
+  so pieces are exactly as before.
+- **Snapshots** hold her whole taste: weights, pins, strength, ratings,
+  novelty, mix, and which works are in use. Accepted works are kept forever
+  in their own file, so a rollback restores the corpus exactly as well.
+  All snapshots live in one file, the last 30, rather than one file per
+  session. Like the taste, they are kept in `patchers/`.
+- **Results** (full corpus; five varied pieces accepted, then 20 new
+  seeds): at mix 0.5, 11% of beats are hers and her variants appear in 11
+  pieces; at mix 0.75, 45% and all 20. At novelty 1, about 6.5 variants a
+  piece with no new parallels.
+- **Cost**: **accept** rebuilds the corpus with the new work, which takes
+  about 1.5 s in Node. Max pauses for a second or two.
+
 ### Tier 3: Conversation (text directions)
 
 You type directions such as "more tension before the cadence", "less like Bach",
@@ -1252,8 +1292,9 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M9 code done; waiting on the Max and Live checks for M8
-([checklist](docs/M8-checklist.md)) and M9 ([checklist](docs/M9-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M10 code done; waiting on the Max and Live checks for M8
+([checklist](docs/M8-checklist.md)), M9 ([checklist](docs/M9-checklist.md))
+and M10 ([checklist](docs/M10-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M11. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
