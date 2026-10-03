@@ -979,6 +979,30 @@ test("view: the beat under the mouse lights up, with where it came from", () => 
   assert.ok(!g.calls.some(([name, text]) => name === "show_text" && /bar 3/.test(text)));
 });
 
+test("view: over the SPEAC lane, a box explains the beat's letter", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics; // 360 x 169: the lane is the bottom 12 px
+  view.send("clear", 4 * Q, 60, 72, 4 * Q, 0, Q);
+  for (const [k, label] of ["S", "P", "A", "C"].entries()) view.send("speac", k * Q, label);
+  view.send("done");
+  const text = () => {
+    g.calls.length = 0;
+    view.send("paint");
+    return g.calls.filter(([name]) => name === "show_text").map(([, t]) => t).join(" ");
+  };
+  view.send("onidle", 100, 80); // beat 2, in the roll: no SPEAC help
+  assert.doesNotMatch(text(), /preparation/);
+  for (const [x, words] of [[45, /^.*S, statement: the beat states where the music is/], [100, /P, preparation: the beat leads into the next one/],
+    [190, /A, antecedent: one of the phrase's most tense beats/], [300, /C, consequent: after an antecedent/]]) {
+    view.send("onidle", x, 163);
+    const shown = text();
+    assert.match(shown, words);
+    assert.match(shown, /SPEAC \(David Cope\) is each beat's function in its phrase/);
+  }
+  view.send("onidleout");
+  assert.doesNotMatch(text(), /consequent/);
+});
+
 test("view: a start tick shows only the end of a long score (a stream's last phrases)", () => {
   const view = loadBundle("emi.view");
   const g = view.context.mgraphics;

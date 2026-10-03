@@ -4,6 +4,56 @@
 var __emi_require = (function () {
   var factories = {};
 
+  // ---- emi-hover.js
+  factories["emi-hover"] = function (exports, module, require) {
+"use strict";
+// Hover help drawn inside a [v8ui] (the window's taste pane, the corpus
+// list): a box beside the control under the mouse, saying what it does.
+// `g` is the view's mgraphics, passed in, so this stays free of Max.
+
+const CHAR = 6; // px per character at 11 px, near enough
+
+// Words into lines of at most `chars` characters (a longer word on its own).
+function wrap(text, chars) {
+  const lines = [];
+  let line = "";
+  for (const word of String(text).split(" ")) {
+    if (line && line.length + 1 + word.length > chars) {
+      lines.push(line);
+      line = word;
+    } else line = line ? line + " " + word : word;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+// The help for a control at { x0, x1, y0, y1 }: in a box below it (above
+// it, near the bottom), wrapped to fit the view.
+function drawHelp(g, help, at, width, height) {
+  const lines = wrap(help, Math.floor(Math.min(560, width - 24) / CHAR));
+  const w = Math.max(...lines.map((l) => l.length)) * CHAR + 16;
+  const h = lines.length * 15 + 8;
+  const x = Math.max(6, Math.min(width - w - 6, at.x0));
+  const y = at.y1 + 4 + h <= height - 4 ? at.y1 + 4 : Math.max(4, at.y0 - h - 4);
+  g.set_source_rgba(0.04, 0.04, 0.05, 0.96);
+  g.rectangle_rounded(x, y, w, h, 6, 6);
+  g.fill();
+  g.set_source_rgba(1, 1, 1, 0.3);
+  g.set_line_width(1);
+  g.rectangle_rounded(x, y, w, h, 6, 6);
+  g.stroke();
+  g.set_font_size(11);
+  g.set_source_rgba(1, 1, 1, 0.95);
+  lines.forEach((line, k) => {
+    g.move_to(x + 8, y + 15 + k * 15);
+    g.show_text(line);
+  });
+}
+
+exports.wrap = wrap;
+exports.drawHelp = drawHelp;
+  };
+
   var cache = {};
   function load(name) {
     if (!Object.prototype.hasOwnProperty.call(cache, name)) {
@@ -31,7 +81,7 @@ __emi_require.local = 1;
 // (M7), named by their signature. Small carets above the lane mark parallel
 // fifths and octaves (M8): grey for Bach's own, red for new ones. With the
 // mouse over a beat, a box at the top shows where it came from (M8: the
-// provenance view). Dragging across the roll selects whole beats for
+// provenance view); over the SPEAC lane, a box explains that beat's letter. Dragging across the roll selects whole beats for
 // Emily to rate (M9): a blue band, sent to the engine as "select <from>
 // <to>" (ticks) while dragging; a click clears it ("select"). Bars are
 // numbered along the top and each C is labelled on the left, where there is
@@ -58,6 +108,8 @@ autowatch = 1;
 inlets = 1;
 outlets = 1;
 
+const hover = __emi_require("emi-hover");
+
 mgraphics.init();
 mgraphics.relative_coords = 0;
 mgraphics.autofill = 0;
@@ -65,6 +117,16 @@ mgraphics.autofill = 0;
 // Twelve colors that stay apart on a dark background; they repeat after 12.
 // SPEAC lane colors: tension rising (P, A) warm, resolving (C) cool.
 const SPEAC_COLORS = { S: [0.55, 0.6, 0.7], P: [0.5, 0.8, 0.45], E: [0.35, 0.35, 0.38], A: [0.95, 0.5, 0.3], C: [0.4, 0.65, 0.95] };
+// What each letter means, shown with the mouse over the lane (emi-speac
+// labels each beat by its tension against its neighbours and its phrase).
+const SPEAC_HELP = {
+  S: "S, statement: the beat states where the music is. Its tension sits near the phrase's average.",
+  P: "P, preparation: the beat leads into the next one. Its tension is close to the next beat's, so it prepares that arrival.",
+  E: "E, extension: the beat carries on the one before it, at about the same tension.",
+  A: "A, antecedent: one of the phrase's most tense beats. It sets up an expectation that needs resolving, as a dominant does before a tonic.",
+  C: "C, consequent: after an antecedent, one of the least tense beats: the resolution that answers it, as a tonic does after a dominant.",
+};
+const SPEAC_ABOUT = "SPEAC (David Cope) is each beat's function in its phrase, worked out from its tension. Composing matches beats by it.";
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const GOLD = [1, 0.82, 0.3];
 
@@ -76,7 +138,8 @@ const PALETTE = [
 
 let shown = null; // the score being drawn
 let incoming = null; // the score being received
-let hover = null; // the beat under the mouse: an index into shown.sources
+let hovered = null; // the beat under the mouse: an index into shown.sources
+let laneHover = null; // over the SPEAC lane: an index into shown.labels
 let selected = null; // [from, to]: the ticks selected (whole beats)
 let playTick = null; // where the player is (a tick), or null when it isn't playing
 let dragFrom = null; // the tick of the beat where a drag started
@@ -144,22 +207,26 @@ function done() {
     selected = incoming.selected;
   }
   incoming = null;
-  hover = null;
+  hovered = null;
+  laneHover = null;
   mgraphics.redraw();
 }
 
-// The provenance view: the beat under the mouse.
-function onidle(x) {
+// The provenance view: the beat under the mouse; over the lane, its letter too.
+function onidle(x, y) {
   const found = sourceAt(x);
-  if (found !== hover) {
-    hover = found;
+  const label = y !== undefined && y >= laneTop() ? labelAt(x) : null;
+  if (found !== hovered || label !== laneHover) {
+    hovered = found;
+    laneHover = label;
     mgraphics.redraw();
   }
 }
 
 function onidleout() {
-  if (hover !== null) {
-    hover = null;
+  if (hovered !== null || laneHover !== null) {
+    hovered = null;
+    laneHover = null;
     mgraphics.redraw();
   }
 }
@@ -209,6 +276,27 @@ function sourceAt(px) {
   return null;
 }
 sourceAt.local = 1;
+
+// Where the SPEAC lane starts (y), as paint lays it out.
+function laneTop() {
+  if (!shown || !shown.labels.length) return Infinity;
+  const [, height] = size();
+  return height - Math.max(12, Math.round(height / 20));
+}
+laneTop.local = 1;
+
+// The lane's label under x, as an index into shown.labels, or null.
+function labelAt(px) {
+  if (!shown || !shown.labels.length) return null;
+  const [width] = size();
+  const tick = shown.start + (px / width) * (shown.end - shown.start);
+  for (let i = shown.labels.length - 1; i >= 0; i--) {
+    const [at] = shown.labels[i];
+    if (at <= tick && tick < at + beatOf(shown)) return i;
+  }
+  return null;
+}
+labelAt.local = 1;
 
 function beatOf(score) {
   return score.beatTicks || score.barTicks / 4;
@@ -371,8 +459,8 @@ function paint() {
   }
 
   // The provenance view: the hovered beat lit up, and its source above.
-  if (hover !== null && shown.sources[hover]) {
-    const [tick, text] = shown.sources[hover];
+  if (hovered !== null && shown.sources[hovered]) {
+    const [tick, text] = shown.sources[hovered];
     const left = x(tick);
     g.set_source_rgba(1, 1, 1, 0.12);
     g.rectangle(left, 0, x(tick + beatOf(shown)) - left, rollHeight);
@@ -415,6 +503,19 @@ function paint() {
     g.line_to(cx, 6);
     g.close_path();
     g.fill();
+  }
+
+  // Over the SPEAC lane: the beat's letter outlined, and what it means above it.
+  if (laneHover !== null && shown.labels[laneHover]) {
+    const [tick, label] = shown.labels[laneHover];
+    const left = x(tick);
+    g.set_source_rgba(1, 1, 1, 0.9);
+    g.set_line_width(1.5);
+    g.rectangle(left + 0.5, rollHeight + 0.5, Math.max(2, beatWidth - 1), lane - 1);
+    g.stroke();
+    g.set_line_width(1);
+    const text = `${SPEAC_HELP[label] || label} ${SPEAC_ABOUT}`;
+    hover.drawHelp(g, text, { x0: left, x1: left + beatWidth, y0: rollHeight, y1: height }, width, height);
   }
 }
 

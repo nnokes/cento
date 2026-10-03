@@ -12,7 +12,8 @@
 | A 3/4 folder alone: pieces in 3/4, and the transport follows | | |
 | The list is remembered between sessions and shared by the two products | | |
 | Hover help on the window's controls | | |
-| Max: one play/stop button (green play, red stop) that goes back to play when the piece ends | | — (Max only) |
+| Max: one play/stop button (green play, red stop) that goes back to play when the piece ends | ✅ (reported: "Play stop colors and actions seem fixed") | — (Max only) |
+| The SPEAC lane explains its letters on hover; the panels' roll is 400 px wide | | |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M11 lets the corpus be more than one folder. Until now, **load corpus** read
@@ -111,7 +112,7 @@ reopen the patch or set.
        **only**, on **remove** and on a folder's name (its full path).
        Then on **add folder** and **rescan**: a yellow hint for each.
        [docs/controls.md](controls.md) lists them all.
-12. [ ] **Play and stop.** The host panel's **Play** is now one button: green,
+12. [x] **Play and stop.** The host panel's **Play** is now one button: green,
        saying `play`. Click it: it turns red and says `stop`, and the piece
        plays from the next barline. Click it again: it goes back to green
        `play`, and the music stops.
@@ -124,6 +125,13 @@ reopen the patch or set.
        - With **stream** on and **phrases** at 2, it stops after the second
          phrase. With **phrases** at 0 (endless) it plays on until you click
          **stop**.
+13. [ ] **SPEAC on hover, and a wider roll.** The panel's piano roll is now
+       400 px wide (it was 360). Compose any seed and move the mouse slowly
+       along the colored lane at the bottom of the roll: a box explains the
+       letter under the mouse, e.g. `P, preparation: the beat leads into the
+       next one...`, followed by a line on what SPEAC is. The same in the
+       pop-up window's large roll. Moving up into the notes, the box goes
+       (and the source box at the top shows, as before).
 
 ## 2. Live version
 
@@ -138,7 +146,8 @@ reopen the patch or set.
 4. [ ] **Hover help in Live.** With the Info View open, move over **corpora** in
        the brain, and over the window's **add folder** and **rescan**: each
        is named and explained. The list's boxes and buttons show their help in
-       a box, as in Max.
+       a box, as in Max, and so do the SPEAC lane's letters in the brain's
+       piano roll (now 400 px wide: the device is 1024 px).
 5. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat`, click **corpora**:
        the list as you left it in Live.
 

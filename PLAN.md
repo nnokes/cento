@@ -864,6 +864,9 @@ the transport:
   queue (`view playhead <step>`, -1 when stopped or before a restarted queue
   begins) to both rolls, which draw a line there. It follows Max's or Live's
   transport, and in a stream it follows each phrase as the roll moves on.
+- *As built after M11:* the panels' roll is 400 px wide (360 before). Over
+  the SPEAC lane, a box explains the letter under the mouse (S, P, E, A, C:
+  what it means, and how emi-speac gives it from tension), in both rolls.
 - *As built (after M10):* hover help. Every control a player sees (55 in the
   patches) has `hint` (Max's tooltip), and `annotation` with
   `annotation_name` (Max's Clue window, Live's Info View), from one table in
@@ -1220,7 +1223,7 @@ How it works:
   **taste** lists the weights and compares ten seeds with and without them.
   **forget** starts again and keeps one backup. They sit in a shared
   `emily.panel` (130 px) between the panel and the piano roll; the device
-  is now 984 px wide (1014 px since the piano roll grew to 390 px, after
+  is now 984 px wide (1024 px since the piano roll grew to 400 px, after
   M11).
 - **Memory**: `patchers/ml_midi.taste.json` next to the settings file
   (git-ignored), not `~/Documents/ml_midi/emily/`. Max's `File` can't create
