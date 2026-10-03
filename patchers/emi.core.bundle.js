@@ -5375,6 +5375,8 @@ __emi_require.local = 1;
 //   restart                    -> the player: notes off; the queue starts again at the next bar
 //   later <message>            -> back to this script through [deferlow]: long work in steps
 //   streamat <step>            -> the player: send "need" when this step is reached
+//   endat <step>               -> the player: send "ended" when this step (the last note-offs) is
+//                                 reached, each time (999999: never). The Max version then stops.
 //   view clear|note|seam|cadence|speac|signature|parallel|source|done -> the piano roll
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
@@ -5776,6 +5778,7 @@ function clear() {
   flow = null;
   outlet(0, "restart");
   outlet(0, "streamat", NO_STEP);
+  outlet(0, "endat", NO_STEP);
   outlet(0, "coll", "clear");
   outlet(0, "status", "queue", "cleared");
 }
@@ -6557,6 +6560,7 @@ function startStream() {
   current = null;
   selection = null;
   outlet(0, "restart");
+  outlet(0, "endat", NO_STEP); // set when its last phrase is queued
   followMeter(db.meter);
   outlet(0, "coll", "clear");
   if (appendPhrase() && !flow.state.finished) appendPhrase();
@@ -6575,6 +6579,7 @@ function appendPhrase() {
   if (!result.ok && last) result = streams.next(db, state, options); // end later instead
   if (!result.ok) {
     outlet(0, "streamat", NO_STEP);
+    if (flow.steps.size) outlet(0, "endat", Math.max(...flow.steps.keys())); // it ends where the queue does
     outlet(0, "error", "the", "stream", "ran", "out", "after", "phrase", number - 1 + ";", "try", "another", "seed", "or", "more", "chorales");
     return null;
   }
@@ -6593,6 +6598,7 @@ function appendPhrase() {
   current = { base: null, score: streamScore(shown, phrase.endTick), name: flow.name, chorale: false };
   const ticksPerStep = db.beatTicks / STEPS_PER_BEAT;
   outlet(0, "streamat", state.finished ? NO_STEP : phrase.startTick / ticksPerStep);
+  if (state.finished) outlet(0, "endat", Math.max(...flow.steps.keys()));
   const from = state.phrases[Math.max(0, state.phrases.length - WINDOW)].startTick;
   draw(current.score, from, phrase.endTick);
   let text = `${flow.name} stream: phrase ${number}${phrasesWanted ? " of " + phrasesWanted : ""} queued (${phrase.work} phrase ${phrase.index}`;
@@ -6743,7 +6749,9 @@ function show(score, name, chorale) {
   outlet(0, "streamat", NO_STEP);
   followMeter(shown.meter);
   outlet(0, "coll", "clear");
-  for (const { step, events } of queue.toSteps(shown, STEPS_PER_BEAT)) outlet(0, "coll", "store", step, ...events);
+  const steps = queue.toSteps(shown, STEPS_PER_BEAT);
+  for (const { step, events } of steps) outlet(0, "coll", "store", step, ...events);
+  outlet(0, "endat", steps.length ? Math.max(...steps.map(({ step }) => step)) : NO_STEP);
   draw(shown);
 }
 

@@ -828,6 +828,15 @@ the transport:
   and the first tick finds the barline. Max's Play still sends play, before
   it starts the transport. `tests/patches.test.js` runs the player's wiring
   tick by tick (`simulatePlayer`), and reproduces the old stutter.
+  *As built in M11:* the end of a piece. With each piece the engine sends
+  `endat <step>`, the step of its last note-offs (for a stream, once its
+  last phrase is queued, or where its queue ends if it runs out; 999999
+  for never). Each time the queue reaches that step the player sends
+  `ended` (on the main thread, through `[deferlow]`), so a piece played
+  again ends again. The Max version's Play is now one play/stop button
+  (`live.text`: green "play", red "stop"); `ended` sets it back to play,
+  which stops the transport as clicking it would. Live ignores `ended`: it
+  follows its own transport.
 - **Queue**: a `[coll ---emi.queue]` keyed by step index. Each entry is a flat
   list of `voice pitch velocity` triples, note-offs first, with velocity 0 for
   note-off. (`[coll]` was chosen over `[dict]` because an int in, list out

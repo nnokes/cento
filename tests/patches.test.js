@@ -488,7 +488,7 @@ function simulatePlayer() {
     list.sort((a, b) => boxes.get(b[0]).patching_rect[0] - boxes.get(a[0]).patching_rect[0] || boxes.get(b[0]).patching_rect[1] - boxes.get(a[0]).patching_rect[1]);
   }
   const state = new Map(); // box id -> stored inlet values and the like
-  const record = { reads: [], playhead: [], flushes: 0, need: 0 };
+  const record = { reads: [], playhead: [], flushes: 0, need: 0, ended: 0 };
   const out = (id, outlet, value) => {
     for (const [to, inlet] of wires.get(`${id}:${outlet}`) || []) receive(to, inlet, value);
   };
@@ -505,6 +505,7 @@ function simulatePlayer() {
     if (b.maxclass === "message") return out(id, 0, Number(b.text));
     if (b.maxclass === "outlet") {
       if (/^need/.test(b.comment)) record.need++;
+      if (/^ended/.test(b.comment)) record.ended++;
       return;
     }
     if (name === "t") {
@@ -512,11 +513,12 @@ function simulatePlayer() {
       for (let k = types.length - 1; k >= 0; k--) out(id, k, types[k] === "b" ? "bang" : value);
       return;
     }
-    if (["-", "+", "!=", "<", "maximum"].includes(name)) {
+    if (["-", "+", "!=", "==", "<", "maximum"].includes(name)) {
       const s = stored(b);
       if (inlet === 1) return void (s.in[0] = value);
       const r = s.in[0];
-      return out(id, 0, name === "-" ? value - r : name === "+" ? value + r : name === "!=" ? Number(value !== r) : name === "<" ? Number(value < r) : Math.max(value, r));
+      const result = { "-": value - r, "+": value + r, "!=": Number(value !== r), "==": Number(value === r), "<": Number(value < r), maximum: Math.max(value, r) }[name];
+      return out(id, 0, result);
     }
     if (name === "sel") {
       const k = args(b).indexOf(value);
@@ -706,6 +708,25 @@ test("grid player, simulated: the queue starts on a barline and plays straight o
   p.ticks(0, 8);
   p.ticks(0, 8);
   assert.equal(p.record.need, 1);
+
+  // ended: when the queue reaches the piece's last step, and again each time
+  // it is played again (Max's Play after the piece stopped itself).
+  p = simulatePlayer();
+  p.send("endat", 20);
+  p.ticks(0, 19);
+  assert.equal(p.record.ended, 0);
+  p.tick(20);
+  assert.equal(p.record.ended, 1, "at the last step");
+  p.ticks(21, 30);
+  assert.equal(p.record.ended, 1, "once");
+  p.send("stop");
+  p.send("play");
+  p.ticks(31, 52); // the queue starts again at bar 3 (step 32): its step 20 is step 52
+  assert.equal(p.record.ended, 2, "played again, ended again");
+  p.send("endat", 999999);
+  p.send("restart");
+  p.ticks(53, 120);
+  assert.equal(p.record.ended, 2, "never");
 });
 
 test("emi.host.live: Live's stop reaches the player, its (late) play doesn't", () => {
@@ -754,7 +775,7 @@ test("emi.host.max: nothing plays until Play is on, even if Max's transport is a
   assert.equal(stops.length, 1);
   assert.deepEqual(p.from(stops[0].id).map(([b, inlet]) => [b.id, inlet]), [[transport.id, 0]]);
   // Voices reach the outputs only through the play gate.
-  const [route] = p.find("route voice setting meter");
+  const [route] = p.find("route voice setting meter ended");
   assert.deepEqual(p.from(route.id, 0).map(([b, inlet]) => [b.id, inlet]), [[playGate.id, 1]]);
   assert.deepEqual(p.from(playGate.id).map(([b, inlet]) => [b.text, inlet]), [["gate 2 1", 1]]);
   // Play: open the gate, tell the engine, start the transport (right to left).
@@ -772,9 +793,28 @@ test("emi.host.max: nothing plays until Play is on, even if Max's transport is a
   assert.deepEqual(steps(1), [["0", "transport", 0], ["stop", "engine", 0], ["0", "play gate", 0]]);
 });
 
+test("emi.host.max: one play/stop button, green for play, red for stop; it goes back to play when the piece ends", () => {
+  const p = patchFile("emi.host.max.maxpat");
+  const [play] = [...p.boxes.values()].filter((b) => b.varname === "Play");
+  assert.equal(play.maxclass, "live.text");
+  assert.deepEqual([play.mode, play.text, play.texton], [1, "play", "stop"], "a toggle: play when off, stop when on");
+  const green = play.activebgcolor;
+  const red = play.activebgoncolor;
+  assert.ok(green[1] > green[0] && green[1] > green[2], "green when off (play)");
+  assert.ok(red[0] > red[1] && red[0] > red[2], "red when on (stop)");
+  assert.deepEqual([play.bgcolor, play.bgoncolor], [green, red]);
+  assert.deepEqual(p.find("toggle").filter((b) => b.varname === "Play"), []);
+  assert.deepEqual(p.from(play.id).map(([b]) => b.text), ["sel 1 0"]);
+  // "ended" from the engine: 0 into the button, as clicking stop would.
+  const [route] = p.find("route voice setting meter ended");
+  const [[zero]] = p.from(route.id, 3);
+  assert.deepEqual([zero.maxclass, zero.text], ["message", "0"]);
+  assert.deepEqual(p.from(zero.id).map(([b, inlet]) => [b.id, inlet]), [[play.id, 0]]);
+});
+
 test("emi.host.max: the engine's meter sets the transport's time signature (M8: 3/4)", () => {
   const p = patchFile("emi.host.max.maxpat");
-  const [route] = p.find("route voice setting meter");
+  const [route] = p.find("route voice setting meter ended");
   const [[pre]] = p.from(route.id, 2);
   assert.equal(pre.text, "prepend timesig");
   assert.deepEqual(p.from(pre.id).map(([b, inlet]) => [b.text, inlet]), [["transport", 0]]);
@@ -783,8 +823,8 @@ test("emi.host.max: the engine's meter sets the transport's time signature (M8: 
 test("emi.engine: the core feeds the queue and the player, and 'need' comes back on the main thread", () => {
   const p = patchFile("emi.engine.maxpat");
   const [core] = p.find("v8 emi.core.bundle.js");
-  const [route] = p.find("route coll restart streamat later");
-  assert.deepEqual(p.from(core.id).map(([b]) => b.text), ["route coll restart streamat later"]);
+  const [route] = p.find("route coll restart streamat later endat");
+  assert.deepEqual(p.from(core.id).map(([b]) => b.text), ["route coll restart streamat later endat"]);
   const [player] = p.find("p grid-player");
   assert.deepEqual(p.from(route.id, 1).map(([b, inlet]) => [b.text, inlet]), [["p grid-player", 2]]);
   assert.deepEqual(p.from(route.id, 2).map(([b, inlet]) => [b.text, inlet]), [["p grid-player", 3]]);
@@ -798,7 +838,14 @@ test("emi.engine: the core feeds the queue and the player, and 'need' comes back
   const [[later]] = p.from(route.id, 3);
   assert.equal(later.text, "deferlow");
   assert.deepEqual(p.from(later.id).map(([b, inlet]) => [b.id, inlet]), [[core.id, 0]]);
+  // endat goes to the player; its "ended" comes back out on the main thread.
+  assert.deepEqual(p.from(route.id, 4).map(([b, inlet]) => [b.text, inlet]), [["p grid-player", 4]]);
+  const [[deferEnd]] = p.from(player.id, 3);
+  assert.equal(deferEnd.text, "deferlow");
+  const [[ended]] = p.from(deferEnd.id);
+  assert.deepEqual([ended.maxclass, ended.text], ["message", "ended"]);
   // Everything else goes out.
   const [out] = p.find("outlet");
-  assert.ok(p.from(route.id, 4).some(([b]) => b.id === out.id));
+  assert.deepEqual(p.from(ended.id).map(([b]) => b.id), [out.id]);
+  assert.ok(p.from(route.id, 5).some(([b]) => b.id === out.id));
 });

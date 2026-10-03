@@ -8,7 +8,7 @@ This page is written from the same table as the hover text (the patch generator)
 
 | Control | What it does |
 | --- | --- |
-| **Play** | Starts Max's transport and plays the current piece (or stream) through the output below, from the next barline. Off: stops the transport and silences held notes. |
+| **Play / stop** | play (green): starts Max's transport and plays the current piece (or stream) through the output below, from the next barline; the button turns red and says stop. stop: stops the transport and silences held notes. When a piece (or a stream with a set number of phrases) ends, it stops by itself and says play again. |
 | **Tempo** | Tempo in beats per minute (20 to 300) for Max's transport. Drag or type. Remembered for next time. |
 | **Audio** | Audio on or off (Max's DSP). Needed only for the vst~ instruments: the MIDI output plays without it. |
 | **Output** | The MIDI port the four voices go to, one channel each: 1 soprano, 2 alto, 3 tenor, 4 bass. Remembered for next time. |

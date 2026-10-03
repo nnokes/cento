@@ -12,6 +12,7 @@
 | A 3/4 folder alone: pieces in 3/4, and the transport follows | | |
 | The list is remembered between sessions and shared by the two products | | |
 | Hover help on the window's controls | | |
+| Max: one play/stop button (green play, red stop) that goes back to play when the piece ends | | — (Max only) |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M11 lets the corpus be more than one folder. Until now, **load corpus** read
@@ -110,6 +111,19 @@ reopen the patch or set.
        **only**, on **remove** and on a folder's name (its full path).
        Then on **add folder** and **rescan**: a yellow hint for each.
        [docs/controls.md](controls.md) lists them all.
+12. [ ] **Play and stop.** The host panel's **Play** is now one button: green,
+       saying `play`. Click it: it turns red and says `stop`, and the piece
+       plays from the next barline. Click it again: it goes back to green
+       `play`, and the music stops.
+       - Turn **stream** off, set **beats** to 16, compose, and click
+         **play**. Let the piece finish: when its last chord ends, the
+         button goes back to green `play` by itself, the transport stops,
+         and the playhead goes.
+       - Click **play** again: the same piece plays again from the next
+         barline, and stops again at its end.
+       - With **stream** on and **phrases** at 2, it stops after the second
+         phrase. With **phrases** at 0 (endless) it plays on until you click
+         **stop**.
 
 ## 2. Live version
 

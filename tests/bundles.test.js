@@ -194,6 +194,7 @@ test("core: 'clear' empties the queue", () => {
   assert.deepEqual(loadBundle("emi.core").send("clear"), [
     [0, "restart"],
     [0, "streamat", 999999],
+    [0, "endat", 999999],
     [0, "coll", "clear"],
     [0, "status", "queue", "cleared"],
   ]);
@@ -810,6 +811,33 @@ test("corpus window: a row per folder, with what it holds; its box, only and rem
   view.send("done");
   const building = draw();
   assert.ok(building.includes("building...") && !building.includes("not used"));
+});
+
+test("endat: the player is told where each piece ends (its last note-offs); a stream, when its last phrase is queued", () => {
+  const core = engineIn(tempDir());
+  core.send("startup", "all");
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  const lastStep = (out) => Math.max(...select(out, "coll").filter(([kind]) => kind === "store").map(([, step]) => step));
+  let out = core.send("compose", 1);
+  assert.deepEqual(select(out, "endat"), [[lastStep(out)]]);
+  out = core.send("pattern");
+  assert.deepEqual(select(out, "endat"), [[lastStep(out)]], "the test phrase too");
+
+  // A stream of two phrases: never, until its last phrase is queued.
+  core.send("stream", 1);
+  core.send("phrases", 2);
+  out = core.send("compose", 1);
+  const ends = select(out, "endat");
+  assert.equal(ends[0][0], 999999, "not yet");
+  assert.deepEqual(ends.at(-1), [lastStep(out)], "both phrases queued: it ends with the second");
+  // An endless stream starts with never; one that runs out of music (this
+  // small corpus does, after a phrase) ends where its queue does.
+  core.send("phrases", 0);
+  out = core.send("compose", 1);
+  assert.match(lastStatus(out).join(" "), /^error the stream ran out after phrase 1;/);
+  assert.deepEqual(select(out, "endat"), [[999999], [lastStep(out)]]);
+  assert.deepEqual(select(core.send("clear"), "endat"), [[999999]]);
 });
 
 // ---------------------------------------------------------------- core: Live clips
