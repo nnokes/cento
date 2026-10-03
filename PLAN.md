@@ -1136,6 +1136,25 @@ function run() {
   them from the `music21` corpus. Commit the **starter database** only after
   checking that the source's terms allow redistribution; until then, the
   script rebuilds it locally.
+  *Checked before M12 (music21 10.5):* **the music21 Bach chorales may not be
+  shared.**
+  - 410 of the 413 files in `corpus/bach` are Margaret Greentree's MusicXML
+    editions ("© 1996–2004 Margaret Greentree, all rights reserved"). music21
+    distributes them with her permission, as part of music21. That isn't an
+    open licence, and it doesn't extend to other projects.
+  - The other three are CCARH Humdrum files that reserve "rights to all
+    derivative electronic formats". For BWV 277, 281 and 366, music21 finds
+    the CCARH file first, so the exporter currently reads those.
+  - music21's `corpus/license.txt`: the software is BSD, and the corpus keeps
+    each encoder's own terms.
+
+  So the music21 export stays a personal-use step, and Cento must not ship
+  its output. Shareable alternatives:
+  - **Bach Chorales Figured Bass** (BCFB, Ju et al., ISMIR 2020): CC BY 4.0
+    (credit required), 139 chorales from the Neue Bach-Ausgabe, MusicXML.
+  - **DCML Bach chorales** (Ulrich Kaiser's engravings, released by the DCML
+    lab): CC0, 370 chorales, MuseScore files. Its own README warns of "many
+    incorrect accidentals", so it needs correcting first.
 - **Reference code.** The SPEAC Python port has **no license**: read it, but
   don't copy from it. Cope's own Lisp code ships with his books and is under his
   copyright. Implement from the published descriptions.
