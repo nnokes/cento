@@ -268,8 +268,12 @@ code/         [v8] wrappers: glue between Max messages and the engine
 code/lib/     the engine: plain JavaScript, no Max APIs, tested in Node
 code/max/     Max-only helpers used by the wrappers (files, Live clips)
 tests/        node --test, including the bundles in a simulated [v8] context
-tools/        build, path check, git hook, chorale export, and maxgen.py,
-              which writes every patch and device (the master copy)
+tools/        build, path check, git hook, chorale export, maxgen.py,
+              which writes every patch and device (the master copy), and
+              package.js, which makes the release zips (npm run package)
+release/      what the downloads carry besides the builds: Read me first.html,
+              and the Cento folder's About this folder.txt
+corpus/       Cento's own chorales (CC BY 4.0: corpus/README.md)
 docs/         milestone checklists; controls.md: what every control does;
               releasing.md: how to publish a version for others
 ```

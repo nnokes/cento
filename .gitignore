@@ -14,6 +14,8 @@ __pycache__/
 frozen/
 *.app/
 build/
+# The release zips (npm run package; docs/releasing.md).
+dist/
 
 # Working data lives in ~/Documents/cento, outside the repo. These catch
 # corpus files or output copied in here by accident.

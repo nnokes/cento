@@ -1513,9 +1513,21 @@ own settings and Emily files.
    the frozen devices, the demo set, the app, the `Cento` folder, the read-me
    and the licence. `dist/` is git-ignored. CI can't do steps 3 and 4 (they
    need Max on a Mac); everything else it can check.
+   *Built* (`tools/package.js`): it reads the builds from `frozen/` and
+   `build/` (`build/Cento Demo Project`, `build/Cento.app`), makes the Cento
+   folder from the repository (`corpus/` and `release/About this
+   folder.txt`, never your own), and says what's missing and how to make
+   it; a device hardly bigger than the unfrozen one isn't frozen. On a Mac
+   it copies and zips with `ditto`, which keeps the app's links and
+   attributes. `npm run package -- --check` only checks; `--only live|mac`
+   makes one zip. Tested with stand-ins (`tests/package.test.js`).
 6. **The read-me** (one page, for people who aren't developers): what Cento
    is, what to install, first piece in five steps, where files go, how to
    remove it, known issues, and that it's independent of David Cope.
+   *Written*: `release/Read me first.html` (a web page: it opens in any
+   browser, light or dark), with the first-open steps for an unsigned app on
+   macOS 15 and later (Privacy & Security, Open Anyway) and earlier
+   (right-click, Open).
 7. **A clean-machine test**: a fresh user account on your Mac (or a friend's
    Mac), following only the read-me.
 8. **The release**: tag `main` (`v0.1.0`, marked as a pre-release: a beta

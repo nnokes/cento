@@ -1,6 +1,6 @@
 {
   "name": "cento",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "An EMI / Emily Howell-style recombinant composer for Max and Max for Live",
   "license": "MIT",
@@ -16,6 +16,7 @@
     "check:paths": "node tools/check-paths.js",
     "patches": "python3 tools/maxgen.py",
     "patches:check": "python3 tools/maxgen.py --check",
-    "hooks": "git config core.hooksPath tools/hooks"
+    "hooks": "git config core.hooksPath tools/hooks",
+    "package": "node tools/package.js"
   }
 }

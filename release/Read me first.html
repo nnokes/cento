@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cento: read me first</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --text: #1f1d1a; --muted: #5e5a53; --line: #e3dfd6;
+    --accent: #7a4b16; --box: #f2eee6; --code: #ece7dc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1a18; --text: #ece8e0; --muted: #aaa397; --line: #3a3732;
+      --accent: #e0a868; --box: #26241f; --code: #302d27;
+    }
+  }
+  html { background: var(--bg); }
+  body {
+    margin: 0 auto; max-width: 44rem; padding: 2rem 1rem 4rem;
+    font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    color: var(--text); background: var(--bg);
+  }
+  h1 { font-size: 2rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.3rem; margin: 2.2rem 0 .6rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.05rem; margin: 1.4rem 0 .4rem; }
+  p, li { margin: .45rem 0; }
+  ol, ul { padding-left: 1.4rem; }
+  a { color: var(--accent); }
+  code, kbd { font: .9em ui-monospace, Menlo, monospace; background: var(--code); padding: .05em .3em; border-radius: 4px; }
+  .lead { color: var(--muted); margin-top: 0; }
+  .box { background: var(--box); border-radius: 8px; padding: .8rem 1rem; margin: 1rem 0; }
+  .small { color: var(--muted); font-size: .92rem; }
+</style>
+</head>
+<body>
+
+<h1>Cento</h1>
+<p class="lead">New chorales in the style of J. S. Bach, made from Bach's own.</p>
+
+<p>Cento learns Bach's chorales beat by beat, then writes new ones by
+joining beats from different chorales, keeping the voice-leading and the
+shape of a real chorale. Its Emily layer learns what you like as you rate
+what you hear. (Cento is an independent project, inspired by David Cope's
+books; it isn't affiliated with him.)</p>
+
+<div class="box">
+<strong>Which one did you download?</strong>
+<ul>
+<li><strong>Cento for Live</strong>: devices for Ableton Live 12 Suite (or
+Live 12 Standard with Max for Live), version 12.2.1 or later.</li>
+<li><strong>Cento for Mac</strong>: an app. Nothing else to install.</li>
+</ul>
+Both need macOS. Start with step 1, then follow your version's steps.
+</div>
+
+<h2>1. Put the Cento folder in Documents (both versions)</h2>
+<ol>
+<li>Double-click the zip you downloaded, if it isn't unzipped already. A
+folder opens.</li>
+<li>In it, find the folder named <strong>Cento</strong>. Drag it onto
+<strong>Documents</strong> in the sidebar of the Finder window.</li>
+</ol>
+<p>Cento looks for this folder every time it opens. It holds Cento's
+chorales, and later your settings and Emily's memory. Keep its name:
+<code>Cento</code>.</p>
+<p class="small">Updating from an earlier version? Keep the Cento folder you
+have: it holds your settings and Emily's memory.</p>
+
+<h2>2a. Cento for Live</h2>
+<ol>
+<li>In the unzipped folder, open <strong>Cento Demo Project</strong> and
+double-click <strong>Cento Demo.als</strong>. Live opens a set with five
+tracks: <em>Cento</em> (the brain), and <em>Soprano</em>, <em>Alto</em>,
+<em>Tenor</em> and <em>Bass</em>.</li>
+<li>If macOS asks whether Live may access files in your Documents folder,
+click <strong>Allow</strong>.</li>
+<li>Press Live's Play button (or the space bar). The piece plays from the
+next bar, and the brain's piano roll follows it.</li>
+<li>For a new piece, change <strong>Seed</strong> on the brain.</li>
+</ol>
+<p><strong>In your own sets:</strong> the devices are in the
+<strong>Devices</strong> folder. Drag <code>cento.brain.amxd</code> onto a
+MIDI track, and <code>cento.voice.amxd</code> onto four MIDI tracks named
+<em>Soprano</em>, <em>Alto</em>, <em>Tenor</em> and <em>Bass</em>, each with
+an instrument. Tip: drag the Devices folder into Live's browser, under
+<em>Places</em>, to find them there.</p>
+
+<h2>2b. Cento for Mac</h2>
+<ol>
+<li>Drag <strong>Cento</strong> (the app) into your
+<strong>Applications</strong> folder.</li>
+<li><strong>The first time only:</strong> the app isn't signed by Apple, so
+macOS stops it once.
+  <ul>
+  <li>Double-click Cento. macOS says it can't check it ("Cento" Not Opened).
+  Click <strong>Done</strong>.</li>
+  <li>Open <strong>System Settings</strong>, then <strong>Privacy &amp;
+  Security</strong>. Scroll down to <em>"Cento" was blocked</em> and click
+  <strong>Open Anyway</strong>. Confirm with <strong>Open Anyway</strong>
+  and your password.</li>
+  <li>On macOS 14 (Sonoma) and earlier, you can instead right-click (or
+  Control-click) Cento, choose <strong>Open</strong>, then
+  <strong>Open</strong>.</li>
+  </ul>
+  After that, Cento opens like any app.</li>
+<li>If macOS asks whether Cento may access files in your Documents folder,
+click <strong>Allow</strong>.</li>
+<li>Click the green <strong>play</strong>. If you hear nothing, set
+<strong>Output</strong> to <em>AU DLS Synth 1</em> (the Mac's own
+instruments), and check the Mac's volume.</li>
+<li>For a new piece, change <strong>Seed</strong>.</li>
+</ol>
+
+<h2>3. Things to try</h2>
+<ul>
+<li><strong>Hover</strong> over any control to see what it does. In Live,
+open the Info View first (the <strong>?</strong> at the bottom left of
+Live's window).</li>
+<li><strong>like</strong> and <strong>dislike</strong> teach Emily your
+taste: later pieces lean toward what you liked. <strong>window</strong>
+shows her taste in full.</li>
+<li><strong>corpora</strong> chooses which chorales Cento composes from.
+<code>bach-figured-bass-3-4</code> alone gives pieces in 3/4.</li>
+<li><strong>export midi</strong> saves the piece as a MIDI file. In Live,
+<strong>writeclips</strong> writes it as clips.</li>
+</ul>
+
+<h2>Where your files are</h2>
+<p>Everything Cento keeps is in <strong>Documents/Cento</strong>: the
+chorales (<code>corpus</code>), your settings and Emily's memory (the
+<code>cento.*.json</code> files). <code>About this folder.txt</code> in it
+says which is which. Pieces you export go where you choose.</p>
+
+<h2>More chorales</h2>
+<p>Cento comes with 131 Bach chorales. The free music21 toolkit has more
+(296 in 4/4 and 32 in 3/4), for your own use only. Getting them takes a few
+commands in Terminal; the steps are on
+<a href="https://github.com/nnokes/cento#more-chorales-from-music21">Cento's
+page on GitHub</a>.</p>
+
+<h2>Removing Cento</h2>
+<p>Delete the app (or the devices and the demo project), and the Cento
+folder in Documents.</p>
+
+<h2>Known issues</h2>
+<ul>
+<li>This is a beta, tried on macOS only.</li>
+<li>The app isn't signed by Apple: see step 2b.</li>
+<li>Cento for Live needs Live 12.2.1 or later (it includes Max 9). With an
+earlier Live, point Live at a Max 9 installation (Live's Settings, File
+&amp; Folder, Max Application).</li>
+<li>Something wrong? Tell us at
+<a href="https://github.com/nnokes/cento/issues">github.com/nnokes/cento/issues</a>.</li>
+</ul>
+
+<h2>Credits and licence</h2>
+<p class="small">Cento is free software under the MIT licence
+(<code>LICENSE.txt</code>). Its chorales come from the <em>Bach Chorales
+Figured Bass</em> dataset (Ju, Yaolong, Sylvain Margot, Cory McKay, Luke
+Dahn, and Ichiro Fujinaga, 2020, ISMIR), under the Creative Commons
+Attribution 4.0 licence: see <code>Cento/corpus/README.md</code>. Cento
+implements ideas from David Cope's published books on <em>Experiments in
+Musical Intelligence</em> and <em>Emily Howell</em>.
+<a href="https://github.com/nnokes/cento">github.com/nnokes/cento</a></p>
+
+</body>
+</html>
