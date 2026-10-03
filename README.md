@@ -1,8 +1,16 @@
-# ml_midi
+# Cento
 
 A recombinant composer for **Max** and **Max for Live**, in the style of David
 Cope's *Experiments in Musical Intelligence* (EMI) and his later program
-*Emily Howell*.
+*Emily Howell*. A *cento* is a poem made entirely of lines from other poems;
+Cento makes music the same way, from beats of the works it has learned.
+
+(Cento was called ml_midi until after M11. The Max patch is now
+`cento.maxpat` and the Live devices `cento.brain.amxd` and `cento.voice.amxd`;
+the settings, Emily's taste, her works and snapshots in `patchers/` carry over
+from their old names, `ml_midi.*.json`, by themselves. The working data
+folder is now `~/Documents/cento`: rename `~/Documents/ml_midi` to it in
+Finder, and the corpus window's folders follow.)
 
 It analyzes a corpus of music in one style (Bach chorales first) and writes
 new pieces in that style by recombining beats from different works. Each
@@ -61,8 +69,8 @@ and milestones are in [PLAN.md](PLAN.md).
 
 | | Open this | Plays through |
 |---|---|---|
-| **Max version** | `patchers/ml_midi.maxpat` | A MIDI port (AU DLS Synth, IAC to any app) or `[vst~]` instruments |
-| **Live version** | `patchers/emi.brain.amxd` on one track, `patchers/emi.voice.amxd` on each voice track | Live's tracks and instruments |
+| **Max version** | `patchers/cento.maxpat` | A MIDI port (AU DLS Synth, IAC to any app) or `[vst~]` instruments |
+| **Live version** | `patchers/cento.brain.amxd` on one track, `patchers/cento.voice.amxd` on each voice track | Live's tracks and instruments |
 
 Both versions load the same `emi.engine` abstraction. Everything that differs
 between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
@@ -82,19 +90,19 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 
 | What | Where | Notes |
 |---|---|---|
-| **The repo** (your clone) | wherever you cloned it, e.g. `~/Documents/GitHub/ml_midi` | Run every command below from this folder |
+| **The repo** (your clone) | wherever you cloned it, e.g. `~/Documents/GitHub/cento` | Run every command below from this folder |
 | **Python for music21** | `<repo>/.venv/` | Made by `python3 -m venv .venv`. About 300 MB, git-ignored, delete it to uninstall |
-| **Chorale corpus** | `~/Documents/ml_midi/corpus/` | Written by `tools/export-chorales.py`; outside the repo |
-| **Minor-key corpus** (optional) | `~/Documents/ml_midi/corpus-minor/` | Written with `--mode minor`; add it in the **corpora** window, on its own or with `corpus` |
-| **Major and minor, 3/4** (optional, M8) | `~/Documents/ml_midi/corpus-both/`, `corpus-3-4/` | Written with `--mode any` and `--meter 3/4` |
-| **Exported pieces** | `~/Documents/ml_midi/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
-| **Listening tests** | anywhere, e.g. `~/Documents/ml_midi/` | Written by the **A/B** button: one web page, opened in a browser |
-| **Emily's taste** (M9) | `<repo>/patchers/ml_midi.taste.json` | Your ratings, pins and strength, shared by both products; git-ignored. **forget** and **recall taste** set the old one aside as `ml_midi.taste.backup.json`; delete both to start fresh |
-| **Stored tastes** (optional) | e.g. `~/Documents/ml_midi/emily/` | Written by **store taste** in the pop-up window; read back by **recall taste** |
-| **Emily's own music and snapshots** (M10) | `<repo>/patchers/ml_midi.emily.json`, `ml_midi.snapshots.json` | Every piece or phrase you **accept**, and her last 30 snapshots; git-ignored, shared by both products |
-| **Later: databases, Emily's snapshots** | `~/Documents/ml_midi/db/`, `emily/` | Outside the repo |
+| **Chorale corpus** | `~/Documents/cento/corpus/` | Written by `tools/export-chorales.py`; outside the repo |
+| **Minor-key corpus** (optional) | `~/Documents/cento/corpus-minor/` | Written with `--mode minor`; add it in the **corpora** window, on its own or with `corpus` |
+| **Major and minor, 3/4** (optional, M8) | `~/Documents/cento/corpus-both/`, `corpus-3-4/` | Written with `--mode any` and `--meter 3/4` |
+| **Exported pieces** | `~/Documents/cento/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
+| **Listening tests** | anywhere, e.g. `~/Documents/cento/` | Written by the **A/B** button: one web page, opened in a browser |
+| **Emily's taste** (M9) | `<repo>/patchers/cento.taste.json` | Your ratings, pins and strength, shared by both products; git-ignored. **forget** and **recall taste** set the old one aside as `cento.taste.backup.json`; delete both to start fresh |
+| **Stored tastes** (optional) | e.g. `~/Documents/cento/emily/` | Written by **store taste** in the pop-up window; read back by **recall taste** |
+| **Emily's own music and snapshots** (M10) | `<repo>/patchers/cento.emily.json`, `cento.snapshots.json` | Every piece or phrase you **accept**, and her last 30 snapshots; git-ignored, shared by both products |
+| **Later: databases, Emily's snapshots** | `~/Documents/cento/db/`, `emily/` | Outside the repo |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
-| **Remembered settings** | `<repo>/patchers/ml_midi.settings.json` | The corpus window's folders (which are on), seed and other settings; written by the patches, git-ignored. Delete it to start fresh |
+| **Remembered settings** | `<repo>/patchers/cento.settings.json` | The corpus window's folders (which are on), seed and other settings; written by the patches, git-ignored. Delete it to start fresh |
 
 `~` is your home folder, `/Users/<your name>`. `<repo>` is the folder you
 cloned into.
@@ -105,23 +113,23 @@ Clone the repo wherever you like (GitHub Desktop's `~/Documents/GitHub` is
 fine), then run everything from inside it:
 
 ```sh
-git clone https://github.com/nnokes/ml_midi.git
-cd ml_midi                  # <repo>: all commands below run from here
+git clone https://github.com/nnokes/cento.git
+cd cento                    # <repo>: all commands below run from here
 
 npm test                    # engine tests
 npm run hooks               # pre-commit check: no personal paths, bundles up to date
 
 # Chorale corpus: installs music21 into <repo>/.venv, then writes all 142
-# major-key chorales in 4/4 to ~/Documents/ml_midi/corpus/
+# major-key chorales in 4/4 to ~/Documents/cento/corpus/
 python3 -m venv .venv
 .venv/bin/pip install music21
 .venv/bin/python tools/export-chorales.py
 
 # Optional: the 153 minor-key chorales, as a corpus of their own
-.venv/bin/python tools/export-chorales.py --mode minor --out ~/Documents/ml_midi/corpus-minor
+.venv/bin/python tools/export-chorales.py --mode minor --out ~/Documents/cento/corpus-minor
 # Optional (M8): major and minor together (295), and the 20 major chorales in 3/4
-.venv/bin/python tools/export-chorales.py --mode any --out ~/Documents/ml_midi/corpus-both
-.venv/bin/python tools/export-chorales.py --meter 3/4 --out ~/Documents/ml_midi/corpus-3-4
+.venv/bin/python tools/export-chorales.py --mode any --out ~/Documents/cento/corpus-both
+.venv/bin/python tools/export-chorales.py --meter 3/4 --out ~/Documents/cento/corpus-3-4
 ```
 
 Tip: in Terminal, type `cd ` (with a space), then drag the repo folder from
@@ -130,14 +138,14 @@ Finder into the window to paste its exact path.
 Everything Max loads (patches, devices and the generated script bundles) is
 in `patchers/`.
 
-- **Max version:** open `patchers/ml_midi.maxpat`. Nothing else to set up.
+- **Max version:** open `patchers/cento.maxpat`. Nothing else to set up.
 - **Live version:** Live's Max needs `patchers/` on its search path, once:
   1. In Live, drop a *Max MIDI Effect* on a track and click *Edit*.
   2. In that editor, choose *Options → File Preferences*, click **+**, then
      *Choose* and select the repo's `patchers` folder.
   3. Restart Live. In Live's browser, add the repo folder under *Places*.
-     Drag `patchers/emi.brain.amxd` onto one MIDI track, and
-     `patchers/emi.voice.amxd` onto four MIDI tracks named **Soprano**,
+     Drag `patchers/cento.brain.amxd` onto one MIDI track, and
+     `patchers/cento.voice.amxd` onto four MIDI tracks named **Soprano**,
      **Alto**, **Tenor** and **Bass**. Each voice device plays the voice its
      track is named for, and shows it.
 
@@ -160,7 +168,7 @@ into `~/Documents/Max 9/Packages/` (a real folder, not a link).
 
 ```
 patchers/     everything Max loads, in one folder:
-              ml_midi.maxpat (Max version), emi.brain.amxd + emi.voice.amxd
+              cento.maxpat (Max version), cento.brain.amxd + cento.voice.amxd
               (Live version), emi.engine, emi.host.max, emi.host.live,
               emi.panel (the shared controls), emily.panel (Emily's ratings),
               emi.view (piano roll), emi.window (the pop-up window),
@@ -177,7 +185,7 @@ docs/         milestone checklists; controls.md: what every control does
 ```
 
 Your working data (corpus, analyzed databases, generated music) lives in
-`~/Documents/ml_midi/`, outside the repository. The remembered settings and
+`~/Documents/cento/`, outside the repository. The remembered settings and
 Emily's taste are git-ignored files in `patchers/`.
 
 ## Development
@@ -196,7 +204,7 @@ Emily's taste are git-ignored files in `patchers/`.
   Max is exactly what gets frozen into a device.
 - Some tests need data that isn't in the repository, and skip without it:
   - `EMI_CORPUS=<folder>` runs the corpus tests on that folder (by default
-    `~/Documents/ml_midi/corpus`);
+    `~/Documents/cento/corpus`);
   - `EMI_SPEAC_REF=<folder>` runs the golden test against Cope's Chopin
     analysis, given a clone of
     [GolzitskyNikolay/SPEAC-analysis](https://github.com/GolzitskyNikolay/SPEAC-analysis).

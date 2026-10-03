@@ -95,14 +95,14 @@ On the full corpus (100 seeds):
 
 Pull the latest code in GitHub Desktop.
 
-## 1. Max version (`patchers/ml_midi.maxpat`)
+## 1. Max version (`patchers/cento.maxpat`)
 
 1. [ ] **Open the patch.** The corpus reloads, and the status line ends with
        the signature count:
        `corpus 142 chorales (major), 8578 beats, 18% dead ends, 76 signatures`.
        Open the Max window (**Window ▸ Max Console**). It lists them:
        ```
-       ml_midi: 76 signatures in 142 chorales, strongest first (in how many chorales):
+       cento: 76 signatures in 142 chorales, strongest first (in how many chorales):
          sig1: bass 4-5-1 (99)
          sig2: alto 1-7-5 (96)
          sig3: tenor 5-4-3 (94)

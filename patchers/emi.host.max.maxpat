@@ -82,7 +82,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "ml_midi (Max)",
+					"text": "Cento (Max)",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"fontface": 1,

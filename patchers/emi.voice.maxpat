@@ -32,7 +32,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.voice: plays one voice from emi.brain on this track. The track's name picks the voice (Soprano, Alto, Tenor or Bass), the same rule clip writing uses.",
+					"text": "emi.voice (the cento.voice device): plays one voice from cento.brain on this track. The track's name picks the voice (Soprano, Alto, Tenor or Bass), the same rule clip writing uses.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -48,7 +48,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "EMI voice",
+					"text": "Cento voice",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"fontface": 1,
@@ -418,7 +418,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "pitch velocity from emi.brain -> this track's instrument; track MIDI passes through",
+					"text": "pitch velocity from cento.brain -> this track's instrument; track MIDI passes through",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,

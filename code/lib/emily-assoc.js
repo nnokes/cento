@@ -57,7 +57,7 @@
 //   - strength scales her whole taste: 0 is no taste, 1 as learned (and
 //     pinned), 2 twice as strong.
 //
-// Memory, as saved (JSON; the engine keeps it in ml_midi.taste.json next to
+// Memory, as saved (JSON; the engine keeps it in cento.taste.json next to
 // the settings file, so both products share it; "store taste" writes the
 // same to a file of your choice):
 //   { version: 1, weights: { feature: w }, pins: { feature: w }, strength,

@@ -32,7 +32,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.host.live: the Live version's adapter: follows Live's transport, sends voices to the emi.voice devices, writes clips, and startup (reloads the last corpus). Panel 170 x 169 px.",
+					"text": "emi.host.live: the Live version's adapter: follows Live's transport, sends voices to the cento.voice devices, writes clips, and startup (reloads the last corpus). Panel 170 x 169 px.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
@@ -82,7 +82,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "ml_midi (Live)",
+					"text": "Cento (Live)",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"fontface": 1,
@@ -488,8 +488,8 @@
 						20.0
 					],
 					"id": "obj-21",
-					"hint": "On: while Live plays, the piece plays through the emi.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice).",
-					"annotation": "On: while Live plays, the piece plays through the emi.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice).",
+					"hint": "On: while Live plays, the piece plays through the cento.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice).",
+					"annotation": "On: while Live plays, the piece plays through the cento.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice).",
 					"annotation_name": "Play Through Voices"
 				}
 			},
@@ -687,7 +687,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "to the emi.voice devices on the Soprano/Alto/Tenor/Bass tracks",
+					"text": "to the cento.voice devices on the Soprano/Alto/Tenor/Bass tracks",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [

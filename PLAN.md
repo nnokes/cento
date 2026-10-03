@@ -1,4 +1,6 @@
-# ml_midi — an EMI / Emily Howell–style composer in Max + [v8]
+# Cento — an EMI / Emily Howell–style composer in Max + [v8]
+
+*(Called ml_midi until after M11: see the README.)*
 
 This is a working plan for a recombinant composition system in the style of
 David Cope's **Experiments in Musical Intelligence (EMI)**, with an **Emily
@@ -86,9 +88,9 @@ There are four reasons for this split:
 
 There are **two deliverables**, and both are first-class:
 
-- **ml_midi for Max**: a standalone Max patch (optionally built into a macOS
+- **Cento for Max**: a standalone Max patch (optionally built into a macOS
   app).
-- **ml_midi for Live**: Max for Live devices.
+- **Cento for Live**: Max for Live devices.
 
 Both are built from the same host-agnostic abstraction, **`emi.engine`**. The
 engine never touches MIDI ports, transports or Live. Everything that differs
@@ -97,15 +99,15 @@ between the two hosts is confined to one thin **host adapter** per product:
 | Concern | `emi.host.max` (Max version) | `emi.host.live` (M4L version) |
 |---------|------------------------------|-------------------------------|
 | **Startup** | `[loadbang]` | `[live.thisdevice]` |
-| **MIDI out** | Per voice: a `[vst~]` instrument hosted in Max (AU/VST3, fed with `midievent` messages), or `[noteout]` on channels 1–4 to hardware or to another app via the IAC Driver | `[send emi.voice.N]` → `emi.voice` devices, or the brain's own `[midiout]` (§5) |
+| **MIDI out** | Per voice: a `[vst~]` instrument hosted in Max (AU/VST3, fed with `midievent` messages), or `[noteout]` on channels 1–4 to hardware or to another app via the IAC Driver | `[send emi.voice.N]` → `cento.voice` devices, or the brain's own `[midiout]` (§5) |
 | **MIDI in** (continuation, keyboard rating) | `[notein]` / `[ctlin]` from any port | the track's MIDI input (`[midiin]`) |
 | **Transport, tempo, meter** | Max's global `[transport]` with its own play/stop, tempo and meter controls | Live's transport; meter read with `[live.observer]` |
 | **Offline result** | `.mid` file, auditioned with `[seq]`; drag it into any DAW | Clips written into the voice tracks (Live API), plus the `.mid` file |
 | **Corpus import** | `[dropfile]` / folder | `[live.drop]` / folder / **Import from Live** (one scene = one work) |
-| **Saving settings** | `[pattrstorage]` presets (JSON). *As built in M4:* one remembered state in `patchers/ml_midi.settings.json`, restored when the patch opens | `live.*` parameters saved with the set; `.adv` presets. *As built in M4:* plus the last corpus, from the same settings file |
+| **Saving settings** | `[pattrstorage]` presets (JSON). *As built in M4:* one remembered state in `patchers/cento.settings.json`, restored when the patch opens | `live.*` parameters saved with the set; `.adv` presets. *As built in M4:* plus the last corpus, from the same settings file |
 | **Instruments** | Hosted in Max (`[vst~]`) or external | Live's tracks |
 
-Both versions share **`~/Documents/ml_midi/`** for databases, output and
+Both versions share **`~/Documents/cento/`** for databases, output and
 Emily's memory. Taste Emily learns in one product carries over to the other.
 
 ### Why not "Max first, port later" or "M4L first, open in Max"?
@@ -166,7 +168,7 @@ Emily's memory. Taste Emily learns in one product carries over to the other.
 ### Shipping the Max version
 
 - **As a patch**: anyone with Max 9 clones the repo and opens
-  `patchers/ml_midi.maxpat`. No search-path setup is needed.
+  `patchers/cento.maxpat`. No search-path setup is needed.
 - **As a macOS app**: Max can build a patch into a standalone application
   that runs **without Max installed**. Include the starter database; the
   scripts are already single-file bundles (§5.4). To share the app beyond your own Mac, it needs code signing
@@ -178,7 +180,7 @@ Emily's memory. Taste Emily learns in one product carries over to the other.
 ### Data flow
 
 ```
- ~/Documents/ml_midi/corpus/*.mid
+ ~/Documents/cento/corpus/*.mid
         │
  ┌──────▼───────┐   dict emi.corpus   ┌──────────────┐   dict emi.db  (+ db/*.json)
  │  emi.ingest  │────────────────────▶│  emi.analyze │──────────────────┐
@@ -208,7 +210,7 @@ own, and UI panels can be shown via `[bpatcher]`. Inside each abstraction, use
 `[p ...]` freely to keep things readable.
 
 ```
-ml_midi.maxpat  (Max version)                 emi.brain.amxd  (Live version)
+cento.maxpat  (Max version)                 cento.brain.amxd  (Live version)
 ├── [emi.host.max]                            ├── [emi.host.live]
 │     ├── [p transport]   play/stop/tempo     │     ├── [p live-sync]    live.observer: tempo, meter
 │     ├── [p midi-out]    noteout ch 1–4      │     ├── [p voices]       send emi.voice.N / midiout
@@ -372,7 +374,7 @@ first sounding beat to its last: `{ rest: true }` for a silent beat (32 of the
 cadence, bass, first, afterRest, last }`. `bass` is the pitch class a cadence
 chord stands on. SPEAC labels and signature slots come in M6 and M7.
 
-**Database file** (`~/Documents/ml_midi/db/<style>.json`): `{ version, settings, works, groupings,
+**Database file** (`~/Documents/cento/db/<style>.json`): `{ version, settings, works, groupings,
 lexicon: {L0, L1, L2, L3}, signatures, templates }`. Record the analysis settings
 in the file so every output can be reproduced.
 
@@ -781,7 +783,7 @@ The engine has three ways out. All three share the score format and provenance.
 
 - `lib/emi-smf.js` also **writes** SMF type 1 files: one track per voice, a
   tempo map, and a text meta event holding the seed and parameters. Files go to
-  `~/Documents/ml_midi/out/<timestamp>-<seed>.mid`, alongside a `.json` provenance file.
+  `~/Documents/cento/out/<timestamp>-<seed>.mid`, alongside a `.json` provenance file.
 - You can drag the file into Live, or `read` it into `[seq]` for quick
   auditioning in the Max version.
 
@@ -903,21 +905,21 @@ the transport:
 
 ```
 Live set
-├── MIDI track "EMI"       [emi.brain.amxd]            engine + UI + grid player + clip writer
-├── MIDI track "Soprano"   [emi.voice.amxd] → instrument   the track's name picks the voice
-├── MIDI track "Alto"      [emi.voice.amxd] → instrument
-├── MIDI track "Tenor"     [emi.voice.amxd] → instrument
-└── MIDI track "Bass"      [emi.voice.amxd] → instrument
+├── MIDI track "EMI"       [cento.brain.amxd]            engine + UI + grid player + clip writer
+├── MIDI track "Soprano"   [cento.voice.amxd] → instrument   the track's name picks the voice
+├── MIDI track "Alto"      [cento.voice.amxd] → instrument
+├── MIDI track "Tenor"     [cento.voice.amxd] → instrument
+└── MIDI track "Bass"      [cento.voice.amxd] → instrument
 ```
 
-- **`emi.brain`** is a MIDI effect device that contains `emi.engine`. Its panel
+- **`cento.brain`** is a MIDI effect device that contains `emi.engine`. Its panel
   has three sections: database (load and save), compose, and Emily.
   - **Offline**: a **Compose** button writes one clip per voice track.
   - **Live**: the grid player follows Live's transport, and a **Play through
     voices** toggle lets its notes through to the voice devices. It is off by
     default, so playing written clips doesn't also send every note a second
     time.
-- **`emi.voice`** is tiny. It contains `[receive emi.voice.N]` → `[midiformat]`
+- **`cento.voice`** is tiny. It contains `[receive emi.voice.N]` → `[midiformat]`
   → `[midiout]`, where N comes from the **track's name** (Soprano, Alto, Tenor
   or Bass; also S/A/T/B, any case). Clip writing finds tracks by the same rule,
   so a track's clips and its live voice always agree. *Learned in M2:* the
@@ -925,7 +927,7 @@ Live set
   the soprano and bass to the wrong tracks. In M4L, `[midiout]` is what sends
   MIDI into the track; `[noteout]` doesn't. Each voice gets its own instrument, mixer channel and
   effects.
-- **Simplest setup**: if you only want one track, `emi.brain` sends all four
+- **Simplest setup**: if you only want one track, `cento.brain` sends all four
   voices out of its own `[midiformat]` → `[midiout]` into one instrument (organ,
   strings).
 - **Recording a live performance**: Live doesn't record MIDI that a device
@@ -977,7 +979,7 @@ function writeVoice(trackIndex, notes, lengthBeats, clipName) {
   rating buttons. Mapping 👍/👎 to a footswitch or pad works naturally this way.
 - **Data lives outside the device.** Freezing a device embeds its JS and
   abstractions, but the databases (`.json`) and Emily's memory are files that
-  change at runtime. Keep them in `~/Documents/ml_midi/` (§6), with the
+  change at runtime. Keep them in `~/Documents/cento/` (§6), with the
   starter database loaded on startup and a **Load** button for others.
 - **Tempo and meter come from Live.** Read them with `[live.observer]` on
   `live_set tempo`, `signature_numerator` and `signature_denominator`, and
@@ -995,7 +997,7 @@ there's no porting step at the end. These are the things to handle:
 | **Max version inside Live** | `[v8]` needs Max 9. Recent Live 12 releases bundle Max 9 (12.2.1 onward, according to Ableton's release notes); earlier 12.x releases bundled Max 8.6. **To check yours**, open any device in the Max editor and choose *Max → About Max*. If it shows 8.x, either update Live or point Live at your own Max 9 installation (*Settings → File & Folder → Max Application*). Anyone you share the devices with needs the same. |
 | **Live edition** | Live Suite, or Standard plus the Max for Live add-on. |
 | **Freezing and `require()`** | Frozen devices are known to break when one JS file `require()`s another: Max can miss the nested dependency, and the error only shows when the editor is open. The fix: keep `code/lib` modular for development and tests, but **load only bundles in Max**. `npm run build` (`tools/build.js`, no dependencies) produces one self-contained `patchers/*.bundle.js` per wrapper, and every patch references those, during development too. Max never runs `require()` at all. The M0 spike checks this: freeze the device, copy it to a folder with no project files, and load it in a fresh set with the editor closed. |
-| **Starter database** | Freeze a prebuilt `bach-chorales.json` into `emi.brain`, so the device makes music straight away with no setup. User databases and Emily's memory still live in `~/Documents/ml_midi/`. |
+| **Starter database** | Freeze a prebuilt `bach-chorales.json` into `cento.brain`, so the device makes music straight away with no setup. User databases and Emily's memory still live in `~/Documents/cento/`. |
 | **Analysis inside Live** | Analysis runs in chunks (`Task`) with a progress bar. Live's audio isn't affected, but Max device UIs are sluggish while it runs, and the engine can't compose the next phrase, so **don't analyze while performing**. 20 chorales should take seconds; a few hundred works, perhaps a minute. Node stays a development tool for bulk runs and tests. |
 | **Per-set state** | Numeric controls are `live.*` parameters, so they are saved with the set and as device presets (`.adv`). Non-numeric state, such as which database file is loaded, needs a short spike: either store it with the set, or fall back to "last used database" in the user folder. |
 | **Distribution** | Freeze both devices. Put them in a folder, or build a **Live Pack** with a demo set (five tracks, devices already in place). |
@@ -1016,10 +1018,10 @@ small extra device could reuse `emi.engine`:
 - **EMI Continue**: continues whatever is in the clip from its last beat, in
   style. This is an offline version of the Alice-style continuation.
 
-It would use the database that `emi.brain` already loaded (through the shared
+It would use the database that `cento.brain` already loaded (through the shared
 global `emi.db` dict), or the frozen starter database if no brain is present.
 MIDI Tools work on one clip at a time, so separate instruments per voice still
-go through `emi.brain`. This is a stretch item (M14).
+go through `cento.brain`. This is a stretch item (M14).
 
 ---
 
@@ -1041,10 +1043,10 @@ none of this, because freezing embeds everything. (A `.maxproj` was dropped: Max
 their own.)
 
 ```
-ml_midi/
+cento/
 ├── README.md  PLAN.md  LICENSE  .gitignore  package.json
-├── patchers/            EVERYTHING MAX LOADS: ml_midi.maxpat (Max version),
-│                        emi.brain.amxd + emi.voice.amxd (Live version),
+├── patchers/            EVERYTHING MAX LOADS: cento.maxpat (Max version),
+│                        cento.brain.amxd + cento.voice.amxd (Live version),
 │                        emi.host.max/live, emi.panel, emi.engine, …
 │                        emily.panel (M9), and the generated
 │                        *.bundle.js scripts (committed, so a clone just works)
@@ -1071,7 +1073,7 @@ ml_midi/
 └── .github/workflows/   CI: tests, bundle freshness, path check, patches
                          match maxgen.py, on every push
 
-~/Documents/ml_midi/     working data, OUTSIDE the repo (shared by both products)
+~/Documents/cento/     working data, OUTSIDE the repo (shared by both products)
 ├── corpus/              your source .mid files
 ├── db/                  analyzed databases (.json)
 ├── out/                 generated .mid + provenance .json
@@ -1139,7 +1141,7 @@ function run() {
   by it. The README should say the project is independent, not affiliated with
   David Cope, and cite his books.
 - **No secrets in the repo.** The Tier 3b API key comes from an environment
-  variable or from a file in `~/Documents/ml_midi/`, never from the repository.
+  variable or from a file in `~/Documents/cento/`, never from the repository.
 - **No personal paths.** Max sometimes saves absolute paths in patchers (for
   example `/Users/<you>/…` in file references or `[vst~]` plugin state). A
   small check (`tools/check-paths.js`, run in CI and as a pre-commit hook)
@@ -1228,8 +1230,8 @@ How it works:
   `emily.panel` (130 px) between the panel and the piano roll; the device
   is now 984 px wide (1024 px since the piano roll grew to 400 px, after
   M11).
-- **Memory**: `patchers/ml_midi.taste.json` next to the settings file
-  (git-ignored), not `~/Documents/ml_midi/emily/`. Max's `File` can't create
+- **Memory**: `patchers/cento.taste.json` next to the settings file
+  (git-ignored), not `~/Documents/cento/emily/`. Max's `File` can't create
   folders, and the settings file already has a known place shared by both
   products. Each product re-reads the file when it changes, so both can be
   open at once.
@@ -1273,7 +1275,7 @@ accept it.
 - **Mix**: how much the original corpus counts compared with Emily's own output.
   The corpus has a minimum share it can't drop below.
 - **Novelty**: how often Emily tries a variant.
-- **Snapshots and rollback**: one file per session in `~/Documents/ml_midi/emily/`.
+- **Snapshots and rollback**: one file per session in `~/Documents/cento/emily/`.
 
 **Risk**: a feedback loop can narrow the style until everything sounds like what
 you liked last week. Decay, the mix floor and the novelty quota guard against
@@ -1403,11 +1405,11 @@ playhead, the false-start fix and hover help on every control.
 
 | # | Milestone | Done when |
 |---|-----------|-----------|
-| **M0** | **Setup, both shells, four spikes**: repo as a Max package, README, LICENSE, `.gitignore`, CI, bundler, corpus export script; `ml_midi.maxpat` and `emi.brain.amxd`, each loading the same `emi.engine` through its adapter | (a) The same `emi-hello` module gives the same result in `node --test` **and in both shells**. (b) `[v8]` in an M4L device writes a test clip through the Live API. (c) A grid player plays a hard-coded 4-voice phrase into 4 Live tracks in sync, and through MIDI ports or 4 `[vst~]` instruments in the Max version. (d) A **frozen** device works with `patchers/` off the search path *(deferred to M11)*. |
+| **M0** | **Setup, both shells, four spikes**: repo as a Max package, README, LICENSE, `.gitignore`, CI, bundler, corpus export script; `cento.maxpat` and `cento.brain.amxd`, each loading the same `emi.engine` through its adapter | (a) The same `emi-hello` module gives the same result in `node --test` **and in both shells**. (b) `[v8]` in an M4L device writes a test clip through the Live API. (c) A grid player plays a hard-coded 4-voice phrase into 4 Live tracks in sync, and through MIDI ports or 4 `[vst~]` instruments in the Max version. (d) A **frozen** device works with `patchers/` off the search path *(deferred to M11)*. |
 | **M1** | **Ingest round-trip**: MIDI reader/writer, ingest with sidecars (pickup padding, fermatas, key), transposition to C major / A minor; load and play a chorale in both products, and write it as Live clips. *(The piano roll moved to M2, where it can show where each beat came from; Live's clip view covers M1.)* | 20 chorales round-trip with identical notes; loaded chorales play in C and in their own key in both products |
 | **M2** | **Naive recombination** (whole piece): beat groupings, `L0` voice-hooking, the different-source rule, a fixed length, ending on a cadence; the piano roll view (`emi.view`) colored by source chorale | 32-beat chorales with no broken voices at seams; heard in the Max version, and the exported `.mid` plays in Live |
 | **M3** | **Form**: templates, phrase lengths, cadence slots, backtracking, match-level relaxation | Output keeps the template's phrase structure; the dead-end rate is under 5% |
-| **M4** | **Both products, offline**: shared `live.*` panels; Max adapter (`.mid` export, `[seq]` audition, `[pattrstorage]` presets); Live adapter (`emi.brain` + `emi.voice`, clip writing) | **Max**: Compose → hear it through `[vst~]` and save the `.mid`. **Live**: Compose writes S/A/T/B clips to tracks found by name. In both, the same seed gives the same notes, and settings survive a reload. |
+| **M4** | **Both products, offline**: shared `live.*` panels; Max adapter (`.mid` export, `[seq]` audition, `[pattrstorage]` presets); Live adapter (`cento.brain` + `cento.voice`, clip writing) | **Max**: Compose → hear it through `[vst~]` and save the `.mid`. **Live**: Compose writes S/A/T/B clips to tracks found by name. In both, the same seed gives the same notes, and settings survive a reload. |
 | **M5** | **Both products, streaming**: phrase-by-phrase composition, grid player, endless or N-phrase pieces | **Max**: its own play, stop and tempo controls. **Live**: follows Live's transport. In both, parameter changes are heard from the next phrase, with no dropped or stuck notes at 60–160 BPM, including stop/start and tempo changes. |
 | **M6** | **Tension and SPEAC**: three-level labels, label-matched recombination, SPEAC lane in the view | Golden tests reproduce Cope's book examples within tolerance |
 | **M7** | **Signatures**: detection UI, pinning, lookahead hooking (also used in streaming) | Known Bach cadential formulas show up as signatures and appear in output at cadences |
@@ -1416,13 +1418,13 @@ playhead, the false-start fix and hover help on every control.
 | **M10** | **Emily Tier 2, memory and drift**: accept-to-database, variation operators, mix and novelty, snapshots | Accepted variants appear in later output; a rollback restores an earlier taste exactly |
 | **M11** | **Corpora**: a corpus window in both products: folders of chorales, each switched on or off (and **only**, **remove**, **add folder**, **rescan**), combined into one corpus: each chorale once, one meter, in file-name order; remembered between sessions | Switching folders on and off changes what pieces are made from, in both products; two folders compose exactly as one folder holding the same chorales |
 | **M12** | **A second style: Palestrina**: a style profile per folder (voices, beat unit, modes, how cadences are found); export of music21's Palestrina masses; cadences found from their formulas instead of fermatas; modal keys; SPEAC, signatures and quality checks re-tuned; Bach and Palestrina folders on together | Palestrina pieces keep the style's rules (ranges, dissonance prepared and resolved, cadences where the formulas fall), a blind A/B test against real Palestrina, and with both styles on, the joins between them are reported |
-| **M13** | **Ship both (for personal use)**: **Max version** as a Max project and an unsigned macOS app for your own Mac; **Live version** as frozen `emi.brain` + `emi.voice` with the starter database, presets and a demo set. Tag a release on GitHub. *Later, if you share them*: code signing and notarization, a Live Pack, and clean-machine tests. | The app opens and plays through `[vst~]`; the demo set plays when you press Play; the parity checklist passes in both; a fresh clone plus the README steps rebuilds everything; the freeze test deferred from M0 (d) passes. |
+| **M13** | **Ship both (for personal use)**: **Max version** as a Max project and an unsigned macOS app for your own Mac; **Live version** as frozen `cento.brain` + `cento.voice` with the starter database, presets and a demo set. Tag a release on GitHub. *Later, if you share them*: code signing and notarization, a Live Pack, and clean-machine tests. | The app opens and plays through `[vst~]`; the demo set plays when you press Play; the parity checklist passes in both; a fresh clone plus the README steps rebuilds everything; the freeze test deferred from M0 (d) passes. |
 | **M14** | **Stretch**: Emily Tier 3a (text), Live 12 MIDI Tool (§5.5), Alice-style continuation from a MIDI keyboard | — |
 
 **First corpus**: about 20 Bach chorales in 4/4, major mode, with each
 voice on its own track. The `music21` corpus has all of them, and
 `tools/export-chorales.py` exports them to per-part MIDI in
-`~/Documents/ml_midi/corpus/`. See §6.1 for licensing.
+`~/Documents/cento/corpus/`. See §6.1 for licensing.
 
 ---
 

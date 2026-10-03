@@ -22,7 +22,7 @@
 // composing prefers them among the choices the rules allow; "temperature"
 // sets how much chance still plays (0: Emily's favourite choices; 1: as
 // before M9; up to 3: more adventurous). Her taste is kept in
-// ml_midi.taste.json next to the settings file, and fades a little at each
+// cento.taste.json next to the settings file, and fades a little at each
 // startup after a session with ratings. Each piece composed with a taste
 // reports in the Max window how it compares with the same seed without one.
 //
@@ -85,7 +85,7 @@
 //   taste                  Emily's taste in the Max window, and how ten pieces compare
 //                          with and without it (composed a piece at a time: tastestep)
 //   tastestep <id>         (from the engine itself, via later) the comparison's next piece
-//   forget                 start a new taste (the old one is kept in ml_midi.taste.backup.json,
+//   forget                 start a new taste (the old one is kept in cento.taste.backup.json,
 //                          and, M10, as a snapshot)
 //   pin <feature> <weight> hold a musical feature (f:...) at a weight, -3..3 (the window's
 //                          weight editor); unpin <feature> releases it, unpin alone all
@@ -93,7 +93,7 @@
 //   novelty <0..1>         M10: the chance that each phrase gets a variant (emily-vary)
 //   accept                 M10: keep the selection, the stream phrase playing or the piece
 //                          as a work of Emily's own (emily-memory); later pieces use it
-//   unaccept <id>          put an accepted work aside (it stays in ml_midi.emily.json)
+//   unaccept <id>          put an accepted work aside (it stays in cento.emily.json)
 //   mix <0..0.75>          how much her own music counts against Bach's (0: Bach only)
 //   snapshot               keep her whole taste as it is now (one is also kept when a
 //                          session starts, if it changed, and before a rollback)
@@ -111,7 +111,7 @@
 //                          (Live version: its controls are saved with the set);
 //                          then compose with the current seed
 //
-// Settings live in ml_midi.settings.json next to this patch (emi-settings).
+// Settings live in cento.settings.json next to this patch (emi-settings).
 // Nothing is written before startup has read the file, so the values controls
 // send while a patch loads can't overwrite what was saved.
 
@@ -188,10 +188,10 @@ let folders = [];
 const folderCache = new Map(); // path -> { works, skipped }
 let corpusReport = { used: new Set(), notes: new Map() }; // the last build, by folder path
 let corpusBuilds = 0; // changes asked for: each one's build id (the last one builds)
-let store = emilyMemory.createStore(); // every work ever accepted (ml_midi.emily.json)
+let store = emilyMemory.createStore(); // every work ever accepted (cento.emily.json)
 let storePath = null;
 let storeText = null;
-let snapshots = emilyMemory.createSnapshots(); // ml_midi.snapshots.json
+let snapshots = emilyMemory.createSnapshots(); // cento.snapshots.json
 let snapshotsPath = null;
 let snapshotsText = null;
 
@@ -361,9 +361,29 @@ function startup(mode) {
       outlet(0, "error", "this", "patch", "has", "no", "folder,", "so", "settings", "won't", "be", "saved");
       return;
     }
+    // Files saved before the project was renamed (ml_midi.*.json) carry over.
+    const carried = settingsFile.migrate(folder);
+    if (carried.length) post(`cento: carried over from ${settingsFile.LEGACY}.*: ${carried.join(", ")}\n`);
     settingsPath = settingsFile.pathIn(folder);
     remembered = settingsFile.read(settingsPath);
     folders = corpora.normalize(remembered.corpora, remembered.corpus); // before anything saves
+    // A corpus folder under ~/Documents/ml_midi that was renamed to cento.
+    const moved = corpora.followRename(folders, (path) => {
+      try {
+        return files.listMidi(path).length > 0;
+      } catch (e) {
+        return false;
+      }
+    });
+    if (moved) {
+      post(`cento: ${moved} corpus ${moved === 1 ? "folder" : "folders"} found under the new name (Documents/cento)\n`);
+      remembered.corpora = folders.map((f) => ({ ...f })); // the file as read, with the new paths
+      try {
+        settingsFile.write(settingsPath, remembered);
+      } catch (e) {
+        // written with the next change
+      }
+    }
     if (mode !== "corpus") restore();
     loadTaste(folder);
     const on = folders.filter((f) => f.on);
@@ -638,7 +658,7 @@ function taste() {
   attempt(() => {
     syncTaste();
     const earlier = memory.sessions ? `; ${memory.sessions} earlier ${memory.sessions === 1 ? "session" : "sessions"}` : "";
-    post(`ml_midi: Emily's taste: ${emily.summary(memory, 6)}${earlier}\n`);
+    post(`cento: Emily's taste: ${emily.summary(memory, 6)}${earlier}\n`);
     const { likes, dislikes } = emily.opinions(memory, 8, 0.05);
     if (likes.length) post("  likes: " + likes.map(([f, w]) => `${emily.nameOf(f)} +${w.toFixed(2)}`).join(", ") + "\n");
     if (dislikes.length) post("  dislikes: " + dislikes.map(([f, w]) => `${emily.nameOf(f)} ${w.toFixed(2)}`).join(", ") + "\n");
@@ -735,7 +755,7 @@ function rateNow(r) {
     outlet(0, "status", ...text.split(" "));
     outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
     showTaste();
-    post(`ml_midi: Emily ${text}\n`);
+    post(`cento: Emily ${text}\n`);
   });
 }
 rateNow.local = 1;
@@ -869,13 +889,13 @@ function ownBeats(piece) {
 }
 ownBeats.local = 1;
 
-// "ml_midi: Emily's own music: 3 works (generation 1: 2, generation 2: 1), 160 beats, 12 varied; 1 signature of her own"
+// "cento: Emily's own music: 3 works (generation 1: 2, generation 2: 1), 160 beats, 12 varied; 1 signature of her own"
 function ownLine() {
   if (!herDb) return null;
   const c = emilyMemory.counts(herDb);
   const gens = [...c.gens].sort((a, b) => a[0] - b[0]).map(([g, n]) => `generation ${g}: ${n}`).join(", ");
   const sigs = herDb.signatures.filter((sig) => sig.emily).length;
-  let text = `ml_midi: Emily's own music: ${c.works} ${c.works === 1 ? "work" : "works"} (${gens}), ${c.beats} beats, ${c.varied} varied`;
+  let text = `cento: Emily's own music: ${c.works} ${c.works === 1 ? "work" : "works"} (${gens}), ${c.beats} beats, ${c.varied} varied`;
   if (sigs) text += `; ${sigs} ${sigs === 1 ? "signature" : "signatures"} of her own`;
   if (db !== herDb) text += "; not in use at mix 0";
   return text;
@@ -1423,7 +1443,7 @@ function followMeter(meter) {
   outlet(0, "meter", meter[0], meter[1]);
   if (host !== "live") return;
   try {
-    if (clips.setMeter(meter[0], meter[1])) post(`ml_midi: Live's time signature set to ${meter[0]}/${meter[1]}\n`);
+    if (clips.setMeter(meter[0], meter[1])) post(`cento: Live's time signature set to ${meter[0]}/${meter[1]}\n`);
   } catch (e) {
     outlet(0, "error", "can't", "set", "Live's", "time", "signature:", ...String(e.message).split(" "));
   }
@@ -1465,7 +1485,7 @@ blocksOf.local = 1;
 // The corpus's signatures, strongest first, in the Max window.
 function listSignatures() {
   const list = db.signatures;
-  post(`ml_midi: ${list.length} signatures in ${db.works.length} chorales, strongest first (in how many chorales):\n`);
+  post(`cento: ${list.length} signatures in ${db.works.length} chorales, strongest first (in how many chorales):\n`);
   const inMode = (sig) => (db.mode === "mixed" ? `, ${sig.mode}` : "");
   for (const sig of list.slice(0, 16)) post(`  ${sig.id}: ${signatureNames.describe(sig, db.mode)} (${sig.works}${inMode(sig)})\n`);
   if (list.length > 16) post(`  ... and ${list.length - 16} more\n`);

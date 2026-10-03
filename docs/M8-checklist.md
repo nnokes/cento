@@ -131,19 +131,19 @@ Pull the latest code in GitHub Desktop.
    into the Terminal window. Press Return.
 3. **Major and minor together** (295 chorales, a few minutes):
    ```sh
-   .venv/bin/python tools/export-chorales.py --mode any --out ~/Documents/ml_midi/corpus-both
+   .venv/bin/python tools/export-chorales.py --mode any --out ~/Documents/cento/corpus-both
    ```
    It ends with `wrote 295 chorales to ...`.
 4. **3/4** (20 major chorales, under a minute):
    ```sh
-   .venv/bin/python tools/export-chorales.py --meter 3/4 --out ~/Documents/ml_midi/corpus-3-4
+   .venv/bin/python tools/export-chorales.py --meter 3/4 --out ~/Documents/cento/corpus-3-4
    ```
    It ends with `wrote 20 chorales to ...`.
 
 If Terminal says `No such file or directory` for `.venv/bin/python`, step 2
 picked the wrong folder (see the M2 checklist for recreating `.venv`).
 
-## 2. Max version (`patchers/ml_midi.maxpat`)
+## 2. Max version (`patchers/cento.maxpat`)
 
 1. [x] **Open the patch.** The corpus reloads as before:
        `corpus 142 chorales (major), 8578 beats, 18% dead ends, 76 signatures`.
@@ -171,13 +171,13 @@ picked the wrong folder (see the M2 checklist for recreating `.venv`).
        from beat 4 of bar 1. Hovering over a beat in bar 6 names the same
        source as the matching beat in bar 2.
 6. [x] **Export with provenance.** Set **seed** back to 3. Click
-       **export midi** and save as `emi-3` in `Documents/ml_midi/out`.
+       **export midi** and save as `emi-3` in `Documents/cento/out`.
        - The status line says `exported emi-3.mid and emi-3.json`.
        - Open `emi-3.json` in TextEdit. Near the bottom, under `"beats"`,
          each beat names its `"grouping"` (such as `"bwv322:3"`), its
          `"bar"`, `"beat"` and `"speac"`.
 7. [x] **Major and minor together.** Click **load corpus** and choose
-       `Documents/ml_midi/corpus-both`:
+       `Documents/cento/corpus-both`:
        `corpus 295 chorales (142 major, 153 minor), 17746 beats, 14% dead ends, 154 signatures`.
        Then seeds 1 and 2:
        - `emi-1: form of bwv258 (A minor), 5 phrases, 56 beats, 31 chorales, SPEAC 89%, 3 signatures`
@@ -188,18 +188,18 @@ picked the wrong folder (see the M2 checklist for recreating `.venv`).
        `emi-1 stream: phrase 2 queued (bwv145-a phrase 2, C major, signature soprano 4-2-1)`,
        and every phrase stays in C major. Seed 2's stream stays in A minor.
        Turn **stream** off.
-8. [x] **3/4.** **load corpus** `Documents/ml_midi/corpus-3-4`:
+8. [x] **3/4.** **load corpus** `Documents/cento/corpus-3-4`:
        `corpus 20 chorales (major), 1522 beats, 48% dead ends, 41 signatures`.
        Seed 1: `emi-1: form of bwv194.12, 4 phrases, 49 beats, 10 chorales, SPEAC 47%, 2 signatures`.
        - The piano roll's bar lines are three beats apart.
        - Press Play: the piece starts on a barline and moves in three.
        - Seed 2 shows the small corpus at work: `(25 octave moves)` at the
          end of its status line.
-9. [x] **Back to the main corpus.** **load corpus** `Documents/ml_midi/corpus`
+9. [x] **Back to the main corpus.** **load corpus** `Documents/cento/corpus`
        and compose any seed: playback is in four again.
 10. [x] **The listening test.** Set **seed** to 5 (so the pairs differ from
        the test you took), click **A/B** and save as `listening-test` in
-       `Documents/ml_midi`. The status line says
+       `Documents/cento`. The status line says
        `wrote listening-test.html: 10 pairs; open it in a web browser`.
        - Double-click the file in Finder: it opens in your browser. Play one
          pair to check the sound.

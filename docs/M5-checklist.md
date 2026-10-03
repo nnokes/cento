@@ -98,7 +98,7 @@ with the Live set and remembered by the Max version.
 
 Pull the latest code in GitHub Desktop.
 
-## 1. Max version (`patchers/ml_midi.maxpat`)
+## 1. Max version (`patchers/cento.maxpat`)
 
 1. [ ] Open the patch. The shared panel has a new bottom row: **stream**,
        **phrases** (8) and **transp.** (0). The corpus reloads as in M4.

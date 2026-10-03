@@ -20,7 +20,7 @@ test("corpora: a list from the settings file is made safe; the old single folder
     { path: "/a", on: true, works: 142, meter: "4/4", modes: "major" },
     { path: "/b", on: false, works: null, meter: null, modes: null },
   ]);
-  assert.equal(corpora.nameOf("/music/ml_midi/corpus-both/"), "corpus-both");
+  assert.equal(corpora.nameOf("/music/cento/corpus-both/"), "corpus-both");
   assert.equal(corpora.nameOf("C:\\music\\bach"), "bach");
 });
 

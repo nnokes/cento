@@ -195,7 +195,7 @@ HELP = {
         "Clips On Compose": ("Clips On Compose", "On: every piece composed is also written as clips (as "
                              "writeclips does), so nothing you like is lost."),
         "Play Through Voices": ("Play Through Voices", "On: while Live plays, the piece plays through the "
-                                "emi.voice devices on the voice tracks. Turn it off to hear only clips you "
+                                "cento.voice devices on the voice tracks. Turn it off to hear only clips you "
                                 "wrote (otherwise each note sounds twice)."),
         "All Voices Here": ("All Voices Here", "On: all four voices also come out of this track, to hear "
                             "the whole piece on this track's instrument."),
@@ -274,7 +274,7 @@ HELP = {
                     "folders counts once; the corpus has one meter (the first folder's). Hover over a name for "
                     "its folder's full path."),
         "add folder": ("add folder", "Choose a folder of chorales (MIDI files, as tools/export-chorales.py "
-                       "writes them, e.g. Documents/ml_midi/corpus-both). It joins the list, switched on."),
+                       "writes them, e.g. Documents/cento/corpus-both). It joins the list, switched on."),
         "rescan": ("rescan", "Read every folder again, after adding or removing chorales in one. (Folders are "
                    "read once, when first switched on.)"),
     },
@@ -316,14 +316,14 @@ def annotate(name, p):
 def controls_doc():
     """docs/controls.md: every control's hover text, by panel."""
     sections = [
-        ("emi.host.max", "Max version: transport and output (left panel of `ml_midi.maxpat`)"),
-        ("emi.host.live", "Live version: clips and voices (left panel of the emi.brain device)"),
+        ("emi.host.max", "Max version: transport and output (left panel of `cento.maxpat`)"),
+        ("emi.host.live", "Live version: clips and voices (left panel of the cento.brain device)"),
         ("emi.panel", "Composing (both versions)"),
         ("emily.panel", "Emily (both versions)"),
         ("emi.view", "Piano roll (both versions)"),
         ("emi.window", "The pop-up window (both versions: Emily panel, window)"),
         ("emi.corpora", "The corpus window (both versions: the panel's corpora button)"),
-        ("emi.voice", "The emi.voice device (Live)"),
+        ("emi.voice", "The cento.voice device (Live)"),
     ]
     out = ["# Controls", "",
            "What every control does: the same text you see when you hover over it. In Max, rest the mouse "
@@ -937,7 +937,7 @@ def host_max():
     out = p.outlet(20, 720, "to emi.engine", 1)
 
     # Title and transport
-    p.comment("ml_midi (Max)", 20, 70, w=110, pres=(6, 4, 120, 20), fontface=1)
+    p.comment("Cento (Max)", 20, 70, w=110, pres=(6, 4, 120, 20), fontface=1)
     # Play/stop: green "play" when stopped, red "stop" while playing. It goes
     # back to play by itself when the piece ends ("ended" from the engine).
     # A live.text toggle needs its parameter (an off/on enum) to toggle at
@@ -1079,11 +1079,11 @@ def host_max():
 def host_live():
     p = Patch(rect=(40, 40, 1300, 760), presentation=True)
     p.comment("emi.host.live: the Live version's adapter: follows Live's transport, sends voices to the "
-              "emi.voice devices, writes clips, and startup (reloads the last corpus). Panel 170 x 169 px.",
+              "cento.voice devices, writes clips, and startup (reloads the last corpus). Panel 170 x 169 px.",
               20, 5, w=1000)
     inl = p.inlet(20, 30, "from emi.engine", 1)
     out = p.outlet(20, 720, "to emi.engine", 1)
-    p.comment("ml_midi (Live)", 20, 70, w=110, pres=(6, 4, 120, 20), fontface=1)
+    p.comment("Cento (Live)", 20, 70, w=110, pres=(6, 4, 120, 20), fontface=1)
 
     # Live's stop -> engine (note-offs; the player starts the queue again at
     # the next barline it reaches). Live's play isn't sent: the observer
@@ -1151,7 +1151,7 @@ def host_live():
     for k in range(4):
         snd = p.obj(f"send emi.voice.{k + 1}", 20 + k * 115, 510, 1, 0, [], w=105)
         p.connect(vroute, k, snd, 0)
-    p.comment("to the emi.voice devices on the Soprano/Alto/Tenor/Bass tracks", 20, 540, w=420)
+    p.comment("to the cento.voice devices on the Soprano/Alto/Tenor/Bass tracks", 20, 540, w=420)
 
     # All voices on this track (row 108)
     here = live_toggle(p, "All Voices Here", "all voices on this track", 600, 360, (6, 108, 158, 20))
@@ -1243,7 +1243,7 @@ def window():
               linecount=2, pres=(766, y - 2, 404, 30), fontsize=10.0)
     # The window's title.
     lb = p.obj("loadbang", 700, 20, 1, 1, ["bang"])
-    title = p.msg("title ml_midi: piano roll and Emily", 700, 55, w=230)
+    title = p.msg("title Cento: piano roll and Emily", 700, 55, w=230)
     this = p.obj("thispatcher", 700, 90, 1, 2, ["", ""], w=80)
     p.connect(lb, 0, title, 0)
     p.connect(title, 0, this, 0)
@@ -1280,7 +1280,7 @@ def corpora_window():
     p.comment("Add a folder of chorales (MIDI files), then switch folders on or off. Hover over anything for "
               "what it does.", 300, 460, w=420, h=30, linecount=2, pres=(176, y - 2, W - 166, 30), fontsize=10.0)
     lb = p.obj("loadbang", 500, 20, 1, 1, ["bang"])
-    title = p.msg("title ml_midi: corpora", 500, 55, w=150)
+    title = p.msg("title Cento: corpora", 500, 55, w=150)
     this = p.obj("thispatcher", 500, 90, 1, 2, ["", ""], w=80)
     p.connect(lb, 0, title, 0)
     p.connect(title, 0, this, 0)
@@ -1341,9 +1341,9 @@ def device_width(host_w):
 
 def voice():
     p = Patch(rect=(80, 80, 760, 460), presentation=True)
-    p.comment("emi.voice: plays one voice from emi.brain on this track. The track's name picks the voice "
+    p.comment("emi.voice (the cento.voice device): plays one voice from cento.brain on this track. The track's name picks the voice "
               "(Soprano, Alto, Tenor or Bass), the same rule clip writing uses.", 20, 5, w=640, h=34, linecount=2)
-    p.comment("EMI voice", 20, 50, w=80, pres=(6, 4, 100, 20), fontface=1)
+    p.comment("Cento voice", 20, 50, w=80, pres=(6, 4, 100, 20), fontface=1)
 
     # The track's name, now and whenever it changes
     thisdev = p.obj("live.thisdevice", 20, 80, 1, 3, ["bang", "int", "int"])
@@ -1382,7 +1382,7 @@ def voice():
     midiout = p.obj("midiout", 260, 470, 1, 0, [], w=55)
     p.connect(fmt, 0, midiout, 0)
     p.connect(midiin, 0, midiout, 0)
-    p.comment("pitch velocity from emi.brain -> this track's instrument; track MIDI passes through",
+    p.comment("pitch velocity from cento.brain -> this track's instrument; track MIDI passes through",
               390, 465, w=330, h=34, linecount=2)
     return p
 
@@ -1429,7 +1429,7 @@ if __name__ == "__main__":
         {"toolbarvisible": 0, "statusbarvisible": 0}))
     write("patchers/emi.corpora.maxpat", annotate("emi.corpora", corpora_window()).to_json(
         {"toolbarvisible": 0, "statusbarvisible": 0}))
-    write("patchers/ml_midi.maxpat", top(
+    write("patchers/cento.maxpat", top(
         "emi.host.max.maxpat",
         "Max version: the Max adapter and the shared panel above, wired both ways to the shared engine.",
         HOST_MAX_W).to_json())
@@ -1441,7 +1441,8 @@ if __name__ == "__main__":
     write("patchers/emi.view.maxpat", annotate("emi.view", view()).to_json())
     assert ANNOTATED == set(HELP), sorted(set(HELP) - ANNOTATED)
     write("docs/controls.md", controls_doc())
-    for name, bp, w in [("emi.brain", "emi.brain.maxpat", device_width(HOST_LIVE_W)), ("emi.voice", "emi.voice.maxpat", 120)]:
+    # The Live devices (their contents are emi.brain and emi.voice).
+    for name, bp, w in [("cento.brain", "emi.brain.maxpat", device_width(HOST_LIVE_W)), ("cento.voice", "emi.voice.maxpat", 120)]:
         write(f"patchers/{name}.amxd", amxd(bp, w, f"{name}.amxd"))
     if CHECK:
         if STALE:

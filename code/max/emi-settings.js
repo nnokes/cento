@@ -1,8 +1,8 @@
 "use strict";
 // Max-only: remembers settings between sessions in one small JSON file,
-// ml_midi.settings.json, in the folder of the engine's patch (patchers/; the
-// file is git-ignored). Both products use the same file, so the last corpus
-// carries over between them.
+// cento.settings.json, in the folder of the engine's patch (patchers/; the
+// file is git-ignored). Both products use the same file, so the corpora
+// carry over between them.
 //
 //   folderOf(patcher)  the folder of the nearest saved patcher (the [v8]'s own
 //                      patcher, then its parents), or null
@@ -10,20 +10,27 @@
 //   read(path)         the settings, or {} if there are none or they're unreadable
 //   write(path, settings)
 //
-// Emily's taste (M9) is kept the same way, in ml_midi.taste.json in the same
+// Emily's taste (M9) is kept the same way, in cento.taste.json in the same
 // folder (also git-ignored), so it carries over between the products too:
 //   tastePathIn(folder), backupPathIn(folder) (what "forget" sets aside)
-// and (M10) the music Emily has accepted, in ml_midi.emily.json, and her
-// snapshots, in ml_midi.snapshots.json:
+// and (M10) the music Emily has accepted, in cento.emily.json, and her
+// snapshots, in cento.snapshots.json:
 //   emilyPathIn(folder), snapshotsPathIn(folder)
+//
+// The project was called ml_midi until after M11. migrate(folder) copies
+// files with the old names (ml_midi.settings.json, ...) to the new ones the
+// first time, so nothing is lost; the old files stay as they are.
 
 const files = require("emi-load");
 
-const FILE_NAME = "ml_midi.settings.json";
-const TASTE_NAME = "ml_midi.taste.json";
-const BACKUP_NAME = "ml_midi.taste.backup.json";
-const EMILY_NAME = "ml_midi.emily.json";
-const SNAPSHOTS_NAME = "ml_midi.snapshots.json";
+const NAME = "cento";
+const LEGACY = "ml_midi"; // the name before Cento
+const FILE_NAME = NAME + ".settings.json";
+const TASTE_NAME = NAME + ".taste.json";
+const BACKUP_NAME = NAME + ".taste.backup.json";
+const EMILY_NAME = NAME + ".emily.json";
+const SNAPSHOTS_NAME = NAME + ".snapshots.json";
+const ALL = [FILE_NAME, TASTE_NAME, BACKUP_NAME, EMILY_NAME, SNAPSHOTS_NAME];
 
 function folderOf(patcher) {
   for (let p = patcher; p; p = p.parentpatcher) {
@@ -54,6 +61,25 @@ function snapshotsPathIn(folder) {
   return folder + "/" + SNAPSHOTS_NAME;
 }
 
+// Copies each file still under its old name (ml_midi.*) to its new name, if
+// the new one isn't there yet. Returns the new names written.
+function migrate(folder) {
+  const copied = [];
+  for (const name of ALL) {
+    const from = folder + "/" + LEGACY + name.slice(NAME.length);
+    const to = folder + "/" + name;
+    try {
+      if (!files.exists(to) && files.exists(from)) {
+        files.writeText(to, files.readText(from));
+        copied.push(name);
+      }
+    } catch (e) {
+      // left under its old name
+    }
+  }
+  return copied;
+}
+
 function read(path) {
   try {
     if (!files.exists(path)) return {};
@@ -79,5 +105,7 @@ exports.EMILY_NAME = EMILY_NAME;
 exports.emilyPathIn = emilyPathIn;
 exports.SNAPSHOTS_NAME = SNAPSHOTS_NAME;
 exports.snapshotsPathIn = snapshotsPathIn;
+exports.migrate = migrate;
+exports.LEGACY = LEGACY;
 exports.read = read;
 exports.write = write;

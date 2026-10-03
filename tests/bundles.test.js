@@ -311,7 +311,7 @@ test("core: signatures: listed when a corpus loads, kept at cadences, drawn as b
   const count = loaded.at(-2);
   assert.ok(count > 0);
   const list = core.posted.join("");
-  assert.match(list, new RegExp(`^ml_midi: ${count} signatures in 3 chorales`));
+  assert.match(list, new RegExp(`^cento: ${count} signatures in 3 chorales`));
   assert.match(list, /sig1: (soprano|alto|tenor|bass) [-#b0-9]+ \(3\)/);
 
   core.send("beats", 8);
@@ -552,14 +552,14 @@ function settle(core, out) {
   }
   return all;
 }
-const settingsIn = (folder) => JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.settings.json"), "utf8"));
+const settingsIn = (folder) => JSON.parse(fs.readFileSync(path.join(folder, "cento.settings.json"), "utf8"));
 
 test("settings: nothing is saved before startup, or when the patch has no folder", () => {
   const folder = tempDir();
   const core = engineIn(folder);
   core.send("seed", 5);
   core.send("beats", 16);
-  assert.equal(fs.existsSync(path.join(folder, "ml_midi.settings.json")), false);
+  assert.equal(fs.existsSync(path.join(folder, "cento.settings.json")), false);
   const unsaved = loadBundle("emi.core");
   assert.equal(lastStatus(unsaved.send("startup", "all"))[0], "error");
 });
@@ -597,13 +597,13 @@ test("settings: the Live version keeps the set's values and only reloads the cor
   first.send("startup", "all");
   first.send("corpus", writeCorpus());
   first.send("seed", 5);
-  const saved = fs.readFileSync(path.join(folder, "ml_midi.settings.json"), "utf8");
+  const saved = fs.readFileSync(path.join(folder, "cento.settings.json"), "utf8");
 
   const live = engineIn(folder, fakeLive({ trackNames: ["EMI", "Soprano", "Alto", "Tenor", "Bass"] }));
   live.send("seed", 3); // the set's saved values arrive while the device loads...
   live.send("beats", 8);
   live.send("autoclips", 1);
-  assert.equal(fs.readFileSync(path.join(folder, "ml_midi.settings.json"), "utf8"), saved, "...and don't overwrite the file");
+  assert.equal(fs.readFileSync(path.join(folder, "cento.settings.json"), "utf8"), saved, "...and don't overwrite the file");
   const out = live.send("startup", "corpus");
   assert.deepEqual(select(out, "setting"), [], "controls keep the set's values");
   assert.deepEqual(lastStatus(out).slice(0, 3), ["status", "emi-3:", "form"]);
@@ -612,7 +612,7 @@ test("settings: the Live version keeps the set's values and only reloads the cor
 
 test("settings: a corpus that has gone missing is reported, not fatal", () => {
   const folder = tempDir();
-  fs.writeFileSync(path.join(folder, "ml_midi.settings.json"), JSON.stringify({ corpus: path.join(folder, "gone"), seed: 2 }));
+  fs.writeFileSync(path.join(folder, "cento.settings.json"), JSON.stringify({ corpus: path.join(folder, "gone"), seed: 2 }));
   const out = engineIn(folder).send("startup", "all");
   assert.deepEqual(select(out, "setting")[0], ["seed", 2]);
   assert.match(lastStatus(out).join(" "), /^error can't reload the last corpus \(gone\):/);
@@ -739,7 +739,7 @@ test("corpora: startup reloads every folder that is on; 'corpus' still loads one
   const folder = tempDir();
   const abc = writeCorpus();
   const de = writeCorpus({ ids: ["d", "e"] });
-  fs.writeFileSync(path.join(folder, "ml_midi.settings.json"), JSON.stringify({
+  fs.writeFileSync(path.join(folder, "cento.settings.json"), JSON.stringify({
     corpora: [{ path: abc, on: true }, { path: de, on: true }, { path: path.join(folder, "off"), on: false }], seed: 3, beats: 8,
   }));
   const core = engineIn(folder);
@@ -766,9 +766,9 @@ test("corpus window: a row per folder, with what it holds; its box, only and rem
   const g = view.context.mgraphics;
   g.size = [760, 330];
   view.send("clear", 0);
-  view.send("folder", 1, 1, 1, 142, "4/4", "major", "corpus", "/music/ml_midi/corpus");
-  view.send("folder", 2, 1, 1, 295, "4/4", "major+minor", "corpus-both", "/music/ml_midi/corpus-both", "142", "already", "in", "a", "folder", "above");
-  view.send("folder", 3, 1, 0, 20, "3/4", "major", "corpus-3-4", "/music/ml_midi/corpus-3-4", "not", "used:", "its", "chorales", "are", "in", "3/4,", "the", "corpus", "in", "4/4");
+  view.send("folder", 1, 1, 1, 142, "4/4", "major", "corpus", "/music/cento/corpus");
+  view.send("folder", 2, 1, 1, 295, "4/4", "major+minor", "corpus-both", "/music/cento/corpus-both", "142", "already", "in", "a", "folder", "above");
+  view.send("folder", 3, 1, 0, 20, "3/4", "major", "corpus-3-4", "/music/cento/corpus-3-4", "not", "used:", "its", "chorales", "are", "in", "3/4,", "the", "corpus", "in", "4/4");
   view.send("folder", 4, 0, 0, -1, "?", "?", "mine", "/music/mine");
   view.send("summary", "In", "use:", "295", "chorales");
   view.send("done");
@@ -801,9 +801,9 @@ test("corpus window: a row per folder, with what it holds; its box, only and rem
   view.send("onidle", ...where("remove", 0));
   assert.ok(draw().some((t) => /^remove: take this folder off the list/.test(t)));
   view.send("onidle", 40, 46 + 40 + 10);
-  assert.ok(draw().includes("/music/ml_midi/corpus-both"));
+  assert.ok(draw().includes("/music/cento/corpus-both"));
   view.send("onidleout");
-  assert.ok(!draw().includes("/music/ml_midi/corpus-both"));
+  assert.ok(!draw().includes("/music/cento/corpus-both"));
   // While a change builds.
   view.send("clear", 1);
   view.send("folder", 1, 1, 0, 142, "4/4", "major", "corpus", "/c");
@@ -838,6 +838,31 @@ test("endat: the player is told where each piece ends (its last note-offs); a st
   assert.match(lastStatus(out).join(" "), /^error the stream ran out after phrase 1;/);
   assert.deepEqual(select(out, "endat"), [[999999], [lastStep(out)]]);
   assert.deepEqual(select(core.send("clear"), "endat"), [[999999]]);
+});
+
+test("rename: files saved as ml_midi.* carry over to cento.*, and a renamed Documents folder is followed", () => {
+  const folder = tempDir();
+  const root = tempDir();
+  fs.mkdirSync(path.join(root, "cento"));
+  fs.renameSync(writeCorpus(), path.join(root, "cento", "corpus")); // ~/Documents/ml_midi renamed to cento
+  const oldCorpus = path.join(root, "ml_midi", "corpus");
+  const settings = { corpora: [{ path: oldCorpus, on: true }], corpus: oldCorpus, seed: 3, beats: 8 };
+  fs.writeFileSync(path.join(folder, "ml_midi.settings.json"), JSON.stringify(settings));
+  fs.writeFileSync(path.join(folder, "ml_midi.taste.json"), JSON.stringify({ weights: { "f:susp": 1 }, ratings: 4, likes: 3 }));
+  fs.writeFileSync(path.join(folder, "ml_midi.emily.json"), JSON.stringify({ version: 1, works: [] }));
+  const core = engineIn(folder);
+  const out = core.send("startup", "all");
+  assert.ok(core.posted.some((line) => line === "cento: carried over from ml_midi.*: cento.settings.json, cento.taste.json, cento.emily.json\n"), core.posted.join(""));
+  assert.ok(core.posted.some((line) => line === "cento: 1 corpus folder found under the new name (Documents/cento)\n"));
+  assert.deepEqual(select(out, "setting")[0], ["seed", 3], "the settings came with them");
+  assert.match(lastStatus(out).join(" "), /^status emi-3: /, "the corpus loaded from its new folder, and composed");
+  assert.equal(tasteIn(folder).ratings, 4, "and the taste");
+  assert.equal(settingsIn(folder).corpora[0].path, path.join(root, "cento", "corpus"), "remembered under the new name");
+  assert.ok(fs.existsSync(path.join(folder, "ml_midi.settings.json")), "the old files stay");
+  // Next time, nothing to carry over.
+  const again = engineIn(folder);
+  again.send("startup", "all");
+  assert.ok(!again.posted.some((line) => /carried over|new name/.test(line)));
 });
 
 // ---------------------------------------------------------------- core: Live clips
@@ -1083,7 +1108,7 @@ test("view: a selection made in the other roll is shown at once ('highlight')", 
 
 // ---------------------------------------------------------------- core: Emily (M9)
 
-const tasteIn = (folder) => JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.taste.json"), "utf8"));
+const tasteIn = (folder) => JSON.parse(fs.readFileSync(path.join(folder, "cento.taste.json"), "utf8"));
 // A clock the test sets (Date.now inside the script).
 function setClock(core, now) {
   core.context.Date = class extends Date {
@@ -1177,7 +1202,7 @@ test("emily: temperature is clamped, saved and restored", () => {
 
 test("emily: a startup after a session with ratings lets the taste fade; forget keeps a backup", () => {
   const folder = tempDir();
-  fs.writeFileSync(path.join(folder, "ml_midi.taste.json"), JSON.stringify({ weights: { "f:susp": 1, "f:16ths": -0.5 }, ratings: 4, likes: 3, rated: 2 }));
+  fs.writeFileSync(path.join(folder, "cento.taste.json"), JSON.stringify({ weights: { "f:susp": 1, "f:16ths": -0.5 }, ratings: 4, likes: 3, rated: 2 }));
   const core = engineIn(folder);
   const out = core.send("startup", "all");
   assert.deepEqual(select(out, "emily"), [["4", "ratings;", "likes", "suspensions;", "dislikes", "16th", "notes"]]);
@@ -1187,10 +1212,10 @@ test("emily: a startup after a session with ratings lets the taste fade; forget 
   assert.equal(tasteIn(folder).weights["f:susp"], 0.9, "no ratings since: no fading");
 
   const forgot = core.send("forget");
-  assert.deepEqual(lastStatus(forgot), ["status", "Emily", "forgot", "her", "taste", "(4", "ratings,", "kept", "in", "ml_midi.taste.backup.json)"]);
+  assert.deepEqual(lastStatus(forgot), ["status", "Emily", "forgot", "her", "taste", "(4", "ratings,", "kept", "in", "cento.taste.backup.json)"]);
   assert.deepEqual(select(forgot, "emily"), [["no", "ratings", "yet"]]);
   assert.equal(tasteIn(folder).ratings, 0);
-  const backup = JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.taste.backup.json"), "utf8"));
+  const backup = JSON.parse(fs.readFileSync(path.join(folder, "cento.taste.backup.json"), "utf8"));
   assert.equal(backup.weights["f:susp"], 0.9);
 });
 
@@ -1207,7 +1232,7 @@ test("emily: 'taste' lists her opinions and compares ten pieces with and without
   }
   core.posted.length = 0;
   const first = core.send("taste");
-  assert.match(core.posted[0], /^ml_midi: Emily's taste: 3 ratings/);
+  assert.match(core.posted[0], /^cento: Emily's taste: 3 ratings/);
   // The twenty pieces come a piece at a time, each on its own turn (later ->
   // [deferlow] -> tastestep), so Max stays responsive; the window shows how
   // far it has got.
@@ -1415,10 +1440,10 @@ test("emily: pins, strength, release, and a stored taste recalled (with the one 
   core.send("like");
   assert.deepEqual(tasteIn(folder).pins, {});
   out = core.send("recalltaste", stored + ".json");
-  assert.match(lastStatus(out).join(" "), /^status recalled Emily's taste from busy\.json \(2 ratings, 1 pin, strength 1\.50\); the one before is in ml_midi\.taste\.backup\.json$/);
+  assert.match(lastStatus(out).join(" "), /^status recalled Emily's taste from busy\.json \(2 ratings, 1 pin, strength 1\.50\); the one before is in cento\.taste\.backup\.json$/);
   assert.deepEqual([tasteIn(folder).pins, tasteIn(folder).strength, tasteIn(folder).ratings], [{ "f:16ths": 1.5 }, 1.5, 2]);
-  assert.equal(JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.taste.backup.json"), "utf8")).ratings, 3);
-  assert.match(lastStatus(core.send("recalltaste", path.join(folder, "ml_midi.settings.json"))).join(" "), /^error ml_midi\.settings\.json isn't a stored taste$/);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(folder, "cento.taste.backup.json"), "utf8")).ratings, 3);
+  assert.match(lastStatus(core.send("recalltaste", path.join(folder, "cento.settings.json"))).join(" "), /^error cento\.settings\.json isn't a stored taste$/);
 
   // Releasing one pin; then all.
   assert.match(lastStatus(core.send("unpin", "f:16ths")).join(" "), /^status Emily: 16th notes released \(back to [-+]?\d\.\d\d, what she learned\)$/);
@@ -1591,7 +1616,7 @@ test("emily: accept keeps a piece as her own; mix uses it; mix 0 is Bach alone, 
   core.send("compose", 1);
   const accepted = lastStatus(core.send("accept")).join(" ");
   assert.match(accepted, /^status accepted emi-1 as emily-1 \(generation 1, \d+ beats, \d+ varied\); Emily has 1 work of her own$/);
-  const stored = JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.emily.json"), "utf8"));
+  const stored = JSON.parse(fs.readFileSync(path.join(folder, "cento.emily.json"), "utf8"));
   assert.deepEqual(stored.works.map((w) => [w.id, w.gen, w.from]), [["emily-1", 1, "emi-1"]]);
   assert.deepEqual([tasteIn(folder).accepted, tasteIn(folder).mix], [["emily-1"], 0.5]);
 
@@ -1668,7 +1693,7 @@ test("emily: a snapshot is kept when a session starts, if her taste changed", ()
   core.send("beats", 8);
   core.send("compose", 1);
   core.send("like");
-  const snapshots = () => JSON.parse(fs.readFileSync(path.join(folder, "ml_midi.snapshots.json"), "utf8")).list.map((s) => s.label);
+  const snapshots = () => JSON.parse(fs.readFileSync(path.join(folder, "cento.snapshots.json"), "utf8")).list.map((s) => s.label);
   engineIn(folder).send("startup", "all");
   assert.deepEqual(snapshots(), ["session start"]);
   engineIn(folder).send("startup", "all");

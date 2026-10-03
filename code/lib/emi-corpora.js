@@ -154,7 +154,26 @@ function combine(list, read) {
   return { works, meter, duplicates, notes, used };
 }
 
+// The working data folder was ~/Documents/ml_midi until the project became
+// Cento (after M11). A listed folder whose path has an "ml_midi" folder in
+// it, and no chorales any more, moves to the same path with "cento" if that
+// one has them (the folder was renamed). `hasChorales(path)` says whether a
+// folder holds any. Returns how many moved.
+function followRename(list, hasChorales) {
+  const old = /(^|[/\\])ml_midi(?=[/\\]|$)/;
+  let moved = 0;
+  for (const folder of list) {
+    if (!old.test(folder.path)) continue;
+    const renamed = folder.path.replace(old, "$1cento");
+    if (list.some((f) => f.path === renamed) || hasChorales(folder.path) || !hasChorales(renamed)) continue;
+    folder.path = renamed;
+    moved++;
+  }
+  return moved;
+}
+
 exports.nameOf = nameOf;
+exports.followRename = followRename;
 exports.normalize = normalize;
 exports.add = add;
 exports.remove = remove;

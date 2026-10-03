@@ -134,7 +134,7 @@ const SCRIPT = `
   var test = JSON.parse(document.getElementById("test-data").textContent);
   var sealed = JSON.parse(document.getElementById("test-key").textContent);
   var answers = function () { return JSON.parse(sealed.map(function (c) { return String.fromCharCode(c ^ 0x5a); }).join("")); };
-  var store = "ml_midi:" + test.id;
+  var store = "cento:" + test.id;
   var saved = {};
   try { saved = JSON.parse(localStorage.getItem(store) || "{}") || {}; } catch (e) { saved = {}; }
   // saved: { size, chosen: [pair indexes], picks: {index: "A"|"B"}, known: [indexes], done }
@@ -343,7 +343,7 @@ const SCRIPT = `
       return "<tr><td>" + (k + 1) + "</td><td>" + a.bach + "</td><td>" + (pick ? '<span class="' + (pick === a.bach ? "right" : "wrong") + '">' + pick + (pick === a.bach ? " ✓" : " ✗") + "</span>" : "–") +
         "</td><td>" + (saved.known.indexOf(i) >= 0 ? "yes" : "") + "</td><td>" + a.chorale + "</td><td>" + a.piece + ", form of " + a.template + "</td></tr>";
     });
-    $("reveal").innerHTML = "<table><thead><tr><th>Pair</th><th>Bach</th><th>Your pick</th><th>Tune known</th><th>Bach's chorale</th><th>ml_midi piece</th></tr></thead><tbody>" + rows.join("") + "</tbody></table>";
+    $("reveal").innerHTML = "<table><thead><tr><th>Pair</th><th>Bach</th><th>Your pick</th><th>Tune known</th><th>Bach's chorale</th><th>Cento piece</th></tr></thead><tbody>" + rows.join("") + "</tbody></table>";
     report = "Which Is Bach? " + s.right + " of " + s.n + " right (chance by guessing " + pText(p) + ")\\n" + codeOf(picks, saved.known);
     $("result").hidden = false;
   }
@@ -515,10 +515,10 @@ function page(test, { standalone = true } = {}) {
 <style>${STYLE}</style>`;
   const body = `<main class="sheet">
   <header>
-    <p class="eyebrow">Blind listening test · ml_midi</p>
+    <p class="eyebrow">Blind listening test · Cento</p>
     <h1>Which is Bach?</h1>
-    <p class="lede">ml_midi is a recreation of Experiments in Musical Intelligence (EMI), a music AI that the composer David Cope began building in the 1980s. It writes new chorales in the style of Johann Sebastian Bach by recombining short fragments of Bach's own.</p>
-    <p class="lede">Each pair is one of J. S. Bach's chorales and one piece by ml_midi in the same form and key. Play both, then choose the one you think J. S. Bach wrote. The answers stay hidden until you ask for the results.</p>
+    <p class="lede">Cento is a recreation of Experiments in Musical Intelligence (EMI), a music AI that the composer David Cope began building in the 1980s. It writes new chorales in the style of Johann Sebastian Bach by recombining short fragments of Bach's own.</p>
+    <p class="lede">Each pair is one of J. S. Bach's chorales and one piece by Cento in the same form and key. Play both, then choose the one you think J. S. Bach wrote. The answers stay hidden until you ask for the results.</p>
     <p class="meta">♩ = ${test.tempo} · organ sound · headphones help</p>
   </header>
   <section class="start" id="start" aria-labelledby="start-title">
@@ -572,7 +572,7 @@ function page(test, { standalone = true } = {}) {
     </div>
     </div>
   </section>
-  <footer>Your choices are kept in this browser until you finish. Pieces are played without the pauses singers take at fermatas, Bach's and ml_midi's alike.</footer>
+  <footer>Your choices are kept in this browser until you finish. Pieces are played without the pauses singers take at fermatas, Bach's and Cento's alike.</footer>
 </main>
 <script type="application/json" id="test-data">${data}</script>
 <script type="application/json" id="test-key">${key}</script>

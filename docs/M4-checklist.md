@@ -22,7 +22,7 @@ settings.
 **One shared panel.** The composing controls now live in one panel,
 `emi.panel`, which both products show. Each window has three parts:
 
-| Part | Max version (`ml_midi.maxpat`) | Live version (`emi.brain`) |
+| Part | Max version (`cento.maxpat`) | Live version (`cento.brain`) |
 |---|---|---|
 | **Left: host panel** | **Play**, **BPM**, **Output**, **vst~ instead**, plug/open 1–4 | **writeclips**, **testclip**, **clips on compose**, **play through voices**, **all voices on this track** |
 | **Middle: shared panel** | the same in both: **load chorale**, **original key**, **pattern**, **clear**, **load corpus**, **form**, **beats**, **compose**, **seed**, **next**, **export midi**, and the status line | |
@@ -40,7 +40,7 @@ Two controls behave differently from M3:
   seed, beats, form, original key, clips on compose, play through voices and
   all voices on this track.
 - **Max version** remembers the same composing settings, plus BPM, Output and
-  vst~ instead, in a small file: `patchers/ml_midi.settings.json`. It's
+  vst~ instead, in a small file: `patchers/cento.settings.json`. It's
   rewritten on every change and read when the patch opens. Git ignores it,
   because it holds your own paths.
 - **Both** remember the last corpus in that file. When a patch or set opens,
@@ -81,9 +81,9 @@ Two controls behave differently from M3:
 
 Pull the latest code in GitHub Desktop.
 
-## 1. Max version (`patchers/ml_midi.maxpat`)
+## 1. Max version (`patchers/cento.maxpat`)
 
-1. [ ] Open `patchers/ml_midi.maxpat`. The window shows three panels side by
+1. [ ] Open `patchers/cento.maxpat`. The window shows three panels side by
        side: the Max controls, the shared panel, the piano roll. Check the
        Max window for red text.
 2. [ ] Choose **AU DLS Synth 1** under **Output** and set **BPM** to `90`.
@@ -107,7 +107,7 @@ Pull the latest code in GitHub Desktop.
        **form** is still off, and the status line reads
        `emi-4: 35 beats from 29 chorales`. Turn **form** back on.
 6. [ ] Optional: in Finder, open the repo's `patchers` folder. You'll see
-       `ml_midi.settings.json`, with your corpus folder, the seed and the
+       `cento.settings.json`, with your corpus folder, the seed and the
        other settings.
 
 ## 2. Live version

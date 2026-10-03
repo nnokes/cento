@@ -91,10 +91,10 @@ the same piece. The last 30 snapshots are kept.
     20.
 
 **Where it's kept** (`patchers/`, next to the taste file, both git-ignored):
-- `ml_midi.emily.json`: every work ever accepted;
-- `ml_midi.snapshots.json`: the snapshots.
+- `cento.emily.json`: every work ever accepted;
+- `cento.snapshots.json`: the snapshots.
 
-Both products share them. The plan put these in `~/Documents/ml_midi/emily/`,
+Both products share them. The plan put these in `~/Documents/cento/emily/`,
 but Max can't create folders.
 
 **Speed.** Each **accept** rebuilds the corpus with her new work, so Max
@@ -106,7 +106,7 @@ pauses for a second or two.
 
 Pull the latest code in GitHub Desktop.
 
-## 1. Max version (`patchers/ml_midi.maxpat`)
+## 1. Max version (`patchers/cento.maxpat`)
 
 Do steps 1 to 9 in one sitting, without closing the patch. The lines below
 assume her taste starts empty, so step 2 puts yours aside first and step 9
@@ -119,10 +119,10 @@ brings it back.
 2. [x] **Keep your taste, then start fresh.**
        1. Make sure **temp** reads `1.00`; drag slowly to set it exactly.
        2. Click **window**. At the bottom of the window, click
-          **store taste** and save as `my-taste` in `Documents/ml_midi`:
+          **store taste** and save as `my-taste` in `Documents/cento`:
           `stored Emily's taste in my-taste.json (... ratings)`.
        3. Click **forget**:
-          `Emily forgot her taste (... ratings, kept in ml_midi.taste.backup.json)`.
+          `Emily forgot her taste (... ratings, kept in cento.taste.backup.json)`.
 3. [x] **No novelty, no change.** Set **seed** to 3:
        `emi-3: form of bwv260, 5 phrases, 56 beats, 23 chorales, SPEAC 68%, 3 signatures`,
        as in M8.
@@ -155,7 +155,7 @@ brings it back.
        From seed 1003 on, pieces already use some of her beats: the first
        **accept** set mix to 0.5. That's why the generations climb. After
        the fifth, the Max window says
-       `ml_midi: Emily's own music: 5 works (generation 1: 2, generation 2: 1, generation 3: 1, generation 4: 1), 295 beats, 31 varied`.
+       `cento: Emily's own music: 5 works (generation 1: 2, generation 2: 1, generation 3: 1, generation 4: 1), 295 beats, 31 varied`.
        The memory view lists emily-5 to emily-1, each with **put aside**.
 6. [x] **Mix.** Drag **mix** to its right end:
        `mix 0.75: her own music counts more than Bach's (from the next piece or phrase)`.
@@ -190,7 +190,7 @@ brings it back.
        step 3's line exactly.
 9. [x] **Your taste back.** Click **recall taste** and choose
        `my-taste.json`:
-       `recalled Emily's taste from my-taste.json (... ratings); the one before is in ml_midi.taste.backup.json`.
+       `recalled Emily's taste from my-taste.json (... ratings); the one before is in cento.taste.backup.json`.
        Your taste comes back as you stored it, before she had music of her
        own, so her works aren't in use in it. The memory view shows
        snapshot #4, `before recalling my-taste.json`. Roll back to it to
@@ -257,10 +257,10 @@ brings it back.
 6. [x] **Hover help in Live.** Open the Info View (**View > Info**, or the
        **?** at the bottom left). Move the mouse over the brain's controls
        (**writeclips**, **Play Through Voices**, **like**, **temp**, ...) and
-       the emi.voice device's voice name: the Info View names each and says
+       the cento.voice device's voice name: the Info View names each and says
        what it does. In the pop-up window, the taste pane's sliders and
        buttons show their help in a box, as in Max.
-7. [x] **Back in Max.** Close Live, open `ml_midi.maxpat`, and open the
+7. [x] **Back in Max.** Close Live, open `cento.maxpat`, and open the
        memory view: the phrase accepted in Live is listed.
 
 ## 3. Your own Emily

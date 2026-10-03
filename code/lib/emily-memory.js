@@ -7,7 +7,7 @@
 // works is a generation later: gen = 1 + the highest generation of the beats
 // it is made of (Bach's beats are generation 0).
 //
-//   accepted file (the engine keeps it in ml_midi.emily.json next to the
+//   accepted file (the engine keeps it in cento.emily.json next to the
 //   taste): { version: 1, works: [work] }, every work ever accepted, in
 //   order; her taste (emily-assoc's memory.accepted) lists the ones in use,
 //   so a rollback can take works out and put them back exactly.
@@ -19,7 +19,7 @@
 // The engine takes one when a session starts (if anything changed since the
 // last), when you ask, and before a rollback; a rollback makes a snapshot's
 // taste hers again, exactly, and so her corpus too (the works it lists).
-//   snapshots file (ml_midi.snapshots.json):
+//   snapshots file (cento.snapshots.json):
 //   { version: 1, next, list: [{ id, at, label, memory }] }, the last KEEP
 
 const KEEP = 30; // snapshots kept

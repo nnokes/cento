@@ -93,20 +93,20 @@ certain to be a final cadence. That is what M3 (form) fixes.
       .venv/bin/python tools/export-chorales.py --count 200
       ```
       It takes about half a minute. The first line is
-      `Exporting to /Users/<your name>/Documents/ml_midi/corpus`, then one
+      `Exporting to /Users/<your name>/Documents/cento/corpus`, then one
       numbered line per chorale, then
       `wrote 142 chorales to …` and `only 142 chorales matched …`. That last
       line is expected: there are only 142, and `--count 200` asks for all
       of them. Your 20 chorales are rewritten unchanged; 122 are added.
    5. **Check the files**: in Finder, *Go → Go to Folder…*, paste
-      `~/Documents/ml_midi/corpus` and press Return. You should see 284
+      `~/Documents/cento/corpus` and press Return. You should see 284
       files: a `.mid` and a `.json` for each chorale.
 
    You can close Terminal afterwards; nothing needs to keep running.
 3. Optional, in the same Terminal window: `npm test` now runs the corpus
    tests on all 142. All should pass, none skipped.
 
-## 1. Max version (`patchers/ml_midi.maxpat`)
+## 1. Max version (`patchers/cento.maxpat`)
 
 The window is wider now: the controls are on the left, the piano roll on the
 right.
@@ -114,7 +114,7 @@ right.
 1. [ ] Click **load chorale** and pick `bwv347.mid`, as in M1. The piano roll
        shows it with notes colored by voice (soprano orange, alto blue, tenor
        green, bass yellow) and faint bar lines.
-2. [ ] Click **load corpus**. In the dialog, go to `Documents/ml_midi`,
+2. [ ] Click **load corpus**. In the dialog, go to `Documents/cento`,
        select the `corpus` folder itself and click *Open* (or *Choose*). The
        status line should read
        `corpus 142 chorales, 8578 beats, 18% dead ends`.
@@ -134,7 +134,7 @@ right.
 6. [ ] Set **beats** to `16`. The status line should read
        `pieces of 16+ beats`. Click **compose**:
        `emi-1: 16 beats from 13 chorales`. Set **beats** back to `32`.
-7. [ ] Click **export midi**. Save as `emi-1` in `~/Documents/ml_midi/out/`
+7. [ ] Click **export midi**. Save as `emi-1` in `~/Documents/cento/out/`
        (in the dialog, make the `out` folder with *New Folder* if it isn't
        there). The status line should read `exported emi-1.mid`. Live step 5
        below plays this file in Live.
@@ -143,7 +143,7 @@ right.
 
 1. [ ] Reopen the set, so the devices reload. The brain device is wider now,
        with the piano roll on its right.
-2. [ ] Click **load corpus** and choose `~/Documents/ml_midi/corpus` as in
+2. [ ] Click **load corpus** and choose `~/Documents/cento/corpus` as in
        Max. Same status line: `corpus 142 chorales, 8578 beats, 18% dead ends`.
 3. [ ] Click **compose** with seed 1. Same status line and piano roll as in
        Max: `emi-1: 36 beats from 29 chorales`.
@@ -151,7 +151,7 @@ right.
        each voice track, and the status line should read
        `wrote emi-1 to 4 voice tracks`. Launch the scene and listen as in
        Max step 4.
-5. [ ] Drag `~/Documents/ml_midi/out/emi-1.mid` (exported in Max step 7)
+5. [ ] Drag `~/Documents/cento/out/emi-1.mid` (exported in Max step 7)
        from Finder into Live, onto the empty area below the tracks. Give the
        new track(s) an instrument and play: it should be the same piece.
 6. [ ] Click **export midi** in the device and save as `emi-1-live` in the
@@ -173,11 +173,11 @@ combined:
 
 **The fix.**
 
-- `emi.voice` has no menu any more. The **track's name** picks the voice
+- `cento.voice` has no menu any more. The **track's name** picks the voice
   (Soprano, Alto, Tenor or Bass; S/A/T/B also work), the same rule
   **writeclips** uses to find the tracks, and the device shows which voice it
   plays.
-- `emi.brain` has a **Play through voices** toggle, off by default. Only with
+- `cento.brain` has a **Play through voices** toggle, off by default. Only with
   it on do the brain's notes reach the voice devices while the transport runs.
   Leave it off when you play clips.
 

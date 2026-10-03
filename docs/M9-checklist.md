@@ -75,7 +75,7 @@ about 51 to 63% of beats, against 61% without a taste). Suspensions and
 repeated melody notes barely move: few beats that have them fit the
 voice-leading.
 
-**Where the taste is kept.** `patchers/ml_midi.taste.json`, next to the
+**Where the taste is kept.** `patchers/cento.taste.json`, next to the
 settings file. Both products use it, so a taste learned in one carries over
 to the other. It's git-ignored. Each time a patch or set opens after you
 rated something, every weight fades by a tenth, so early opinions don't
@@ -87,7 +87,7 @@ harden.
 
 Pull the latest code in GitHub Desktop.
 
-## 1. Max version (`patchers/ml_midi.maxpat`)
+## 1. Max version (`patchers/cento.maxpat`)
 
 Do steps 1 to 6 in one sitting, without closing the patch: closing and
 reopening it makes the taste fade (step 7), and the lines below would change.
@@ -149,7 +149,7 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        `Emily, seeds 1-10: a high melody 83% of beats (54% without her taste), a low melody 1% (14%); more in the Max window`.
        The Max window:
        ```
-       ml_midi: Emily's taste: 10 ratings; likes a high melody, the home key, major chords, low tension, repeated melody notes, block chords; dislikes a low melody, seventh chords, chromatic notes, high tension, 16th notes, suspensions
+       cento: Emily's taste: 10 ratings; likes a high melody, the home key, major chords, low tension, repeated melody notes, block chords; dislikes a low melody, seventh chords, chromatic notes, high tension, 16th notes, suspensions
          likes: a high melody +2.10, the home key +1.58, major chords +1.47, low tension +1.32, repeated melody notes +1.01, block chords +0.87, the subdominant key +0.07
          dislikes: a low melody -1.75, seventh chords -1.34, chromatic notes -1.34, high tension -1.28, 16th notes -1.24, suspensions -1.13, the dominant key -1.08, stepwise melody -1.01
          seeds 1-10, with her taste and without: her taste +5.87 a beat (+2.59 without); a high melody 83% of beats (54%); the home key 83% (61%); major chords 88% (85%); a low melody 1% (14%); seventh chords 3% (5%); chromatic notes 4% (13%)
@@ -184,7 +184,7 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        line now ends `; 1 earlier session`. Opening a patch or set after a
        session with ratings makes every weight fade by a tenth.
 9. [x] **The pop-up window.** Click **window** at the top right of the
-       **Emily** panel. A window titled `ml_midi: piano roll and Emily` opens:
+       **Emily** panel. A window titled `Cento: piano roll and Emily` opens:
        - **Top:** the piano roll, about three times larger. Bars are numbered
          along the top, each C is named on the left (C4 is middle C), and
          the SPEAC letters and the hover box are larger.
@@ -229,12 +229,12 @@ reopening it makes the taste fade (step 7), and the lines below would change.
        line now counts the pins, and the strength when it isn't 1.
 11. [x] **Store and recall a taste.** Pin a feature or two, then click
        **store taste** and save it, for example as `busy` in
-       `Documents/ml_midi` (the dialog's **New Folder** button can make an
+       `Documents/cento` (the dialog's **New Folder** button can make an
        `emily` folder there for tastes). The status line says
        `stored Emily's taste in busy.json (... ratings, ... pins)`.
        Release all pins and rate something, then click **recall taste** and
        choose `busy.json`:
-       `recalled Emily's taste from busy.json (...); the one before is in ml_midi.taste.backup.json`.
+       `recalled Emily's taste from busy.json (...); the one before is in cento.taste.backup.json`.
        The pins, strength, ratings and learned weights are all back as
        stored. A stored taste is a plain file: you can keep several and
        switch between them, in either product.
@@ -257,13 +257,13 @@ reopening it makes the taste fade (step 7), and the lines below would change.
 5. [x] **The pop-up window in Live.** Click **window** on the brain's
        **Emily** panel: the same window opens over Live, and follows the
        stream phrase by phrase.
-6. [x] **Back in Max.** Close Live, open `ml_midi.maxpat` and click **taste**:
+6. [x] **Back in Max.** Close Live, open `cento.maxpat` and click **taste**:
        the ratings from Live are counted.
 
 ## 3. Your own taste, by ear
 
 1. [x] In the pop-up window, click **forget**. The status line says
-       `Emily forgot her taste (N ratings, kept in ml_midi.taste.backup.json)`
+       `Emily forgot her taste (N ratings, kept in cento.taste.backup.json)`
        and the box `no ratings yet`. (The backup is the scripted taste. Only
        the last one forgotten is kept.)
 2. [x] Rate about ten pieces, or phrases of a stream, by ear: whatever you

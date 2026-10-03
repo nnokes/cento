@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exports Bach chorales from the music21 corpus as the ml_midi source corpus.
+"""Exports Bach chorales from the music21 corpus as the Cento source corpus.
 
 For each chorale that passes the filter, this writes:
   <name>.mid   type-1 MIDI at 960 ticks per quarter (the engine's own unit).
@@ -10,7 +10,7 @@ For each chorale that passes the filter, this writes:
                the key, the meter and where the chorale came from
 
 Paths:
-  output:   ~/Documents/ml_midi/corpus/  (i.e. $HOME/Documents/ml_midi/corpus/),
+  output:   ~/Documents/cento/corpus/  (i.e. $HOME/Documents/cento/corpus/),
             outside the repository: the music is public domain, but these
             encodings aren't ours to redistribute. Change it with --out.
   music21:  installed into <repo>/.venv by the commands below (git-ignored).
@@ -20,9 +20,9 @@ Run from the repo folder:
   .venv/bin/pip install music21
   .venv/bin/python tools/export-chorales.py                  # all 4/4 major (142)
   .venv/bin/python tools/export-chorales.py --count 20       # just the first 20
-  .venv/bin/python tools/export-chorales.py --mode minor --out ~/Documents/ml_midi/corpus-minor
-  .venv/bin/python tools/export-chorales.py --mode any --out ~/Documents/ml_midi/corpus-both     # 4/4, major and minor (295)
-  .venv/bin/python tools/export-chorales.py --meter 3/4 --mode any --out ~/Documents/ml_midi/corpus-3-4  # 3/4 (32)
+  .venv/bin/python tools/export-chorales.py --mode minor --out ~/Documents/cento/corpus-minor
+  .venv/bin/python tools/export-chorales.py --mode any --out ~/Documents/cento/corpus-both     # 4/4, major and minor (295)
+  .venv/bin/python tools/export-chorales.py --meter 3/4 --mode any --out ~/Documents/cento/corpus-3-4  # 3/4 (32)
 """
 
 import argparse
@@ -33,7 +33,7 @@ from pathlib import Path
 from music21 import corpus, defaults, expressions, meter, midi
 from music21.corpus import chorales
 
-DEFAULT_OUT = Path.home() / "Documents" / "ml_midi" / "corpus"
+DEFAULT_OUT = Path.home() / "Documents" / "cento" / "corpus"
 PPQ = 960
 defaults.ticksPerQuarter = PPQ  # music21's default is 10080
 

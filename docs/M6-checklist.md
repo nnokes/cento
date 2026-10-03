@@ -87,7 +87,7 @@ since every beat is analysed.
 
 Pull the latest code in GitHub Desktop.
 
-## 1. Max version (`patchers/ml_midi.maxpat`)
+## 1. Max version (`patchers/cento.maxpat`)
 
 1. [ ] Open the patch. The corpus reloads. Check the Max window for red
        text.

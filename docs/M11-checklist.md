@@ -58,21 +58,39 @@ folder on the list.
 
 ---
 
-## 0. Get the new code
+## 0. Get the new code (and the new name)
 
-Pull the latest code in GitHub Desktop. If Max or Live is open, close and
-reopen the patch or set.
+Pull the latest code in GitHub Desktop. If Max or Live is open, close the
+patch or set first. The project is now called **Cento** (it was ml_midi), so
+once:
 
-## 1. Max version (`patchers/ml_midi.maxpat`)
+1. **Max:** open `patchers/cento.maxpat` (`ml_midi.maxpat` is gone). The
+   Max window says `cento: carried over from ml_midi.*: cento.settings.json,
+   ...`: your settings, Emily's taste, her works and snapshots are copied to
+   their new names. The old files stay in `patchers/`; delete them when
+   you're happy.
+2. **Your data folder:** in Finder, rename `Documents/ml_midi` to
+   `Documents/cento`. Next time you open the patch the Max window says
+   `cento: N corpus folders found under the new name`, and the corpus
+   window lists them there.
+3. **Live:** on each track, delete `emi.brain` and `emi.voice`, and drag in
+   `cento.brain.amxd` and `cento.voice.amxd` from `patchers/`. Map
+   **like**, **dislike** and **accept** to their keys again.
+4. **GitHub (when convenient):** rename the repository to `cento` (on
+   github.com: the repository's Settings, General, Repository name).
+   GitHub Desktop follows it. If you also rename your local folder, point
+   Max's and Live's File Preferences at the new `<repo>/patchers`.
+
+## 1. Max version (`patchers/cento.maxpat`)
 
 1. [ ] **Open the patch.** The corpus reloads as before. The panel's second
        row starts with **corpora** where **load corpus** was.
-2. [ ] **The corpus window.** Click **corpora**. A window, `ml_midi: corpora`,
+2. [ ] **The corpus window.** Click **corpora**. A window, `Cento: corpora`,
        opens. It lists one folder, `corpus`, with a filled green box:
        `142 chorales · 4/4 · major`, then `in use`. The line under the list:
        `In use: 142 chorales (major) from 1 folder, in 4/4: 8578 beats, 76 signatures.`
 3. [ ] **Add a folder.** Click **add folder** and choose
-       `Documents/ml_midi/corpus-both`.
+       `Documents/cento/corpus-both`.
        - The window shows `building...` at once.
        - The status line then says
          `corpus 295 chorales (142 major, 153 minor), 17746 beats, 14% dead ends, 154 signatures from 2 folders`,
@@ -86,7 +104,7 @@ reopen the patch or set.
        (If not, the two exported folders hold different versions of some
        chorales: tell me which seed.)
 5. [ ] **A folder in another meter.** Click `corpus`'s box to switch it back
-       on. Then **add folder** `Documents/ml_midi/corpus-3-4`.
+       on. Then **add folder** `Documents/cento/corpus-3-4`.
        - Its row: `20 chorales · 3/4 · major`, then, in amber,
          `not used: its chorales are in 3/4, the corpus in 4/4`.
        - The status line: `corpus unchanged: 295 chorales`. Nothing is
@@ -100,7 +118,7 @@ reopen the patch or set.
        list `No corpus: switch a folder on.` Click **compose**: `error: load a
        corpus first`. Switch `corpus` back on.
 8. [ ] **Remove.** On `corpus-3-4`'s row, click **remove**: the row goes. The
-       folder is still in `Documents/ml_midi`.
+       folder is still in `Documents/cento`.
 9. [ ] **While a stream plays.** Turn **stream** on, compose and press Play.
        Switch `corpus-both` on: the stream starts again at the next bar, now
        with minor phrases among the major ones.
@@ -148,7 +166,7 @@ reopen the patch or set.
        is named and explained. The list's boxes and buttons show their help in
        a box, as in Max, and so do the SPEAC lane's letters in the brain's
        piano roll (now 400 px wide: the device is 1024 px).
-5. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat`, click **corpora**:
+5. [ ] **Back in Max.** Close Live, open `cento.maxpat`, click **corpora**:
        the list as you left it in Live.
 
 ---

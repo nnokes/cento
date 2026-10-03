@@ -179,7 +179,7 @@ const liveParameters = (name) =>
 
 test("live.* parameters: named, and unique within each product", () => {
   const products = {
-    "Max version": ["ml_midi.maxpat", "emi.host.max.maxpat", "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat"],
+    "Max version": ["cento.maxpat", "emi.host.max.maxpat", "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat"],
     "emi.brain": ["emi.brain.maxpat", "emi.host.live.maxpat", "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat"],
   };
   for (const [product, names] of Object.entries(products)) {
@@ -370,7 +370,7 @@ test("startup: Max restores everything after loading; Live only reloads the corp
 });
 
 test("top patches: host panel, shared panel, Emily's panel and piano roll, all wired to one engine", () => {
-  for (const [file, host] of [["ml_midi.maxpat", "emi.host.max.maxpat"], ["emi.brain.maxpat", "emi.host.live.maxpat"]]) {
+  for (const [file, host] of [["cento.maxpat", "emi.host.max.maxpat"], ["emi.brain.maxpat", "emi.host.live.maxpat"]]) {
     const p = patchFile(file);
     const [engine] = p.find("emi.engine");
     const bpatchers = [...p.boxes.values()].filter((b) => b.maxclass === "bpatcher").map((b) => b.name);
@@ -392,7 +392,7 @@ test("top patches: host panel, shared panel, Emily's panel and piano roll, all w
     }
   }
   // The device is exactly as wide as its four panels.
-  const device = readPatcher(path.join(ROOT, "patchers", "emi.brain.amxd"));
+  const device = readPatcher(path.join(ROOT, "patchers", "cento.brain.amxd"));
   const brain = patchFile("emi.brain.maxpat");
   const right = Math.max(...[...brain.boxes.values()].filter((b) => b.presentation_rect).map((b) => b.presentation_rect[0] + b.presentation_rect[2]));
   assert.equal(device.devicewidth, right);

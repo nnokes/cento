@@ -1,7 +1,8 @@
 "use strict";
 // Round-trips every chorale in the local corpus. The corpus isn't in the repo
 // (see PLAN.md, section 6.1), so this runs only where it exists:
-// EMI_CORPUS=<folder>, or ~/Documents/ml_midi/corpus by default. In CI it
+// EMI_CORPUS=<folder>, or ~/Documents/cento/corpus by default (or, if that
+// isn't there, ~/Documents/ml_midi/corpus, its name before the rename). In CI it
 // skips.
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -21,7 +22,7 @@ const vary = require("emily-vary");
 const emilyMemory = require("emily-memory");
 const { checkPiece, checkForm } = require("./piece-rules");
 
-const dir = process.env.EMI_CORPUS || path.join(os.homedir(), "Documents", "ml_midi", "corpus");
+const dir = process.env.EMI_CORPUS || ["cento", "ml_midi"].map((name) => path.join(os.homedir(), "Documents", name, "corpus")).find((d) => fs.existsSync(d)) || path.join(os.homedir(), "Documents", "cento", "corpus");
 const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith(".mid")).sort() : [];
 const skip = files.length ? false : `no corpus at ${dir} (run tools/export-chorales.py)`;
 

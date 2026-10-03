@@ -51,16 +51,16 @@ clips.
    .venv/bin/python tools/export-chorales.py
    ```
    The script prints its output folder first and its file count last. It
-   writes 20 chorales (`.mid` + `.json`) to `~/Documents/ml_midi/corpus/`,
-   which is `/Users/<your name>/Documents/ml_midi/corpus/`. In Finder, use
-   *Go → Go to Folder…* and paste `~/Documents/ml_midi/corpus`.
+   writes 20 chorales (`.mid` + `.json`) to `~/Documents/cento/corpus/`,
+   which is `/Users/<your name>/Documents/cento/corpus/`. In Finder, use
+   *Go → Go to Folder…* and paste `~/Documents/cento/corpus`.
 3. Optional: `npm test` now also runs the four corpus tests against your
    corpus. All should pass, none skipped.
 
-## 1. Max version (`patchers/ml_midi.maxpat`)
+## 1. Max version (`patchers/cento.maxpat`)
 
 1. [ ] Click **load chorale** and pick `bwv347.mid` from
-       `~/Documents/ml_midi/corpus/`. The status line should read
+       `~/Documents/cento/corpus/`. The status line should read
        `bwv347 A major -> C major (+3) 4/4 18 bars 6 phrases queued`.
 2. [ ] Choose **AU DLS Synth 1** under Output and turn on **Play**. You should
        hear the chorale in C major. It starts after three beats of silence:

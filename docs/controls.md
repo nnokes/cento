@@ -4,7 +4,7 @@ What every control does: the same text you see when you hover over it. In Max, r
 
 This page is written from the same table as the hover text (the patch generator), so they agree; `tests/patches.test.js` checks it.
 
-## Max version: transport and output (left panel of `ml_midi.maxpat`)
+## Max version: transport and output (left panel of `cento.maxpat`)
 
 | Control | What it does |
 | --- | --- |
@@ -22,14 +22,14 @@ This page is written from the same table as the hover text (the patch generator)
 | **open 3** | Show the editor window of voice 3's (tenor) plug-in instrument. |
 | **open 4** | Show the editor window of voice 4's (bass) plug-in instrument. |
 
-## Live version: clips and voices (left panel of the emi.brain device)
+## Live version: clips and voices (left panel of the cento.brain device)
 
 | Control | What it does |
 | --- | --- |
 | **writeclips** | Write the current piece as MIDI clips, one per voice, in the first empty clip slot of the Soprano, Alto, Tenor and Bass tracks. Edit them in Live like any clip. |
 | **testclip** | Write a short test phrase as clips on the voice tracks: a quick check that the tracks are named and set up. |
 | **Clips On Compose** | On: every piece composed is also written as clips (as writeclips does), so nothing you like is lost. |
-| **Play Through Voices** | On: while Live plays, the piece plays through the emi.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice). |
+| **Play Through Voices** | On: while Live plays, the piece plays through the cento.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice). |
 | **All Voices Here** | On: all four voices also come out of this track, to hear the whole piece on this track's instrument. |
 
 ## Composing (both versions)
@@ -93,10 +93,10 @@ This page is written from the same table as the hover text (the patch generator)
 | Control | What it does |
 | --- | --- |
 | **Corpora** | Every folder of chorales on the list: switch one on or off with its box, use it alone (only), or take it off the list (remove). Composing uses every folder that is on, as one corpus, and the seed shown is composed again with it. A chorale in two folders counts once; the corpus has one meter (the first folder's). Hover over a name for its folder's full path. |
-| **add folder** | Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/ml_midi/corpus-both). It joins the list, switched on. |
+| **add folder** | Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/cento/corpus-both). It joins the list, switched on. |
 | **rescan** | Read every folder again, after adding or removing chorales in one. (Folders are read once, when first switched on.) |
 
-## The emi.voice device (Live)
+## The cento.voice device (Live)
 
 | Control | What it does |
 | --- | --- |

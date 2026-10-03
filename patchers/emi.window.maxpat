@@ -691,7 +691,7 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "title ml_midi: piano roll and Emily",
+					"text": "title Cento: piano roll and Emily",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [

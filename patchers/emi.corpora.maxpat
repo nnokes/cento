@@ -159,8 +159,8 @@
 						24.0
 					],
 					"id": "obj-6",
-					"hint": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/ml_midi/corpus-both). It joins the list, switched on.",
-					"annotation": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/ml_midi/corpus-both). It joins the list, switched on.",
+					"hint": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/cento/corpus-both). It joins the list, switched on.",
+					"annotation": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/cento/corpus-both). It joins the list, switched on.",
 					"annotation_name": "add folder"
 				}
 			},
@@ -347,7 +347,7 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "title ml_midi: corpora",
+					"text": "title Cento: corpora",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [

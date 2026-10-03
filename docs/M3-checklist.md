@@ -68,7 +68,7 @@ cadence, so cadences already land where they should.
 Pull the latest code in GitHub Desktop. The corpus from M2 (all 142
 chorales) is all M3 needs.
 
-## 1. Max version (`patchers/ml_midi.maxpat`)
+## 1. Max version (`patchers/cento.maxpat`)
 
 There's a new **form** toggle at the right end of the top row. It's on when
 the patch opens.
@@ -97,7 +97,7 @@ the patch opens.
        chorales`, the M2 piece. Its six triangles bunch up (beats 4, 6, 18,
        24, 26 and 34): borrowed cadence beats land wherever the chain put
        them. Turn **form** back on.
-7. [ ] Optional: **export midi** as `emi-1-form` in `~/Documents/ml_midi/out/`.
+7. [ ] Optional: **export midi** as `emi-1-form` in `~/Documents/cento/out/`.
 
 ## 2. Live version
 
