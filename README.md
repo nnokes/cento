@@ -13,9 +13,11 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M9 and M10 passed in both products ([M9](docs/M9-checklist.md),
-[M10](docs/M10-checklist.md) results); M8 passed in the Max version and
-waits on its Live checks ([M8](docs/M8-checklist.md) checklist).**
+**Status: M11 code done; waiting on its Max and Live checks
+([M11](docs/M11-checklist.md) checklist). M9 and M10 passed in both
+products ([M9](docs/M9-checklist.md), [M10](docs/M10-checklist.md)
+results); M8 passed in the Max version and waits on its Live checks
+([M8](docs/M8-checklist.md) checklist).**
 Both products load Bach chorales, play them in C major or their own key, and
 compose new chorales by
 recombining beats from the whole corpus. Since M3, each new piece takes the
@@ -48,7 +50,9 @@ also pin any feature's weight with a slider, set her taste's strength, and
 store and recall whole tastes as files. Since M10, Emily varies pieces with
 notes Bach never wrote (**novelty**), **accept** keeps what you like as music
 of her own that later pieces draw on (**mix**), and snapshots let you roll
-her back to any earlier state. Every control explains itself when you hover
+her back to any earlier state. Since M11, the **corpora** window lists folders
+of chorales, each switched on or off: composing uses every folder that is on,
+as one corpus (major and minor, or a 3/4 folder alone). Every control explains itself when you hover
 over it (a tooltip in Max, the Info View in Live); [docs/controls.md](docs/controls.md)
 lists them all. The full plan
 and milestones are in [PLAN.md](PLAN.md).
@@ -81,7 +85,7 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **The repo** (your clone) | wherever you cloned it, e.g. `~/Documents/GitHub/ml_midi` | Run every command below from this folder |
 | **Python for music21** | `<repo>/.venv/` | Made by `python3 -m venv .venv`. About 300 MB, git-ignored, delete it to uninstall |
 | **Chorale corpus** | `~/Documents/ml_midi/corpus/` | Written by `tools/export-chorales.py`; outside the repo |
-| **Minor-key corpus** (optional) | `~/Documents/ml_midi/corpus-minor/` | Written with `--mode minor`; load it with **load corpus** instead |
+| **Minor-key corpus** (optional) | `~/Documents/ml_midi/corpus-minor/` | Written with `--mode minor`; add it in the **corpora** window, on its own or with `corpus` |
 | **Major and minor, 3/4** (optional, M8) | `~/Documents/ml_midi/corpus-both/`, `corpus-3-4/` | Written with `--mode any` and `--meter 3/4` |
 | **Exported pieces** | `~/Documents/ml_midi/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
 | **Listening tests** | anywhere, e.g. `~/Documents/ml_midi/` | Written by the **A/B** button: one web page, opened in a browser |
@@ -90,7 +94,7 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **Emily's own music and snapshots** (M10) | `<repo>/patchers/ml_midi.emily.json`, `ml_midi.snapshots.json` | Every piece or phrase you **accept**, and her last 30 snapshots; git-ignored, shared by both products |
 | **Later: databases, Emily's snapshots** | `~/Documents/ml_midi/db/`, `emily/` | Outside the repo |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
-| **Remembered settings** | `<repo>/patchers/ml_midi.settings.json` | Last corpus, seed and other settings; written by the patches, git-ignored. Delete it to start fresh |
+| **Remembered settings** | `<repo>/patchers/ml_midi.settings.json` | The corpus window's folders (which are on), seed and other settings; written by the patches, git-ignored. Delete it to start fresh |
 
 `~` is your home folder, `/Users/<your name>`. `<repo>` is the folder you
 cloned into.
@@ -159,8 +163,9 @@ patchers/     everything Max loads, in one folder:
               ml_midi.maxpat (Max version), emi.brain.amxd + emi.voice.amxd
               (Live version), emi.engine, emi.host.max, emi.host.live,
               emi.panel (the shared controls), emily.panel (Emily's ratings),
-              emi.view (piano roll), emi.window (the pop-up window), and the
-              generated *.bundle.js scripts (npm run build; committed)
+              emi.view (piano roll), emi.window (the pop-up window),
+              emi.corpora (the corpus window), and the generated
+              *.bundle.js scripts (npm run build; committed)
 code/         [v8] wrappers: glue between Max messages and the engine
               (emi.core.v8.js), and the piano roll (emi.view.v8ui.js)
 code/lib/     the engine: plain JavaScript, no Max APIs, tested in Node

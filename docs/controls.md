@@ -36,11 +36,11 @@ This page is written from the same table as the hover text (the patch generator)
 
 | Control | What it does |
 | --- | --- |
-| **load chorale** | Load one chorale (a MIDI file) and make it current: it plays as written and is drawn in the piano roll. To compose, use load corpus. |
+| **load chorale** | Load one chorale (a MIDI file) and make it current: it plays as written and is drawn in the piano roll. To compose, use corpora. |
 | **Original Key** | On: a chorale you load keeps its own key. Off: it is moved to C major or A minor (the default). Only for load chorale. |
 | **pattern** | Make the built-in test phrase current (no corpus needed): a quick check that the voices sound. |
 | **clear** | Empty the queue: what is playing stops at once. The piano roll still shows it. |
-| **load corpus** | Choose the folder of Bach chorales (MIDI files) to compose from, e.g. Documents/ml_midi/corpus. Every chorale in it is read; it is reloaded by itself next time. |
+| **corpora** | Open the corpus window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; it is reloaded by itself next time. |
 | **Form** | On: each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan. |
 | **Beats** | The shortest piece to compose, in beats (4 to 256). With form on, only chorales at least this long lend their form. |
 | **A/B** | Write a blind listening test: a web page of 10 pairs, each a Bach chorale and a piece composed in its form, in random order. Can listeners tell which is Bach? |
@@ -88,6 +88,14 @@ This page is written from the same table as the hover text (the patch generator)
 | **recall taste** | Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot. |
 | **forget** | Start a new taste from nothing. The old one is kept as a backup and as a snapshot, so you can roll back to it. |
 
+## The corpus window (both versions: the panel's corpora button)
+
+| Control | What it does |
+| --- | --- |
+| **Corpora** | Every folder of chorales on the list: switch one on or off with its box, use it alone (only), or take it off the list (remove). Composing uses every folder that is on, as one corpus, and the seed shown is composed again with it. A chorale in two folders counts once; the corpus has one meter (the first folder's). Hover over a name for its folder's full path. |
+| **add folder** | Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/ml_midi/corpus-both). It joins the list, switched on. |
+| **rescan** | Read every folder again, after adding or removing chorales in one. (Folders are read once, when first switched on.) |
+
 ## The emi.voice device (Live)
 
 | Control | What it does |
@@ -110,3 +118,14 @@ These are drawn by the window's taste pane (`code/emi.taste.v8ui.js`), so their 
 | **put aside** | Stop composing from this work of hers. It stays in her memory file: roll back to a snapshot from when it was in use to bring it back. |
 | **keep a snapshot** | Keep her whole taste as it is now, to roll back to later. |
 | **roll back** | Make this snapshot's taste hers again, exactly: weights, pins, sliders, and which of her works are in use. The taste she has now is kept as a snapshot first. |
+
+## In the corpus window's list
+
+Drawn by `code/emi.corpora.v8ui.js`, with its help drawn the same way.
+
+| Control | What it does |
+| --- | --- |
+| **a folder's box** | Switch this folder on or off. Composing uses every folder that is on, as one corpus; the seed shown is composed again with it. |
+| **only** | Switch this folder on and every other one off. |
+| **remove** | Take this folder off the list (the folder and its files stay where they are). Add it again with add folder. |
+| **a folder's name** | Hover over it for the folder's full path. |

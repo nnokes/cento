@@ -301,6 +301,31 @@ test("emi.window: a large piano roll and Emily's taste, fed by the engine; selec
   assert.ok(row.at(-1)[0] + row.at(-1)[2] <= roll.presentation_rect[0] + roll.presentation_rect[2]);
 });
 
+test("emi.corpora: the corpus window (M11): its list talks to the engine; add folder and rescan too", () => {
+  const p = patchFile("emi.corpora.maxpat");
+  const [inlet] = p.find("inlet");
+  const [outlet] = p.find("outlet");
+  const [route] = p.find("route corpusview");
+  assert.deepEqual(p.from(inlet.id).map(([b]) => b.id), [route.id]);
+  const [[list]] = p.from(route.id, 0);
+  assert.equal(list.filename, "emi.corpora.bundle.js");
+  assert.deepEqual(p.from(list.id).map(([b]) => b.id), [outlet.id], "corpuson, corpusonly, corpusremove");
+  const [dialog] = p.find("opendialog fold");
+  const [[pre]] = p.from(dialog.id, 0);
+  assert.equal(pre.text, "prepend corpusadd");
+  assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
+  const [rescan] = p.find("rescan");
+  const [[t]] = p.from(rescan.id);
+  const [[message]] = p.from(t.id);
+  assert.deepEqual([message.maxclass, message.text], ["message", "corpusrescan"]);
+  assert.deepEqual(p.from(message.id).map(([b]) => b.id), [outlet.id]);
+  // The panel's corpora button opens it.
+  const panel = patchFile("emi.panel.maxpat");
+  const [button] = panel.find("corpora");
+  assert.deepEqual(panel.from(button.id).map(([b]) => b.text), ["s ---emi.corpora"]);
+  assert.deepEqual(panel.find("load corpus"), [], "the window replaces load corpus");
+});
+
 test("emi.panel: the status line shows status and errors in a text box ([v8ui] emi.text)", () => {
   const p = patchFile("emi.panel.maxpat");
   const [route] = p.find("route status error setting");
@@ -334,17 +359,20 @@ test("top patches: host panel, shared panel, Emily's panel and piano roll, all w
     const bpatchers = [...p.boxes.values()].filter((b) => b.maxclass === "bpatcher").map((b) => b.name);
     assert.deepEqual(bpatchers, [host, "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat"], file);
     const into = p.into(engine.id).map(([b]) => b.name || b.text).sort();
-    assert.deepEqual(into, [host, "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.window"].sort(), `${file}: the panels, the roll's selections and the window go to the engine`);
+    assert.deepEqual(into, [host, "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.window", "emi.corpora"].sort(), `${file}: the panels, the roll's selections and the windows go to the engine`);
     const from = p.from(engine.id).map(([b]) => b.name || b.text).sort();
-    assert.deepEqual(from, [host, "emi.panel.maxpat", "emily.panel.maxpat", "route view", "emi.window"].sort(), `${file}: the engine answers them`);
-    // The Emily panel's window button opens the pop-up window.
-    const [window] = p.find("emi.window");
-    const [receive] = p.find("r ---emi.window");
-    const [[open]] = p.from(receive.id);
-    assert.equal(open.text, "open");
-    const [[pcontrol]] = p.from(open.id);
-    assert.equal(pcontrol.text, "pcontrol");
-    assert.deepEqual(p.from(pcontrol.id).map(([b, inlet]) => [b.id, inlet]), [[window.id, 0]], file);
+    assert.deepEqual(from, [host, "emi.panel.maxpat", "emily.panel.maxpat", "route view", "emi.window", "emi.corpora"].sort(), `${file}: the engine answers them`);
+    // The Emily panel's window button opens the pop-up window; the panel's
+    // corpora button (M11) opens the corpus window.
+    for (const [abstraction, name] of [["emi.window", "---emi.window"], ["emi.corpora", "---emi.corpora"]]) {
+      const [window] = p.find(abstraction);
+      const [receive] = p.find("r " + name);
+      const [[open]] = p.from(receive.id);
+      assert.equal(open.text, "open");
+      const [[pcontrol]] = p.from(open.id);
+      assert.equal(pcontrol.text, "pcontrol");
+      assert.deepEqual(p.from(pcontrol.id).map(([b, inlet]) => [b.id, inlet]), [[window.id, 0]], `${file}: ${abstraction}`);
+    }
   }
   // The device is exactly as wide as its four panels.
   const device = readPatcher(path.join(ROOT, "patchers", "emi.brain.amxd"));

@@ -214,12 +214,14 @@ picked the wrong folder (see the M2 checklist for recreating `.venv`).
        corpus status line is as in Max.
 2. [ ] **Hover** over the piano roll in the brain: the same source box as in
        Max.
-3. [ ] **3/4 in Live.** In the brain, **load corpus** `corpus-3-4` and compose
+3. [ ] **3/4 in Live.** (Since M11, **load corpus** is the **corpora** window.)
+       In the brain, click **corpora**. If `corpus-3-4` isn't listed, click
+       **add folder** and choose it. Click **only** on its row, then compose
        seed 1. Live's time signature (top left of Live's window) changes to
        **3/4**. Play: the piece starts on a bar. **writeclips**, and play the
        clips.
-4. [ ] **Back to 4/4.** **load corpus** `corpus` and compose: Live's time
-       signature goes back to **4/4**.
+4. [ ] **Back to 4/4.** In the corpus window, **only** on `corpus`, and compose:
+       Live's time signature goes back to **4/4**.
 
 ---
 

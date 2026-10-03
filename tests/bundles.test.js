@@ -49,11 +49,11 @@ function writeAMajorChorale() {
 }
 
 // A folder of three chorales on the same I-IV-V cycle, so they recombine.
-function writeCorpus() {
+function writeCorpus({ ids = ["a", "b", "c"], meter = [4, 4] } = {}) {
   const dir = tempDir();
   const [I, IV, V] = [[72, 67, 64, 48], [72, 69, 65, 53], [71, 67, 62, 55]];
   const cycle = [I, IV, V, I, IV, V, I, IV, V].map((c) => [...c, 1]).concat([[...I, 2]]);
-  for (const id of ["a", "b", "c"]) writeChorale(dir, id, cycle);
+  for (const id of ids) writeChorale(dir, id, cycle, { meter });
   fs.writeFileSync(path.join(dir, "notes.txt"), "not a MIDI file"); // ignored
   return dir;
 }
@@ -105,7 +105,7 @@ test("bundles in patchers/ are up to date with code/", () => {
 test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
-    "abtest", "accept", "autoclips", "beats", "clear", "compose", "corpus", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
+    "abtest", "accept", "autoclips", "beats", "clear", "compose", "corpus", "corpusadd", "corpusbuild", "corpuson", "corpusonly", "corpusremove", "corpusrescan", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
     "mix", "need", "next", "novelty", "pattern", "phrases", "pin", "recalltaste", "remember", "rollback", "seed", "select", "sigs", "snapshot", "startup", "storetaste", "stream",
     "strength", "taste", "tastestep", "temperature", "testclip", "transpose", "unaccept", "unpin", "writeclips",
   ]);
@@ -113,6 +113,7 @@ test("each bundle exposes exactly its documented messages", () => {
     "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "playhead", "seam", "selection", "signature", "source", "speac", "variant",
   ]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
+  assert.deepEqual(loadBundle("emi.corpora").handlers(), ["clear", "done", "folder", "onclick", "onidle", "onidleout", "onresize", "paint", "summary"]);
   assert.deepEqual(loadBundle("emi.text").handlers(), ["alert", "clear", "onresize", "paint", "text"]);
   assert.deepEqual(loadBundle("emi.taste").handlers(), [
     "clear", "compare", "comparing", "dislike", "done", "like", "onclick", "ondblclick", "ondrag", "onidle", "onidleout", "onresize", "own", "paint", "pair", "rating",
@@ -134,6 +135,7 @@ test("[v8] bundles have one inlet and one outlet (the view's sends selections, M
   assert.deepEqual(counts("emi.voice"), [1, 1, 1]);
   assert.deepEqual(counts("emi.text"), [1, 0, 1]);
   assert.deepEqual(counts("emi.taste"), [1, 1, 1]);
+  assert.deepEqual(counts("emi.corpora"), [1, 1, 1]);
 });
 
 // ---------------------------------------------------------------- voice: the track's name picks the voice
@@ -574,6 +576,7 @@ test("settings: the Max version restores every setting, reloads the corpus and c
   first.send("remember", "bpm", 120);
   first.send("remember", "output", 2);
   assert.deepEqual(settingsIn(folder), {
+    corpora: [{ path: corpusDir, on: true, works: 3, meter: "4/4", modes: "major" }],
     corpus: corpusDir, seed: 5, beats: 8, form: 0, signatures: 1, key: 1, stream: 0, phrases: 8, transpose: 0, temperature: 1, host: { bpm: [120], output: [2] },
   });
 
@@ -612,6 +615,201 @@ test("settings: a corpus that has gone missing is reported, not fatal", () => {
   const out = engineIn(folder).send("startup", "all");
   assert.deepEqual(select(out, "setting")[0], ["seed", 2]);
   assert.match(lastStatus(out).join(" "), /^error can't reload the last corpus \(gone\):/);
+});
+
+// ---------------------------------------------------------------- M11: corpora
+
+// The corpus window's rows: [n, on, used, works, meter, modes, name, note].
+const folderRows = (out) => select(out, "corpusview").filter(([kind]) => kind === "folder")
+  .map(([, n, on, used, works, meter, modes, name, , ...note]) => [n, on, used, works, meter, modes, name, note.join(" ")]);
+const corpusSummary = (out) => select(out, "corpusview").filter(([kind]) => kind === "summary").map(([, ...words]) => words.join(" ")).at(-1);
+
+test("corpora: folders join the corpus window, on or off; each change builds on the next turn and composes", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  let out = core.send("startup", "all");
+  assert.equal(corpusSummary(out), "No folders yet: click add folder and choose a folder of chorales (MIDI files).");
+  core.send("beats", 8);
+  const abc = writeCorpus();
+  const de = writeCorpus({ ids: ["d", "e"] });
+
+  // Adding a folder: shown at once (building), built on the next turn, then composed.
+  out = core.send("corpusadd", abc);
+  assert.deepEqual(select(out, "corpusview")[0], ["clear", 1]);
+  assert.equal(corpusSummary(out), "Building the corpus...");
+  assert.match(lastStatus(out).join(" "), /^status corpora changed: building the corpus\.\.\.$/);
+  assert.deepEqual(out.filter((o) => o[1] === "later"), [[0, "later", "corpusbuild", 1]]);
+  out = settle(core, out);
+  assert.ok(select(out, "status").some((words) => words.join(" ").startsWith("corpus 3 chorales (major), ")), "built");
+  assert.match(lastStatus(out).join(" "), /^status emi-1: /, "then composed");
+  assert.deepEqual(folderRows(out).at(-1), [1, 1, 1, 3, "4/4", "major", path.basename(abc), ""]);
+  assert.match(corpusSummary(out), /^In use: 3 chorales \(major\) from 1 folder, in 4\/4: \d+ beats, \d+ signatures\.$/);
+
+  // A second folder: both in use.
+  out = settle(core, core.send("corpusadd", de));
+  assert.ok(select(out, "status").some((words) => /^corpus 5 chorales \(major\), .* from 2 folders$/.test(words.join(" "))), "from 2 folders");
+  assert.deepEqual(folderRows(out).slice(-2).map(([n, on, used, works]) => [n, on, used, works]), [[1, 1, 1, 3], [2, 1, 1, 2]]);
+  assert.match(corpusSummary(out), /^In use: 5 chorales \(major\) from 2 folders, in 4\/4: /);
+
+  // Off, only, remove.
+  out = settle(core, core.send("corpuson", 1, 0));
+  assert.ok(select(out, "status").some((words) => words.join(" ").startsWith("corpus 2 chorales")));
+  assert.deepEqual(folderRows(out).slice(-2).map(([n, on, used]) => [n, on, used]), [[1, 0, 0], [2, 1, 1]]);
+  out = settle(core, core.send("corpusonly", 1));
+  assert.deepEqual(folderRows(out).slice(-2).map(([n, on, used]) => [n, on, used]), [[1, 1, 1], [2, 0, 0]]);
+  out = settle(core, core.send("corpusremove", 2));
+  assert.deepEqual(folderRows(out).slice(-1).map(([n, , , , , , name]) => [n, name]), [[1, path.basename(abc)]]);
+  assert.match(lastStatus(core.send("corpuson", 5, 1)).join(" "), /^error no folder 5 in the list$/);
+
+  // All off: no corpus, said plainly.
+  out = settle(core, core.send("corpuson", 1, 0));
+  assert.ok(select(out, "status").some((words) => words.join(" ") === "no corpus: switch a folder on in corpora"));
+  assert.equal(corpusSummary(out), "No corpus: switch a folder on.");
+  assert.match(lastStatus(core.send("compose")).join(" "), /^error load a corpus first$/);
+
+  // The list is remembered, each folder with what it holds.
+  core.send("corpuson", 1, 1);
+  assert.deepEqual(settingsIn(folder).corpora, [{ path: abc, on: true, works: 3, meter: "4/4", modes: "major" }]);
+});
+
+test("corpora: quick changes build once; a chorale in two folders counts once; other meters are left out", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  const abc = writeCorpus();
+  const again = writeCorpus({ ids: ["a", "b", "x"] }); // a and b again
+  const triple = writeCorpus({ ids: ["t", "u"], meter: [3, 4] });
+  const first = core.send("corpusadd", abc);
+  const second = core.send("corpusadd", again);
+  const third = core.send("corpusadd", triple);
+  // Only the last change's build runs.
+  assert.deepEqual(core.send(...first.find((o) => o[1] === "later").slice(2)), []);
+  assert.deepEqual(core.send(...second.find((o) => o[1] === "later").slice(2)), []);
+  const out = settle(core, third);
+  assert.ok(select(out, "status").some((words) => /^corpus 4 chorales \(major\), .* from 2 folders$/.test(words.join(" "))));
+  assert.deepEqual(folderRows(out).slice(-3).map(([n, on, used, works, meter, , , note]) => [n, on, used, works, meter, note]), [
+    [1, 1, 1, 3, "4/4", ""],
+    [2, 1, 1, 3, "4/4", "2 already in a folder above"],
+    [3, 1, 0, 2, "3/4", "not used: its chorales are in 3/4, the corpus in 4/4"],
+  ]);
+  // Switching off a folder that gives nothing changes nothing: no build, no compose.
+  const same = settle(core, core.send("corpuson", 3, 0));
+  assert.deepEqual(select(same, "status").map((w) => w.join(" ")), ["corpora changed: building the corpus...", "corpus unchanged: 4 chorales"]);
+  core.send("corpuson", 3, 1);
+  // A 3/4 corpus: that folder only.
+  const only = settle(core, core.send("corpusonly", 3));
+  assert.ok(select(only, "status").some((words) => words.join(" ").startsWith("corpus 2 chorales")));
+  assert.match(corpusSummary(only), / in 3\/4: /);
+});
+
+test("corpora: two folders compose exactly as one folder holding the same chorales (M11's done when)", () => {
+  const pieceFrom = (dirs) => {
+    const core = engineIn(tempDir());
+    core.send("startup", "all");
+    core.send("beats", 8);
+    let out = [];
+    for (const dir of dirs) out = settle(core, core.send("corpusadd", dir));
+    const composed = core.send("compose", 4);
+    // Where each beat came from (the test chorales share their notes, so the notes alone can't tell).
+    const sources = select(composed, "view").filter(([kind]) => kind === "source").map(([, tick, ...text]) => [tick, text.join(" ")]);
+    return [select(out, "status").find((w) => w[0] === "corpus").slice(0, 6).join(" "), [select(composed, "coll"), sources]];
+  };
+  const [oneStatus, one] = pieceFrom([writeCorpus({ ids: ["a", "b", "c", "d", "e"] })]);
+  const [twoStatus, two] = pieceFrom([writeCorpus({ ids: ["d", "b", "e"] }), writeCorpus({ ids: ["c", "a", "b"] })]);
+  assert.equal(twoStatus, oneStatus);
+  assert.ok(one[0].length > 2 && one[1].length > 2);
+  assert.deepEqual(two, one, "the same notes, from the same beats of the same chorales");
+});
+
+test("corpora: a stream playing when the corpus changes starts again from the new corpus", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  core.send("stream", 1);
+  core.send("compose", 2);
+  const out = settle(core, core.send("corpusadd", writeCorpus({ ids: ["d", "e"] })));
+  assert.ok(select(out, "restart").length >= 1, "the player starts again at the next bar");
+  assert.ok(select(out, "status").some((words) => /^emi-2 stream: phrase 1/.test(words.join(" "))), select(out, "status").map((w) => w.join(" ")).join("\n"));
+});
+
+test("corpora: startup reloads every folder that is on; 'corpus' still loads one folder alone", () => {
+  const folder = tempDir();
+  const abc = writeCorpus();
+  const de = writeCorpus({ ids: ["d", "e"] });
+  fs.writeFileSync(path.join(folder, "ml_midi.settings.json"), JSON.stringify({
+    corpora: [{ path: abc, on: true }, { path: de, on: true }, { path: path.join(folder, "off"), on: false }], seed: 3, beats: 8,
+  }));
+  const core = engineIn(folder);
+  let out = core.send("startup", "all");
+  assert.ok(select(out, "status").some((words) => /^corpus 5 chorales .* from 2 folders$/.test(words.join(" "))));
+  assert.match(lastStatus(out).join(" "), /^status emi-3: /);
+  assert.deepEqual(folderRows(out).map(([n, on, used, works]) => [n, on, used, works]), [[1, 1, 1, 3], [2, 1, 1, 2], [3, 0, 0, -1]], "a folder that is off isn't read");
+
+  // "corpus <folder>" (as before M11): that folder alone, added to the list.
+  const fgh = writeCorpus({ ids: ["f", "g", "h"] });
+  out = core.send("corpus", fgh);
+  assert.match(lastStatus(out).join(" "), /^status corpus 3 chorales \(major\), /);
+  assert.deepEqual(settingsIn(folder).corpora.map((f) => [path.basename(f.path), f.on]), [
+    [path.basename(abc), false], [path.basename(de), false], ["off", false], [path.basename(fgh), true],
+  ]);
+  // A folder with no chorales changes nothing.
+  assert.match(lastStatus(core.send("corpus", tempDir())).join(" "), /^error no \.mid files in /);
+  assert.equal(settingsIn(folder).corpora.length, 4);
+  assert.match(lastStatus(core.send("compose", 1)).join(" "), /^status emi-1: /, "the corpus in use stays");
+});
+
+test("corpus window: a row per folder, with what it holds; its box, only and remove talk to the engine", () => {
+  const view = loadBundle("emi.corpora");
+  const g = view.context.mgraphics;
+  g.size = [760, 330];
+  view.send("clear", 0);
+  view.send("folder", 1, 1, 1, 142, "4/4", "major", "corpus", "/music/ml_midi/corpus");
+  view.send("folder", 2, 1, 1, 295, "4/4", "major+minor", "corpus-both", "/music/ml_midi/corpus-both", "142", "already", "in", "a", "folder", "above");
+  view.send("folder", 3, 1, 0, 20, "3/4", "major", "corpus-3-4", "/music/ml_midi/corpus-3-4", "not", "used:", "its", "chorales", "are", "in", "3/4,", "the", "corpus", "in", "4/4");
+  view.send("folder", 4, 0, 0, -1, "?", "?", "mine", "/music/mine");
+  view.send("summary", "In", "use:", "295", "chorales");
+  view.send("done");
+  const draw = () => {
+    g.calls.length = 0;
+    view.send("paint");
+    return g.calls.filter(([name]) => name === "show_text").map(([, t]) => t);
+  };
+  const text = draw();
+  for (const expected of [
+    "Corpora", "corpus", "142 chorales · 4/4 · major", "in use", "corpus-both", "295 chorales · 4/4 · major and minor",
+    "in use; 142 already in a folder above", "not used: its chorales are in 3/4, the corpus in 4/4", "mine",
+    "not read yet (switch it on)", "In use: 295 chorales", "only", "remove",
+  ]) assert.ok(text.includes(expected), expected);
+  const where = (label, nth = 0) => {
+    const k = g.calls.map((c, i) => [c, i]).filter(([[name, t]]) => name === "show_text" && t === label)[nth][1];
+    const [, x, y] = g.calls.slice(0, k).filter(([name]) => name === "move_to").at(-1);
+    return [x + 4, y - 4];
+  };
+  // The box of row 4 (off): on.
+  assert.deepEqual(view.send("onclick", 18, 46 + 3 * 40 + 8), [[0, "corpuson", 4, 1]]);
+  assert.deepEqual(view.send("onclick", 18, 46 + 8), [[0, "corpuson", 1, 0]]);
+  draw();
+  assert.deepEqual(view.send("onclick", ...where("only", 2)), [[0, "corpusonly", 3]]);
+  assert.deepEqual(view.send("onclick", ...where("remove", 1)), [[0, "corpusremove", 2]]);
+  assert.deepEqual(view.send("onclick", 400, 20), [], "nothing there");
+  // Hover help: the box, the buttons, and a name's full path.
+  view.send("onidle", 18, 46 + 8);
+  assert.ok(draw().some((t) => /^Switch this folder on or off/.test(t)));
+  view.send("onidle", ...where("remove", 0));
+  assert.ok(draw().some((t) => /^remove: take this folder off the list/.test(t)));
+  view.send("onidle", 40, 46 + 40 + 10);
+  assert.ok(draw().includes("/music/ml_midi/corpus-both"));
+  view.send("onidleout");
+  assert.ok(!draw().includes("/music/ml_midi/corpus-both"));
+  // While a change builds.
+  view.send("clear", 1);
+  view.send("folder", 1, 1, 0, 142, "4/4", "major", "corpus", "/c");
+  view.send("summary", "Building", "the", "corpus...");
+  view.send("done");
+  const building = draw();
+  assert.ok(building.includes("building...") && !building.includes("not used"));
 });
 
 // ---------------------------------------------------------------- core: Live clips

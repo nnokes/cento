@@ -45,6 +45,8 @@ autowatch = 1;
 inlets = 1;
 outlets = 1;
 
+const hover = require("emi-hover");
+
 mgraphics.init();
 mgraphics.relative_coords = 0;
 mgraphics.autofill = 0;
@@ -263,47 +265,13 @@ function keyOf(hit) {
 }
 keyOf.local = 1;
 
-// The hovered control's help, in a box below it (above, near the bottom),
-// wrapped to fit.
+// The hovered control's help (emi-hover), unless a slider is being dragged.
 function paintHelp(width, height) {
   const hit = hovered === null ? null : hits.find((h) => keyOf(h) === hovered);
   if (!hit || !hit.help || dragging) return;
-  const g = mgraphics;
-  const CHAR = 6; // px per character at 11 px, near enough
-  const lines = wrap(hit.help, Math.floor(Math.min(560, width - 24) / CHAR));
-  const w = Math.max(...lines.map((l) => l.length)) * CHAR + 16;
-  const h = lines.length * 15 + 8;
-  const x = Math.max(6, Math.min(width - w - 6, hit.x0));
-  const y = hit.y1 + 4 + h <= height - 4 ? hit.y1 + 4 : Math.max(4, hit.y0 - h - 4);
-  g.set_source_rgba(0.04, 0.04, 0.05, 0.96);
-  g.rectangle_rounded(x, y, w, h, 6, 6);
-  g.fill();
-  g.set_source_rgba(1, 1, 1, 0.3);
-  g.set_line_width(1);
-  g.rectangle_rounded(x, y, w, h, 6, 6);
-  g.stroke();
-  g.set_font_size(11);
-  g.set_source_rgba(1, 1, 1, 0.95);
-  lines.forEach((line, k) => {
-    g.move_to(x + 8, y + 15 + k * 15);
-    g.show_text(line);
-  });
+  hover.drawHelp(mgraphics, hit.help, hit, width, height);
 }
 paintHelp.local = 1;
-
-function wrap(text, chars) {
-  const lines = [];
-  let line = "";
-  for (const word of text.split(" ")) {
-    if (line && line.length + 1 + word.length > chars) {
-      lines.push(line);
-      line = word;
-    } else line = line ? line + " " + word : word;
-  }
-  if (line) lines.push(line);
-  return lines;
-}
-wrap.local = 1;
 
 function sliderValue(name) {
   if (name === "strength") return Number(shown.strength);

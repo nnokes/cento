@@ -44,6 +44,8 @@
 //                                                                  only her strongest like and dislike (M9)
 //   emilyview clear|like|dislike|rating|compare|pair|strength|weight|done
 //             comparing <pairs done|-1> <pairs>                 (a taste comparison's progress)
+//   corpusview clear|folder|summary|done                        -> the corpus window (M11): the folders
+//                                                                  and what each gives the corpus
 //                                                               -> the pop-up window: her taste in full, and
 //                                                                  every feature's weight for the editor
 //                                                                  (emi.taste; sent whenever it changes)
@@ -51,7 +53,15 @@
 // Messages:
 //   loadmidi <path>        read a chorale (+ its .json) and make it current
 //   key c|original|0|1     chorales in C major / A minor (default) or as written
-//   corpus <folder>        read every chorale in a folder and build the lexicon
+//   corpus <folder>        read every chorale in a folder and build the lexicon from it
+//                          alone (M11: the folder joins the list of corpora, the only one on)
+//   corpusadd <folder>     M11, from the corpus window: add a folder (switched on)
+//   corpuson <n> 0|1       switch folder n of the list (from 1) off or on
+//   corpusonly <n>         only folder n on
+//   corpusremove <n>       take folder n off the list
+//   corpusrescan           read the folders again (after adding chorales to one)
+//   corpusbuild <id>       (from the engine itself, via later) build the corpus from the
+//                          folders that are on, then compose the seed shown
 //   beats <n>              shortest piece to compose (default 32)
 //   form 1 | form 0        compose in the form of a chorale (M3, default) or freely (M2)
 //   sigs 1 | sigs 0        keep signatures at cadences (M7, default) or not
@@ -127,6 +137,7 @@ const abtestPage = require("emi-abtest-page");
 const emily = require("emily-assoc");
 const variation = require("emily-vary");
 const emilyMemory = require("emily-memory");
+const corpora = require("emi-corpora");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
@@ -169,6 +180,12 @@ let bachWorks = null;
 let bachDb = null;
 let herDb = null;
 let builtFor = null; // what herDb was built from: accepted ids and the store
+// M11: the corpus is every folder on this list that is switched on
+// (emi-corpora). Each folder is read once (until a rescan or a "corpus").
+let folders = [];
+const folderCache = new Map(); // path -> { works, skipped }
+let corpusReport = { used: new Set(), notes: new Map() }; // the last build, by folder path
+let corpusBuilds = 0; // changes asked for: each one's build id (the last one builds)
 let store = emilyMemory.createStore(); // every work ever accepted (ml_midi.emily.json)
 let storePath = null;
 let storeText = null;
@@ -200,6 +217,53 @@ function corpus(folder) {
     save();
   });
 }
+
+// ---- M11: the corpus window. Each change is saved and shown at once; the
+// corpus is built on the next turn (later -> corpusbuild), so the window
+// answers first, and only the last of several quick changes builds.
+
+function corpusadd(folder) {
+  changeCorpora(() => corpora.add(folders, String(folder)));
+}
+
+function corpuson(n, on) {
+  changeCorpora(() => corpora.setOn(folders, Number(n) - 1, on));
+}
+
+function corpusonly(n) {
+  changeCorpora(() => corpora.only(folders, Number(n) - 1));
+}
+
+function corpusremove(n) {
+  changeCorpora(() => folderCache.delete(corpora.remove(folders, Number(n) - 1).path));
+}
+
+function corpusrescan() {
+  changeCorpora(() => folderCache.clear());
+}
+
+function corpusbuild(id) {
+  if (id !== corpusBuilds) return; // a later change builds instead
+  attempt(() => {
+    try {
+      if (buildCorpus() === "built") composeNow(false);
+    } finally {
+      save();
+      showCorpora(false);
+    }
+  });
+}
+
+function changeCorpora(change) {
+  attempt(() => {
+    change();
+    save();
+    showCorpora(true);
+    outlet(0, "status", "corpora", "changed:", "building", "the", "corpus...");
+    outlet(0, "later", "corpusbuild", ++corpusBuilds);
+  });
+}
+changeCorpora.local = 1;
 
 function beats(n) {
   minBeats = Math.max(4, Math.min(256, Math.round(n)));
@@ -297,13 +361,23 @@ function startup(mode) {
     }
     settingsPath = settingsFile.pathIn(folder);
     remembered = settingsFile.read(settingsPath);
+    folders = corpora.normalize(remembered.corpora, remembered.corpus); // before anything saves
     if (mode !== "corpus") restore();
     loadTaste(folder);
-    if (!remembered.corpus) return;
+    const on = folders.filter((f) => f.on);
+    if (!on.length) {
+      showCorpora(false);
+      return;
+    }
+    let built = false;
     try {
-      loadCorpus(remembered.corpus);
-    } catch (e) {
-      outlet(0, "error", "can't", "reload", "the", "last", "corpus", "(" + files.fileName(remembered.corpus) + "):", ...String(e.message).split(" "));
+      built = buildCorpus();
+    } finally {
+      showCorpora(false);
+    }
+    if (!built) {
+      const why = corpusReport.notes.get(on[0].path) || "no chorales in it";
+      outlet(0, "error", "can't", "reload", "the", "last", "corpus", "(" + on.map((f) => corpora.nameOf(f.path)).join(", ") + "):", ...why.split(" "));
       return;
     }
     composeNow(true);
@@ -690,6 +764,77 @@ barsOf.local = 1;
 // The corpus in use (M10): with her own works in use when there are any and
 // mix is above 0, rebuilt when what she has accepted changes; Bach's alone
 // otherwise.
+// Builds the corpus from the folders that are on (emi-corpora) and reports
+// it: "built", "same" (the same chorales as the corpus in use: nothing to
+// build or compose again), or false when they give none (no corpus then).
+function buildCorpus() {
+  const result = corpora.combine(folders, (path) => {
+    if (!folderCache.has(path)) folderCache.set(path, files.loadFolder(path));
+    return folderCache.get(path).works;
+  });
+  corpusReport = {
+    used: new Set(result.used.map((i) => folders[i].path)),
+    notes: new Map([...result.notes].map(([i, note]) => [folders[i].path, note])),
+  };
+  if (!result.works.length) {
+    bachWorks = null;
+    bachDb = null;
+    herDb = null;
+    db = null;
+    builtFor = null;
+    outlet(0, "status", "no", "corpus:", "switch", "a", "folder", "on", "in", "corpora");
+    return false;
+  }
+  if (bachDb && bachWorks && bachWorks.length === result.works.length && bachWorks.every((w, i) => w === result.works[i])) {
+    outlet(0, "status", "corpus", "unchanged:", bachWorks.length, "chorales");
+    return "same";
+  }
+  bachWorks = result.works;
+  bachDb = lexicon.build(result.works);
+  db = bachDb;
+  builtFor = null;
+  remembered.corpus = folders.find((f) => corpusReport.used.has(f.path)).path; // for older versions
+  const s = lexicon.stats(bachDb);
+  const counted = (m) => db.works.filter((w) => w.mode === m).length;
+  const mode = db.mode === "mixed" ? `${counted("major")} major, ${counted("minor")} minor` : db.mode;
+  const words = ["corpus", s.works, "chorales", ...("(" + mode + "),").split(" "), s.groupings, "beats,", Math.round(100 * s.deadEndShare) + "%", "dead", "ends,", db.signatures.length, "signatures"];
+  if (corpusReport.used.size > 1) words.push("from", corpusReport.used.size, "folders");
+  const skipped = folders.filter((f) => corpusReport.used.has(f.path)).reduce((n, f) => n + folderCache.get(f.path).skipped.length, 0);
+  if (skipped) words.push("(" + skipped, "skipped)");
+  outlet(0, "status", ...words);
+  listSignatures();
+  ensureCorpus();
+  const own = ownLine();
+  if (own) post(own + "\n");
+  return "built";
+}
+buildCorpus.local = 1;
+
+// The corpus window (emi.corpora): each folder, on or off, what it holds and
+// what it gives the corpus; then the corpus in a line. `building`: a change
+// is waiting for its build.
+function showCorpora(building) {
+  outlet(0, "corpusview", "clear", building ? 1 : 0);
+  folders.forEach((f, i) => {
+    const note = building ? "" : corpusReport.notes.get(f.path) || "";
+    const used = !building && corpusReport.used.has(f.path) ? 1 : 0;
+    outlet(0, "corpusview", "folder", i + 1, f.on ? 1 : 0, used, f.works === null ? -1 : f.works, f.meter || "?", f.modes || "?", corpora.nameOf(f.path), f.path, ...(note ? note.split(" ") : []));
+  });
+  let summary;
+  if (building) summary = "Building the corpus...";
+  else if (!folders.length) summary = "No folders yet: click add folder and choose a folder of chorales (MIDI files).";
+  else if (!db || !bachDb) summary = "No corpus: switch a folder on.";
+  else {
+    const counted = (m) => bachDb.works.filter((w) => w.mode === m).length;
+    const mode = bachDb.mode === "mixed" ? `${counted("major")} major, ${counted("minor")} minor` : bachDb.mode;
+    const n = corpusReport.used.size;
+    summary = `In use: ${bachDb.works.length} chorales (${mode}) from ${n} ${n === 1 ? "folder" : "folders"}, in ${bachDb.meter.join("/")}: ${bachDb.groupings.length} beats, ${bachDb.signatures.length} signatures.`;
+  }
+  outlet(0, "corpusview", "summary", ...summary.split(" "));
+  outlet(0, "corpusview", "done");
+}
+showCorpora.local = 1;
+
 function ensureCorpus() {
   if (!bachWorks) return;
   syncTaste();
@@ -1007,24 +1152,16 @@ function clampSeed(n) {
 }
 clampSeed.local = 1;
 
+// "corpus <folder>": that folder alone, read afresh. A folder with no
+// chorales changes nothing (the corpus in use stays).
 function loadCorpus(folder) {
-  const { works, skipped } = files.loadFolder(folder);
-  if (!works.length) throw new Error("no .mid files in " + files.fileName(folder));
-  bachWorks = works;
-  bachDb = lexicon.build(works);
-  db = bachDb;
-  builtFor = null;
-  remembered.corpus = String(folder);
-  const s = lexicon.stats(bachDb);
-  const counted = (m) => db.works.filter((w) => w.mode === m).length;
-  const mode = db.mode === "mixed" ? `${counted("major")} major, ${counted("minor")} minor` : db.mode;
-  const words = ["corpus", s.works, "chorales", ...("(" + mode + "),").split(" "), s.groupings, "beats,", Math.round(100 * s.deadEndShare) + "%", "dead", "ends,", db.signatures.length, "signatures"];
-  if (skipped.length) words.push("(" + skipped.length, "skipped)");
-  outlet(0, "status", ...words);
-  listSignatures();
-  ensureCorpus();
-  const own = ownLine();
-  if (own) post(own + "\n");
+  const found = files.loadFolder(String(folder));
+  if (!found.works.length) throw new Error("no .mid files in " + files.fileName(folder));
+  const index = corpora.add(folders, String(folder));
+  corpora.only(folders, index);
+  folderCache.set(folders[index].path, found);
+  buildCorpus();
+  showCorpora(false);
 }
 loadCorpus.local = 1;
 
@@ -1219,6 +1356,7 @@ restore.local = 1;
 // Writes the settings file (once startup has read it).
 function save() {
   if (!settingsPath) return;
+  remembered.corpora = folders.map((f) => ({ ...f }));
   remembered.seed = currentSeed;
   remembered.beats = minBeats;
   remembered.form = useForm ? 1 : 0;

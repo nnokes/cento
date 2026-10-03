@@ -103,8 +103,8 @@
 						20.0
 					],
 					"id": "obj-4",
-					"hint": "Load one chorale (a MIDI file) and make it current: it plays as written and is drawn in the piano roll. To compose, use load corpus.",
-					"annotation": "Load one chorale (a MIDI file) and make it current: it plays as written and is drawn in the piano roll. To compose, use load corpus.",
+					"hint": "Load one chorale (a MIDI file) and make it current: it plays as written and is drawn in the piano roll. To compose, use corpora.",
+					"annotation": "Load one chorale (a MIDI file) and make it current: it plays as written and is drawn in the piano roll. To compose, use corpora.",
 					"annotation_name": "load chorale"
 				}
 			},
@@ -308,7 +308,7 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "load corpus",
+					"text": "corpora",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -317,7 +317,7 @@
 					"patching_rect": [
 						20.0,
 						300.0,
-						93.0,
+						65.0,
 						22.0
 					],
 					"presentation": 1,
@@ -328,25 +328,22 @@
 						20.0
 					],
 					"id": "obj-13",
-					"hint": "Choose the folder of Bach chorales (MIDI files) to compose from, e.g. Documents/ml_midi/corpus. Every chorale in it is read; it is reloaded by itself next time.",
-					"annotation": "Choose the folder of Bach chorales (MIDI files) to compose from, e.g. Documents/ml_midi/corpus. Every chorale in it is read; it is reloaded by itself next time.",
-					"annotation_name": "load corpus"
+					"hint": "Open the corpus window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; it is reloaded by itself next time.",
+					"annotation": "Open the corpus window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; it is reloaded by itself next time.",
+					"annotation_name": "corpora"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "route load",
-					"numinlets": 2,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
+					"text": "s ---emi.corpora",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": [],
 					"patching_rect": [
 						20.0,
-						330.0,
-						80.0,
+						335.0,
+						110.0,
 						22.0
 					],
 					"id": "obj-14"
@@ -354,63 +351,8 @@
 			},
 			{
 				"box": {
-					"maxclass": "newobj",
-					"text": "t b",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						"bang"
-					],
-					"patching_rect": [
-						20.0,
-						360.0,
-						35.0,
-						22.0
-					],
-					"id": "obj-15"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "opendialog fold",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"bang"
-					],
-					"patching_rect": [
-						20.0,
-						390.0,
-						110.0,
-						22.0
-					],
-					"id": "obj-16"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend corpus",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						20.0,
-						420.0,
-						120.0,
-						22.0
-					],
-					"id": "obj-17"
-				}
-			},
-			{
-				"box": {
 					"maxclass": "comment",
-					"text": "choose ~/Documents/ml_midi/corpus (all chorales in it are read)",
+					"text": "corpora: open the corpus window (folders of chorales, each on or off)",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -420,7 +362,7 @@
 						230.0,
 						34.0
 					],
-					"id": "obj-18"
+					"id": "obj-15"
 				}
 			},
 			{
@@ -466,7 +408,7 @@
 						50.0,
 						20.0
 					],
-					"id": "obj-19",
+					"id": "obj-16",
 					"hint": "On: each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan.",
 					"annotation": "On: each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan.",
 					"annotation_name": "Form"
@@ -487,7 +429,7 @@
 						90.0,
 						22.0
 					],
-					"id": "obj-20"
+					"id": "obj-17"
 				}
 			},
 			{
@@ -509,7 +451,7 @@
 						36.0,
 						20.0
 					],
-					"id": "obj-21"
+					"id": "obj-18"
 				}
 			},
 			{
@@ -550,7 +492,7 @@
 						50.0,
 						20.0
 					],
-					"id": "obj-22",
+					"id": "obj-19",
 					"hint": "The shortest piece to compose, in beats (4 to 256). With form on, only chorales at least this long lend their form.",
 					"annotation": "The shortest piece to compose, in beats (4 to 256). With form on, only chorales at least this long lend their form.",
 					"annotation_name": "Beats"
@@ -571,7 +513,7 @@
 						95.0,
 						22.0
 					],
-					"id": "obj-23"
+					"id": "obj-20"
 				}
 			},
 			{
@@ -596,7 +538,7 @@
 						44.0,
 						20.0
 					],
-					"id": "obj-24",
+					"id": "obj-21",
 					"hint": "Write a blind listening test: a web page of 10 pairs, each a Bach chorale and a piece composed in its form, in random order. Can listeners tell which is Bach?",
 					"annotation": "Write a blind listening test: a web page of 10 pairs, each a Bach chorale and a piece composed in its form, in random order. Can listeners tell which is Bach?",
 					"annotation_name": "A/B"
@@ -618,7 +560,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-25"
+					"id": "obj-22"
 				}
 			},
 			{
@@ -636,7 +578,7 @@
 						35.0,
 						22.0
 					],
-					"id": "obj-26"
+					"id": "obj-23"
 				}
 			},
 			{
@@ -655,7 +597,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-27"
+					"id": "obj-24"
 				}
 			},
 			{
@@ -673,7 +615,7 @@
 						120.0,
 						22.0
 					],
-					"id": "obj-28"
+					"id": "obj-25"
 				}
 			},
 			{
@@ -689,7 +631,7 @@
 						200.0,
 						34.0
 					],
-					"id": "obj-29"
+					"id": "obj-26"
 				}
 			},
 			{
@@ -714,7 +656,7 @@
 						64.0,
 						20.0
 					],
-					"id": "obj-30",
+					"id": "obj-27",
 					"hint": "Compose a piece with the seed shown (with stream on: start a stream). While playing, the new music starts at the next bar.",
 					"annotation": "Compose a piece with the seed shown (with stream on: start a stream). While playing, the new music starts at the next bar.",
 					"annotation_name": "compose"
@@ -739,7 +681,7 @@
 						30.0,
 						20.0
 					],
-					"id": "obj-31"
+					"id": "obj-28"
 				}
 			},
 			{
@@ -780,7 +722,7 @@
 						56.0,
 						20.0
 					],
-					"id": "obj-32",
+					"id": "obj-29",
 					"hint": "The random seed: the same seed, corpus, settings and taste always give the same piece. Changing it composes at once (once a corpus is loaded).",
 					"annotation": "The random seed: the same seed, corpus, settings and taste always give the same piece. Changing it composes at once (once a corpus is loaded).",
 					"annotation_name": "Seed"
@@ -801,7 +743,7 @@
 						90.0,
 						22.0
 					],
-					"id": "obj-33"
+					"id": "obj-30"
 				}
 			},
 			{
@@ -826,7 +768,7 @@
 						40.0,
 						20.0
 					],
-					"id": "obj-34",
+					"id": "obj-31",
 					"hint": "Add 1 to the seed and compose: the quickest way to hear another piece.",
 					"annotation": "Add 1 to the seed and compose: the quickest way to hear another piece.",
 					"annotation_name": "next"
@@ -845,7 +787,7 @@
 						330.0,
 						34.0
 					],
-					"id": "obj-35"
+					"id": "obj-32"
 				}
 			},
 			{
@@ -870,7 +812,7 @@
 						84.0,
 						20.0
 					],
-					"id": "obj-36",
+					"id": "obj-33",
 					"hint": "Save the current piece as a MIDI file. For a composed piece or stream, a .json of where every beat came from is saved next to it.",
 					"annotation": "Save the current piece as a MIDI file. For a composed piece or stream, a .json of where every beat came from is saved next to it.",
 					"annotation_name": "export midi"
@@ -892,7 +834,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-37"
+					"id": "obj-34"
 				}
 			},
 			{
@@ -910,7 +852,7 @@
 						35.0,
 						22.0
 					],
-					"id": "obj-38"
+					"id": "obj-35"
 				}
 			},
 			{
@@ -929,7 +871,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-39"
+					"id": "obj-36"
 				}
 			},
 			{
@@ -947,7 +889,7 @@
 						120.0,
 						22.0
 					],
-					"id": "obj-40"
+					"id": "obj-37"
 				}
 			},
 			{
@@ -993,7 +935,7 @@
 						56.0,
 						20.0
 					],
-					"id": "obj-41",
+					"id": "obj-38",
 					"hint": "On: compose starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece.",
 					"annotation": "On: compose starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece.",
 					"annotation_name": "Stream"
@@ -1014,7 +956,7 @@
 						100.0,
 						22.0
 					],
-					"id": "obj-42"
+					"id": "obj-39"
 				}
 			},
 			{
@@ -1036,7 +978,7 @@
 						48.0,
 						20.0
 					],
-					"id": "obj-43"
+					"id": "obj-40"
 				}
 			},
 			{
@@ -1077,7 +1019,7 @@
 						40.0,
 						20.0
 					],
-					"id": "obj-44",
+					"id": "obj-41",
 					"hint": "How many phrases a stream plays before it ends (0: endless).",
 					"annotation": "How many phrases a stream plays before it ends (0: endless).",
 					"annotation_name": "Phrases"
@@ -1098,7 +1040,7 @@
 						105.0,
 						22.0
 					],
-					"id": "obj-45"
+					"id": "obj-42"
 				}
 			},
 			{
@@ -1120,7 +1062,7 @@
 						46.0,
 						20.0
 					],
-					"id": "obj-46"
+					"id": "obj-43"
 				}
 			},
 			{
@@ -1161,7 +1103,7 @@
 						40.0,
 						20.0
 					],
-					"id": "obj-47",
+					"id": "obj-44",
 					"hint": "Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase.",
 					"annotation": "Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase.",
 					"annotation_name": "Transpose"
@@ -1182,7 +1124,7 @@
 						115.0,
 						22.0
 					],
-					"id": "obj-48"
+					"id": "obj-45"
 				}
 			},
 			{
@@ -1198,7 +1140,7 @@
 						330.0,
 						34.0
 					],
-					"id": "obj-49"
+					"id": "obj-46"
 				}
 			},
 			{
@@ -1244,7 +1186,7 @@
 						44.0,
 						20.0
 					],
-					"id": "obj-50",
+					"id": "obj-47",
 					"hint": "On: Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats.",
 					"annotation": "On: Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats.",
 					"annotation_name": "Signatures"
@@ -1265,7 +1207,7 @@
 						90.0,
 						22.0
 					],
-					"id": "obj-51"
+					"id": "obj-48"
 				}
 			},
 			{
@@ -1281,7 +1223,7 @@
 						250.0,
 						34.0
 					],
-					"id": "obj-52"
+					"id": "obj-49"
 				}
 			},
 			{
@@ -1302,7 +1244,7 @@
 						170.0,
 						22.0
 					],
-					"id": "obj-53"
+					"id": "obj-50"
 				}
 			},
 			{
@@ -1320,7 +1262,7 @@
 						98.0,
 						22.0
 					],
-					"id": "obj-54"
+					"id": "obj-51"
 				}
 			},
 			{
@@ -1338,7 +1280,7 @@
 						100.0,
 						22.0
 					],
-					"id": "obj-55"
+					"id": "obj-52"
 				}
 			},
 			{
@@ -1370,7 +1312,7 @@
 						288.0,
 						55.0
 					],
-					"id": "obj-56",
+					"id": "obj-53",
 					"hint": "What the engine just did, or what went wrong.",
 					"annotation": "What the engine just did, or what went wrong.",
 					"annotation_name": "Status"
@@ -1399,7 +1341,7 @@
 						360.0,
 						22.0
 					],
-					"id": "obj-57"
+					"id": "obj-54"
 				}
 			},
 			{
@@ -1414,7 +1356,7 @@
 						330.0,
 						20.0
 					],
-					"id": "obj-58"
+					"id": "obj-55"
 				}
 			},
 			{
@@ -1432,7 +1374,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-59"
+					"id": "obj-56"
 				}
 			},
 			{
@@ -1450,7 +1392,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-60"
+					"id": "obj-57"
 				}
 			},
 			{
@@ -1468,7 +1410,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-61"
+					"id": "obj-58"
 				}
 			},
 			{
@@ -1486,7 +1428,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-62"
+					"id": "obj-59"
 				}
 			},
 			{
@@ -1504,7 +1446,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-63"
+					"id": "obj-60"
 				}
 			},
 			{
@@ -1522,7 +1464,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-64"
+					"id": "obj-61"
 				}
 			},
 			{
@@ -1540,7 +1482,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-65"
+					"id": "obj-62"
 				}
 			},
 			{
@@ -1558,7 +1500,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-66"
+					"id": "obj-63"
 				}
 			}
 		],
@@ -1686,30 +1628,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-14",
-						0
-					],
-					"destination": [
-						"obj-15",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-15",
-						0
-					],
-					"destination": [
-						"obj-16",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-16",
 						0
 					],
@@ -1758,6 +1676,18 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-21",
+						0
+					],
+					"destination": [
+						"obj-22",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-22",
 						0
 					],
@@ -1774,7 +1704,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-24",
 						0
 					]
 				}
@@ -1798,19 +1728,7 @@
 						0
 					],
 					"destination": [
-						"obj-26",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-26",
-						0
-					],
-					"destination": [
-						"obj-27",
+						"obj-3",
 						0
 					]
 				}
@@ -1819,22 +1737,22 @@
 				"patchline": {
 					"source": [
 						"obj-27",
-						0
-					],
-					"destination": [
-						"obj-28",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-28",
 						0
 					],
 					"destination": [
 						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-29",
+						0
+					],
+					"destination": [
+						"obj-30",
 						0
 					]
 				}
@@ -1854,11 +1772,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-32",
+						"obj-31",
 						0
 					],
 					"destination": [
-						"obj-33",
+						"obj-3",
 						0
 					]
 				}
@@ -1870,7 +1788,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-34",
 						0
 					]
 				}
@@ -1882,7 +1800,19 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-35",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-35",
+						0
+					],
+					"destination": [
+						"obj-36",
 						0
 					]
 				}
@@ -1906,7 +1836,7 @@
 						0
 					],
 					"destination": [
-						"obj-38",
+						"obj-3",
 						0
 					]
 				}
@@ -1927,18 +1857,6 @@
 				"patchline": {
 					"source": [
 						"obj-39",
-						0
-					],
-					"destination": [
-						"obj-40",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-40",
 						0
 					],
 					"destination": [
@@ -2011,30 +1929,6 @@
 				"patchline": {
 					"source": [
 						"obj-48",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-50",
-						0
-					],
-					"destination": [
-						"obj-51",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-51",
 						0
 					],
 					"destination": [
@@ -2050,7 +1944,7 @@
 						0
 					],
 					"destination": [
-						"obj-53",
+						"obj-50",
 						0
 					]
 				}
@@ -2058,11 +1952,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-53",
+						"obj-50",
 						0
 					],
 					"destination": [
-						"obj-54",
+						"obj-51",
 						0
 					]
 				}
@@ -2070,11 +1964,47 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-53",
+						"obj-50",
 						1
 					],
 					"destination": [
-						"obj-55",
+						"obj-52",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-51",
+						0
+					],
+					"destination": [
+						"obj-53",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-52",
+						0
+					],
+					"destination": [
+						"obj-53",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-50",
+						2
+					],
+					"destination": [
+						"obj-54",
 						0
 					]
 				}
@@ -2094,23 +2024,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-55",
-						0
-					],
-					"destination": [
 						"obj-56",
 						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-53",
-						2
 					],
 					"destination": [
-						"obj-57",
+						"obj-29",
 						0
 					]
 				}
@@ -2118,47 +2036,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-57",
-						0
-					],
-					"destination": [
-						"obj-59",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-59",
-						0
-					],
-					"destination": [
-						"obj-32",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-57",
+						"obj-54",
 						1
 					],
 					"destination": [
-						"obj-60",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-60",
-						0
-					],
-					"destination": [
-						"obj-22",
+						"obj-57",
 						0
 					]
 				}
@@ -2167,18 +2049,6 @@
 				"patchline": {
 					"source": [
 						"obj-57",
-						2
-					],
-					"destination": [
-						"obj-61",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-61",
 						0
 					],
 					"destination": [
@@ -2190,11 +2060,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-57",
-						3
+						"obj-54",
+						2
 					],
 					"destination": [
-						"obj-62",
+						"obj-58",
 						0
 					]
 				}
@@ -2202,7 +2072,31 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-62",
+						"obj-58",
+						0
+					],
+					"destination": [
+						"obj-16",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-54",
+						3
+					],
+					"destination": [
+						"obj-59",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-59",
 						0
 					],
 					"destination": [
@@ -2214,11 +2108,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-57",
+						"obj-54",
 						4
 					],
 					"destination": [
-						"obj-63",
+						"obj-60",
 						0
 					]
 				}
@@ -2226,7 +2120,31 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-63",
+						"obj-60",
+						0
+					],
+					"destination": [
+						"obj-38",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-54",
+						5
+					],
+					"destination": [
+						"obj-61",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-61",
 						0
 					],
 					"destination": [
@@ -2238,11 +2156,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-57",
-						5
+						"obj-54",
+						6
 					],
 					"destination": [
-						"obj-64",
+						"obj-62",
 						0
 					]
 				}
@@ -2250,7 +2168,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-64",
+						"obj-62",
 						0
 					],
 					"destination": [
@@ -2262,11 +2180,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-57",
-						6
+						"obj-54",
+						7
 					],
 					"destination": [
-						"obj-65",
+						"obj-63",
 						0
 					]
 				}
@@ -2274,35 +2192,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-65",
+						"obj-63",
 						0
 					],
 					"destination": [
 						"obj-47",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-57",
-						7
-					],
-					"destination": [
-						"obj-66",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-66",
-						0
-					],
-					"destination": [
-						"obj-50",
 						0
 					]
 				}

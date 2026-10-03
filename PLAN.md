@@ -565,6 +565,22 @@ aimed at the "done when" (cadential formulas).
   phrase lengths and the locations of its signatures.
 - **Database statistics** for the UI: how many candidates are available per key,
   and which entries have **no exits**, meaning dead ends.
+- *As built in M11:* the corpus is a list of folders (`emi-corpora`), each
+  switched on or off in the corpus window (`emi.corpora`, opened by the
+  panel's **corpora** button, which replaced **load corpus**). The lexicon is
+  built from every folder that is on: a chorale in two folders is used once
+  (from the first), the corpus keeps the first folder's meter (a folder in
+  another meter is listed as not used, with the reason), and chorales from
+  two or more folders are put in file-name order, so `corpus` and
+  `corpus-minor` together compose exactly as `corpus-both`. Each folder is
+  read once (until **rescan**). A change is shown at once and built on the
+  next turn (`later corpusbuild <id>`, only the last of quick changes), then
+  the seed shown is composed again (a stream restarts: its state points
+  into the old corpus); a change that leaves the same chorales builds
+  nothing. The list (with each folder's chorales, meter and modes) is in the
+  settings file as `corpora`; the old single `corpus` is still written, and
+  read when there is no list. `corpus <folder>` still loads one folder
+  alone.
 
 ### 4.6 `emi.compose`: the recombination engine (a simplified ATN)
 
@@ -991,7 +1007,7 @@ small extra device could reuse `emi.engine`:
 It would use the database that `emi.brain` already loaded (through the shared
 global `emi.db` dict), or the frozen starter database if no brain is present.
 MIDI Tools work on one clip at a time, so separate instruments per voice still
-go through `emi.brain`. This is a stretch item (M12).
+go through `emi.brain`. This is a stretch item (M14).
 
 ---
 
@@ -1316,7 +1332,7 @@ is a signature found in 9 works."
 - **Core**: Tier 1 + Tier 2 (milestones M9 and M10).
 - **Later**: Tier 3a once the parameter set has settled. Tier 3b is optional.
 - **Separate feature**: Alice-style continuation (play a phrase on a MIDI
-  keyboard and it continues in style) belongs to live mode, not Emily (M12).
+  keyboard and it continues in style) belongs to live mode, not Emily (M14).
 
 ---
 
@@ -1330,10 +1346,11 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M9 and M10 passed in both products; M8 passed in the Max
-version and waits on its Live checks and the third listening test's score
-([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
-its freeze test is deferred to M11. M1 passed in both products
+**Current status: M11 code done; waiting on its Max and Live checks
+([checklist](docs/M11-checklist.md)). M9 and M10 passed in both products;
+M8 passed in the Max version and waits on its Live checks and the third
+listening test's score ([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
+its freeze test is deferred to M13 (shipping). M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
 M2 passed in both products ([results](docs/M2-checklist.md)): new chorales
@@ -1381,8 +1398,10 @@ playhead, the false-start fix and hover help on every control.
 | **M8** | **Hardening**: provenance view, plagiarism guards, parallel-5ths report, minor mode, 3/4 | A blind A/B listening test against real chorales; quotation metrics under threshold |
 | **M9** | **Emily Tier 1, taste**: rating buttons (mappable), association weights, temperature | After about 10 rating sessions, output measurably shifts toward the liked features |
 | **M10** | **Emily Tier 2, memory and drift**: accept-to-database, variation operators, mix and novelty, snapshots | Accepted variants appear in later output; a rollback restores an earlier taste exactly |
-| **M11** | **Ship both (for personal use)**: **Max version** as a Max project and an unsigned macOS app for your own Mac; **Live version** as frozen `emi.brain` + `emi.voice` with the starter database, presets and a demo set. Tag a release on GitHub. *Later, if you share them*: code signing and notarization, a Live Pack, and clean-machine tests. | The app opens and plays through `[vst~]`; the demo set plays when you press Play; the parity checklist passes in both; a fresh clone plus the README steps rebuilds everything; the freeze test deferred from M0 (d) passes. |
-| **M12** | **Stretch**: Emily Tier 3a (text), Live 12 MIDI Tool (§5.5), Alice-style continuation from a MIDI keyboard, a second style | — |
+| **M11** | **Corpora**: a corpus window in both products: folders of chorales, each switched on or off (and **only**, **remove**, **add folder**, **rescan**), combined into one corpus: each chorale once, one meter, in file-name order; remembered between sessions | Switching folders on and off changes what pieces are made from, in both products; two folders compose exactly as one folder holding the same chorales |
+| **M12** | **A second style: Palestrina**: a style profile per folder (voices, beat unit, modes, how cadences are found); export of music21's Palestrina masses; cadences found from their formulas instead of fermatas; modal keys; SPEAC, signatures and quality checks re-tuned; Bach and Palestrina folders on together | Palestrina pieces keep the style's rules (ranges, dissonance prepared and resolved, cadences where the formulas fall), a blind A/B test against real Palestrina, and with both styles on, the joins between them are reported |
+| **M13** | **Ship both (for personal use)**: **Max version** as a Max project and an unsigned macOS app for your own Mac; **Live version** as frozen `emi.brain` + `emi.voice` with the starter database, presets and a demo set. Tag a release on GitHub. *Later, if you share them*: code signing and notarization, a Live Pack, and clean-machine tests. | The app opens and plays through `[vst~]`; the demo set plays when you press Play; the parity checklist passes in both; a fresh clone plus the README steps rebuilds everything; the freeze test deferred from M0 (d) passes. |
+| **M14** | **Stretch**: Emily Tier 3a (text), Live 12 MIDI Tool (§5.5), Alice-style continuation from a MIDI keyboard | — |
 
 **First corpus**: about 20 Bach chorales in 4/4, major mode, with each
 voice on its own track. The `music21` corpus has all of them, and
