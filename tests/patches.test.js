@@ -402,6 +402,115 @@ function playerPatch() {
   return { boxes, find, from };
 }
 
+// Runs the [p grid-player] as Max would, message by message, for the objects
+// it uses. An outlet's connections fire right to left (by the destination's
+// position), and [t] fires its outlets right to left. tick(step) is the
+// transport at that step (16ths from bar 1 in 4/4) on a metro tick; it
+// records the steps read from the queue, the playhead sent and the note-offs.
+function simulatePlayer() {
+  const { boxes } = playerPatch();
+  const player = readPatcher(path.join(ROOT, "patchers", "emi.engine.maxpat")).boxes.map(({ box }) => box).find((b) => b.text === "p grid-player").patcher;
+  const wires = new Map();
+  for (const { patchline: l } of player.lines) {
+    const key = `${l.source[0]}:${l.source[1]}`;
+    if (!wires.has(key)) wires.set(key, []);
+    wires.get(key).push([l.destination[0], l.destination[1]]);
+  }
+  for (const list of wires.values()) {
+    list.sort((a, b) => boxes.get(b[0]).patching_rect[0] - boxes.get(a[0]).patching_rect[0] || boxes.get(b[0]).patching_rect[1] - boxes.get(a[0]).patching_rect[1]);
+  }
+  const state = new Map(); // box id -> stored inlet values and the like
+  const record = { reads: [], playhead: [], flushes: 0, need: 0 };
+  const out = (id, outlet, value) => {
+    for (const [to, inlet] of wires.get(`${id}:${outlet}`) || []) receive(to, inlet, value);
+  };
+  const args = (b) => b.text.split(" ").slice(1).map(Number);
+  const stored = (b, inlet) => {
+    const s = state.get(b.id) || { in: args(b) };
+    state.set(b.id, s);
+    return s;
+  };
+  function receive(id, inlet, value) {
+    const b = boxes.get(id);
+    const text = b.text || "";
+    const [name] = text.split(" ");
+    if (b.maxclass === "message") return out(id, 0, Number(b.text));
+    if (b.maxclass === "outlet") {
+      if (/^need/.test(b.comment)) record.need++;
+      return;
+    }
+    if (name === "t") {
+      const types = text.split(" ").slice(1);
+      for (let k = types.length - 1; k >= 0; k--) out(id, k, types[k] === "b" ? "bang" : value);
+      return;
+    }
+    if (["-", "+", "!=", "<", "maximum"].includes(name)) {
+      const s = stored(b);
+      if (inlet === 1) return void (s.in[0] = value);
+      const r = s.in[0];
+      return out(id, 0, name === "-" ? value - r : name === "+" ? value + r : name === "!=" ? Number(value !== r) : name === "<" ? Number(value < r) : Math.max(value, r));
+    }
+    if (name === "sel") {
+      const k = args(b).indexOf(value);
+      return out(id, k >= 0 ? k : args(b).length, k >= 0 ? "bang" : value);
+    }
+    if (name === "gate") {
+      const s = state.get(id) || { open: args(b)[1] };
+      state.set(id, s);
+      if (inlet === 0) return void (s.open = value);
+      if (s.open) out(id, s.open - 1, value);
+      return;
+    }
+    if (name === "change") {
+      const s = state.get(id) || { last: args(b)[0] };
+      state.set(id, s);
+      if (value !== s.last) out(id, 0, (s.last = value));
+      return;
+    }
+    if (name === "expr") {
+      const s = state.get(id) || { in: [0, 0, 0, 0, 0] };
+      state.set(id, s);
+      if (Array.isArray(value)) value.forEach((v, k) => (s.in[k] = v));
+      else s.in[inlet] = value;
+      if (inlet === 0) out(id, 0, maxExpr(text, s.in));
+      return;
+    }
+    if (name === "pack") {
+      const s = state.get(id) || { in: args(b) };
+      state.set(id, s);
+      s.in[inlet] = value;
+      if (inlet === 0) out(id, 0, s.in.slice());
+      return;
+    }
+    if (text === "prepend view playhead") return void record.playhead.push(value);
+    if (text === "coll ---emi.queue") return void record.reads.push(value);
+    if (text === "flush") return void record.flushes++;
+    if (b.maxclass === "inlet") return out(id, 0, value);
+    throw new Error(`the simulation doesn't know [${text || b.maxclass}]`);
+  }
+  const inlets = [...boxes.values()].filter((b) => b.maxclass === "inlet");
+  const [transport] = [...boxes.values()].filter((b) => b.text === "transport");
+  return {
+    record,
+    send(comment, value = "bang") {
+      receive(inlets.find((b) => b.comment.startsWith(comment)).id, 0, value);
+    },
+    // [transport] answers right to left: time signature, then units, beats, bars.
+    tick(step) {
+      out(transport.id, 6, 4);
+      out(transport.id, 5, 4);
+      out(transport.id, 2, (step % 4) * 120);
+      out(transport.id, 1, Math.floor((step % 16) / 4) + 1);
+      out(transport.id, 0, Math.floor(step / 16) + 1);
+    },
+    ticks(from, to) {
+      for (let s = from; s <= to; s++) this.tick(s);
+    },
+  };
+}
+
+const range = (from, to) => Array.from({ length: to - from + 1 }, (_, k) => from + k);
+
 test("grid player: the step comes from the transport's position, and the queue starts on a barline", () => {
   const p = playerPatch();
   const [metro] = p.find("metro 16n @quantize 16n @active 1");
@@ -430,20 +539,118 @@ test("grid player: the step comes from the transport's position, and the queue s
     assert.equal(at, step, `${num}/${den} bar ${bars} beat ${beats} units ${units}`);
     assert.equal(maxExpr(toBar.text, [at, spBar]), origin, `${num}/${den}: the next barline`);
   }
-  // Every way in that changes where the queue starts also sends note-offs.
+  // Stop and restart send note-offs.
   const [flushAll] = p.find("t b").filter((b) => p.from(b.id).filter(([to]) => to.text === "flush").length === 4);
   assert.ok(flushAll, "one [t b] reaches all four [flush]es");
-  // A jump also resets the lead, so Play from bar 1 starts at bar 1 even after a restart.
-  const [sel] = p.find("sel 1");
+  // A jump (a step that isn't the last + 1) resets the lead, so a transport
+  // starting at bar 1 starts the queue at bar 1 even after a restart. It
+  // doesn't send note-offs: a playing queue plays straight on (below).
+  const [split] = p.find("t i i i");
+  const [[diff, diffInlet]] = p.from(split.id, 2);
+  assert.deepEqual([diff.text, diffInlet], ["- 0", 0], "this step...");
+  assert.deepEqual(p.from(split.id, 1).map(([b, inlet]) => [b.id, inlet]), [[diff.id, 1]], "...minus the last");
+  const [[jumped]] = p.from(diff.id).filter(([b]) => b.text === "!= 1");
+  const [[sel]] = p.from(jumped.id);
+  assert.equal(sel.text, "sel 1");
   const targets = p.from(sel.id, 0).map(([b]) => b);
-  assert.ok(targets.some((b) => b.id === flushAll.id), "a jump sends note-offs");
-  const lead = p.find("+ 0")[0];
+  assert.ok(!targets.some((b) => b.id === flushAll.id), "a jump sends no note-offs");
+  const [[gate]] = p.from(p.find("t i i").find((b) => p.from(b.id, 1).some(([to]) => to.text === "gate 1 1")).id, 1);
+  const [[lead]] = p.from(gate.id);
+  assert.equal(lead.text, "+ 0");
   assert.ok(targets.some((b) => b.maxclass === "message" && b.text === "0" && p.from(b.id).some(([to, inlet]) => to.id === lead.id && inlet === 1)), "a jump sets lead 0");
+
+  // A jump while the queue plays moves its origin by (jump - 1), so the queue
+  // goes on to its next step: the piece never jumps back with the transport
+  // (Ableton Link realigning Max's transport, a moved playhead). The origin
+  // the gate finds (play, stop, restart) is kept the same way, and comes
+  // later in the tick, so it wins.
+  const [[shift]] = p.from(diff.id).filter(([b]) => b.text === "- 1");
+  const [[moved]] = p.from(shift.id);
+  assert.equal(moved.text, "sel 0", "no jump: nothing");
+  const [[sum, sumInlet]] = p.from(moved.id, 1);
+  assert.deepEqual([sum.text, sumInlet], ["+ 0", 0], "jump - 1 + the origin");
+  const [[keep]] = p.from(sum.id);
+  assert.equal(keep.text, "t i i");
+  const [originT] = p.find("t b i");
+  assert.deepEqual(p.from(originT.id, 1).map(([b, inlet]) => [b.id, inlet]), [[keep.id, 0]], "the origin found");
+  assert.deepEqual(p.from(keep.id, 1).map(([b, inlet]) => [b.id, inlet]), [[sum.id, 1]], "kept for the next jump");
+  const [[relative, relInlet]] = p.from(keep.id, 0);
+  assert.deepEqual([relative.text, relInlet], ["- 0", 1], "step - origin = the step in the queue");
+  // The jump path fires first (the [t i i i]'s right outlet), the gate's after.
+  assert.deepEqual(p.from(split.id, 0).map(([b]) => b.text), ["t i i"]);
   for (const comment of ["stop (bang): note-offs for sounding notes", "restart (bang): note-offs; the queue starts again at the bar after this one"]) {
     const [inlet] = [...p.boxes.values()].filter((b) => b.maxclass === "inlet" && b.comment === comment);
     const trigger = p.from(inlet.id).map(([b]) => b).find((b) => (b.text || "").startsWith("t "));
     assert.ok(p.from(trigger.id).some(([to]) => to.id === flushAll.id), comment);
   }
+});
+
+test("grid player, simulated: the queue starts on a barline and plays straight on through transport jumps", () => {
+  // Max's Play: play, then the transport starts where it was (bar 2, beat 2).
+  let p = simulatePlayer();
+  p.send("play");
+  p.ticks(20, 40);
+  assert.deepEqual(p.record.reads, range(-12, 8), "the queue starts at bar 3 (step 32)");
+  assert.deepEqual(p.record.playhead.slice(0, 2), [-1, 0], "the playhead shows from step 0");
+
+  // Live: the transport starts at bar 1 with no play message (stop came
+  // before, or the device just loaded). The queue starts at once.
+  p = simulatePlayer();
+  p.send("restart"); // a piece composed while stopped
+  p.ticks(0, 10);
+  assert.deepEqual(p.record.reads, range(0, 10), "a jump finds the barline at or after, even after a restart");
+
+  // The false start: the transport jumps back while the piece plays (Link
+  // realigning Max's transport, Live's position settling at its start). The
+  // queue plays on, with no note-offs cutting it.
+  p = simulatePlayer();
+  p.send("stop");
+  const flushes = p.record.flushes;
+  p.ticks(0, 5);
+  p.ticks(0, 3); // back to bar 1
+  p.ticks(0, 9); // and again
+  p.ticks(40, 42); // and ahead
+  assert.deepEqual(p.record.reads, range(0, 22), "never back to the beginning, never ahead");
+  assert.equal(p.record.flushes, flushes, "no note-offs on a jump");
+  assert.deepEqual(p.record.playhead, [-1, ...range(0, 22)]);
+
+  // Stop: note-offs and the playhead hidden; Play again (Max's transport goes
+  // on from where it stopped) starts the queue at the next barline.
+  p.send("stop");
+  assert.ok(p.record.flushes > flushes, "stop sends note-offs");
+  assert.equal(p.record.playhead.at(-1), -1);
+  p.send("play");
+  p.ticks(43, 50);
+  assert.deepEqual(p.record.reads.slice(-8), range(-5, 2), "from bar 4 (step 48)");
+
+  // A restart while playing: the new queue starts at the bar after this one,
+  // and a jump while it waits doesn't change how long it waits.
+  p = simulatePlayer();
+  p.ticks(0, 37);
+  p.send("restart");
+  p.ticks(38, 40);
+  p.ticks(20, 30);
+  assert.deepEqual(p.record.reads.slice(-14), range(-10, 3), "the bar after 37 is 48: 10 steps to wait, then on");
+
+  // need: once, when the queue reaches the threshold.
+  p = simulatePlayer();
+  p.send("streamat", 6);
+  p.ticks(0, 8);
+  p.ticks(0, 8);
+  assert.equal(p.record.need, 1);
+});
+
+test("emi.host.live: Live's stop reaches the player, its (late) play doesn't", () => {
+  // Live's is_playing arrives on the main thread, often after the transport
+  // has started and the player has begun the piece: a play then would start
+  // it again at the next bar.
+  const p = patchFile("emi.host.live.maxpat");
+  const [observer] = p.find("live.observer");
+  const [[sel]] = p.from(observer.id);
+  assert.equal(sel.text, "sel 0");
+  assert.deepEqual(p.from(sel.id, 0).map(([b]) => b.text), ["stop"]);
+  assert.deepEqual(p.from(sel.id, 1), []);
+  assert.deepEqual(p.find("play"), [], "no play message in the Live host");
 });
 
 test("grid player: the step in the queue goes to the piano rolls as a playhead, hidden when stopped", () => {

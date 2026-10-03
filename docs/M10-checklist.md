@@ -192,6 +192,13 @@ brings it back.
          new piece starts on the next barline, then runs from its start.
        - In a stream, it follows each phrase as the roll moves on.
        - Turn **Play** off: the line goes.
+11. [ ] **No false start.** Turn **Play** off, compose a seed, and turn
+       **Play** on. The piece starts on the next barline and plays straight
+       through: it never plays its first chords and then goes back to the
+       beginning. Do this five times, with **stream** off and on. If you use
+       Ableton Link (the Link button in Max's Global Transport window), do it
+       once with Link on too: the piece still plays straight on, though Link
+       may move it off the barline by a little.
 
 ## 2. Live version
 
@@ -208,7 +215,12 @@ brings it back.
 4. [ ] **The playhead in Live.** Press Play in Live: the line moves across
        the brain's piano roll (and the pop-up window's), following Live's
        transport; stop Live and it goes.
-5. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat`, and open the
+5. [ ] **No false start in Live.** Stop Live, return to bar 1, and press
+       Play, five times, with **stream** off and on. Each time the piece
+       starts on bar 1 and plays straight through, without going back to its
+       beginning after the first chords. Move Live's playhead while it plays:
+       the piece plays on from where it was.
+6. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat`, and open the
        memory view: the phrase accepted in Live is listed.
 
 ## 3. Your own Emily

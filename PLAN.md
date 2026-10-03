@@ -796,6 +796,22 @@ the transport:
   step + 1 (Play, or a jump of the playhead) sends note-offs first and always
   anchors at or after the step, because Live's play message can arrive after
   the first tick. 4/4 only, for now: 16 steps a bar.
+  *As fixed after M10 (the false start):* a piece could play its first
+  chords, then go back to the beginning, sometimes twice. Two causes, both
+  fixed. (1) The queue's step was the transport's step minus the origin, so
+  a transport that jumped back while playing (Ableton Link realigning Max's
+  global transport at its start, Live's position settling) replayed the
+  queue from there. Now a jump while the queue plays moves the origin with
+  it (by the jump - 1), so the queue goes on to its next step, with no
+  note-offs (the queue's own note-offs still come). Only play, stop and
+  restart find a new origin. (2) Live's play came from a `live.observer` on
+  the main thread, often a few 16ths after the transport started: the player
+  had already begun the piece, and the late play started it again at the
+  next bar (the "rest after the first chords"). The Live host no longer
+  sends play: Live's stop (or loading the device) gets the player ready,
+  and the first tick finds the barline. Max's Play still sends play, before
+  it starts the transport. `tests/patches.test.js` runs the player's wiring
+  tick by tick (`simulatePlayer`), and reproduces the old stutter.
 - **Queue**: a `[coll ---emi.queue]` keyed by step index. Each entry is a flat
   list of `voice pitch velocity` triples, note-offs first, with velocity 0 for
   note-off. (`[coll]` was chosen over `[dict]` because an int in, list out

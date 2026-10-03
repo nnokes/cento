@@ -219,18 +219,17 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "sel 0 1",
-					"numinlets": 1,
-					"numoutlets": 3,
+					"text": "sel 0",
+					"numinlets": 2,
+					"numoutlets": 2,
 					"outlettype": [
-						"bang",
 						"bang",
 						""
 					],
 					"patching_rect": [
 						1180.0,
 						205.0,
-						55.0,
+						45.0,
 						22.0
 					],
 					"id": "obj-11"
@@ -256,18 +255,16 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "play",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
+					"maxclass": "comment",
+					"text": "not play: it can arrive late",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"linecount": 2,
 					"patching_rect": [
 						1240.0,
-						275.0,
-						40.0,
-						22.0
+						205.0,
+						110.0,
+						34.0
 					],
 					"id": "obj-13"
 				}
@@ -966,31 +963,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-11",
-						1
-					],
-					"destination": [
-						"obj-13",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-12",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-13",
 						0
 					],
 					"destination": [

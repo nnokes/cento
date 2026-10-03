@@ -26,6 +26,8 @@ bar, beat and position on every 16th:
 - **Composing while playing** sends note-offs for anything sounding. The new
   music starts at the bar after the current one.
 - **Moving the playhead while playing** (a jump) also sends note-offs first.
+  (Changed after M10: a playing piece now plays straight on through a jump;
+  see the M10 checklist, step 1.11.)
 - Only 4/4 for now: the player counts 16 steps a bar.
 
 **Streaming.** Turn on **stream** and **compose** starts a *stream*. The
