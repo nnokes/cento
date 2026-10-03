@@ -104,6 +104,7 @@
 				"box": {
 					"maxclass": "v8ui",
 					"filename": "emi.view.bundle.js",
+					"varname": "Piano roll",
 					"textfile": {
 						"filename": "emi.view.bundle.js",
 						"flags": 0,
@@ -130,13 +131,17 @@
 						1160.0,
 						430.0
 					],
-					"id": "obj-5"
+					"id": "obj-5",
+					"hint": "The current piece, large. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from.",
+					"annotation": "The current piece, large. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from.",
+					"annotation_name": "Piano roll"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "v8ui",
 					"filename": "emi.taste.bundle.js",
+					"varname": "Taste",
 					"textfile": {
 						"filename": "emi.taste.bundle.js",
 						"flags": 0,
@@ -163,7 +168,10 @@
 						1160.0,
 						250.0
 					],
-					"id": "obj-6"
+					"id": "obj-6",
+					"hint": "What Emily likes and dislikes most, her latest ratings, and the last taste comparison. edit weights and memory change this pane; there, hover over a slider or button for what it does.",
+					"annotation": "What Emily likes and dislikes most, her latest ratings, and the last taste comparison. edit weights and memory change this pane; there, hover over a slider or button for what it does.",
+					"annotation_name": "Emily's taste"
 				}
 			},
 			{
@@ -188,7 +196,10 @@
 						56.0,
 						24.0
 					],
-					"id": "obj-7"
+					"id": "obj-7",
+					"hint": "Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes.",
+					"annotation": "Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes.",
+					"annotation_name": "like"
 				}
 			},
 			{
@@ -213,7 +224,10 @@
 						56.0,
 						24.0
 					],
-					"id": "obj-8"
+					"id": "obj-8",
+					"hint": "Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features.",
+					"annotation": "Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features.",
+					"annotation_name": "dislike"
 				}
 			},
 			{
@@ -238,7 +252,10 @@
 						56.0,
 						24.0
 					],
-					"id": "obj-9"
+					"id": "obj-9",
+					"hint": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory view).",
+					"annotation": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory view).",
+					"annotation_name": "accept"
 				}
 			},
 			{
@@ -263,7 +280,10 @@
 						56.0,
 						24.0
 					],
-					"id": "obj-10"
+					"id": "obj-10",
+					"hint": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature (also shown in the pop-up window). It changes nothing.",
+					"annotation": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature (also shown in the pop-up window). It changes nothing.",
+					"annotation_name": "taste"
 				}
 			},
 			{
@@ -288,7 +308,10 @@
 						100.0,
 						24.0
 					],
-					"id": "obj-11"
+					"id": "obj-11",
+					"hint": "Show (or hide) the weight editor: a slider per musical feature. Drag one to pin Emily's weight there; double-click it to release it. strength scales her whole taste.",
+					"annotation": "Show (or hide) the weight editor: a slider per musical feature. Drag one to pin Emily's weight there; double-click it to release it. strength scales her whole taste.",
+					"annotation_name": "edit weights"
 				}
 			},
 			{
@@ -313,7 +336,10 @@
 						64.0,
 						24.0
 					],
-					"id": "obj-12"
+					"id": "obj-12",
+					"hint": "Show (or hide) Emily's memory: her own works in use (put one aside), snapshots of her taste (roll back to one), and the mix and novelty sliders.",
+					"annotation": "Show (or hide) Emily's memory: her own works in use (put one aside), snapshots of her taste (roll back to one), and the mix and novelty sliders.",
+					"annotation_name": "memory"
 				}
 			},
 			{
@@ -338,7 +364,10 @@
 						120.0,
 						24.0
 					],
-					"id": "obj-13"
+					"id": "obj-13",
+					"hint": "Release every pinned weight: each goes back to what Emily learned from your ratings.",
+					"annotation": "Release every pinned weight: each goes back to what Emily learned from your ratings.",
+					"annotation_name": "release all pins"
 				}
 			},
 			{
@@ -399,7 +428,10 @@
 						95.0,
 						24.0
 					],
-					"id": "obj-16"
+					"id": "obj-16",
+					"hint": "Save Emily's whole taste (weights, pins, strength, ratings) to a file you choose.",
+					"annotation": "Save Emily's whole taste (weights, pins, strength, ratings) to a file you choose.",
+					"annotation_name": "store taste"
 				}
 			},
 			{
@@ -498,7 +530,10 @@
 						95.0,
 						24.0
 					],
-					"id": "obj-21"
+					"id": "obj-21",
+					"hint": "Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot.",
+					"annotation": "Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot.",
+					"annotation_name": "recall taste"
 				}
 			},
 			{
@@ -597,13 +632,16 @@
 						60.0,
 						24.0
 					],
-					"id": "obj-26"
+					"id": "obj-26",
+					"hint": "Start a new taste from nothing. The old one is kept as a backup and as a snapshot, so you can roll back to it.",
+					"annotation": "Start a new taste from nothing. The old one is kept as a backup and as a snapshot, so you can roll back to it.",
+					"annotation_name": "forget"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "Drag across the roll to select beats for like, dislike and accept. Hover over a beat to see where it came from.",
+					"text": "Drag across the roll to select beats for like, dislike and accept. Hover over a beat to see where it came from, and over any button or slider for what it does.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -611,7 +649,7 @@
 					"patching_rect": [
 						900.0,
 						820.0,
-						300.0,
+						310.0,
 						34.0
 					],
 					"presentation": 1,

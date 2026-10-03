@@ -199,6 +199,15 @@ brings it back.
        Ableton Link (the Link button in Max's Global Transport window), do it
        once with Link on too: the piece still plays straight on, though Link
        may move it off the barline by a little.
+12. [ ] **Hover help.** Rest the mouse on any control for a moment: a
+       yellow hint says what it does. Try **taste** in the Emily panel:
+       `Report Emily's taste: ...`. With **Window > Clue Window** open, the
+       same text appears there as you move over controls. In the pop-up
+       window, click **edit weights** and rest on a slider (say,
+       *suspensions*): a box beside it says what the feature means and how to
+       pin it. Click **memory** and rest on **mix**, **novelty**, **put
+       aside** and **roll back**: each explains itself.
+       [docs/controls.md](controls.md) has every control's text.
 
 ## 2. Live version
 
@@ -220,7 +229,13 @@ brings it back.
        starts on bar 1 and plays straight through, without going back to its
        beginning after the first chords. Move Live's playhead while it plays:
        the piece plays on from where it was.
-6. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat`, and open the
+6. [ ] **Hover help in Live.** Open the Info View (**View > Info**, or the
+       **?** at the bottom left). Move the mouse over the brain's controls
+       (**writeclips**, **Play Through Voices**, **like**, **temp**, ...) and
+       the emi.voice device's voice name: the Info View names each and says
+       what it does. In the pop-up window, the taste pane's sliders and
+       buttons show their help in a box, as in Max.
+7. [ ] **Back in Max.** Close Live, open `ml_midi.maxpat`, and open the
        memory view: the phrase accepted in Live is listed.
 
 ## 3. Your own Emily

@@ -102,7 +102,10 @@
 						90.0,
 						20.0
 					],
-					"id": "obj-4"
+					"id": "obj-4",
+					"hint": "Load one chorale (a MIDI file) and make it current: it plays as written and is drawn in the piano roll. To compose, use load corpus.",
+					"annotation": "Load one chorale (a MIDI file) and make it current: it plays as written and is drawn in the piano roll. To compose, use load corpus.",
+					"annotation_name": "load chorale"
 				}
 			},
 			{
@@ -222,7 +225,10 @@
 						90.0,
 						20.0
 					],
-					"id": "obj-9"
+					"id": "obj-9",
+					"hint": "On: a chorale you load keeps its own key. Off: it is moved to C major or A minor (the default). Only for load chorale.",
+					"annotation": "On: a chorale you load keeps its own key. Off: it is moved to C major or A minor (the default). Only for load chorale.",
+					"annotation_name": "Original Key"
 				}
 			},
 			{
@@ -265,7 +271,10 @@
 						50.0,
 						20.0
 					],
-					"id": "obj-11"
+					"id": "obj-11",
+					"hint": "Make the built-in test phrase current (no corpus needed): a quick check that the voices sound.",
+					"annotation": "Make the built-in test phrase current (no corpus needed): a quick check that the voices sound.",
+					"annotation_name": "pattern"
 				}
 			},
 			{
@@ -290,7 +299,10 @@
 						46.0,
 						20.0
 					],
-					"id": "obj-12"
+					"id": "obj-12",
+					"hint": "Empty the queue: what is playing stops at once. The piano roll still shows it.",
+					"annotation": "Empty the queue: what is playing stops at once. The piano roll still shows it.",
+					"annotation_name": "clear"
 				}
 			},
 			{
@@ -315,7 +327,10 @@
 						90.0,
 						20.0
 					],
-					"id": "obj-13"
+					"id": "obj-13",
+					"hint": "Choose the folder of Bach chorales (MIDI files) to compose from, e.g. Documents/ml_midi/corpus. Every chorale in it is read; it is reloaded by itself next time.",
+					"annotation": "Choose the folder of Bach chorales (MIDI files) to compose from, e.g. Documents/ml_midi/corpus. Every chorale in it is read; it is reloaded by itself next time.",
+					"annotation_name": "load corpus"
 				}
 			},
 			{
@@ -451,7 +466,10 @@
 						50.0,
 						20.0
 					],
-					"id": "obj-19"
+					"id": "obj-19",
+					"hint": "On: each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan.",
+					"annotation": "On: each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan.",
+					"annotation_name": "Form"
 				}
 			},
 			{
@@ -532,7 +550,10 @@
 						50.0,
 						20.0
 					],
-					"id": "obj-22"
+					"id": "obj-22",
+					"hint": "The shortest piece to compose, in beats (4 to 256). With form on, only chorales at least this long lend their form.",
+					"annotation": "The shortest piece to compose, in beats (4 to 256). With form on, only chorales at least this long lend their form.",
+					"annotation_name": "Beats"
 				}
 			},
 			{
@@ -575,7 +596,10 @@
 						44.0,
 						20.0
 					],
-					"id": "obj-24"
+					"id": "obj-24",
+					"hint": "Write a blind listening test: a web page of 10 pairs, each a Bach chorale and a piece composed in its form, in random order. Can listeners tell which is Bach?",
+					"annotation": "Write a blind listening test: a web page of 10 pairs, each a Bach chorale and a piece composed in its form, in random order. Can listeners tell which is Bach?",
+					"annotation_name": "A/B"
 				}
 			},
 			{
@@ -690,7 +714,10 @@
 						64.0,
 						20.0
 					],
-					"id": "obj-30"
+					"id": "obj-30",
+					"hint": "Compose a piece with the seed shown (with stream on: start a stream). While playing, the new music starts at the next bar.",
+					"annotation": "Compose a piece with the seed shown (with stream on: start a stream). While playing, the new music starts at the next bar.",
+					"annotation_name": "compose"
 				}
 			},
 			{
@@ -753,7 +780,10 @@
 						56.0,
 						20.0
 					],
-					"id": "obj-32"
+					"id": "obj-32",
+					"hint": "The random seed: the same seed, corpus, settings and taste always give the same piece. Changing it composes at once (once a corpus is loaded).",
+					"annotation": "The random seed: the same seed, corpus, settings and taste always give the same piece. Changing it composes at once (once a corpus is loaded).",
+					"annotation_name": "Seed"
 				}
 			},
 			{
@@ -796,7 +826,10 @@
 						40.0,
 						20.0
 					],
-					"id": "obj-34"
+					"id": "obj-34",
+					"hint": "Add 1 to the seed and compose: the quickest way to hear another piece.",
+					"annotation": "Add 1 to the seed and compose: the quickest way to hear another piece.",
+					"annotation_name": "next"
 				}
 			},
 			{
@@ -837,7 +870,10 @@
 						84.0,
 						20.0
 					],
-					"id": "obj-36"
+					"id": "obj-36",
+					"hint": "Save the current piece as a MIDI file. For a composed piece or stream, a .json of where every beat came from is saved next to it.",
+					"annotation": "Save the current piece as a MIDI file. For a composed piece or stream, a .json of where every beat came from is saved next to it.",
+					"annotation_name": "export midi"
 				}
 			},
 			{
@@ -957,7 +993,10 @@
 						56.0,
 						20.0
 					],
-					"id": "obj-41"
+					"id": "obj-41",
+					"hint": "On: compose starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece.",
+					"annotation": "On: compose starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece.",
+					"annotation_name": "Stream"
 				}
 			},
 			{
@@ -1038,7 +1077,10 @@
 						40.0,
 						20.0
 					],
-					"id": "obj-44"
+					"id": "obj-44",
+					"hint": "How many phrases a stream plays before it ends (0: endless).",
+					"annotation": "How many phrases a stream plays before it ends (0: endless).",
+					"annotation_name": "Phrases"
 				}
 			},
 			{
@@ -1119,7 +1161,10 @@
 						40.0,
 						20.0
 					],
-					"id": "obj-47"
+					"id": "obj-47",
+					"hint": "Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase.",
+					"annotation": "Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase.",
+					"annotation_name": "Transpose"
 				}
 			},
 			{
@@ -1199,7 +1244,10 @@
 						44.0,
 						20.0
 					],
-					"id": "obj-50"
+					"id": "obj-50",
+					"hint": "On: Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats.",
+					"annotation": "On: Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats.",
+					"annotation_name": "Signatures"
 				}
 			},
 			{
@@ -1297,6 +1345,7 @@
 				"box": {
 					"maxclass": "v8ui",
 					"filename": "emi.text.bundle.js",
+					"varname": "Status",
 					"textfile": {
 						"filename": "emi.text.bundle.js",
 						"flags": 0,
@@ -1321,7 +1370,10 @@
 						288.0,
 						55.0
 					],
-					"id": "obj-56"
+					"id": "obj-56",
+					"hint": "What the engine just did, or what went wrong.",
+					"annotation": "What the engine just did, or what went wrong.",
+					"annotation_name": "Status"
 				}
 			},
 			{

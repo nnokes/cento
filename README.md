@@ -48,7 +48,9 @@ also pin any feature's weight with a slider, set her taste's strength, and
 store and recall whole tastes as files. Since M10, Emily varies pieces with
 notes Bach never wrote (**novelty**), **accept** keeps what you like as music
 of her own that later pieces draw on (**mix**), and snapshots let you roll
-her back to any earlier state. The full plan
+her back to any earlier state. Every control explains itself when you hover
+over it (a tooltip in Max, the Info View in Live); [docs/controls.md](docs/controls.md)
+lists them all. The full plan
 and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
@@ -165,7 +167,7 @@ code/lib/     the engine: plain JavaScript, no Max APIs, tested in Node
 code/max/     Max-only helpers used by the wrappers (files, Live clips)
 tests/        node --test, including the bundles in a simulated [v8] context
 tools/        build, path check, git hook, chorale export
-docs/         milestone checklists
+docs/         milestone checklists; controls.md: what every control does
 ```
 
 Your working data (corpus, analyzed databases, generated music) lives in

@@ -115,7 +115,7 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
   assert.deepEqual(loadBundle("emi.text").handlers(), ["alert", "clear", "onresize", "paint", "text"]);
   assert.deepEqual(loadBundle("emi.taste").handlers(), [
-    "clear", "compare", "dislike", "done", "edit", "like", "memory", "onclick", "ondblclick", "ondrag", "onresize", "own", "paint", "pair", "rating",
+    "clear", "compare", "dislike", "done", "edit", "like", "memory", "onclick", "ondblclick", "ondrag", "onidle", "onidleout", "onresize", "own", "paint", "pair", "rating",
     "snapshot", "strength", "weight", "work",
   ]);
 });
@@ -1172,6 +1172,73 @@ test("taste view: 'edit' shows a slider per feature; dragging pins, double-click
   // "edit" again: back to the overview; clicks do nothing there.
   view.send("edit", "weights");
   assert.deepEqual(view.send("onclick", t1, y), []);
+});
+
+test("taste view: hovering over a slider or button shows what it does", () => {
+  const view = loadBundle("emi.taste");
+  const g = view.context.mgraphics;
+  g.size = [1160, 250];
+  view.send("clear", 3, 2, 0, 1);
+  view.send("strength", 1);
+  view.send("weight", "Motion", "f:motion:still", 0.4, 0, 0.4, "block", "chords");
+  view.send("weight", "Motion", "f:16ths", -0.2, 0, -0.2, "16th", "notes");
+  view.send("own", 1, 8, 2, 0.5, 0.25, 1);
+  view.send("work", "emily-1", 1, 8, 2, "seed", "3");
+  view.send("snapshot", 4, "2026-10-03", "10:00", "session", "start");
+  view.send("done");
+  const helpShown = () => {
+    g.calls.length = 0;
+    view.send("paint");
+    return g.calls.filter(([name]) => name === "show_text").map(([, t]) => t).join(" ");
+  };
+  // In the overview there is nothing to explain.
+  view.send("onidle", 200, 100);
+  assert.doesNotMatch(helpShown(), /Drag to pin/);
+
+  view.send("edit", "weights");
+  helpShown(); // drawn, as Max does after a change, before the mouse moves
+  const t0 = 12 + 112;
+  const t1 = 12 + (1160 - 24) / 2 - 52;
+  view.send("onidle", (t0 + t1) / 2, 72 + 18 + 24);
+  let text = helpShown();
+  assert.match(text, /16th notes: beats with 16th notes\. Drag to pin her weight/);
+  assert.match(text, /double-click to release it/);
+  view.send("onidle", 1160 - 150, 46);
+  assert.match(helpShown(), /strength: how much her whole taste counts/);
+  view.send("onidleout");
+  assert.doesNotMatch(helpShown(), /strength: how much/);
+
+  view.send("memory");
+  helpShown();
+  view.send("onidle", 1160 - 150, 24);
+  assert.match(helpShown(), /novelty: the chance that each phrase gets a variant/);
+  view.send("onidle", 1160 - 450, 24);
+  assert.match(helpShown(), /mix: how much her own works/);
+  // The buttons: put aside, keep a snapshot, roll back.
+  const column = (1160 - 24) / 2;
+  view.send("onidle", 12 + column - 80, 58 + 8 + 20 - 6 - 4);
+  assert.match(helpShown(), /put aside: stop composing from this work/);
+  view.send("onidle", 12 + column + 180, 58 - 4);
+  assert.match(helpShown(), /keep a snapshot: keep her whole taste/);
+  view.send("onidle", 12 + column + column - 80, 58 + 8 + 20 - 6 - 4);
+  text = helpShown();
+  assert.match(text, /roll back: make this snapshot's taste hers again/);
+  // Wrapped to fit: no line wider than the box allows.
+  const lines = g.calls.filter(([name]) => name === "show_text").map(([, t]) => t).filter((t) => /roll back|snapshot first|exactly/.test(t));
+  assert.ok(lines.length >= 2 && lines.every((l) => l.length <= 93), lines.join(" | "));
+});
+
+test("taste view: every musical feature Emily knows has hover help; docs/controls.md gives the rest", () => {
+  const emily = require("emily-assoc");
+  const source = fs.readFileSync(path.join(__dirname, "..", "code", "emi.taste.v8ui.js"), "utf8");
+  for (const feature of Object.keys(emily.NAMES)) assert.ok(source.includes(`"${feature}": "`), feature);
+  // The sliders' and buttons' help ("name: what it does") is in the docs' table.
+  const doc = fs.readFileSync(path.join(__dirname, "..", "docs", "controls.md"), "utf8");
+  const helps = [...source.matchAll(/(?:help: |^  [a-z]+: )"([a-z ]+): ([^"]+)"/gm)];
+  assert.equal(helps.length, 6, "strength, mix, novelty; put aside, roll back, keep a snapshot");
+  for (const [, name, text] of helps) {
+    assert.ok(doc.includes(`| **${name}** | ${text[0].toUpperCase()}${text.slice(1)} |`), name);
+  }
 });
 
 // ---------------------------------------------------------------- M10: variants

@@ -19,7 +19,13 @@
 // (each with "roll back": "rollback <id>"; "keep a snapshot": "snapshot"),
 // and sliders for mix (0..0.75: "mix <v>"; double-click for 0.5) and
 // novelty (0..1: "novelty <v>"; double-click for 0). "memory" again goes
-// back. The engine sends it all at once, whenever it changes:
+// back.
+//
+// Hover help: resting the mouse on a slider or button in the editor or the
+// memory view shows what it does in a box beside it (each musical feature
+// with what it means), as Max's hints do for the window's own controls.
+//
+// The engine sends it all at once, whenever it changes:
 //   clear <ratings> <likes> <sessions> <temperature>
 //   like <weight> <name...>               (strongest first)
 //   dislike <weight> <name...>
@@ -48,20 +54,67 @@ const ROW = 20;
 const AMBER = [1, 0.75, 0.25];
 const STEP = 0.1; // a pinned weight's resolution
 const PURPLE = [0.75, 0.45, 1];
-// The sliders other than the weights: their range, step, and value on a double-click.
+// The sliders other than the weights: their range, step, value on a
+// double-click, and hover help.
 const SLIDERS = {
-  strength: { min: 0, max: 2, step: 0.05, reset: 1 },
-  mix: { min: 0, max: 0.75, step: 0.05, reset: 0.5 },
-  novelty: { min: 0, max: 1, step: 0.05, reset: 0 },
+  strength: {
+    min: 0, max: 2, step: 0.05, reset: 1,
+    help: "strength: how much her whole taste counts when composing. 0: not at all; 1: as she learned it; 2: twice as much. Double-click for 1.",
+  },
+  mix: {
+    min: 0, max: 0.75, step: 0.05, reset: 0.5,
+    help: "mix: how much her own works (the ones you accepted) count against Bach's when composing. 0: Bach only; 0.75: mostly hers. Double-click for 0.5.",
+  },
+  novelty: {
+    min: 0, max: 1, step: 0.05, reset: 0,
+    help: "novelty: the chance that each phrase gets a variant of her own: a passing tone, a neighbour note, a suspension, a re-voiced chord... 0: never; 1: every phrase. Double-click for 0.",
+  },
+};
+// What each musical feature means (emily-assoc's f: kinds), for hover help.
+const FEATURES = {
+  "f:motion:still": "beats where no voice moves within the beat: block chords",
+  "f:motion:flowing": "beats where one voice moves within the beat while the others hold",
+  "f:motion:busy": "beats where two or more voices move within the beat",
+  "f:16ths": "beats with 16th notes",
+  "f:susp": "suspensions: an upper voice held over from the beat before, then stepping down",
+  "f:melody:same": "the soprano repeats its note into the next beat",
+  "f:melody:step": "the soprano moves by step to the next beat",
+  "f:melody:leap": "the soprano leaps to the next beat",
+  "f:register:low": "the soprano in the lowest third of the corpus's range",
+  "f:register:mid": "the soprano in the middle third of the corpus's range",
+  "f:register:high": "the soprano in the highest third of the corpus's range",
+  "f:chord:major": "a major chord on the beat",
+  "f:chord:minor": "a minor chord on the beat",
+  "f:chord:seventh": "a seventh chord on the beat",
+  "f:chord:diminished": "a diminished chord on the beat",
+  "f:chord:other": "no plain chord on the beat: open fifths, unisons and the like",
+  "f:chromatic": "notes outside the key",
+  "f:key:home": "beats in the piece's home key",
+  "f:key:dominant": "beats in the dominant key (a fifth above home)",
+  "f:key:relative": "beats in the relative major or minor",
+  "f:key:subdominant": "beats in the subdominant key (a fifth below home)",
+  "f:key:other": "beats in more distant keys",
+  "f:tension:low": "the calmest third of the corpus's beats (Cope's tension)",
+  "f:tension:mid": "the middle third of the corpus's beats by tension",
+  "f:tension:high": "the tensest third of the corpus's beats",
+  "f:mode:major": "pieces in a major key",
+  "f:mode:minor": "pieces in a minor key",
+};
+// The drawn buttons' hover help, by message.
+const BUTTONS = {
+  unaccept: "put aside: stop composing from this work of hers. It stays in her memory file: roll back to a snapshot from when it was in use to bring it back.",
+  rollback: "roll back: make this snapshot's taste hers again, exactly: weights, pins, sliders, and which of her works are in use. The taste she has now is kept as a snapshot first.",
+  snapshot: "keep a snapshot: keep her whole taste as it is now, to roll back to later.",
 };
 
 let shown = null;
 let incoming = null;
 let mode = "overview"; // or "weights" (the editor) or "memory" (M10)
 // The sliders and buttons as last drawn: { kind: "weight" | "slider" | "button",
-// feature (a weight's), name (a slider's), message (a button's), x0, x1, y0, y1 }
+// feature (a weight's), name (a slider's), message (a button's), help, x0, x1, y0, y1 }
 let hits = [];
 let dragging = null; // the slider being dragged (its hit)
+let hovered = null; // the slider or button under the mouse (its key), for its help
 
 function clear(ratings, likes, sessions, temperature) {
   incoming = { ratings, likes, sessions, temperature, liked: [], disliked: [], recent: [], compare: null, pairs: [], strength: 1, weights: [], own: null, works: [], snapshots: [] };
@@ -90,12 +143,14 @@ function weight(kind, feature, learned, pinned, value, ...name) {
 function edit() {
   mode = mode === "weights" ? "overview" : "weights";
   dragging = null;
+  hovered = null;
   mgraphics.redraw();
 }
 
 function memory() {
   mode = mode === "memory" ? "overview" : "memory";
   dragging = null;
+  hovered = null;
   mgraphics.redraw();
 }
 
@@ -171,6 +226,71 @@ function hitAt(x, y) {
 }
 hitAt.local = 1;
 
+// ---- hover help
+
+function onidle(x, y) {
+  const hit = mode === "overview" || !shown ? null : hitAt(x, y);
+  const key = hit ? keyOf(hit) : null;
+  if (key !== hovered) {
+    hovered = key;
+    mgraphics.redraw();
+  }
+}
+
+function onidleout() {
+  if (hovered !== null) {
+    hovered = null;
+    mgraphics.redraw();
+  }
+}
+
+function keyOf(hit) {
+  return hit.kind + " " + (hit.feature || hit.name || hit.message.join(" "));
+}
+keyOf.local = 1;
+
+// The hovered control's help, in a box below it (above, near the bottom),
+// wrapped to fit.
+function paintHelp(width, height) {
+  const hit = hovered === null ? null : hits.find((h) => keyOf(h) === hovered);
+  if (!hit || !hit.help || dragging) return;
+  const g = mgraphics;
+  const CHAR = 6; // px per character at 11 px, near enough
+  const lines = wrap(hit.help, Math.floor(Math.min(560, width - 24) / CHAR));
+  const w = Math.max(...lines.map((l) => l.length)) * CHAR + 16;
+  const h = lines.length * 15 + 8;
+  const x = Math.max(6, Math.min(width - w - 6, hit.x0));
+  const y = hit.y1 + 4 + h <= height - 4 ? hit.y1 + 4 : Math.max(4, hit.y0 - h - 4);
+  g.set_source_rgba(0.04, 0.04, 0.05, 0.96);
+  g.rectangle_rounded(x, y, w, h, 6, 6);
+  g.fill();
+  g.set_source_rgba(1, 1, 1, 0.3);
+  g.set_line_width(1);
+  g.rectangle_rounded(x, y, w, h, 6, 6);
+  g.stroke();
+  g.set_font_size(11);
+  g.set_source_rgba(1, 1, 1, 0.95);
+  lines.forEach((line, k) => {
+    g.move_to(x + 8, y + 15 + k * 15);
+    g.show_text(line);
+  });
+}
+paintHelp.local = 1;
+
+function wrap(text, chars) {
+  const lines = [];
+  let line = "";
+  for (const word of text.split(" ")) {
+    if (line && line.length + 1 + word.length > chars) {
+      lines.push(line);
+      line = word;
+    } else line = line ? line + " " + word : word;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+wrap.local = 1;
+
 function sliderValue(name) {
   if (name === "strength") return Number(shown.strength);
   return shown.own ? Number(shown.own[name]) : 0;
@@ -216,10 +336,12 @@ function paint() {
   hits = [];
   if (mode === "weights") {
     paintEditor(width, height);
+    paintHelp(width, height);
     return;
   }
   if (mode === "memory") {
     paintMemory(width, height);
+    paintHelp(width, height);
     return;
   }
 
@@ -383,7 +505,8 @@ function paintEditor(width, height) {
       g.set_source_rgba(1, 1, 1, w.pinned ? 0.95 : 0.6);
       g.move_to(t1 + 8, y + 4);
       g.show_text((w.value > 0 ? "+" : "") + Number(w.value).toFixed(1));
-      hits.push({ kind: "weight", feature: w.feature, x0: t0, x1: t1, y0: y - 10, y1: y + 10 });
+      const help = `${w.name}: ${FEATURES[w.feature] || w.name}. Drag to pin her weight for it (-3: she avoids it, +3: she seeks it); double-click to release it to what she learned (the thin line).`;
+      hits.push({ kind: "weight", feature: w.feature, help, x0: t0, x1: t1, y0: y - 10, y1: y + 10 });
     });
   });
 }
@@ -408,7 +531,7 @@ function namedSlider(name, label, x0, x1, y) {
   g.set_source_rgba(1, 1, 1, 0.8);
   g.move_to(x1 + 8, y + 4);
   g.show_text(value.toFixed(2));
-  hits.push({ kind: "slider", name, x0, x1, y0: y - 10, y1: y + 10 });
+  hits.push({ kind: "slider", name, help: range.help, x0, x1, y0: y - 10, y1: y + 10 });
 }
 namedSlider.local = 1;
 
@@ -423,7 +546,7 @@ function button(text, x, y, message, color = [1, 1, 1]) {
   g.set_source_rgba(color[0], color[1], color[2], 0.95);
   g.move_to(x + 6, y);
   g.show_text(text);
-  hits.push({ kind: "button", message, x0: x, x1: x + w, y0: y - 12, y1: y + 4 });
+  hits.push({ kind: "button", message, help: BUTTONS[message[0]], x0: x, x1: x + w, y0: y - 12, y1: y + 4 });
   return w;
 }
 button.local = 1;

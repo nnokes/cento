@@ -111,6 +111,7 @@
 						"int"
 					],
 					"parameter_enable": 0,
+					"varname": "Play",
 					"patching_rect": [
 						150.0,
 						70.0,
@@ -124,7 +125,10 @@
 						20.0,
 						20.0
 					],
-					"id": "obj-5"
+					"id": "obj-5",
+					"hint": "Starts Max's transport and plays the current piece (or stream) through the output below, from the next barline. Off: stops the transport and silences held notes.",
+					"annotation": "Starts Max's transport and plays the current piece (or stream) through the output below, from the next barline. Off: stops the transport and silences held notes.",
+					"annotation_name": "Play"
 				}
 			},
 			{
@@ -161,6 +165,7 @@
 					"minimum": 20,
 					"maximum": 300,
 					"parameter_enable": 0,
+					"varname": "BPM",
 					"patching_rect": [
 						230.0,
 						70.0,
@@ -174,7 +179,10 @@
 						50.0,
 						20.0
 					],
-					"id": "obj-7"
+					"id": "obj-7",
+					"hint": "Tempo in beats per minute (20 to 300) for Max's transport. Drag or type. Remembered for next time.",
+					"annotation": "Tempo in beats per minute (20 to 300) for Max's transport. Drag or type. Remembered for next time.",
+					"annotation_name": "Tempo"
 				}
 			},
 			{
@@ -487,6 +495,7 @@
 					"numinlets": 2,
 					"numoutlets": 0,
 					"outlettype": [],
+					"varname": "Audio",
 					"patching_rect": [
 						720.0,
 						70.0,
@@ -500,7 +509,10 @@
 						30.0,
 						30.0
 					],
-					"id": "obj-24"
+					"id": "obj-24",
+					"hint": "Audio on or off (Max's DSP). Needed only for the vst~ instruments: the MIDI output plays without it.",
+					"annotation": "Audio on or off (Max's DSP). Needed only for the vst~ instruments: the MIDI output plays without it.",
+					"annotation_name": "Audio"
 				}
 			},
 			{
@@ -574,6 +586,7 @@
 					],
 					"parameter_enable": 0,
 					"items": [],
+					"varname": "Output",
 					"patching_rect": [
 						80.0,
 						335.0,
@@ -587,7 +600,10 @@
 						174.0,
 						20.0
 					],
-					"id": "obj-28"
+					"id": "obj-28",
+					"hint": "The MIDI port the four voices go to, one channel each: 1 soprano, 2 alto, 3 tenor, 4 bass. Remembered for next time.",
+					"annotation": "The MIDI port the four voices go to, one channel each: 1 soprano, 2 alto, 3 tenor, 4 bass. Remembered for next time.",
+					"annotation_name": "Output"
 				}
 			},
 			{
@@ -599,6 +615,7 @@
 						"int"
 					],
 					"parameter_enable": 0,
+					"varname": "Use vst~",
 					"patching_rect": [
 						300.0,
 						300.0,
@@ -612,7 +629,10 @@
 						20.0,
 						20.0
 					],
-					"id": "obj-29"
+					"id": "obj-29",
+					"hint": "On: the voices play through four plug-in instruments inside Max (choose them with plug 1 to 4) instead of the MIDI port. Turn audio on (the speaker) to hear them. Remembered for next time.",
+					"annotation": "On: the voices play through four plug-in instruments inside Max (choose them with plug 1 to 4) instead of the MIDI port. Turn audio on (the speaker) to hear them. Remembered for next time.",
+					"annotation_name": "vst~ instead"
 				}
 			},
 			{
@@ -677,7 +697,10 @@
 						52.0,
 						20.0
 					],
-					"id": "obj-32"
+					"id": "obj-32",
+					"hint": "Choose the AU or VST3 instrument that plays voice 1 (soprano) when vst~ instead is on.",
+					"annotation": "Choose the AU or VST3 instrument that plays voice 1 (soprano) when vst~ instead is on.",
+					"annotation_name": "plug 1"
 				}
 			},
 			{
@@ -702,7 +725,10 @@
 						52.0,
 						20.0
 					],
-					"id": "obj-33"
+					"id": "obj-33",
+					"hint": "Show the editor window of voice 1's (soprano) plug-in instrument.",
+					"annotation": "Show the editor window of voice 1's (soprano) plug-in instrument.",
+					"annotation_name": "open 1"
 				}
 			},
 			{
@@ -727,7 +753,10 @@
 						52.0,
 						20.0
 					],
-					"id": "obj-34"
+					"id": "obj-34",
+					"hint": "Choose the AU or VST3 instrument that plays voice 2 (alto) when vst~ instead is on.",
+					"annotation": "Choose the AU or VST3 instrument that plays voice 2 (alto) when vst~ instead is on.",
+					"annotation_name": "plug 2"
 				}
 			},
 			{
@@ -752,7 +781,10 @@
 						52.0,
 						20.0
 					],
-					"id": "obj-35"
+					"id": "obj-35",
+					"hint": "Show the editor window of voice 2's (alto) plug-in instrument.",
+					"annotation": "Show the editor window of voice 2's (alto) plug-in instrument.",
+					"annotation_name": "open 2"
 				}
 			},
 			{
@@ -777,7 +809,10 @@
 						52.0,
 						20.0
 					],
-					"id": "obj-36"
+					"id": "obj-36",
+					"hint": "Choose the AU or VST3 instrument that plays voice 3 (tenor) when vst~ instead is on.",
+					"annotation": "Choose the AU or VST3 instrument that plays voice 3 (tenor) when vst~ instead is on.",
+					"annotation_name": "plug 3"
 				}
 			},
 			{
@@ -802,7 +837,10 @@
 						52.0,
 						20.0
 					],
-					"id": "obj-37"
+					"id": "obj-37",
+					"hint": "Show the editor window of voice 3's (tenor) plug-in instrument.",
+					"annotation": "Show the editor window of voice 3's (tenor) plug-in instrument.",
+					"annotation_name": "open 3"
 				}
 			},
 			{
@@ -827,7 +865,10 @@
 						52.0,
 						20.0
 					],
-					"id": "obj-38"
+					"id": "obj-38",
+					"hint": "Choose the AU or VST3 instrument that plays voice 4 (bass) when vst~ instead is on.",
+					"annotation": "Choose the AU or VST3 instrument that plays voice 4 (bass) when vst~ instead is on.",
+					"annotation_name": "plug 4"
 				}
 			},
 			{
@@ -852,7 +893,10 @@
 						52.0,
 						20.0
 					],
-					"id": "obj-39"
+					"id": "obj-39",
+					"hint": "Show the editor window of voice 4's (bass) plug-in instrument.",
+					"annotation": "Show the editor window of voice 4's (bass) plug-in instrument.",
+					"annotation_name": "open 4"
 				}
 			},
 			{

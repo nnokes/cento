@@ -125,7 +125,10 @@
 						58.0,
 						20.0
 					],
-					"id": "obj-5"
+					"id": "obj-5",
+					"hint": "Open the pop-up window: a large piano roll and Emily's taste in full, where you can edit her weights and see her memory.",
+					"annotation": "Open the pop-up window: a large piano roll and Emily's taste in full, where you can edit her weights and see her memory.",
+					"annotation_name": "window"
 				}
 			},
 			{
@@ -187,7 +190,10 @@
 						57.0,
 						30.0
 					],
-					"id": "obj-7"
+					"id": "obj-7",
+					"hint": "Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation": "Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation_name": "Like"
 				}
 			},
 			{
@@ -233,7 +239,10 @@
 						57.0,
 						30.0
 					],
-					"id": "obj-8"
+					"id": "obj-8",
+					"hint": "Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation": "Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation_name": "Dislike"
 				}
 			},
 			{
@@ -310,7 +319,10 @@
 						44.0,
 						48.0
 					],
-					"id": "obj-11"
+					"id": "obj-11",
+					"hint": "How much chance still plays when composing. 0: only Emily's favourite choices; 1: as before Emily (the default); up to 3: more adventurous.",
+					"annotation": "How much chance still plays when composing. 0: only Emily's favourite choices; 1: as before Emily (the default); up to 3: more adventurous.",
+					"annotation_name": "Temperature"
 				}
 			},
 			{
@@ -353,7 +365,10 @@
 						64.0,
 						20.0
 					],
-					"id": "obj-13"
+					"id": "obj-13",
+					"hint": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature (also shown in the pop-up window). It changes nothing.",
+					"annotation": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature (also shown in the pop-up window). It changes nothing.",
+					"annotation_name": "taste"
 				}
 			},
 			{
@@ -399,7 +414,10 @@
 						64.0,
 						20.0
 					],
-					"id": "obj-14"
+					"id": "obj-14",
+					"hint": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory view). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory view). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation_name": "Accept"
 				}
 			},
 			{
@@ -478,6 +496,7 @@
 				"box": {
 					"maxclass": "v8ui",
 					"filename": "emi.text.bundle.js",
+					"varname": "Emily",
 					"textfile": {
 						"filename": "emi.text.bundle.js",
 						"flags": 0,
@@ -502,7 +521,10 @@
 						118.0,
 						51.0
 					],
-					"id": "obj-19"
+					"id": "obj-19",
+					"hint": "Emily in a line: how many ratings she has had, and what she likes and dislikes most.",
+					"annotation": "Emily in a line: how many ratings she has had, and what she likes and dislikes most.",
+					"annotation_name": "Emily"
 				}
 			},
 			{

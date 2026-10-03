@@ -52,6 +52,7 @@
 				"box": {
 					"maxclass": "v8ui",
 					"filename": "emi.view.bundle.js",
+					"varname": "Piano roll",
 					"textfile": {
 						"filename": "emi.view.bundle.js",
 						"flags": 0,
@@ -77,7 +78,10 @@
 						360.0,
 						169.0
 					],
-					"id": "obj-2"
+					"id": "obj-2",
+					"hint": "The current piece. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from. For a large one: window, in the Emily panel.",
+					"annotation": "The current piece. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from. For a large one: window, in the Emily panel.",
+					"annotation_name": "Piano roll"
 				}
 			},
 			{

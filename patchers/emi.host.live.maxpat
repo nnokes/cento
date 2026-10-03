@@ -343,7 +343,10 @@
 						80.0,
 						20.0
 					],
-					"id": "obj-17"
+					"id": "obj-17",
+					"hint": "Write the current piece as MIDI clips, one per voice, in the first empty clip slot of the Soprano, Alto, Tenor and Bass tracks. Edit them in Live like any clip.",
+					"annotation": "Write the current piece as MIDI clips, one per voice, in the first empty clip slot of the Soprano, Alto, Tenor and Bass tracks. Edit them in Live like any clip.",
+					"annotation_name": "writeclips"
 				}
 			},
 			{
@@ -368,7 +371,10 @@
 						74.0,
 						20.0
 					],
-					"id": "obj-18"
+					"id": "obj-18",
+					"hint": "Write a short test phrase as clips on the voice tracks: a quick check that the tracks are named and set up.",
+					"annotation": "Write a short test phrase as clips on the voice tracks: a quick check that the tracks are named and set up.",
+					"annotation_name": "testclip"
 				}
 			},
 			{
@@ -414,7 +420,10 @@
 						158.0,
 						20.0
 					],
-					"id": "obj-19"
+					"id": "obj-19",
+					"hint": "On: every piece composed is also written as clips (as writeclips does), so nothing you like is lost.",
+					"annotation": "On: every piece composed is also written as clips (as writeclips does), so nothing you like is lost.",
+					"annotation_name": "Clips On Compose"
 				}
 			},
 			{
@@ -478,7 +487,10 @@
 						158.0,
 						20.0
 					],
-					"id": "obj-21"
+					"id": "obj-21",
+					"hint": "On: while Live plays, the piece plays through the emi.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice).",
+					"annotation": "On: while Live plays, the piece plays through the emi.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice).",
+					"annotation_name": "Play Through Voices"
 				}
 			},
 			{
@@ -730,7 +742,10 @@
 						158.0,
 						20.0
 					],
-					"id": "obj-34"
+					"id": "obj-34",
+					"hint": "On: all four voices also come out of this track, to hear the whole piece on this track's instrument.",
+					"annotation": "On: all four voices also come out of this track, to hear the whole piece on this track's instrument.",
+					"annotation_name": "All Voices Here"
 				}
 			},
 			{

@@ -285,6 +285,7 @@
 					"outlettype": [
 						""
 					],
+					"varname": "Voice",
 					"patching_rect": [
 						330.0,
 						395.0,
@@ -298,7 +299,10 @@
 						108.0,
 						20.0
 					],
-					"id": "obj-14"
+					"id": "obj-14",
+					"hint": "The voice this device plays, from its track's name: Soprano, Alto, Tenor or Bass. Rename the track to change it.",
+					"annotation": "The voice this device plays, from its track's name: Soprano, Alto, Tenor or Bass. Rename the track to change it.",
+					"annotation_name": "Voice"
 				}
 			},
 			{

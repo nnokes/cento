@@ -839,6 +839,14 @@ the transport:
   queue (`view playhead <step>`, -1 when stopped or before a restarted queue
   begins) to both rolls, which draw a line there. It follows Max's or Live's
   transport, and in a stream it follows each phrase as the roll moves on.
+- *As built (after M10):* hover help. Every control a player sees (56 in the
+  patches) has `hint` (Max's tooltip), and `annotation` with
+  `annotation_name` (Max's Clue window, Live's Info View), from one table in
+  the patch generator, which also writes `docs/controls.md`; a patch test
+  checks that every visible control has it and the page agrees. The window's
+  taste pane draws its own: resting on a weight slider, a setting slider or a
+  button shows a box saying what it does (each musical feature with what it
+  means).
 - **Click to inspect a grouping**: its source, tension, labels and the
   alternative candidates that were available at that point. This is the main
   debugging tool and later the selection tool for Emily's ratings.

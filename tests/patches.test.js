@@ -343,6 +343,36 @@ test("top patches: host panel, shared panel, Emily's panel and piano roll, all w
   assert.equal(device.devicewidth, right);
 });
 
+// ---------------------------------------------------------------- hover text
+
+// Every control a player sees has hover text: "hint" (Max's tooltip) and
+// "annotation" with "annotation_name" (Max's Clue window, Live's Info View),
+// the same text docs/controls.md gives.
+test("every visible control has hover text, and docs/controls.md gives the same", () => {
+  const doc = fs.readFileSync(path.join(ROOT, "docs", "controls.md"), "utf8");
+  const rows = new Set(doc.split("\n").filter((l) => l.startsWith("| **")));
+  let controls = 0;
+  for (const file of files.filter((f) => f.endsWith(".maxpat"))) {
+    for (const [patcher, where] of patchers(readPatcher(path.join(ROOT, file)), file)) {
+      for (const { box } of patcher.boxes) {
+        if (!box.presentation || ["comment", "panel", "bpatcher"].includes(box.maxclass)) continue;
+        const name = `${where}: ${box.maxclass} ${box.varname || box.text}`;
+        assert.ok(box.hint && box.hint.length > 20, `${name}: a hint`);
+        assert.equal(box.annotation, box.hint, `${name}: the same text for the Clue window and Live's Info View`);
+        assert.ok(box.annotation_name, `${name}: a name for the Info View`);
+        assert.ok(rows.has(`| **${box.annotation_name}** | ${box.hint} |`), `${name}: in docs/controls.md`);
+        controls++;
+      }
+    }
+  }
+  assert.ok(controls >= 56, `${controls} controls`); // 56 when written
+  // The Taste button, in both places, says what it does.
+  for (const file of ["emily.panel.maxpat", "emi.window.maxpat"]) {
+    const [taste] = patchFile(file).find("taste");
+    assert.match(taste.hint, /^Report Emily's taste: .*It changes nothing\.$/);
+  }
+});
+
 // ---------------------------------------------------------------- M5: the player and streaming
 
 // Evaluates a Max [expr] such as "expr ($i1 - 1) * $i4 + int(($f3 + 60.) / 120.)"
