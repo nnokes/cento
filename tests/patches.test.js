@@ -951,7 +951,7 @@ test("emi.engine: the core feeds the queue and the player, and 'need' comes back
 // covers anything else.
 test("layout: every panel's controls fit inside it, none overlapping", () => {
   // The strip's sections are 149 px high, below the 20-px row of their names (169 in all).
-  const sizes = { "emi.host.max.maxpat": [232, 149], "emi.host.live.maxpat": [170, 149], "emi.panel.maxpat": [300, 149], "emily.panel.maxpat": [130, 149], "emi.instruments.maxpat": [330, 170], "emi.extras.maxpat": [360, 190] };
+  const sizes = { "emi.host.max.maxpat": [192, 149], "emi.host.live.maxpat": [130, 149], "emi.panel.maxpat": [300, 149], "emily.panel.maxpat": [170, 149], "emi.instruments.maxpat": [330, 170], "emi.extras.maxpat": [360, 190] };
   for (const [file, [width, height]] of Object.entries(sizes)) {
     const shown = [...patchFile(file).boxes.values()].filter((b) => b.presentation_rect && b.maxclass !== "panel");
     for (const b of shown) {
@@ -1095,14 +1095,19 @@ test("the panels' piano roll is narrower (260 px): the pop-up window has the lar
   const roll = [...view.boxes.values()].find((b) => b.varname === "Piano roll");
   assert.equal(roll.presentation_rect[2], 260);
   const device = readPatcher(locate("cento.brain.amxd"));
-  assert.equal(device.devicewidth, 170 + 8 + 300 + 8 + 130 + 8 + 260);
+  // The left panel gave Magdalena's 40 px: the device is as wide as before (884 px).
+  assert.equal(device.devicewidth, 130 + 8 + 300 + 8 + 170 + 8 + 260);
+  assert.equal(device.devicewidth, 884);
+  const max = patchFile("cento.maxpat");
+  const right = Math.max(...[...max.boxes.values()].filter((b) => b.presentation_rect).map((b) => b.presentation_rect[0] + b.presentation_rect[2]));
+  assert.equal(right, 946, "the Max version is as wide as before");
 });
 
 test("Magdalena: her panel says what she is (the user's taste); the pop-up window explains her", () => {
   const panel = patchFile("emily.panel.maxpat");
   const [subtitle] = panel.find("user's taste");
   const [x, y, width] = subtitle.presentation_rect;
-  assert.deepEqual([x, y, width, subtitle.textjustification], [0, 2, 130, 1], "under her name in the top row, centred");
+  assert.deepEqual([x, y, width, subtitle.textjustification], [0, 2, 170, 1], "under her name in the top row, centred");
   const temperature = named(panel, "Temperature");
   assert.ok(temperature.presentation_rect[3] >= 44, "the slider is tall enough for its name and value");
   assert.deepEqual(panel.find("taste report"), [], "the report itself stays: the text box");
@@ -1139,7 +1144,7 @@ test("Magdalena: her panel says what she is (the user's taste); the pop-up windo
 
 test("sections: each part of the strip sits on a solid colour of its own, with light text on it", () => {
   const colours = new Map();
-  for (const [file, width] of [["emi.host.max.maxpat", 232], ["emi.host.live.maxpat", 170], ["emi.panel.maxpat", 300], ["emily.panel.maxpat", 130]]) {
+  for (const [file, width] of [["emi.host.max.maxpat", 192], ["emi.host.live.maxpat", 130], ["emi.panel.maxpat", 300], ["emily.panel.maxpat", 170]]) {
     const p = readPatcher(locate(file));
     const back = p.boxes[0].box;
     assert.equal(back.maxclass, "panel", `${file}: the first box (the back) is a [panel]`);

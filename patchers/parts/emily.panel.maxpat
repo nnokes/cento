@@ -62,7 +62,7 @@
 					"presentation_rect": [
 						0.0,
 						0.0,
-						130.0,
+						170.0,
 						149.0
 					],
 					"id": "obj-23"
@@ -71,7 +71,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emily.panel: Magdalena's taste (M9), shared by both products. like and dislike rate the beats selected in the piano roll, or the stream phrase playing, or the piece; temperature sets how much chance still plays; keep (accept) keeps what is playing as music of her own (M10). like, dislike, keep and temperature are live.* parameters, so they can be MIDI- or key-mapped. Panel 130 x 149 px.",
+					"text": "emily.panel: Magdalena's taste (M9), shared by both products. like and dislike rate the beats selected in the piano roll, or the stream phrase playing, or the piece; temperature sets how much chance still plays; keep (accept) keeps what is playing as music of her own (M10). like, dislike, keep and temperature are live.* parameters, so they can be MIDI- or key-mapped. Panel 170 x 149 px.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 3,
@@ -143,7 +143,7 @@
 					"presentation_rect": [
 						0.0,
 						2.0,
-						130.0,
+						170.0,
 						16.0
 					],
 					"id": "obj-4"
@@ -231,14 +231,14 @@
 					"patching_rect": [
 						20.0,
 						140.0,
-						57.0,
+						77.0,
 						24.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
 						19.0,
-						57.0,
+						77.0,
 						24.0
 					],
 					"id": "obj-5",
@@ -365,14 +365,14 @@
 					"patching_rect": [
 						120.0,
 						140.0,
-						57.0,
+						77.0,
 						24.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						67.0,
+						87.0,
 						19.0,
-						57.0,
+						77.0,
 						24.0
 					],
 					"id": "obj-8",
@@ -499,14 +499,14 @@
 					"patching_rect": [
 						220.0,
 						140.0,
-						118.0,
+						158.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
 						46.0,
-						118.0,
+						158.0,
 						20.0
 					],
 					"id": "obj-11",
@@ -588,14 +588,14 @@
 					"patching_rect": [
 						340.0,
 						140.0,
-						118.0,
+						158.0,
 						46.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
 						68.0,
-						118.0,
+						158.0,
 						46.0
 					],
 					"id": "obj-14",
@@ -695,14 +695,14 @@
 					"patching_rect": [
 						20.0,
 						380.0,
-						118.0,
+						158.0,
 						44.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
 						116.0,
-						118.0,
+						158.0,
 						30.0
 					],
 					"id": "obj-19",

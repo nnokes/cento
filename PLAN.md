@@ -154,7 +154,8 @@ Emily's memory. Taste Emily learns in one product carries over to the other.
    `live.numbox` / `live.text` parameters. Each host adapter keeps only its
    own controls: 232 px in Max (transport, output, `[vst~]`), 170 px in Live
    (clips, voice routing). Both show the piano roll on the right; the device
-   is 846 px wide.
+   is 846 px wide. (Since the M12 redesign: 192 px in Max, 130 in Live, and
+   Magdalena's panel 170; the device is 884 px wide, the Max strip 946.)
    The engine keeps the settings file. It writes nothing until `startup` has
    read the file, so values that controls send while a patch loads can't
    overwrite it. `startup all` (Max) restores every setting; `startup corpus`
@@ -1579,7 +1580,10 @@ hover text itself stays), the temperature slider got the height its name
 and value need, and the piano roll's bar numbers, cadence triangles and
 Magdalena's dots each have a row of their own above the notes. The window
 button is a square **↗** at the right end of the row of names (no room there
-for a word), in the top patch rather than Magdalena's panel.
+for a word), in the top patch rather than Magdalena's panel. The left panel
+(PLAY, or CLIPS AND VOICES) gave Magdalena's panel 40 px (192 and 130 px
+now, Magdalena 170), so the strip is as wide as before; in Live, "all voices
+on this track" is now "all voices here" to fit.
 
 **Subfolders**: `patchers/` holds only what you open (`cento.maxpat`,
 `cento.brain.amxd`, `cento.voice.amxd`); the patches they're made of are in

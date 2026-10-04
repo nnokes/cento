@@ -86,14 +86,14 @@
 					"patching_rect": [
 						20.0,
 						2.0,
-						170.0,
+						130.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						1.0,
-						170.0,
+						130.0,
 						18.0
 					],
 					"id": "obj-2"
@@ -115,14 +115,14 @@
 					],
 					"textjustification": 1,
 					"patching_rect": [
-						198.0,
+						158.0,
 						2.0,
 						300.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						178.0,
+						138.0,
 						1.0,
 						300.0,
 						18.0
@@ -146,16 +146,16 @@
 					],
 					"textjustification": 1,
 					"patching_rect": [
-						506.0,
+						466.0,
 						2.0,
-						130.0,
+						170.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						486.0,
+						446.0,
 						1.0,
-						130.0,
+						170.0,
 						18.0
 					],
 					"id": "obj-4"
@@ -215,14 +215,14 @@
 					"patching_rect": [
 						20.0,
 						40.0,
-						170.0,
+						130.0,
 						149.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						20.0,
-						170.0,
+						130.0,
 						149.0
 					],
 					"id": "obj-6"
@@ -249,14 +249,14 @@
 					"enablevscroll": 0,
 					"lockeddragscroll": 0,
 					"patching_rect": [
-						198.0,
+						158.0,
 						40.0,
 						300.0,
 						149.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						178.0,
+						138.0,
 						20.0,
 						300.0,
 						149.0
@@ -285,16 +285,16 @@
 					"enablevscroll": 0,
 					"lockeddragscroll": 0,
 					"patching_rect": [
-						506.0,
+						466.0,
 						40.0,
-						130.0,
+						170.0,
 						149.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						486.0,
+						446.0,
 						20.0,
-						130.0,
+						170.0,
 						149.0
 					],
 					"id": "obj-8"

@@ -62,7 +62,7 @@
 					"presentation_rect": [
 						0.0,
 						0.0,
-						232.0,
+						192.0,
 						149.0
 					],
 					"id": "obj-63"
@@ -71,7 +71,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.host.max: the Max version's adapter: transport, MIDI ports, vst~ instruments, the more features window, and startup (restores the settings file). Panel 232 x 149 px.",
+					"text": "emi.host.max: the Max version's adapter: transport, MIDI ports, vst~ instruments, the more features window, and startup (restores the settings file). Panel 192 x 149 px.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
@@ -201,7 +201,7 @@
 					"presentation_rect": [
 						6.0,
 						6.0,
-						80.0,
+						72.0,
 						26.0
 					],
 					"id": "obj-4",
@@ -231,9 +231,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						92.0,
+						82.0,
 						9.0,
-						44.0,
+						40.0,
 						20.0
 					],
 					"id": "obj-5",
@@ -257,9 +257,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						138.0,
+						124.0,
 						10.0,
-						30.0,
+						28.0,
 						18.0
 					],
 					"id": "obj-6",
@@ -568,7 +568,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						196.0,
+						156.0,
 						4.0,
 						30.0,
 						30.0
@@ -668,7 +668,7 @@
 					"presentation_rect": [
 						52.0,
 						40.0,
-						174.0,
+						134.0,
 						20.0
 					],
 					"id": "obj-26",
@@ -766,7 +766,7 @@
 					"presentation_rect": [
 						6.0,
 						66.0,
-						144.0,
+						120.0,
 						20.0
 					],
 					"id": "obj-27",
@@ -876,14 +876,14 @@
 					"patching_rect": [
 						560.0,
 						560.0,
-						72.0,
+						56.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						154.0,
+						130.0,
 						66.0,
-						72.0,
+						56.0,
 						20.0
 					],
 					"id": "obj-29",
@@ -1062,14 +1062,14 @@
 					"patching_rect": [
 						950.0,
 						560.0,
-						110.0,
+						120.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						96.0,
-						110.0,
+						92.0,
+						120.0,
 						20.0
 					],
 					"id": "obj-35",

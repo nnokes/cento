@@ -30,7 +30,7 @@ This page is written from the same table as the hover text (the patch generator)
 | **test clips** | Write a short test phrase as clips on the voice tracks: a quick check that the tracks are named and set up. |
 | **clips on compose** | On: every piece composed is also written as clips (as write clips does), so nothing you like is lost. |
 | **play through voices** | On: while Live plays, the piece plays through the cento.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice). |
-| **all voices on this track** | On: all four voices also come out of this track, to hear the whole piece on this track's instrument. |
+| **all voices here** | On: all four voices also come out of this track, to hear the whole piece on this track's instrument. |
 
 ## Composing (both versions)
 

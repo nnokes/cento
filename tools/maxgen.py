@@ -217,7 +217,7 @@ HELP = {
         "Play Through Voices": ("play through voices", "On: while Live plays, the piece plays through the "
                                 "cento.voice devices on the voice tracks. Turn it off to hear only clips you "
                                 "wrote (otherwise each note sounds twice)."),
-        "All Voices Here": ("all voices on this track", "On: all four voices also come out of this track, to hear "
+        "All Voices Here": ("all voices here", "On: all four voices also come out of this track, to hear "
                             "the whole piece on this track's instrument."),
     },
     "emi.panel": {
@@ -963,18 +963,18 @@ def emily_panel():
     # What she is, under her name (the name is in the strip's row of names).
     p.comment("user's taste", 140, 100, w=80, pres=(0, 2, W, 16), fontsize=LABEL_SIZE, textcolor=SOFT_TEXT,
               textjustification=1)
-    labelled(p, "Like", "like", "like", 20, 140, (6, 19, 57, 24), out, look=WARM, mappable=True, fontsize=11.0)
-    labelled(p, "Dislike", "dislike", "dislike", 120, 140, (67, 19, 57, 24), out, look=WARM, mappable=True,
+    labelled(p, "Like", "like", "like", 20, 140, (6, 19, 77, 24), out, look=WARM, mappable=True, fontsize=11.0)
+    labelled(p, "Dislike", "dislike", "dislike", 120, 140, (87, 19, 77, 24), out, look=WARM, mappable=True,
              fontsize=11.0)
     # M10: accept keeps what is playing as music of her own (mappable, like
     # like and dislike), shown as "keep"; forget is in the pop-up window.
-    labelled(p, "Accept", "keep", "accept", 220, 140, (6, 46, 118, 20), out, look=WARM, mappable=True)
+    labelled(p, "Accept", "keep", "accept", 220, 140, (6, 46, W - 12, 20), out, look=WARM, mappable=True)
     # (The pop-up window, a large piano roll and her taste in full, opens
     # from the square button at the strip's top right, in the top patch.)
     # Temperature: how much chance still plays. A horizontal slider across
     # the panel, tall enough for its name (above) and value (below).
     temp = p.ui(
-        "live.slider", 340, 140, 118, 46, 1, 2, ["", "float"], pres=(6, 68, 118, 46),
+        "live.slider", 340, 140, W - 12, 46, 1, 2, ["", "float"], pres=(6, 68, W - 12, 46),
         parameter_enable=1, varname="Temperature", orientation=1, showname=1, shownumber=1,
         textcolor=HEADING,
         saved_attribute_attributes={"valueof": {
@@ -1028,7 +1028,7 @@ def host_max():
     # back to play by itself when the piece ends ("ended" from the engine).
     # A live.text toggle needs its parameter (an off/on enum) to toggle at
     # all; it starts off and isn't restored (no initial value).
-    play = p.ui("live.text", 150, 70, 58, 20, 1, 2, ["", ""], pres=(6, 6, 80, 26), parameter_enable=1,
+    play = p.ui("live.text", 150, 70, 58, 20, 1, 2, ["", ""], pres=(6, 6, 72, 26), parameter_enable=1,
                 varname="Play", mode=1, text="play", texton="stop", fontsize=12.0,
                 bgcolor=GREEN_ON, activebgcolor=GREEN_ON, bgoncolor=RED_ON, activebgoncolor=RED_ON,
                 textcolor=DARK_TEXT, activetextcolor=DARK_TEXT, activetextoncolor=LIGHT_TEXT,
@@ -1041,9 +1041,9 @@ def host_max():
                     "parameter_initial": [0],
                     "parameter_initial_enable": 0,
                 }})
-    tempo = p.ui("number", 230, 70, 50, 22, 1, 2, ["", "bang"], pres=(92, 9, 44, 20),
+    tempo = p.ui("number", 230, 70, 50, 22, 1, 2, ["", "bang"], pres=(82, 9, 40, 20),
                  minimum=20, maximum=300, parameter_enable=0, varname="BPM")
-    label(p, "bpm", 285, 70, (138, 10, 30, 18), w=40)
+    label(p, "bpm", 285, 70, (124, 10, 28, 18), w=40)
     lb = p.obj("loadbang", 330, 30, 1, 1, ["bang"])
     init_tempo = p.msg("100", 330, 70, w=40)
     p.connect(lb, 0, init_tempo, 0)
@@ -1082,28 +1082,28 @@ def host_max():
     p.connect(lb, 0, stop_at_load, 0)
     p.connect(stop_at_load, 0, transport, 0)
     p.comment("at load: transport stopped, as Play shows", 420, 70, w=150, h=34, linecount=2)
-    p.ui("ezdac~", 720, 70, 32, 32, 2, 0, [], pres=(196, 4, 30, 30), varname="Audio")
+    p.ui("ezdac~", 720, 70, 32, 32, 2, 0, [], pres=(156, 4, 30, 30), varname="Audio")
 
     # Output selection, and plug-in instruments (vst~): the switch here, the
     # instruments themselves in a window of their own (emi.instruments).
     p.comment("Output", 20, 300, w=50, pres=(6, 41, 46, 18), fontsize=LABEL_SIZE)
     lb2 = p.obj("loadbang", 80, 270, 1, 1, ["bang"])
     midiinfo = p.obj("midiinfo", 80, 300, 2, 2)
-    menu = p.ui("umenu", 80, 335, 170, 22, 1, 3, ["int", "", ""], pres=(52, 40, 174, 20),
+    menu = p.ui("umenu", 80, 335, 170, 22, 1, 3, ["int", "", ""], pres=(52, 40, 134, 20),
                 parameter_enable=0, items=[], varname="Output")
     p.connect(lb2, 0, midiinfo, 0)
     p.connect(midiinfo, 0, menu, 0)
     # Not restored by Max at load (no initial value): the settings file does it.
-    use_vst = live_toggle(p, "Plug-in Instruments", "plug-in instruments", 300, 300, (6, 66, 144, 20),
+    use_vst = live_toggle(p, "Plug-in Instruments", "plug-in instruments", 300, 300, (6, 66, 120, 20),
                           initial_enable=0)
     plus = p.obj("+ 1", 300, 335, 2, 1, ["int"], w=40)
     p.connect(use_vst, 0, plus, 0)
-    instruments_window_obj = opener(p, "Set Up", "set up…", 560, 560, (154, 66, 72, 20), "emi.instruments")
+    instruments_window_obj = opener(p, "Set Up", "set up…", 560, 560, (130, 66, 56, 20), "emi.instruments")
     p.comment("set up: the plug-in instruments window (plug <n>, open <n>)", 680, 655, w=250)
     # More features (Max version only): the listening test and the less-used
     # tools, in a window of their own (emi.extras); what they send goes to
     # the engine, and a restored original key reaches its switch.
-    extras = opener(p, "More Features", "more features…", 950, 560, (6, 96, 110, 20), "emi.extras")
+    extras = opener(p, "More Features", "more features…", 950, 560, (6, 92, 120, 20), "emi.extras")
     p.connect(extras, 0, out, 0)
     p.comment("more features: listening test, load a chorale (original key), test phrase, clear", 1070, 655,
               w=220, h=34, linecount=2)
@@ -1283,9 +1283,9 @@ def host_live():
               h=34, linecount=2)
 
     # Clips (rows 6 and 32)
-    labelled(p, "Write Clips", "write clips", "writeclips", 20, 100, (6, 6, 80, 20), out, mappable=True)
-    labelled(p, "Test Clips", "test clips", "testclip", 120, 100, (90, 6, 74, 20), out)
-    auto = live_toggle(p, "Clips On Compose", "clips on compose", 260, 100, (6, 32, 158, 20))
+    labelled(p, "Write Clips", "write clips", "writeclips", 20, 100, (6, 6, 60, 20), out, mappable=True)
+    labelled(p, "Test Clips", "test clips", "testclip", 120, 100, (70, 6, 54, 20), out)
+    auto = live_toggle(p, "Clips On Compose", "clips on compose", 260, 100, (6, 32, 118, 20))
     auto_pre = p.obj("prepend autoclips", 260, 135, 2, 1, w=110)
     p.connect(auto, 0, auto_pre, 0)
     p.connect(auto_pre, 0, out, 0)
@@ -1295,7 +1295,7 @@ def host_live():
     # on, so written clips don't also get every note a second time. Turning
     # it off first stops the player (note-offs pass while the gate is still
     # open), then closes the gate.
-    play_on = live_toggle(p, "Play Through Voices", "play through voices", 850, 600, (6, 58, 158, 20))
+    play_on = live_toggle(p, "Play Through Voices", "play through voices", 850, 600, (6, 58, 118, 20))
     play_t = p.obj("t i i", 850, 635, 1, 2, ["int", "int"], w=45)
     p.connect(play_on, 0, play_t, 0)
     off = p.obj("sel 0", 950, 635, 2, 2, ["bang", ""], w=45)
@@ -1317,7 +1317,7 @@ def host_live():
     p.comment("to the cento.voice devices on the Soprano/Alto/Tenor/Bass tracks", 20, 540, w=420)
 
     # All voices on this track (row 84)
-    here = live_toggle(p, "All Voices Here", "all voices on this track", 600, 360, (6, 84, 158, 20))
+    here = live_toggle(p, "All Voices Here", "all voices here", 600, 360, (6, 84, 118, 20))
     gate = p.obj("gate 1", 600, 440, 2, 1, w=50)
     p.connect(here, 0, gate, 0)
     p.connect(voices, 0, gate, 1)
@@ -1331,7 +1331,7 @@ def host_live():
     p.connect(midiin, 0, midiout, 0)
     p.comment("track MIDI passes through", 780, 480, w=170)
     p.comment("Voice tracks: Soprano, Alto, Tenor, Bass.", 20, 600, w=160, h=34, linecount=2,
-              pres=(6, 112, 158, 32), fontsize=LABEL_SIZE, textcolor=SOFT_TEXT)
+              pres=(6, 112, 118, 34), fontsize=LABEL_SIZE, textcolor=SOFT_TEXT)
     section(p, PLAY_BG, HOST_LIVE_W)
     return p
 
@@ -1468,11 +1468,11 @@ def corpora_window():
 
 
 PANEL_W = 300
-EMILY_W = 130
+EMILY_W = 170  # 130 until the play panel gave it 40 px (the strip is as wide as before)
 VIEW_W = 260  # the panels' piano roll (260 px since the GUI redesign; 400 in M11, 360 before;
 #               the pop-up window has the large one)
-HOST_MAX_W = 232
-HOST_LIVE_W = 170
+HOST_MAX_W = 192
+HOST_LIVE_W = 130
 
 
 def top(adapter, host_name, title, host_w, h=169, abstraction="emi.engine"):

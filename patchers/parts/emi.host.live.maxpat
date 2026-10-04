@@ -62,7 +62,7 @@
 					"presentation_rect": [
 						0.0,
 						0.0,
-						170.0,
+						130.0,
 						149.0
 					],
 					"id": "obj-45"
@@ -71,7 +71,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.host.live: the Live version's adapter: follows Live's transport, sends voices to the cento.voice devices, writes clips, and startup (reloads the last corpus). Panel 170 x 149 px.",
+					"text": "emi.host.live: the Live version's adapter: follows Live's transport, sends voices to the cento.voice devices, writes clips, and startup (reloads the last corpus). Panel 130 x 149 px.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
@@ -419,14 +419,14 @@
 					"patching_rect": [
 						20.0,
 						100.0,
-						80.0,
+						60.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
 						6.0,
-						80.0,
+						60.0,
 						20.0
 					],
 					"id": "obj-16",
@@ -554,14 +554,14 @@
 					"patching_rect": [
 						120.0,
 						100.0,
-						74.0,
+						54.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						90.0,
+						70.0,
 						6.0,
-						74.0,
+						54.0,
 						20.0
 					],
 					"id": "obj-19",
@@ -695,7 +695,7 @@
 					"presentation_rect": [
 						6.0,
 						32.0,
-						158.0,
+						118.0,
 						20.0
 					],
 					"id": "obj-22",
@@ -811,7 +811,7 @@
 					"presentation_rect": [
 						6.0,
 						58.0,
-						158.0,
+						118.0,
 						20.0
 					],
 					"id": "obj-24",
@@ -1038,8 +1038,8 @@
 					"parameter_enable": 1,
 					"varname": "All Voices Here",
 					"mode": 1,
-					"text": "all voices on this track",
-					"texton": "all voices on this track",
+					"text": "all voices here",
+					"texton": "all voices here",
 					"fontsize": 10.0,
 					"bgcolor": [
 						0.84,
@@ -1115,13 +1115,13 @@
 					"presentation_rect": [
 						6.0,
 						84.0,
-						158.0,
+						118.0,
 						20.0
 					],
 					"id": "obj-37",
 					"hint": "On: all four voices also come out of this track, to hear the whole piece on this track's instrument.",
 					"annotation": "On: all four voices also come out of this track, to hear the whole piece on this track's instrument.",
-					"annotation_name": "all voices on this track"
+					"annotation_name": "all voices here"
 				}
 			},
 			{
@@ -1253,8 +1253,8 @@
 					"presentation_rect": [
 						6.0,
 						112.0,
-						158.0,
-						32.0
+						118.0,
+						34.0
 					],
 					"id": "obj-44"
 				}
