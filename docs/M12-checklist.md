@@ -1,12 +1,12 @@
 # M12 checklist: shipping Cento to others (free)
 
-## Result: under way; sections 0 and 1 passed on your Mac (1.6 not yet reported); next, sections 2 to 6
+## Result: under way; sections 0 and 1 passed on your Mac; next, sections 2 to 6
 
 | Check | Max version | Live version |
 |---|---|---|
 | The new layout: a row of section names, compose first, every button in Live's look, more features window (Max), plug-in instruments window, plain names, a narrower piano roll; nothing overlaps | ✅ (`npm test`: sizes, overlaps, wiring; 0.0–0.4 on the Mac) | ✅ (0.5) |
 | Your files live in your Cento folder (`~/Documents/cento`), copied there from `patchers/` the first time | ✅ (1.1–1.4) | ✅ (1.5) |
-| Both products share them, as before | | |
+| Both products share them, as before | ✅ (1.6) | ✅ (1.6) |
 | Finding the folder: from a patch in a home folder, from Max's own path, through `/Users` (the app), by a file in it; none: the status line says where it goes | ✅ (`npm test`) | ✅ (the same engine) |
 | Cento's own chorales are found in the Cento folder (as in a download) or the repository | ✅ (`npm test`) | ✅ (the same engine) |
 | Frozen devices work on their own (the freeze test deferred from M0) | — | |
@@ -162,7 +162,7 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        Console*: the same `your Cento folder` line (it may say "from Max's
        own folder" or "from the patch's folder"). If macOS asks whether
        **Live** may access your Documents folder, click **Allow**.
-6. [ ] **Shared.** The corpus window lists the same folders as in Max. Click
+6. [x] **Shared.** The corpus window lists the same folders as in Max. Click
        **like** on a piece in Live; then open `cento.maxpat` in Max: the
        pop-up window's overview counts that rating.
 
@@ -191,10 +191,14 @@ Then, to be safe, copy `About this folder.txt` from the repository's
 4. [ ] **It works.** The brain composes at once (its piano roll fills).
        **Play Through Voices** on, then Live's Play: the piece plays through
        the four instruments, from a bar. Then, one at a time: **corpora**
-       opens the corpus window; **window** opens the pop-up window; hover
+       opens the corpus window; **↗** (top right) opens the pop-up window; hover
        help shows in the Info View; **like** counts. Last, open the brain's
        editor and *Window → Max Console*: copy the
        `cento: your Cento folder is ...` line. Close the editor.
+       (Your settings, Magdalena's taste and her notebook are there as
+       before: they live in your Cento folder, not in the device, so every
+       copy of Cento finds them: the patch, frozen devices and the app. A
+       newcomer's Cento folder, from the download, starts empty: section 6.)
 5. [ ] Leave the set open for section 3.
 
 ## 3. The demo set (made once)
