@@ -1549,6 +1549,15 @@ in the empty piano roll, and a narrower roll (260 px; the pop-up window has the
 large one). `tests/patches.test.js` checks that nothing overlaps or leaves its
 panel.
 
+**Emily becomes Magdalena** (on screen only): the taste layer is shown as
+**Magdalena**, with "user's taste" beside her panel's heading, so it no longer
+reads as David Cope's Emily Howell. The music you keep is **Magdalena's
+notebook**, after Anna Magdalena Bach's notebooks of favourite pieces; the
+pop-up window's **explain Magdalena** opens a page on who she is and what she
+does (`emi.magdalena`). Inside, nothing is renamed: the engine's modules
+(`emily-*`), the files (`cento.emily.json`), the messages to the engine and
+Live's parameters keep their names, so saved work and mappings carry on.
+
 **Later, if it's wanted**: a signed app; a Live Pack (one file that installs
 the devices and the demo set into Live's browser); Windows (Max and Live run
 there, but nothing has been tried); Max's Package Manager.

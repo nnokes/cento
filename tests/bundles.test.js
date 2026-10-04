@@ -1273,7 +1273,7 @@ test("emily: a chorale isn't rated; composing with a taste is compared with the 
   core.send("corpus", writeCorpus());
   core.send("beats", 8);
   core.send("loadmidi", writeAMajorChorale());
-  assert.match(lastStatus(core.send("like")).join(" "), /^error Emily learns from composed music: compose a piece first$/);
+  assert.match(lastStatus(core.send("like")).join(" "), /^error Magdalena learns from composed music: compose a piece first$/);
   core.send("compose", 1);
   core.send("like");
   core.posted.length = 0;
@@ -1307,7 +1307,7 @@ test("emily: temperature is clamped, saved and restored", () => {
   assert.deepEqual(lastStatus(core.send("temperature", 0.5)).slice(0, 7), ["status", "chance", "0.50:", "less", "chance,", "more", "taste"]);
   assert.equal(settingsIn(folder).temperature, 0.5);
   assert.deepEqual(lastStatus(core.send("temperature", 7)).slice(0, 4), ["status", "chance", "3.00:", "more"]);
-  assert.deepEqual(lastStatus(core.send("temperature", 0)).slice(0, 5), ["status", "chance", "0.00:", "only", "Emily's"]);
+  assert.deepEqual(lastStatus(core.send("temperature", 0)).slice(0, 5), ["status", "chance", "0.00:", "only", "Magdalena's"]);
   core.send("temperature", 1.5);
   const restored = engineIn(folder).send("startup", "all");
   assert.deepEqual(select(restored, "setting").find(([name]) => name === "temperature"), ["temperature", 1.5]);
@@ -1325,7 +1325,7 @@ test("emily: a startup after a session with ratings lets the taste fade; forget 
   assert.equal(tasteIn(folder).weights["f:susp"], 0.9, "no ratings since: no fading");
 
   const forgot = core.send("forget");
-  assert.deepEqual(lastStatus(forgot), ["status", "Emily", "forgot", "her", "taste", "(4", "ratings,", "kept", "in", "cento.taste.backup.json)"]);
+  assert.deepEqual(lastStatus(forgot), ["status", "Magdalena", "forgot", "her", "taste", "(4", "ratings,", "kept", "in", "cento.taste.backup.json)"]);
   assert.deepEqual(select(forgot, "emily"), [["no", "ratings", "yet"]]);
   assert.equal(tasteIn(folder).ratings, 0);
   const backup = JSON.parse(fs.readFileSync(path.join(folder, "cento.taste.backup.json"), "utf8"));
@@ -1336,7 +1336,7 @@ test("emily: 'taste' lists her opinions and compares ten pieces with and without
   const folder = tempDir();
   const core = engineIn(folder);
   core.send("startup", "all");
-  assert.deepEqual(lastStatus(core.send("taste")), ["status", "Emily:", "no", "ratings", "yet"]);
+  assert.deepEqual(lastStatus(core.send("taste")), ["status", "Magdalena:", "no", "ratings", "yet"]);
   core.send("corpus", writeCorpus());
   core.send("beats", 8);
   for (const seed of [1, 2, 3]) {
@@ -1345,24 +1345,24 @@ test("emily: 'taste' lists her opinions and compares ten pieces with and without
   }
   core.posted.length = 0;
   const first = core.send("taste");
-  assert.match(core.posted[0], /^cento: Emily's taste: 3 ratings/);
+  assert.match(core.posted[0], /^cento: Magdalena's taste: 3 ratings/);
   // The twenty pieces come a piece at a time, each on its own turn (later ->
   // [deferlow] -> tastestep), so Max stays responsive; the window shows how
   // far it has got.
-  assert.deepEqual(lastStatus(first), ["status", "Emily:", "comparing", "10", "pieces", "with", "her", "taste", "and", "without..."]);
+  assert.deepEqual(lastStatus(first), ["status", "Magdalena:", "comparing", "10", "pieces", "with", "her", "taste", "and", "without..."]);
   assert.deepEqual(first.filter((o) => o[1] === "later"), [[0, "later", "tastestep", 1]]);
   const out = settle(core, first);
   assert.equal(out.filter((o) => o[1] === "later").length, 20, "a step for each piece");
   assert.deepEqual(out.filter((o) => o[1] === "emilyview" && o[2] === "comparing").map((o) => o[3]), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1]);
   assert.ok(core.posted.some((line) => /^ {2}seeds 3-12, with her taste and without: her taste /.test(line)), core.posted.join(""));
-  assert.match(lastStatus(out).join(" "), /^status Emily, seeds 3-12: her taste [-+]\d\.\d\d a beat/);
+  assert.match(lastStatus(out).join(" "), /^status Magdalena, seeds 3-12: her taste [-+]\d\.\d\d a beat/);
 
   // A rating while it runs makes it stale: it stops, and says so.
   const started = core.send("taste");
   let step = core.send(...started.find((o) => o[1] === "later").slice(2));
   core.send("like");
   step = core.send(...step.find((o) => o[1] === "later").slice(2));
-  assert.match(lastStatus(step).join(" "), /^status Emily: comparison stopped \(her taste or the corpus changed\); click taste again$/);
+  assert.match(lastStatus(step).join(" "), /^status Magdalena: comparison stopped \(her taste or the corpus changed\); click taste report again$/);
   assert.ok(step.some((o) => o[1] === "emilyview" && o[2] === "comparing" && o[3] === -1));
   assert.ok(!step.some((o) => o[1] === "later"), "no more steps");
 
@@ -1370,7 +1370,7 @@ test("emily: 'taste' lists her opinions and compares ten pieces with and without
   const old = core.send("taste");
   const fresh = core.send("taste");
   assert.deepEqual(core.send(...old.find((o) => o[1] === "later").slice(2)), []);
-  assert.match(lastStatus(settle(core, fresh)).join(" "), /^status Emily, seeds 3-12: /);
+  assert.match(lastStatus(settle(core, fresh)).join(" "), /^status Magdalena, seeds 3-12: /);
 });
 
 // ---------------------------------------------------------------- view: selecting beats (M9)
@@ -1533,12 +1533,12 @@ test("emily: pins, strength, release, and a stored taste recalled (with the one 
   core.send("compose", 1);
   core.send("like");
   let out = core.send("pin", "f:16ths", 1.5);
-  assert.match(lastStatus(out).join(" "), /^status Emily: 16th notes pinned at \+1\.50 \(she learned [-+]?\d\.\d\d\)$/);
+  assert.match(lastStatus(out).join(" "), /^status Magdalena: 16th notes pinned at \+1\.50 \(she learned [-+]?\d\.\d\d\)$/);
   assert.deepEqual(tasteIn(folder).pins, { "f:16ths": 1.5 });
   const row = select(out, "emilyview").find(([kind, , f]) => kind === "weight" && f === "f:16ths");
   assert.deepEqual(row.slice(0, 6), ["weight", "Motion", "f:16ths", row[3], 1, 1.5]);
   assert.match(lastStatus(core.send("pin", "f:nonsense", 1)).join(" "), /^error not a feature: f:nonsense$/);
-  assert.match(lastStatus(core.send("strength", 1.5)).join(" "), /^status Emily's taste at strength 1\.50: stronger than learned/);
+  assert.match(lastStatus(core.send("strength", 1.5)).join(" "), /^status Magdalena's taste at strength 1\.50: stronger than learned/);
   assert.equal(tasteIn(folder).strength, 1.5);
 
   // A rating teaches what she learned, not the pin.
@@ -1547,20 +1547,20 @@ test("emily: pins, strength, release, and a stored taste recalled (with the one 
 
   // Store, change, recall.
   const stored = path.join(folder, "busy");
-  assert.match(lastStatus(core.send("storetaste", stored)).join(" "), /^status stored Emily's taste in busy\.json \(2 ratings, 1 pin, strength 1\.50\)$/);
+  assert.match(lastStatus(core.send("storetaste", stored)).join(" "), /^status stored Magdalena's taste in busy\.json \(2 ratings, 1 pin, strength 1\.50\)$/);
   core.send("unpin");
   core.send("strength", 1);
   core.send("like");
   assert.deepEqual(tasteIn(folder).pins, {});
   out = core.send("recalltaste", stored + ".json");
-  assert.match(lastStatus(out).join(" "), /^status recalled Emily's taste from busy\.json \(2 ratings, 1 pin, strength 1\.50\); the one before is in cento\.taste\.backup\.json$/);
+  assert.match(lastStatus(out).join(" "), /^status recalled Magdalena's taste from busy\.json \(2 ratings, 1 pin, strength 1\.50\); the one before is in cento\.taste\.backup\.json$/);
   assert.deepEqual([tasteIn(folder).pins, tasteIn(folder).strength, tasteIn(folder).ratings], [{ "f:16ths": 1.5 }, 1.5, 2]);
   assert.equal(JSON.parse(fs.readFileSync(path.join(folder, "cento.taste.backup.json"), "utf8")).ratings, 3);
   assert.match(lastStatus(core.send("recalltaste", path.join(folder, "cento.settings.json"))).join(" "), /^error cento\.settings\.json isn't a stored taste$/);
 
   // Releasing one pin; then all.
-  assert.match(lastStatus(core.send("unpin", "f:16ths")).join(" "), /^status Emily: 16th notes released \(back to [-+]?\d\.\d\d, what she learned\)$/);
-  assert.match(lastStatus(core.send("unpin")).join(" "), /^status Emily: no pins to release$/);
+  assert.match(lastStatus(core.send("unpin", "f:16ths")).join(" "), /^status Magdalena: 16th notes released \(back to [-+]?\d\.\d\d, what she learned\)$/);
+  assert.match(lastStatus(core.send("unpin")).join(" "), /^status Magdalena: no pins to release$/);
 });
 
 // Clicks one of the taste pane's tabs (overview, weights, memory) where it
@@ -1588,7 +1588,7 @@ test("taste view: the weights tab shows a slider per feature; dragging pins, dou
   g.calls.length = 0;
   view.send("paint");
   const text = g.calls.filter(([name]) => name === "show_text").map(([, t]) => t);
-  for (const expected of ["Edit Emily's weights", "Motion", "Melody", "block chords", "16th notes", "+0.4", "-0.2", "strength", "1.00"]) assert.ok(text.includes(expected), expected);
+  for (const expected of ["Edit Magdalena's weights", "Motion", "Melody", "block chords", "16th notes", "+0.4", "-0.2", "strength", "1.00"]) assert.ok(text.includes(expected), expected);
 
   // The 16th notes slider: column 0 (568 px wide), second row.
   const t0 = 12 + 112;
@@ -1652,7 +1652,7 @@ test("taste view: hovering over a slider or button shows what it does", () => {
   view.send("onidle", 1160 - 150, 46);
   assert.match(helpShown(), /novelty: the chance that each phrase gets a variant/);
   view.send("onidle", 1160 - 450, 46);
-  assert.match(helpShown(), /mix: how much her own works/);
+  assert.match(helpShown(), /mix: how much the works in her notebook/);
   // The buttons: put aside, keep a snapshot, roll back.
   const column = (1160 - 24) / 2;
   view.send("onidle", 12 + column - 80, 72 + 8 + 20 - 6 - 4);
@@ -1728,7 +1728,7 @@ test("emily: accept keeps a piece as her own; mix uses it; mix 0 is Bach alone, 
   core.send("novelty", 1);
   core.send("compose", 1);
   const accepted = lastStatus(core.send("accept")).join(" ");
-  assert.match(accepted, /^status accepted emi-1 as emily-1 \(generation 1, \d+ beats, \d+ varied\); Emily has 1 work of her own$/);
+  assert.match(accepted, /^status kept emi-1 as emily-1 \(generation 1, \d+ beats, \d+ varied\); Magdalena's notebook has 1 work$/);
   const stored = JSON.parse(fs.readFileSync(path.join(folder, "cento.emily.json"), "utf8"));
   assert.deepEqual(stored.works.map((w) => [w.id, w.gen, w.from]), [["emily-1", 1, "emi-1"]]);
   assert.deepEqual([tasteIn(folder).accepted, tasteIn(folder).mix], [["emily-1"], 0.5]);
@@ -1736,13 +1736,13 @@ test("emily: accept keeps a piece as her own; mix uses it; mix 0 is Bach alone, 
   core.send("novelty", 0);
   core.send("mix", 0.75);
   const own = [2, 3, 4, 5].map((seed) => lastStatus(core.send("compose", seed)).join(" "));
-  assert.ok(own.some((s) => /of Emily's own beats?/.test(s)), own.join("\n"));
+  assert.ok(own.some((s) => /beats? from Magdalena's notebook/.test(s)), own.join("\n"));
   assert.match(lastStatus(core.send("mix", 0)).join(" "), /^status mix 0\.00: Bach only/);
   assert.equal(lastStatus(core.send("compose", 2)).join(" "), before, "mix 0: exactly as before she had music of her own");
 
-  assert.match(lastStatus(core.send("unaccept", "emily-1")).join(" "), /^status emily-1 put aside: Emily no longer uses it/);
+  assert.match(lastStatus(core.send("unaccept", "emily-1")).join(" "), /^status emily-1 put aside: Magdalena no longer uses it/);
   assert.deepEqual(tasteIn(folder).accepted, []);
-  assert.match(lastStatus(core.send("unaccept", "emily-1")).join(" "), /^error emily-1 isn't one of Emily's works in use$/);
+  assert.match(lastStatus(core.send("unaccept", "emily-1")).join(" "), /^error emily-1 isn't one of the works in use from Magdalena's notebook$/);
 });
 
 test("emily: accepting a stream phrase keeps that phrase", () => {
@@ -1753,7 +1753,7 @@ test("emily: accepting a stream phrase keeps that phrase", () => {
   core.send("stream", 1);
   core.send("phrases", 0);
   core.send("compose", 4);
-  assert.match(lastStatus(core.send("accept")).join(" "), /^status accepted phrase 1 of emi-4 as emily-1 \(generation 1, \d+ beats\); Emily has 1 work of her own$/);
+  assert.match(lastStatus(core.send("accept")).join(" "), /^status kept phrase 1 of emi-4 as emily-1 \(generation 1, \d+ beats\); Magdalena's notebook has 1 work$/);
 });
 
 // ---------------------------------------------------------------- M10: snapshots and rollback
@@ -1770,7 +1770,7 @@ test("emily: a rollback restores an earlier taste exactly, her own music include
   core.send("accept");
   core.send("mix", 0.75);
   const kept = lastStatus(core.send("snapshot")).join(" ");
-  assert.match(kept, /^status snapshot #1 kept: 1 rating, 1 work of her own$/);
+  assert.match(kept, /^status snapshot #1 kept: 1 rating, 1 work in her notebook$/);
   const tasteThen = tasteIn(folder);
   const pieceThen = lastStatus(core.send("compose", 3)).join(" ");
 
@@ -1783,7 +1783,7 @@ test("emily: a rollback restores an earlier taste exactly, her own music include
   assert.notDeepEqual(tasteIn(folder), tasteThen);
 
   const out = core.send("rollback", 1);
-  assert.match(lastStatus(out).join(" "), /^status rolled back to snapshot #1 \([-0-9]+ [0-9:]+\): 1 rating, 1 work of her own; what was before is snapshot #2$/);
+  assert.match(lastStatus(out).join(" "), /^status rolled back to snapshot #1 \([-0-9]+ [0-9:]+\): 1 rating, 1 work in her notebook; what was before is snapshot #2$/);
   assert.deepEqual(tasteIn(folder), tasteThen, "her taste, exactly");
   assert.equal(lastStatus(core.send("compose", 3)).join(" "), pieceThen, "and so the same piece for the same seed");
   // The rollback can itself be undone.
@@ -1827,7 +1827,7 @@ test("taste view: the memory view lists her works and snapshots; its buttons and
   g.calls.length = 0;
   view.send("paint");
   const text = g.calls.filter(([name]) => name === "show_text").map(([, t]) => t);
-  for (const expected of ["Emily's memory", "emily-2", "generation 2 · 56 beats · 3 varied · from emi-12", "#3", "2026-10-03 14:12 · kept by hand: 2 ratings", "put aside", "roll back", "keep a snapshot", "0.50", "0.25"]) {
+  for (const expected of ["Magdalena's memory", "emily-2", "generation 2 · 56 beats · 3 varied · from emi-12", "#3", "2026-10-03 14:12 · kept by hand: 2 ratings", "put aside", "roll back", "keep a snapshot", "0.50", "0.25"]) {
     assert.ok(text.includes(expected), expected);
   }
   // Click each button: find where it was drawn.
@@ -1877,23 +1877,23 @@ test("taste view: tabs choose the view; a taste comparison shows the overview an
   };
   let text = draw();
   for (const name of ["overview", "weights", "memory"]) assert.ok(text.includes(name), name);
-  assert.ok(text.includes("Emily's taste"));
+  assert.ok(text.includes("Magdalena: the user's taste"));
   view.send("onclick", ...tab("weights"));
-  assert.ok(draw().includes("Edit Emily's weights"));
+  assert.ok(draw().includes("Edit Magdalena's weights"));
   view.send("onclick", ...tab("memory"));
-  assert.ok(draw().includes("Emily's memory"));
+  assert.ok(draw().includes("Magdalena's memory"));
   view.send("onidle", ...tab("memory"));
-  assert.ok(draw().some((t) => /^memory: her own works/.test(t)), "a tab's hover help");
+  assert.ok(draw().some((t) => /^memory: her notebook/.test(t)), "a tab's hover help");
 
   // A comparison starting (from either taste button) shows the overview, with its progress.
   view.send("comparing", 0, 10);
   text = draw();
-  assert.ok(text.includes("Emily's taste") && text.includes("Comparing...") && text.includes("0 of 10 seeds, with her taste and without"));
+  assert.ok(text.includes("Magdalena: the user's taste") && text.includes("Comparing...") && text.includes("0 of 10 seeds, with her taste and without"));
   view.send("comparing", 4, 10);
   assert.ok(draw().includes("4 of 10 seeds, with her taste and without"));
   view.send("onclick", ...tab("weights"));
   view.send("comparing", 5, 10);
-  assert.ok(draw().includes("Edit Emily's weights"), "progress doesn't pull you out of another view");
+  assert.ok(draw().includes("Edit Magdalena's weights"), "progress doesn't pull you out of another view");
   view.send("onclick", ...tab("overview"));
   view.send("comparing", -1, 10);
   text = draw();

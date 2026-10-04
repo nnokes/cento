@@ -151,18 +151,18 @@ def write(path, data):
 MAP = " Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live)."
 VOICES = ["soprano", "alto", "tenor", "bass"]
 RATE = "the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece"
-LIKE = (f"Tell Emily you like what you're hearing: {RATE}. She learns which musical features it has, "
+LIKE = (f"Tell Magdalena you like what you're hearing: {RATE}. She learns which musical features it has, "
         "and prefers them when she composes.")
-DISLIKE = (f"Tell Emily you don't like what you're hearing: {RATE}. She learns to avoid its musical "
+DISLIKE = (f"Tell Magdalena you don't like what you're hearing: {RATE}. She learns to avoid its musical "
            "features.")
-ACCEPT = (f"Keep what you're hearing as a work of Emily's own: {RATE}. She composes from it alongside "
+ACCEPT = (f"Keep what you're hearing in Magdalena's notebook: {RATE}. She composes from it alongside "
           "Bach from then on (how much: mix, in the pop-up window's memory tab).")
-TASTE = ("Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces "
+TASTE = ("Report Magdalena's taste: what she likes and dislikes most, in the Max window, and ten pieces "
          "composed with and without her taste, compared feature by feature. The pop-up window shows its "
          "progress (it composes a piece at a time, so you can go on playing) and the result. It changes "
          "nothing.")
 ROLL = ("Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: "
-        "signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow "
+        "signatures; red marks: new parallel fifths or octaves; purple dots: notes Magdalena varied; yellow "
         "line: the playhead. Drag across beats to select them for like, dislike and accept (a click "
         "clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along "
         "the bottom) for what each means.")
@@ -237,38 +237,41 @@ HELP = {
                   "clear the queue: what is playing stops at once."),
     },
     "emily.panel": {
-        "window": ("window", "Open the pop-up window: a large piano roll and Emily's taste in full, where "
-                   "you can edit her weights and see her memory."),
+        "window": ("window", "Open the pop-up window: a large piano roll and Magdalena's taste in full, "
+                   "where you can edit her weights and see her memory (and read who she is)."),
         "Like": ("Like", LIKE + MAP),
         "Dislike": ("Dislike", DISLIKE + MAP),
-        "Temperature": ("chance", "How much chance still plays when composing (Emily's temperature). 0: "
-                        "only Emily's favourite choices; 1: as before Emily (the default); up to 3: more "
-                        "adventurous."),
+        "Temperature": ("chance", "How much chance still plays when composing (Magdalena's temperature). "
+                        "0: only her favourite choices; 1: as if she weren't there (the default); up to 3: "
+                        "more adventurous."),
         "taste report": ("taste report", TASTE),
         "Accept": ("keep", ACCEPT + MAP),
-        "Emily": ("Emily", "Emily in a line: how many ratings she has had, and what she likes and dislikes "
-                  "most."),
+        "Magdalena": ("Magdalena", "Magdalena in a line: how many ratings she has had, and what she likes "
+                      "and dislikes most. Who she is: explain Magdalena, in the pop-up window."),
     },
     "emi.window": {
         "Piano roll": ("Piano roll", "The current piece, large. " + ROLL),
-        "Taste": ("Emily's taste", "Emily's taste in three views, chosen by the tabs at its top right: "
+        "Taste": ("Magdalena's taste", "The user's taste, as Magdalena has learned it, in three views, chosen by the tabs at its top right: "
                   "overview (what she likes and dislikes most, her latest ratings, the last taste "
                   "comparison), weights and memory. Hover over a tab, slider or button for what it does."),
         "like": ("like", LIKE),
         "dislike": ("dislike", DISLIKE),
         "keep": ("keep", ACCEPT),
         "taste report": ("taste report", TASTE),
-        "reload seed": ("reload seed", "Compose the seed shown again, with Emily's taste, mix and novelty "
+        "reload seed": ("reload seed", "Compose the seed shown again, with Magdalena's taste, mix and novelty "
                         "as they are now, to hear and see what your changes did. With stream on, the stream "
                         "starts again."),
         "release all pins": ("release all pins", "Release every pinned weight: each goes back to what "
-                             "Emily learned from your ratings."),
-        "store taste": ("store taste", "Save Emily's whole taste (weights, pins, strength, ratings) to a "
+                             "Magdalena learned from your ratings."),
+        "store taste": ("store taste", "Save Magdalena's whole taste (weights, pins, strength, ratings) to a "
                         "file you choose."),
         "recall taste": ("recall taste", "Load a taste saved with store taste and make it hers. The taste "
                          "it replaces is kept as a backup and as a snapshot."),
         "forget": ("forget", "Start a new taste from nothing. The old one is kept as a backup and as a "
                    "snapshot, so you can roll back to it."),
+        "explain Magdalena": ("explain Magdalena", "Who Magdalena is and what she does: she learns the "
+                              "user's taste, keeps a notebook of the music you keep, and is named after Anna "
+                              "Magdalena Bach."),
     },
     "emi.corpora": {
         "Corpora": ("Corpora", "Every folder of chorales on the list: switch one on or off with its box, "
@@ -282,8 +285,8 @@ HELP = {
                    "read once, when first switched on.)"),
     },
     "emi.view": {
-        "Piano roll": ("Piano roll", "The current piece. " + ROLL + " For a large one: window, in the "
-                       "Emily panel."),
+        "Piano roll": ("Piano roll", "The current piece. " + ROLL + " For a large one: window, in "
+                       "Magdalena's panel."),
     },
     "emi.voice": {
         "Voice": ("Voice", "The voice this device plays, from its track's name: Soprano, Alto, Tenor or "
@@ -322,10 +325,10 @@ def controls_doc():
         ("emi.host.max", "Max version: transport and output (left panel of `cento.maxpat`)"),
         ("emi.host.live", "Live version: clips and voices (left panel of the cento.brain device)"),
         ("emi.panel", "Composing (both versions)"),
-        ("emily.panel", "Emily (both versions)"),
+        ("emily.panel", "Magdalena: the user's taste (both versions)"),
         ("emi.view", "Piano roll (both versions)"),
         ("emi.instruments", "The plug-in instruments window (Max version: set up, in the left panel)"),
-        ("emi.window", "The pop-up window (both versions: Emily panel, window)"),
+        ("emi.window", "The pop-up window (both versions: Magdalena's panel, window)"),
         ("emi.corpora", "The corpus window (both versions: the panel's corpora button)"),
         ("emi.voice", "The cento.voice device (Live)"),
     ]
@@ -349,14 +352,14 @@ def controls_doc():
             "| **overview** (tab) | What she likes and dislikes most, her latest ratings, and the last taste "
             "comparison. |",
             "| **weights** (tab) | A slider per musical feature, to pin her weight for it, and strength. |",
-            "| **memory** (tab) | Her own works, snapshots of her taste to roll back to, and the mix and "
+            "| **memory** (tab) | Her notebook, snapshots of her taste to roll back to, and the mix and "
             "novelty sliders. |",
-            "| **a feature's slider** | Drag to pin Emily's weight for that feature (-3: she avoids it, +3: "
+            "| **a feature's slider** | Drag to pin Magdalena's weight for that feature (-3: she avoids it, +3: "
             "she seeks it); double-click to release it to what she learned (the thin line). |",
             "| **strength** | How much her whole taste counts when composing. 0: not at all; 1: as she learned "
             "it; 2: twice as much. Double-click for 1. |",
-            "| **mix** | How much her own works (the ones you accepted) count against Bach's when composing. "
-            "0: Bach only; 0.75: mostly hers. Double-click for 0.5. |",
+            "| **mix** | How much the works in her notebook (the ones you kept) count against Bach's when "
+            "composing. 0: Bach only; 0.75: mostly hers. Double-click for 0.5. |",
             "| **novelty** | The chance that each phrase gets a variant of her own: a passing tone, a "
             "neighbour note, a suspension, a re-voiced chord... 0: never; 1: every phrase. Double-click for 0. |",
             "| **put aside** | Stop composing from this work of hers. It stays in her memory file: roll back to "
@@ -668,7 +671,7 @@ def instruments():
 # ---------------------------------------------------------------- the look (GUI redesign, M12)
 # One look per kind of control, in every panel: the main action (compose)
 # strong blue, one-shot buttons light blue, on/off switches warm grey that
-# turn amber when on, Emily's rating buttons warm. Small grey headings name
+# turn amber when on, Magdalena's rating buttons warm. Small grey headings name
 # each panel's job.
 DARK_TEXT = [0.08, 0.08, 0.09, 1.0]
 LIGHT_TEXT = [1.0, 1.0, 1.0, 1.0]
@@ -924,7 +927,7 @@ def live_button(p, name, label, x, y, pres):
 def emily_panel():
     W = EMILY_W
     p = Patch(rect=(80, 80, 1000, 620), presentation=True)
-    p.comment("emily.panel: Emily's taste (M9), shared by both products. like and dislike rate the beats selected "
+    p.comment("emily.panel: Magdalena's taste (M9), shared by both products. like and dislike rate the beats selected "
               "in the piano roll, or the stream phrase playing, or the piece; temperature sets how much chance "
               "still plays; accept keeps what is playing as music of her own (M10). like, dislike, accept and "
               "temperature are live.* parameters, so they can be MIDI- or key-mapped. "
@@ -933,7 +936,8 @@ def emily_panel():
     out = p.outlet(20, 560, "to emi.engine", 1)
     send = lambda obj: p.connect(obj, 0, out, 0)
 
-    heading(p, "EMILY", 20, 100, (6, 1, 60, 18))
+    heading(p, "MAGDALENA", 20, 100, (6, 1, 64, 18))
+    p.comment("user's taste", 140, 100, w=80, pres=(70, 3, 58, 15), fontsize=9.0, textcolor=HEADING)
     # The pop-up window (emi.window, in the top patch): a large piano roll and
     # her taste in full. [send] with "---": unique to each device in Live.
     window = p.msg("window", 600, 300, pres=(67, 53, 57, 20), **BUTTON)
@@ -985,7 +989,7 @@ def emily_panel():
     accept_msg = p.msg("accept", 460, 185, w=55)
     p.connect(accept, 0, accept_msg, 0)
     send(accept_msg)
-    p.comment("chance (temperature): 0 Emily's favourite choices only, 1 as before Emily, 3 adventurous. "
+    p.comment("chance (temperature): 0 Magdalena's favourite choices only, 1 as before Magdalena, 3 adventurous. "
               "taste report: her taste in the Max window and ten pieces compared; keep (accept, M10)",
               520, 220, w=330, h=48, linecount=3)
 
@@ -993,7 +997,7 @@ def emily_panel():
     p.connect(inl, 0, route, 0)
     set_text = p.obj("prepend text", 20, 340, 2, 1)
     p.connect(route, 0, set_text, 0)
-    text = text_box(p, 20, 380, W - 12, 44, (6, 123, W - 12, 43), "Emily")
+    text = text_box(p, 20, 380, W - 12, 44, (6, 123, W - 12, 43), "Magdalena")
     p.connect(set_text, 0, text, 0)
     controls = p.obj("route temperature", 200, 340, 2, 2, w=110)
     p.connect(route, 1, controls, 0)
@@ -1296,7 +1300,7 @@ def view():
         "numinlets": 1, "numoutlets": 1, "outlettype": [""], "parameter_enable": 0,
     }, 20, 60, VIEW_W, 169, (0, 0, VIEW_W, 169)))
     p.connect(inl, 0, roll, 0)
-    out = p.outlet(20, 260, "to emi.engine: select <from> <to> (beats dragged across, for Emily's ratings)", 1)
+    out = p.outlet(20, 260, "to emi.engine: select <from> <to> (beats dragged across, for Magdalena's ratings)", 1)
     p.connect(roll, 0, out, 0)
     p.comment("emi.view: piano roll of the current score; colors = source chorale (or voice), bright lines = seams",
               40 + VIEW_W, 60, w=260, h=48, linecount=3)
@@ -1308,7 +1312,7 @@ def window():
     W, ROLL_H, TASTE_H = 1160, 430, 250
     p = Patch(rect=(60, 60, 60 + W + 20, 60 + ROLL_H + TASTE_H + 70), presentation=True)
     p.comment("emi.window: the pop-up window (both products). A large piano roll (the same script as the "
-              "panels' roll, emi.view) and Emily's taste in full (emi.taste). Opened by the Emily panel's "
+              "panels' roll, emi.view) and Magdalena's taste in full (emi.taste). Opened by the Magdalena panel's "
               "window button, through [pcontrol] in the top patch.", 20, 900, w=900, h=34, linecount=2)
     inl = p.inlet(20, 20, "from emi.engine: view ..., emilyview ...", 1)
     out = p.outlet(20, 860, "to emi.engine: select (from the roll), like, dislike, taste", 1)
@@ -1354,13 +1358,63 @@ def window():
     dialog_button(p, "recall taste", 720, 760, (587, y, 95, 24), "opendialog", "recalltaste", [(out, 0)])
     forget = p.msg("forget", 860, 820, w=60, pres=(688, y, 60, 24), **BUTTON)
     p.connect(forget, 0, out, 0)
+    # Who Magdalena is (emi.magdalena, a small window of its own).
+    explain = p.msg("explain Magdalena", 1000, 760, w=130, pres=(758, y, 130, 24), **BUTTON)
+    explain_t = p.obj("t b", 1000, 790, 1, 1, ["bang"], w=35)
+    explain_open = p.msg("open", 1000, 820, w=40)
+    explain_pc = p.obj("pcontrol", 1050, 820, 1, 1, w=60)
+    about = p.obj("emi.magdalena", 1000, 855, 1, 1, w=100)
+    p.connect(explain, 0, explain_t, 0)
+    p.connect(explain_t, 0, explain_open, 0)
+    p.connect(explain_open, 0, explain_pc, 0)
+    p.connect(explain_pc, 0, about, 0)
     p.comment("Drag across the roll to select beats for like, dislike and keep. Hover over anything for "
-              "what it does; the tabs at the pane's top right choose its view.", 940, 820, w=400, h=30,
-              linecount=2, pres=(766, y - 2, 404, 30), fontsize=10.0)
+              "what it does; the tabs at the pane's top right choose its view.", 940, 900, w=400, h=44,
+              linecount=3, pres=(896, y - 4, 274, 44), fontsize=10.0)
     # The window's title.
     lb = p.obj("loadbang", 700, 20, 1, 1, ["bang"])
-    title = p.msg("title Cento: piano roll and Emily", 700, 55, w=230)
+    title = p.msg("title Cento: piano roll and Magdalena", 700, 55, w=250)
     this = p.obj("thispatcher", 700, 90, 1, 2, ["", ""], w=80)
+    p.connect(lb, 0, title, 0)
+    p.connect(title, 0, this, 0)
+    return p
+
+
+MAGDALENA_TEXT = [
+    ("Magdalena", 16.0, 1, 24),
+    ("learns the user's taste", 11.0, 0, 20),
+    ("Magdalena is Cento's listener. She learns the user's taste: like and dislike tell her what you "
+     "enjoy in a piece, a stream phrase, or beats you select in the piano roll. Later pieces lean toward "
+     "what you liked, always within Bach's rules. chance sets how much luck still plays: 0, only her "
+     "favourite choices; 1, as if she weren't there; up to 3, more adventurous.", 12.0, 0, 90),
+    ("keep writes what you're hearing into Magdalena's notebook: music of her own that later pieces draw on, "
+     "alongside Bach's (how much: mix, in the memory tab). novelty lets her vary phrases with notes Bach "
+     "never wrote. Snapshots let you roll her taste back to an earlier one; forget starts afresh.",
+     12.0, 0, 90),
+    ("She is named after Anna Magdalena Bach (1701\u20131760), a professional singer and the copyist of "
+     "much of Bach's music. Her notebooks of 1722 and 1725 collected the pieces she and her family loved, "
+     "as Magdalena's notebook collects the ones you keep.", 12.0, 0, 76),
+    ("Her ideas come from David Cope's Emily Howell, a program that learned from its listeners. Cento is "
+     "independent and isn't affiliated with David Cope.", 10.0, 0, 36),
+]
+
+
+def magdalena_window():
+    """emi.magdalena: who Magdalena is (the pop-up window's explain Magdalena button)."""
+    W = 480
+    p = Patch(rect=(160, 120, 160 + W + 20, 120 + 410), presentation=True)
+    p.comment("emi.magdalena: who Magdalena is, and what she does. Opened by the pop-up window's explain "
+              "Magdalena button, through [pcontrol] in emi.window.", 20, 520, w=600, h=34, linecount=2)
+    p.inlet(20, 20, "pcontrol: open", 1)
+    y = 12
+    for k, (text, size, face, h) in enumerate(MAGDALENA_TEXT):
+        extra = {"textcolor": HEADING} if k == 1 or k == len(MAGDALENA_TEXT) - 1 else {}
+        p.comment(text, 20, 60 + k * 70, w=W - 20, h=h, pres=(12, y, W - 24, h), fontsize=size, fontface=face,
+                  linecount=max(1, round(h / (size * 1.4))), **extra)
+        y += h + 8
+    lb = p.obj("loadbang", 520, 20, 1, 1, ["bang"])
+    title = p.msg("title Cento: about Magdalena", 520, 55, w=190)
+    this = p.obj("thispatcher", 520, 90, 1, 2, ["", ""], w=80)
     p.connect(lb, 0, title, 0)
     p.connect(title, 0, this, 0)
     return p
@@ -1412,7 +1466,7 @@ HOST_LIVE_W = 170
 
 
 def top(adapter, title, host_w, h=169, abstraction="emi.engine"):
-    """[host adapter panel | shared panel | Emily | piano roll], all wired to one engine."""
+    """[host adapter panel | shared panel | Magdalena | piano roll], all wired to one engine."""
     panel_x = host_w + 8
     emily_x = panel_x + PANEL_W + 8
     view_x = emily_x + EMILY_W + 8
@@ -1423,7 +1477,7 @@ def top(adapter, title, host_w, h=169, abstraction="emi.engine"):
     vw = p.bpatcher("emi.view.maxpat", view_x + 20, 20, VIEW_W, h, 1, 1, pres=(view_x, 0, VIEW_W, h))
     eng = p.obj(abstraction, 20, h + 60, 1, 1, w=90)
     rv = p.obj("route view", view_x + 20, h + 60, 2, 2, w=75)
-    # The pop-up window: opened by the Emily panel's window button.
+    # The pop-up window: opened by the Magdalena panel's window button.
     win = p.obj("emi.window", view_x + 120, h + 60, 1, 1, w=80)
     rcv = p.obj("r ---emi.window", view_x + 120, h + 100, 1, 1, w=100)
     opener = p.msg("open", view_x + 120, h + 130, w=40)
@@ -1548,6 +1602,7 @@ if __name__ == "__main__":
         {"toolbarvisible": 0, "statusbarvisible": 0}))
     write("patchers/emi.instruments.maxpat", annotate("emi.instruments", instruments_window()).to_json(
         {"toolbarvisible": 0, "statusbarvisible": 0}))
+    write("patchers/emi.magdalena.maxpat", magdalena_window().to_json({"toolbarvisible": 0, "statusbarvisible": 0}))
     write("patchers/cento.maxpat", top(
         "emi.host.max.maxpat",
         "Max version: the Max adapter and the shared panel above, wired both ways to the shared engine.",

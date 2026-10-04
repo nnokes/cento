@@ -11,9 +11,9 @@ What's in it:
 
   cento.settings.json     Your settings: which chorale folders are on, the
                           seed, and so on. Cento writes it.
-  cento.taste.json        Emily's taste: your likes and dislikes.
-  cento.emily.json        The pieces you accepted as Emily's own music.
-  cento.snapshots.json    Emily's last 30 snapshots, to roll her back.
+  cento.taste.json        Magdalena's taste: your likes and dislikes.
+  cento.emily.json        Magdalena's notebook: the pieces you kept.
+  cento.snapshots.json    Magdalena's last 30 snapshots, to roll her back.
 
 The cento.* files appear as you use Cento. Delete one to start that part
 afresh; delete the whole folder to remove everything Cento keeps.

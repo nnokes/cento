@@ -44,23 +44,23 @@ This page is written from the same table as the hover text (the patch generator)
 | **listening test** | Write a blind listening test: a web page of 10 pairs, each a Bach chorale and a piece composed in its form, in random order. Can listeners tell which is Bach? |
 | **tools** | Less-used tools. Load a chorale: one chorale (a MIDI file) plays as written and is drawn in the piano roll, moved to C major or A minor, or in its own key. Play the test phrase: a built-in phrase (no chorales needed), to check that the voices sound. Stop and clear the queue: what is playing stops at once. |
 
-## Emily (both versions)
+## Magdalena: the user's taste (both versions)
 
 | Control | What it does |
 | --- | --- |
-| **window** | Open the pop-up window: a large piano roll and Emily's taste in full, where you can edit her weights and see her memory. |
-| **Like** | Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
-| **Dislike** | Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
-| **chance** | How much chance still plays when composing (Emily's temperature). 0: only Emily's favourite choices; 1: as before Emily (the default); up to 3: more adventurous. |
-| **taste report** | Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing. |
-| **keep** | Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
-| **Emily** | Emily in a line: how many ratings she has had, and what she likes and dislikes most. |
+| **window** | Open the pop-up window: a large piano roll and Magdalena's taste in full, where you can edit her weights and see her memory (and read who she is). |
+| **Like** | Tell Magdalena you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
+| **Dislike** | Tell Magdalena you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
+| **chance** | How much chance still plays when composing (Magdalena's temperature). 0: only her favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous. |
+| **taste report** | Report Magdalena's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing. |
+| **keep** | Keep what you're hearing in Magdalena's notebook: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
+| **Magdalena** | Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Who she is: explain Magdalena, in the pop-up window. |
 
 ## Piano roll (both versions)
 
 | Control | What it does |
 | --- | --- |
-| **Piano roll** | The current piece. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means. For a large one: window, in the Emily panel. |
+| **Piano roll** | The current piece. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Magdalena varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means. For a large one: window, in Magdalena's panel. |
 
 ## The plug-in instruments window (Max version: set up, in the left panel)
 
@@ -75,21 +75,22 @@ This page is written from the same table as the hover text (the patch generator)
 | **show editor (tenor)** | Show the editor window of the tenor's plug-in instrument. |
 | **show editor (bass)** | Show the editor window of the bass's plug-in instrument. |
 
-## The pop-up window (both versions: Emily panel, window)
+## The pop-up window (both versions: Magdalena's panel, window)
 
 | Control | What it does |
 | --- | --- |
-| **Piano roll** | The current piece, large. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means. |
-| **Emily's taste** | Emily's taste in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does. |
-| **like** | Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. |
-| **dislike** | Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. |
-| **keep** | Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). |
-| **taste report** | Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing. |
-| **reload seed** | Compose the seed shown again, with Emily's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again. |
-| **release all pins** | Release every pinned weight: each goes back to what Emily learned from your ratings. |
-| **store taste** | Save Emily's whole taste (weights, pins, strength, ratings) to a file you choose. |
+| **Piano roll** | The current piece, large. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Magdalena varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means. |
+| **Magdalena's taste** | The user's taste, as Magdalena has learned it, in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does. |
+| **like** | Tell Magdalena you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. |
+| **dislike** | Tell Magdalena you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. |
+| **keep** | Keep what you're hearing in Magdalena's notebook: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). |
+| **taste report** | Report Magdalena's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing. |
+| **reload seed** | Compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again. |
+| **release all pins** | Release every pinned weight: each goes back to what Magdalena learned from your ratings. |
+| **store taste** | Save Magdalena's whole taste (weights, pins, strength, ratings) to a file you choose. |
 | **recall taste** | Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot. |
 | **forget** | Start a new taste from nothing. The old one is kept as a backup and as a snapshot, so you can roll back to it. |
+| **explain Magdalena** | Who Magdalena is and what she does: she learns the user's taste, keeps a notebook of the music you keep, and is named after Anna Magdalena Bach. |
 
 ## The corpus window (both versions: the panel's corpora button)
 
@@ -113,10 +114,10 @@ These are drawn by the window's taste pane (`code/emi.taste.v8ui.js`), so their 
 | --- | --- |
 | **overview** (tab) | What she likes and dislikes most, her latest ratings, and the last taste comparison. |
 | **weights** (tab) | A slider per musical feature, to pin her weight for it, and strength. |
-| **memory** (tab) | Her own works, snapshots of her taste to roll back to, and the mix and novelty sliders. |
-| **a feature's slider** | Drag to pin Emily's weight for that feature (-3: she avoids it, +3: she seeks it); double-click to release it to what she learned (the thin line). |
+| **memory** (tab) | Her notebook, snapshots of her taste to roll back to, and the mix and novelty sliders. |
+| **a feature's slider** | Drag to pin Magdalena's weight for that feature (-3: she avoids it, +3: she seeks it); double-click to release it to what she learned (the thin line). |
 | **strength** | How much her whole taste counts when composing. 0: not at all; 1: as she learned it; 2: twice as much. Double-click for 1. |
-| **mix** | How much her own works (the ones you accepted) count against Bach's when composing. 0: Bach only; 0.75: mostly hers. Double-click for 0.5. |
+| **mix** | How much the works in her notebook (the ones you kept) count against Bach's when composing. 0: Bach only; 0.75: mostly hers. Double-click for 0.5. |
 | **novelty** | The chance that each phrase gets a variant of her own: a passing tone, a neighbour note, a suspension, a re-voiced chord... 0: never; 1: every phrase. Double-click for 0. |
 | **put aside** | Stop composing from this work of hers. It stays in her memory file: roll back to a snapshot from when it was in use to bring it back. |
 | **keep a snapshot** | Keep her whole taste as it is now, to roll back to later. |

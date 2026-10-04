@@ -424,7 +424,7 @@ test("every visible control has hover text, and docs/controls.md gives the same"
   // The taste report button, in both places, says what it does.
   for (const file of ["emily.panel.maxpat", "emi.window.maxpat"]) {
     const [taste] = patchFile(file).find("taste report");
-    assert.match(taste.hint, /^Report Emily's taste: .*It changes nothing\.$/);
+    assert.match(taste.hint, /^Report Magdalena's taste: .*It changes nothing\.$/);
   }
 });
 
@@ -911,7 +911,7 @@ test("layout: the composing panel starts with compose, the main action; each pan
       if (b.maxclass === "live.text" && b.mode === 1 && b.varname !== "Play") assert.deepEqual(b.bgoncolor, [0.96, 0.7, 0.33, 1], `${file}: ${b.varname}`);
     }
   }
-  for (const [file, word] of [["emi.host.max.maxpat", "PLAY"], ["emi.host.live.maxpat", "CLIPS AND VOICES"], ["emi.panel.maxpat", "COMPOSE"], ["emily.panel.maxpat", "EMILY"]]) {
+  for (const [file, word] of [["emi.host.max.maxpat", "PLAY"], ["emi.host.live.maxpat", "CLIPS AND VOICES"], ["emi.panel.maxpat", "COMPOSE"], ["emily.panel.maxpat", "MAGDALENA"]]) {
     const [heading] = patchFile(file).find(word);
     assert.deepEqual(heading.presentation_rect.slice(0, 2), [6, 1], `${file}: ${word} at the top left`);
   }
@@ -1010,4 +1010,38 @@ test("the panels' piano roll is narrower (260 px): the pop-up window has the lar
   assert.equal(roll.presentation_rect[2], 260);
   const device = readPatcher(path.join(ROOT, "patchers", "cento.brain.amxd"));
   assert.equal(device.devicewidth, 170 + 8 + 300 + 8 + 130 + 8 + 260);
+});
+
+test("Magdalena: her panel says what she is (the user's taste); the pop-up window explains her", () => {
+  const panel = patchFile("emily.panel.maxpat");
+  const [subtitle] = panel.find("user's taste");
+  assert.ok(subtitle.presentation_rect, "beside the heading");
+  const w = patchFile("emi.window.maxpat");
+  const [explain] = w.find("explain Magdalena");
+  assert.ok(explain.presentation_rect && /Anna Magdalena Bach/.test(explain.hint));
+  const [[t]] = w.from(explain.id);
+  const [[open]] = w.from(t.id);
+  assert.equal(open.text, "open");
+  const [[pcontrol]] = w.from(open.id);
+  assert.equal(pcontrol.text, "pcontrol");
+  const [[about]] = w.from(pcontrol.id);
+  assert.equal(about.text, "emi.magdalena");
+  const a = patchFile("emi.magdalena.maxpat");
+  const text = [...a.boxes.values()].filter((b) => b.maxclass === "comment" && b.presentation_rect).map((b) => b.text).join(" ");
+  for (const words of ["learns the user's taste", "like and dislike", "chance", "keep writes what you're hearing into Magdalena's notebook", "Anna Magdalena Bach (1701–1760)", "isn't affiliated with David Cope"]) {
+    assert.ok(text.includes(words), words);
+  }
+  const shown = [...a.boxes.values()].filter((b) => b.presentation_rect).map((b) => b.presentation_rect);
+  shown.slice(1).forEach((r, k) => assert.ok(r[1] >= shown[k][1] + shown[k][3], "paragraphs one under another"));
+  const [title] = [...a.boxes.values()].filter((b) => (b.text || "").startsWith("title "));
+  assert.equal(title.text, "title Cento: about Magdalena");
+  // Nowhere on a panel or window is she still called Emily.
+  for (const file of files.filter((f) => f.endsWith(".maxpat"))) {
+    for (const [patcher] of patchers(readPatcher(path.join(ROOT, file)), file)) {
+      for (const { box } of patcher.boxes) {
+        if (!box.presentation_rect) continue;
+        for (const field of ["text", "hint", "annotation_name"]) assert.ok(!/\bEmily\b(?! Howell)/.test(box[field] || ""), `${file}: ${box[field]}`);
+      }
+    }
+  }
 });

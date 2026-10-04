@@ -32,7 +32,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emily.panel: Emily's taste (M9), shared by both products. like and dislike rate the beats selected in the piano roll, or the stream phrase playing, or the piece; temperature sets how much chance still plays; accept keeps what is playing as music of her own (M10). like, dislike, accept and temperature are live.* parameters, so they can be MIDI- or key-mapped. Panel 130 x 169 px.",
+					"text": "emily.panel: Magdalena's taste (M9), shared by both products. like and dislike rate the beats selected in the piano roll, or the stream phrase playing, or the piece; temperature sets how much chance still plays; accept keeps what is playing as music of her own (M10). like, dislike, accept and temperature are live.* parameters, so they can be MIDI- or key-mapped. Panel 130 x 169 px.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 3,
@@ -83,7 +83,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "EMILY",
+					"text": "MAGDALENA",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"fontsize": 10.0,
@@ -104,10 +104,39 @@
 					"presentation_rect": [
 						6.0,
 						1.0,
-						60.0,
+						64.0,
 						18.0
 					],
 					"id": "obj-4"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "comment",
+					"text": "user's taste",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"fontsize": 9.0,
+					"textcolor": [
+						0.55,
+						0.55,
+						0.55,
+						1.0
+					],
+					"patching_rect": [
+						140.0,
+						100.0,
+						80.0,
+						20.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						70.0,
+						3.0,
+						58.0,
+						15.0
+					],
+					"id": "obj-5"
 				}
 			},
 			{
@@ -151,9 +180,9 @@
 						57.0,
 						20.0
 					],
-					"id": "obj-5",
-					"hint": "Open the pop-up window: a large piano roll and Emily's taste in full, where you can edit her weights and see her memory.",
-					"annotation": "Open the pop-up window: a large piano roll and Emily's taste in full, where you can edit her weights and see her memory.",
+					"id": "obj-6",
+					"hint": "Open the pop-up window: a large piano roll and Magdalena's taste in full, where you can edit her weights and see her memory (and read who she is).",
+					"annotation": "Open the pop-up window: a large piano roll and Magdalena's taste in full, where you can edit her weights and see her memory (and read who she is).",
 					"annotation_name": "window"
 				}
 			},
@@ -170,7 +199,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-6"
+					"id": "obj-7"
 				}
 			},
 			{
@@ -264,9 +293,9 @@
 						57.0,
 						30.0
 					],
-					"id": "obj-7",
-					"hint": "Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
-					"annotation": "Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"id": "obj-8",
+					"hint": "Tell Magdalena you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation": "Tell Magdalena you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
 					"annotation_name": "Like"
 				}
 			},
@@ -361,9 +390,9 @@
 						57.0,
 						30.0
 					],
-					"id": "obj-8",
-					"hint": "Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
-					"annotation": "Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"id": "obj-9",
+					"hint": "Tell Magdalena you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation": "Tell Magdalena you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
 					"annotation_name": "Dislike"
 				}
 			},
@@ -382,7 +411,7 @@
 						55.0,
 						22.0
 					],
-					"id": "obj-9"
+					"id": "obj-10"
 				}
 			},
 			{
@@ -400,7 +429,7 @@
 						55.0,
 						22.0
 					],
-					"id": "obj-10"
+					"id": "obj-11"
 				}
 			},
 			{
@@ -441,9 +470,9 @@
 						44.0,
 						44.0
 					],
-					"id": "obj-11",
-					"hint": "How much chance still plays when composing (Emily's temperature). 0: only Emily's favourite choices; 1: as before Emily (the default); up to 3: more adventurous.",
-					"annotation": "How much chance still plays when composing (Emily's temperature). 0: only Emily's favourite choices; 1: as before Emily (the default); up to 3: more adventurous.",
+					"id": "obj-12",
+					"hint": "How much chance still plays when composing (Magdalena's temperature). 0: only her favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
+					"annotation": "How much chance still plays when composing (Magdalena's temperature). 0: only her favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
 					"annotation_name": "chance"
 				}
 			},
@@ -462,7 +491,7 @@
 						130.0,
 						22.0
 					],
-					"id": "obj-12"
+					"id": "obj-13"
 				}
 			},
 			{
@@ -507,9 +536,9 @@
 						70.0,
 						20.0
 					],
-					"id": "obj-13",
-					"hint": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
-					"annotation": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
+					"id": "obj-14",
+					"hint": "Report Magdalena's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
+					"annotation": "Report Magdalena's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
 					"annotation_name": "taste report"
 				}
 			},
@@ -528,7 +557,7 @@
 						35.0,
 						22.0
 					],
-					"id": "obj-14"
+					"id": "obj-15"
 				}
 			},
 			{
@@ -546,7 +575,7 @@
 						51.0,
 						22.0
 					],
-					"id": "obj-15"
+					"id": "obj-16"
 				}
 			},
 			{
@@ -640,9 +669,9 @@
 						57.0,
 						20.0
 					],
-					"id": "obj-16",
-					"hint": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
-					"annotation": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"id": "obj-17",
+					"hint": "Keep what you're hearing in Magdalena's notebook: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation": "Keep what you're hearing in Magdalena's notebook: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
 					"annotation_name": "keep"
 				}
 			},
@@ -661,13 +690,13 @@
 						55.0,
 						22.0
 					],
-					"id": "obj-17"
+					"id": "obj-18"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "chance (temperature): 0 Emily's favourite choices only, 1 as before Emily, 3 adventurous. taste report: her taste in the Max window and ten pieces compared; keep (accept, M10)",
+					"text": "chance (temperature): 0 Magdalena's favourite choices only, 1 as before Magdalena, 3 adventurous. taste report: her taste in the Max window and ten pieces compared; keep (accept, M10)",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 3,
@@ -677,7 +706,7 @@
 						330.0,
 						48.0
 					],
-					"id": "obj-18"
+					"id": "obj-19"
 				}
 			},
 			{
@@ -697,7 +726,7 @@
 						120.0,
 						22.0
 					],
-					"id": "obj-19"
+					"id": "obj-20"
 				}
 			},
 			{
@@ -715,14 +744,14 @@
 						98.0,
 						22.0
 					],
-					"id": "obj-20"
+					"id": "obj-21"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "v8ui",
 					"filename": "emi.text.bundle.js",
-					"varname": "Emily",
+					"varname": "Magdalena",
 					"textfile": {
 						"filename": "emi.text.bundle.js",
 						"flags": 0,
@@ -747,10 +776,10 @@
 						118.0,
 						43.0
 					],
-					"id": "obj-21",
-					"hint": "Emily in a line: how many ratings she has had, and what she likes and dislikes most.",
-					"annotation": "Emily in a line: how many ratings she has had, and what she likes and dislikes most.",
-					"annotation_name": "Emily"
+					"id": "obj-22",
+					"hint": "Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Who she is: explain Magdalena, in the pop-up window.",
+					"annotation": "Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Who she is: explain Magdalena, in the pop-up window.",
+					"annotation_name": "Magdalena"
 				}
 			},
 			{
@@ -769,7 +798,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-22"
+					"id": "obj-23"
 				}
 			},
 			{
@@ -787,7 +816,7 @@
 						91.0,
 						22.0
 					],
-					"id": "obj-23"
+					"id": "obj-24"
 				}
 			},
 			{
@@ -802,7 +831,7 @@
 						300.0,
 						20.0
 					],
-					"id": "obj-24"
+					"id": "obj-25"
 				}
 			}
 		],
@@ -810,35 +839,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-5",
-						0
-					],
-					"destination": [
 						"obj-6",
 						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
+					],
+					"destination": [
 						"obj-7",
-						0
-					],
-					"destination": [
-						"obj-9",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-9",
-						0
-					],
-					"destination": [
-						"obj-3",
 						0
 					]
 				}
@@ -870,11 +875,23 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-9",
+						0
+					],
+					"destination": [
+						"obj-11",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-11",
 						0
 					],
 					"destination": [
-						"obj-12",
+						"obj-3",
 						0
 					]
 				}
@@ -886,7 +903,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-13",
 						0
 					]
 				}
@@ -898,31 +915,31 @@
 						0
 					],
 					"destination": [
-						"obj-14",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-14",
-						0
-					],
-					"destination": [
-						"obj-15",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-15",
-						0
-					],
-					"destination": [
 						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-14",
+						0
+					],
+					"destination": [
+						"obj-15",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-15",
+						0
+					],
+					"destination": [
+						"obj-16",
 						0
 					]
 				}
@@ -934,7 +951,7 @@
 						0
 					],
 					"destination": [
-						"obj-17",
+						"obj-3",
 						0
 					]
 				}
@@ -943,6 +960,18 @@
 				"patchline": {
 					"source": [
 						"obj-17",
+						0
+					],
+					"destination": [
+						"obj-18",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-18",
 						0
 					],
 					"destination": [
@@ -955,18 +984,6 @@
 				"patchline": {
 					"source": [
 						"obj-2",
-						0
-					],
-					"destination": [
-						"obj-19",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-19",
 						0
 					],
 					"destination": [
@@ -990,22 +1007,22 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-19",
+						"obj-21",
+						0
+					],
+					"destination": [
+						"obj-22",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-20",
 						1
 					],
 					"destination": [
-						"obj-22",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-22",
-						0
-					],
-					"destination": [
 						"obj-23",
 						0
 					]
@@ -1018,7 +1035,19 @@
 						0
 					],
 					"destination": [
-						"obj-11",
+						"obj-24",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-24",
+						0
+					],
+					"destination": [
+						"obj-12",
 						0
 					]
 				}

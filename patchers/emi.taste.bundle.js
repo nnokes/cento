@@ -138,7 +138,7 @@ const SLIDERS = {
   },
   mix: {
     min: 0, max: 0.75, step: 0.05, reset: 0.5,
-    help: "mix: how much her own works (the ones you accepted) count against Bach's when composing. 0: Bach only; 0.75: mostly hers. Double-click for 0.5.",
+    help: "mix: how much the works in her notebook (the ones you kept) count against Bach's when composing. 0: Bach only; 0.75: mostly hers. Double-click for 0.5.",
   },
   novelty: {
     min: 0, max: 1, step: 0.05, reset: 0,
@@ -179,7 +179,7 @@ const FEATURES = {
 const TABS = [
   ["overview", "overview: what she likes and dislikes most, her latest ratings, and the last taste comparison."],
   ["weights", "weights: a slider per musical feature, to pin her weight for it, and strength."],
-  ["memory", "memory: her own works, snapshots of her taste to roll back to, and the mix and novelty sliders."],
+  ["memory", "memory: her notebook, snapshots of her taste to roll back to, and the mix and novelty sliders."],
 ];
 // The drawn buttons' hover help, by message.
 const BUTTONS = {
@@ -401,7 +401,7 @@ function paintOverview(width, height) {
   g.set_font_size(16);
   g.set_source_rgba(1, 1, 1, 0.95);
   g.move_to(12, 24);
-  g.show_text("Emily's taste");
+  g.show_text("Magdalena: the user's taste");
   if (!shown) return;
   const parts = [shown.ratings + (shown.ratings === 1 ? " rating" : " ratings")];
   if (shown.ratings) parts[0] += ` (${shown.likes} liked, ${shown.ratings - shown.likes} disliked)`;
@@ -549,7 +549,7 @@ function paintEditor(width, height) {
   g.set_font_size(16);
   g.set_source_rgba(1, 1, 1, 0.95);
   g.move_to(12, 24);
-  g.show_text("Edit Emily's weights");
+  g.show_text("Edit Magdalena's weights");
   g.set_font_size(12);
   g.set_source_rgba(1, 1, 1, 0.6);
   g.move_to(175, 24);
@@ -643,15 +643,15 @@ function paintMemory(width, height) {
   g.set_font_size(16);
   g.set_source_rgba(1, 1, 1, 0.95);
   g.move_to(12, 24);
-  g.show_text("Emily's memory");
+  g.show_text("Magdalena's memory");
   if (!shown || !shown.own) return;
   const o = shown.own;
   g.set_font_size(12);
   g.set_source_rgba(1, 1, 1, 0.6);
   g.move_to(140, 24);
   const summary = o.works
-    ? `${o.works} ${o.works === 1 ? "work" : "works"} of her own, ${o.beats} beats, ${o.varied} with notes she varied${o.inUse ? "" : " (not in use at mix 0)"}`
-    : "No music of her own yet: accept a piece, a stream phrase, or beats you select.";
+    ? `Her notebook: ${o.works} ${o.works === 1 ? "work" : "works"}, ${o.beats} beats, ${o.varied} with notes she varied${o.inUse ? "" : " (not in use at mix 0)"}`
+    : "Her notebook is empty: keep a piece, a stream phrase, or beats you select.";
   g.show_text(summary);
   // On the second line, as strength is in the editor (the tabs are on the first).
   namedSlider("mix", "mix", width - 520, width - 380, 46);
@@ -663,7 +663,7 @@ function paintMemory(width, height) {
   g.set_font_size(12);
   g.set_source_rgba(1, 1, 1, 0.85);
   g.move_to(12, top);
-  g.show_text("Her own works (latest first)");
+  g.show_text("Her notebook (latest first)");
   shown.works.slice(0, rows).forEach((w, i) => {
     const y = top + 8 + (i + 1) * ROW - 6;
     g.set_font_size(12);

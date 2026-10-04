@@ -8,8 +8,12 @@ Cento makes music the same way, from beats of the works it has learned.
 It analyzes a corpus of music in one style (Bach chorales first) and writes
 new pieces in that style by recombining beats from different works. Each
 recombination must preserve the voice-leading, the structural function of the
-beat (SPEAC) and the composer's recurring signatures. An Emily-style layer then
-learns from your ratings, and its style drifts as you accept its music.
+beat (SPEAC) and the composer's recurring signatures. Then **Magdalena**, a layer
+in the spirit of Cope's Emily Howell, learns the user's taste from your ratings,
+and her style drifts as you keep her music in **Magdalena's notebook**. She is
+named after Anna Magdalena Bach, singer and copyist of Bach's music, whose
+notebooks collected the pieces she loved (**explain Magdalena**, in the pop-up
+window, says the same).
 
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
@@ -44,14 +48,14 @@ shown as gold bands in the piano roll. Since M8, pieces that quote a chorale
 for too long are set aside, the piano roll shows where each beat came from
 when you hover over it, a corpus may mix major and minor chorales, 3/4
 chorales work, and the **listening test** button writes a blind A/B test (Bach or
-not?) as a web page. Since M9, Emily learns your taste: **like** and
+not?) as a web page. Since M9, Magdalena learns your taste: **like** and
 **dislike** rate the piece, the stream phrase playing or the beats you drag
 across in the piano roll. Later pieces lean toward the features you liked
 (high melodies, 16th notes, modulations, ...), within the same rules, and
 **chance** sets how much chance still plays. The **window** button opens a
-large piano roll with Emily's taste in full, in both products. There you can
+large piano roll with Magdalena's taste in full, in both products. There you can
 also pin any feature's weight with a slider, set her taste's strength, and
-store and recall whole tastes as files. Since M10, Emily varies pieces with
+store and recall whole tastes as files. Since M10, Magdalena varies pieces with
 notes Bach never wrote (**novelty**), **keep** keeps what you like as music
 of her own that later pieces draw on (**mix**), and snapshots let you roll
 her back to any earlier state. Since M11, the **corpora** window lists folders
@@ -97,13 +101,13 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **music21's chorales** (optional) | `~/Documents/cento/corpus/`, `corpus-both/`, `corpus-minor/`, `corpus-3-4/` | Written by `tools/export-chorales.py` ([step 5](#more-chorales-from-music21)); outside the repo, because they're for your own use only |
 | **Exported pieces** | `~/Documents/cento/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
 | **Listening tests** | anywhere, e.g. `~/Documents/cento/` | Written by the **listening test** button: one web page, opened in a browser |
-| **Emily's taste** (M9) | `~/Documents/cento/cento.taste.json` | Your ratings, pins and strength, shared by both products. **forget** and **recall taste** set the old one aside as `cento.taste.backup.json`; delete both to start fresh |
+| **Magdalena's taste** (M9) | `~/Documents/cento/cento.taste.json` | Your ratings, pins and strength, shared by both products. **forget** and **recall taste** set the old one aside as `cento.taste.backup.json`; delete both to start fresh |
 | **Stored tastes** (optional) | e.g. `~/Documents/cento/emily/` | Written by **store taste** in the pop-up window; read back by **recall taste** |
-| **Emily's own music and snapshots** (M10) | `~/Documents/cento/cento.emily.json`, `cento.snapshots.json` | Every piece or phrase you **keep**, and her last 30 snapshots; shared by both products |
+| **Magdalena's notebook and snapshots** (M10) | `~/Documents/cento/cento.emily.json`, `cento.snapshots.json` | Every piece or phrase you **keep**, and her last 30 snapshots (the files keep their names from before she was called Magdalena); shared by both products |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
 | **Remembered settings** | `~/Documents/cento/cento.settings.json` | The corpus window's folders (which are on), seed and other settings; written by the patches. Delete it to start fresh |
 
-**Your Cento folder** (M12): the settings and Emily's files live in
+**Your Cento folder** (M12): the settings and Magdalena's files live in
 `~/Documents/cento` (any case: `Cento` is the same folder on a Mac). Cento
 uses it if it's there, so make it in Finder if you don't have it yet. The
 first time Cento finds it, it copies the files it kept in `patchers/` until
@@ -253,7 +257,7 @@ Finder, **⌘ Shift .** shows hidden folders), and the folders you exported in
 patchers/     everything Max loads, in one folder:
               cento.maxpat (Max version), cento.brain.amxd + cento.voice.amxd
               (Live version), emi.engine, emi.host.max, emi.host.live,
-              emi.panel (the shared controls), emily.panel (Emily's ratings),
+              emi.panel (the shared controls), emily.panel (Magdalena's ratings),
               emi.view (piano roll), emi.window (the pop-up window),
               emi.corpora (the corpus window), emi.instruments (the
               Max version's plug-in instruments), and the generated
@@ -273,7 +277,7 @@ docs/         milestone checklists; controls.md: what every control does;
               releasing.md: how to publish a version for others
 ```
 
-Your working data (corpus, settings, Emily's taste and music, generated
+Your working data (corpus, settings, Magdalena's taste and notebook, generated
 music) lives in `~/Documents/cento/`, outside the repository.
 
 ## Development

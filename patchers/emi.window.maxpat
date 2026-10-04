@@ -32,7 +32,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.window: the pop-up window (both products). A large piano roll (the same script as the panels' roll, emi.view) and Emily's taste in full (emi.taste). Opened by the Emily panel's window button, through [pcontrol] in the top patch.",
+					"text": "emi.window: the pop-up window (both products). A large piano roll (the same script as the panels' roll, emi.view) and Magdalena's taste in full (emi.taste). Opened by the Magdalena panel's window button, through [pcontrol] in the top patch.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -132,8 +132,8 @@
 						430.0
 					],
 					"id": "obj-5",
-					"hint": "The current piece, large. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means.",
-					"annotation": "The current piece, large. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means.",
+					"hint": "The current piece, large. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Magdalena varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means.",
+					"annotation": "The current piece, large. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Magdalena varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means.",
 					"annotation_name": "Piano roll"
 				}
 			},
@@ -169,9 +169,9 @@
 						250.0
 					],
 					"id": "obj-6",
-					"hint": "Emily's taste in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does.",
-					"annotation": "Emily's taste in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does.",
-					"annotation_name": "Emily's taste"
+					"hint": "The user's taste, as Magdalena has learned it, in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does.",
+					"annotation": "The user's taste, as Magdalena has learned it, in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does.",
+					"annotation_name": "Magdalena's taste"
 				}
 			},
 			{
@@ -216,8 +216,8 @@
 						24.0
 					],
 					"id": "obj-7",
-					"hint": "Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes.",
-					"annotation": "Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes.",
+					"hint": "Tell Magdalena you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes.",
+					"annotation": "Tell Magdalena you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes.",
 					"annotation_name": "like"
 				}
 			},
@@ -263,8 +263,8 @@
 						24.0
 					],
 					"id": "obj-8",
-					"hint": "Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features.",
-					"annotation": "Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features.",
+					"hint": "Tell Magdalena you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features.",
+					"annotation": "Tell Magdalena you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features.",
 					"annotation_name": "dislike"
 				}
 			},
@@ -310,8 +310,8 @@
 						24.0
 					],
 					"id": "obj-9",
-					"hint": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab).",
-					"annotation": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab).",
+					"hint": "Keep what you're hearing in Magdalena's notebook: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab).",
+					"annotation": "Keep what you're hearing in Magdalena's notebook: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab).",
 					"annotation_name": "keep"
 				}
 			},
@@ -394,8 +394,8 @@
 						24.0
 					],
 					"id": "obj-12",
-					"hint": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
-					"annotation": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
+					"hint": "Report Magdalena's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
+					"annotation": "Report Magdalena's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
 					"annotation_name": "taste report"
 				}
 			},
@@ -477,8 +477,8 @@
 						24.0
 					],
 					"id": "obj-15",
-					"hint": "Compose the seed shown again, with Emily's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
-					"annotation": "Compose the seed shown again, with Emily's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
+					"hint": "Compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
+					"annotation": "Compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
 					"annotation_name": "reload seed"
 				}
 			},
@@ -560,8 +560,8 @@
 						24.0
 					],
 					"id": "obj-18",
-					"hint": "Release every pinned weight: each goes back to what Emily learned from your ratings.",
-					"annotation": "Release every pinned weight: each goes back to what Emily learned from your ratings.",
+					"hint": "Release every pinned weight: each goes back to what Magdalena learned from your ratings.",
+					"annotation": "Release every pinned weight: each goes back to what Magdalena learned from your ratings.",
 					"annotation_name": "release all pins"
 				}
 			},
@@ -643,8 +643,8 @@
 						24.0
 					],
 					"id": "obj-21",
-					"hint": "Save Emily's whole taste (weights, pins, strength, ratings) to a file you choose.",
-					"annotation": "Save Emily's whole taste (weights, pins, strength, ratings) to a file you choose.",
+					"hint": "Save Magdalena's whole taste (weights, pins, strength, ratings) to a file you choose.",
+					"annotation": "Save Magdalena's whole taste (weights, pins, strength, ratings) to a file you choose.",
 					"annotation_name": "store taste"
 				}
 			},
@@ -892,26 +892,145 @@
 			},
 			{
 				"box": {
+					"maxclass": "message",
+					"text": "explain Magdalena",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"patching_rect": [
+						1000.0,
+						760.0,
+						130.0,
+						22.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						758.0,
+						710.0,
+						130.0,
+						24.0
+					],
+					"id": "obj-32",
+					"hint": "Who Magdalena is and what she does: she learns the user's taste, keeps a notebook of the music you keep, and is named after Anna Magdalena Bach.",
+					"annotation": "Who Magdalena is and what she does: she learns the user's taste, keeps a notebook of the music you keep, and is named after Anna Magdalena Bach.",
+					"annotation_name": "explain Magdalena"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "t b",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					],
+					"patching_rect": [
+						1000.0,
+						790.0,
+						35.0,
+						22.0
+					],
+					"id": "obj-33"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "open",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						1000.0,
+						820.0,
+						40.0,
+						22.0
+					],
+					"id": "obj-34"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "pcontrol",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						1050.0,
+						820.0,
+						60.0,
+						22.0
+					],
+					"id": "obj-35"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "emi.magdalena",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						1000.0,
+						855.0,
+						100.0,
+						22.0
+					],
+					"id": "obj-36"
+				}
+			},
+			{
+				"box": {
 					"maxclass": "comment",
 					"text": "Drag across the roll to select beats for like, dislike and keep. Hover over anything for what it does; the tabs at the pane's top right choose its view.",
 					"numinlets": 1,
 					"numoutlets": 0,
-					"linecount": 2,
+					"linecount": 3,
 					"fontsize": 10.0,
 					"patching_rect": [
 						940.0,
-						820.0,
+						900.0,
 						400.0,
-						30.0
+						44.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						766.0,
-						708.0,
-						404.0,
-						30.0
+						896.0,
+						706.0,
+						274.0,
+						44.0
 					],
-					"id": "obj-32"
+					"id": "obj-37"
 				}
 			},
 			{
@@ -929,13 +1048,13 @@
 						70.0,
 						22.0
 					],
-					"id": "obj-33"
+					"id": "obj-38"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "title Cento: piano roll and Emily",
+					"text": "title Cento: piano roll and Magdalena",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -944,10 +1063,10 @@
 					"patching_rect": [
 						700.0,
 						55.0,
-						230.0,
+						250.0,
 						22.0
 					],
-					"id": "obj-34"
+					"id": "obj-39"
 				}
 			},
 			{
@@ -966,7 +1085,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-35"
+					"id": "obj-40"
 				}
 			}
 		],
@@ -1334,6 +1453,18 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-32",
+						0
+					],
+					"destination": [
+						"obj-33",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-33",
 						0
 					],
@@ -1351,6 +1482,42 @@
 					],
 					"destination": [
 						"obj-35",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-35",
+						0
+					],
+					"destination": [
+						"obj-36",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-38",
+						0
+					],
+					"destination": [
+						"obj-39",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-39",
+						0
+					],
+					"destination": [
+						"obj-40",
 						0
 					]
 				}

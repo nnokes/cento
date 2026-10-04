@@ -23,7 +23,7 @@ app). The plan is in [PLAN.md](../PLAN.md) (§8, "M12 in detail"); publishing
 is in [releasing.md](releasing.md).
 
 **First: your Cento folder.** A frozen device or an app has no `patchers/`
-folder to write in, so each user's files (settings, Emily's taste, her works
+folder to write in, so each user's files (settings, Magdalena's taste, her notebook
 and snapshots) now live in a folder called Cento in Documents:
 `~/Documents/Cento`. On your Mac that's the `cento` folder you already have
 (a Mac's disk doesn't tell `Cento` from `cento`). The first time Cento finds
@@ -59,6 +59,7 @@ called:
 | accept, temperature (temp), taste | **keep**, **chance**, **taste report** |
 | vst~ instead, plug 1–4, open 1–4 (Max) | **plug-in instruments** and **set up…** (a window) |
 | writeclips, testclip (Live) | **write clips**, **test clips** |
+| Emily (her panel, her own music) | **Magdalena**, "user's taste" (her panel), **Magdalena's notebook** (the music you keep); **explain Magdalena** in the pop-up window |
 
 The piano roll in the panels is narrower (260 px); **window** has the large
 one. In Live the device is now about 880 px wide.
@@ -77,7 +78,9 @@ one. In Live the device is now about 880 px wide.
 4. [ ] **The windows.** **corpora** opens *Cento: corpora*. **set up…**
        opens *Cento: plug-in instruments*; click **choose…** for the soprano:
        the plug-in chooser opens (cancel it). **window** opens the pop-up
-       window, whose buttons now say **keep** and **taste report**.
+       window, whose buttons now say **keep** and **taste report**; click
+       **explain Magdalena**: *Cento: about Magdalena* opens, with who she
+       is and what she does. Every paragraph is whole (nothing cut off).
 5. [ ] **Live: the look.** Reopen your set. The brain device is narrower,
        with **CLIPS AND VOICES**, **COMPOSE** and **EMILY** headings;
        nothing overlaps. **write clips** and **test clips** work. The dial
@@ -112,7 +115,7 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        copy that line: it says where Cento looked and how many names Max
        listed there.
 2. [ ] **Nothing lost.** The seed, the corpus window's folders (which are
-       on) and Emily's taste (the pop-up window's overview) are as they
+       on) and Magdalena's taste (the pop-up window's overview) are as they
        were. The piece composed is the same as before you pulled.
 3. [ ] **Saved there.** In Finder, open `Documents/cento`: it now holds
        `cento.settings.json` (and `cento.taste.json`, ...). Change the

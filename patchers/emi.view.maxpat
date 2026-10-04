@@ -79,15 +79,15 @@
 						169.0
 					],
 					"id": "obj-2",
-					"hint": "The current piece. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means. For a large one: window, in the Emily panel.",
-					"annotation": "The current piece. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means. For a large one: window, in the Emily panel.",
+					"hint": "The current piece. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Magdalena varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means. For a large one: window, in Magdalena's panel.",
+					"annotation": "The current piece. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Magdalena varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means. For a large one: window, in Magdalena's panel.",
 					"annotation_name": "Piano roll"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "outlet",
-					"comment": "to emi.engine: select <from> <to> (beats dragged across, for Emily's ratings)",
+					"comment": "to emi.engine: select <from> <to> (beats dragged across, for Magdalena's ratings)",
 					"index": 1,
 					"numinlets": 1,
 					"numoutlets": 0,
