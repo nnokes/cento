@@ -245,9 +245,11 @@ HELP = {
                        "are recombined like any other beats."),
         "Status": ("Status", "What the engine just did, or what went wrong."),
     },
-    "emily.panel": {
+    "top": {
         "Window": ("window", "Open the pop-up window: a large piano roll and Magdalena's taste in full, "
                    "where you can edit her weights and see her memory (and read who she is)."),
+    },
+    "emily.panel": {
         "Like": ("Like", LIKE + MAP),
         "Dislike": ("Dislike", DISLIKE + MAP),
         "Temperature": ("temperature", "How much chance still plays when composing. 0: only Magdalena's "
@@ -255,7 +257,7 @@ HELP = {
                         "adventurous."),
         "Accept": ("keep", ACCEPT + MAP),
         "Magdalena": ("Magdalena", "Magdalena in a line: how many ratings she has had, and what she likes "
-                      "and dislikes most. Her full report, and who she is: the pop-up window (window)."),
+                      "and dislikes most. Her full report, and who she is: the pop-up window (\u2197, top right)."),
     },
     "emi.window": {
         "Piano roll": ("Piano roll", "The current piece, large. " + ROLL),
@@ -293,8 +295,8 @@ HELP = {
                    "read once, when first switched on.)"),
     },
     "emi.view": {
-        "Piano roll": ("Piano roll", "The current piece. " + ROLL + " For a large one: window, in "
-                       "Magdalena's panel."),
+        "Piano roll": ("Piano roll", "The current piece. " + ROLL + " For a large one: the window "
+                       "button (\u2197) at the top right."),
     },
     "emi.voice": {
         "Voice": ("Voice", "The voice this device plays, from its track's name: Soprano, Alto, Tenor or "
@@ -330,6 +332,7 @@ def annotate(name, p):
 def controls_doc():
     """docs/controls.md: every control's hover text, by panel."""
     sections = [
+        ("top", "Both versions: the row of section names along the top (the button at its right)"),
         ("emi.host.max", "Max version: transport and output (left panel of `cento.maxpat`)"),
         ("emi.host.live", "Live version: clips and voices (left panel of the cento.brain device)"),
         ("emi.panel", "Composing (both versions)"),
@@ -702,6 +705,7 @@ MAGDALENA_BG = [0.32, 0.20, 0.15, 1.0]
 # The row of section names along the top of the strip, above the sections.
 HEADER_BG = [0.11, 0.11, 0.12, 1.0]
 HEADER_H = 20
+WINDOW_SIZE = 18  # the square window button, in the row of names
 PANEL_H = 169 - HEADER_H  # each section's height below the row (Live devices are 169 px high)
 LABEL_SIZE = 10.0  # labels, and the text on buttons and switches
 
@@ -964,14 +968,9 @@ def emily_panel():
              fontsize=11.0)
     # M10: accept keeps what is playing as music of her own (mappable, like
     # like and dislike), shown as "keep"; forget is in the pop-up window.
-    labelled(p, "Accept", "keep", "accept", 220, 140, (6, 46, 57, 20), out, look=WARM, mappable=True)
-    # The pop-up window (emi.window, in the top patch): a large piano roll and
-    # her taste in full. [send] with "---": unique to each device in Live.
-    window = button(p, "Window", "window", 600, 300, (67, 46, 57, 20))
-    window_t = p.obj("t b", 600, 330, 1, 1, ["bang"], w=35)
-    to_window = p.obj("s ---emi.window", 600, 360, 1, 0, [], w=110)
-    p.connect(window, 0, window_t, 0)
-    p.connect(window_t, 0, to_window, 0)
+    labelled(p, "Accept", "keep", "accept", 220, 140, (6, 46, 118, 20), out, look=WARM, mappable=True)
+    # (The pop-up window, a large piano roll and her taste in full, opens
+    # from the square button at the strip's top right, in the top patch.)
     # Temperature: how much chance still plays. A horizontal slider across
     # the panel, tall enough for its name (above) and value (below).
     temp = p.ui(
@@ -1485,8 +1484,11 @@ def top(adapter, host_name, title, host_w, h=169, abstraction="emi.engine"):
     p = Patch(rect=(50, 50, max(view_x + VIEW_W + 60, 900), 540), presentation=True)
     # The row of section names along the top.
     solid(p, HEADER_BG, (0, 0, view_x + VIEW_W, HEADER_H))
+    # The piano roll's name leaves room at the right for the window button,
+    # keeping its centre.
+    room = WINDOW_SIZE + 4
     for name, x, w in [(host_name, 0, host_w), ("COMPOSE", panel_x, PANEL_W), ("MAGDALENA", emily_x, EMILY_W),
-                       ("PIANO ROLL", view_x, VIEW_W)]:
+                       ("PIANO ROLL", view_x + room, VIEW_W - 2 * room)]:
         p.comment(name, 20 + x, 2, w=w, h=18, pres=(x, 1, w, 18), fontsize=11.0, fontface=1, textcolor=HEADING,
                   textjustification=1)
     y, ph = 20 + HEADER_H, h - HEADER_H
@@ -1496,12 +1498,16 @@ def top(adapter, host_name, title, host_w, h=169, abstraction="emi.engine"):
     vw = p.bpatcher("emi.view.maxpat", view_x + 20, y, VIEW_W, ph, 1, 1, pres=(view_x, HEADER_H, VIEW_W, ph))
     eng = p.obj(abstraction, 20, h + 60, 1, 1, w=90)
     rv = p.obj("route view", view_x + 20, h + 60, 2, 2, w=75)
-    # The pop-up window: opened by the Magdalena panel's window button.
+    # The pop-up window: opened by the square button at the top right, in
+    # the row of names (an arrow: there's no room for a word).
     win = p.obj("emi.window", view_x + 120, h + 60, 1, 1, w=80)
-    rcv = p.obj("r ---emi.window", view_x + 120, h + 100, 1, 1, w=100)
-    opener = p.msg("open", view_x + 120, h + 130, w=40)
-    pcontrol = p.obj("pcontrol", view_x + 120, h + 160, 1, 1, w=60)
-    p.connect(rcv, 0, opener, 0)
+    window = button(p, "Window", "\u2197", view_x + 120, h + 100, (view_x + VIEW_W - WINDOW_SIZE - 1, 1, WINDOW_SIZE,
+                    WINDOW_SIZE), fontsize=12.0)
+    window_t = p.obj("t b", view_x + 120, h + 130, 1, 1, ["bang"], w=35)
+    opener = p.msg("open", view_x + 120, h + 160, w=40)
+    pcontrol = p.obj("pcontrol", view_x + 120, h + 190, 1, 1, w=60)
+    p.connect(window, 0, window_t, 0)
+    p.connect(window_t, 0, opener, 0)
     p.connect(opener, 0, pcontrol, 0)
     p.connect(pcontrol, 0, win, 0)
     # The corpus window (M11): opened by the panel's corpora button.
@@ -1522,7 +1528,7 @@ def top(adapter, host_name, title, host_w, h=169, abstraction="emi.engine"):
     p.connect(eng, 0, win, 0)
     p.connect(rv, 0, vw, 0)
     p.comment(title, 20, h + 100, w=480, h=34, linecount=2)
-    return p
+    return annotate("top", p)
 
 
 def device_width(host_w):

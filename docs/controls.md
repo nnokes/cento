@@ -4,6 +4,12 @@ What every control does: the same text you see when you hover over it. In Max, r
 
 This page is written from the same table as the hover text (the patch generator), so they agree; `tests/patches.test.js` checks it.
 
+## Both versions: the row of section names along the top (the button at its right)
+
+| Control | What it does |
+| --- | --- |
+| **window** | Open the pop-up window: a large piano roll and Magdalena's taste in full, where you can edit her weights and see her memory (and read who she is). |
+
 ## Max version: transport and output (left panel of `cento.maxpat`)
 
 | Control | What it does |
@@ -47,18 +53,17 @@ This page is written from the same table as the hover text (the patch generator)
 
 | Control | What it does |
 | --- | --- |
-| **window** | Open the pop-up window: a large piano roll and Magdalena's taste in full, where you can edit her weights and see her memory (and read who she is). |
 | **Like** | Tell Magdalena you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **Dislike** | Tell Magdalena you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **temperature** | How much chance still plays when composing. 0: only Magdalena's favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous. |
 | **keep** | Keep what you're hearing in Magdalena's notebook: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
-| **Magdalena** | Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Her full report, and who she is: the pop-up window (window). |
+| **Magdalena** | Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Her full report, and who she is: the pop-up window (↗, top right). |
 
 ## Piano roll (both versions)
 
 | Control | What it does |
 | --- | --- |
-| **Piano roll** | The current piece. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Magdalena varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means. For a large one: window, in Magdalena's panel. |
+| **Piano roll** | The current piece. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Magdalena varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means. For a large one: the window button (↗) at the top right. |
 
 ## The plug-in instruments window (Max version: set up, in the left panel)
 

@@ -1577,7 +1577,9 @@ them. The panel's taste report button went (its one-line report stays; the
 full report is in the pop-up window), the "rest the mouse" lines went (the
 hover text itself stays), the temperature slider got the height its name
 and value need, and the piano roll's bar numbers, cadence triangles and
-Magdalena's dots each have a row of their own above the notes.
+Magdalena's dots each have a row of their own above the notes. The window
+button is a square **↗** at the right end of the row of names (no room there
+for a word), in the top patch rather than Magdalena's panel.
 
 **Subfolders**: `patchers/` holds only what you open (`cento.maxpat`,
 `cento.brain.amxd`, `cento.voice.amxd`); the patches they're made of are in

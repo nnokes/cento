@@ -52,7 +52,7 @@ writes a blind A/B test (Bach or not?) as a web page. Since M9, Magdalena learns
 **dislike** rate the piece, the stream phrase playing or the beats you drag
 across in the piano roll. Later pieces lean toward the features you liked
 (high melodies, 16th notes, modulations, ...), within the same rules, and
-**temperature** sets how much chance still plays. The **window** button opens a
+**temperature** sets how much chance still plays. The **window** button (**↗**, at the top right) opens a
 large piano roll with Magdalena's taste in full, in both products. There you can
 also pin any feature's weight with a slider, set her taste's strength, and
 store and recall whole tastes as files. Since M10, Magdalena varies pieces with

@@ -65,7 +65,7 @@
 						130.0,
 						149.0
 					],
-					"id": "obj-26"
+					"id": "obj-23"
 				}
 			},
 			{
@@ -499,14 +499,14 @@
 					"patching_rect": [
 						220.0,
 						140.0,
-						57.0,
+						118.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
 						46.0,
-						57.0,
+						118.0,
 						20.0
 					],
 					"id": "obj-11",
@@ -549,139 +549,6 @@
 						22.0
 					],
 					"id": "obj-13"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "live.text",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"parameter_enable": 1,
-					"varname": "Window",
-					"mode": 0,
-					"text": "window",
-					"texton": "window",
-					"fontsize": 10.0,
-					"bgcolor": [
-						0.8,
-						0.85,
-						0.93,
-						1.0
-					],
-					"activebgcolor": [
-						0.8,
-						0.85,
-						0.93,
-						1.0
-					],
-					"bgoncolor": [
-						0.6,
-						0.69,
-						0.84,
-						1.0
-					],
-					"activebgoncolor": [
-						0.6,
-						0.69,
-						0.84,
-						1.0
-					],
-					"textcolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"activetextcolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"textoncolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"activetextoncolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_enum": [
-								"off",
-								"on"
-							],
-							"parameter_longname": "Window",
-							"parameter_shortname": "window",
-							"parameter_type": 2,
-							"parameter_mmax": 1,
-							"parameter_initial": [
-								0
-							],
-							"parameter_initial_enable": 0,
-							"parameter_invisible": 2
-						}
-					},
-					"patching_rect": [
-						600.0,
-						300.0,
-						57.0,
-						20.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						67.0,
-						46.0,
-						57.0,
-						20.0
-					],
-					"id": "obj-14",
-					"hint": "Open the pop-up window: a large piano roll and Magdalena's taste in full, where you can edit her weights and see her memory (and read who she is).",
-					"annotation": "Open the pop-up window: a large piano roll and Magdalena's taste in full, where you can edit her weights and see her memory (and read who she is).",
-					"annotation_name": "window"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "t b",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						"bang"
-					],
-					"patching_rect": [
-						600.0,
-						330.0,
-						35.0,
-						22.0
-					],
-					"id": "obj-15"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "s ---emi.window",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"outlettype": [],
-					"patching_rect": [
-						600.0,
-						360.0,
-						110.0,
-						22.0
-					],
-					"id": "obj-16"
 				}
 			},
 			{
@@ -731,7 +598,7 @@
 						118.0,
 						46.0
 					],
-					"id": "obj-17",
+					"id": "obj-14",
 					"hint": "How much chance still plays when composing. 0: only Magdalena's favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
 					"annotation": "How much chance still plays when composing. 0: only Magdalena's favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
 					"annotation_name": "temperature"
@@ -752,7 +619,7 @@
 						130.0,
 						22.0
 					],
-					"id": "obj-18"
+					"id": "obj-15"
 				}
 			},
 			{
@@ -768,7 +635,7 @@
 						330.0,
 						48.0
 					],
-					"id": "obj-19"
+					"id": "obj-16"
 				}
 			},
 			{
@@ -788,7 +655,7 @@
 						120.0,
 						22.0
 					],
-					"id": "obj-20"
+					"id": "obj-17"
 				}
 			},
 			{
@@ -806,7 +673,7 @@
 						98.0,
 						22.0
 					],
-					"id": "obj-21"
+					"id": "obj-18"
 				}
 			},
 			{
@@ -838,9 +705,9 @@
 						118.0,
 						30.0
 					],
-					"id": "obj-22",
-					"hint": "Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Her full report, and who she is: the pop-up window (window).",
-					"annotation": "Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Her full report, and who she is: the pop-up window (window).",
+					"id": "obj-19",
+					"hint": "Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Her full report, and who she is: the pop-up window (\u2197, top right).",
+					"annotation": "Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Her full report, and who she is: the pop-up window (\u2197, top right).",
 					"annotation_name": "Magdalena"
 				}
 			},
@@ -860,7 +727,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-23"
+					"id": "obj-20"
 				}
 			},
 			{
@@ -878,7 +745,7 @@
 						91.0,
 						22.0
 					],
-					"id": "obj-24"
+					"id": "obj-21"
 				}
 			},
 			{
@@ -893,7 +760,7 @@
 						300.0,
 						20.0
 					],
-					"id": "obj-25"
+					"id": "obj-22"
 				}
 			}
 		],
@@ -1025,30 +892,6 @@
 						0
 					],
 					"destination": [
-						"obj-16",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-17",
-						0
-					],
-					"destination": [
-						"obj-18",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-18",
-						0
-					],
-					"destination": [
 						"obj-3",
 						0
 					]
@@ -1061,7 +904,7 @@
 						0
 					],
 					"destination": [
-						"obj-20",
+						"obj-17",
 						0
 					]
 				}
@@ -1069,11 +912,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-20",
+						"obj-17",
 						0
 					],
 					"destination": [
-						"obj-21",
+						"obj-18",
 						0
 					]
 				}
@@ -1081,11 +924,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-21",
+						"obj-18",
 						0
 					],
 					"destination": [
-						"obj-22",
+						"obj-19",
 						0
 					]
 				}
@@ -1093,11 +936,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-20",
+						"obj-17",
 						1
 					],
 					"destination": [
-						"obj-23",
+						"obj-20",
 						0
 					]
 				}
@@ -1105,11 +948,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-23",
+						"obj-20",
 						0
 					],
 					"destination": [
-						"obj-24",
+						"obj-21",
 						0
 					]
 				}
@@ -1117,11 +960,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-24",
+						"obj-21",
 						0
 					],
 					"destination": [
-						"obj-17",
+						"obj-14",
 						0
 					]
 				}

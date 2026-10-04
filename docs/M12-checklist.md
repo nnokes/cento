@@ -63,7 +63,8 @@ called:
 | writeclips, testclip (Live) | **write clips**, **test clips** |
 | Emily (her panel, her own music) | **Magdalena**, "user's taste" (her panel), **Magdalena's notebook** (the music you keep); **explain Magdalena** in the pop-up window |
 
-The piano roll in the panels is narrower (260 px); **window** has the large
+The piano roll in the panels is narrower (260 px); **window** (the square
+**↗** button at the top right, in the row of names) has the large
 one. In Live the device is now about 880 px wide. A dark row along the top
 names each section (**PLAY** or **CLIPS AND VOICES**, **COMPOSE**,
 **MAGDALENA**, **PIANO ROLL**), centred above it. Every button is in Live's
@@ -102,7 +103,7 @@ MIDI notes; the other buttons are hidden from Live's mapping and automation.
        window). **listening test…** asks where to save the test.
 4. [x] **The windows.** **corpora** opens *Cento: corpora*. **set up…**
        opens *Cento: plug-in instruments*; click **choose…** for the soprano:
-       the plug-in chooser opens (cancel it). **window** opens the pop-up
+       the plug-in chooser opens (cancel it). **↗** (top right) opens the pop-up
        window, whose buttons say **keep** and **taste report**; click
        **explain Magdalena**: *Cento: about Magdalena* opens, with who she
        is and what she does. Every paragraph is whole (nothing cut off).

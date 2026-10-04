@@ -177,16 +177,16 @@
 					],
 					"textjustification": 1,
 					"patching_rect": [
-						706.0,
+						728.0,
 						2.0,
-						260.0,
+						216.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						686.0,
+						708.0,
 						1.0,
-						260.0,
+						216.0,
 						18.0
 					],
 					"id": "obj-5"
@@ -393,20 +393,119 @@
 			},
 			{
 				"box": {
-					"maxclass": "newobj",
-					"text": "r ---emi.window",
+					"maxclass": "live.text",
 					"numinlets": 1,
-					"numoutlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Window",
+					"mode": 0,
+					"text": "\u2197",
+					"texton": "\u2197",
+					"fontsize": 12.0,
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"activebgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Window",
+							"parameter_shortname": "\u2197",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						806.0,
 						269.0,
-						100.0,
+						18.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						927.0,
+						1.0,
+						18.0,
+						18.0
+					],
+					"id": "obj-13",
+					"hint": "Open the pop-up window: a large piano roll and Magdalena's taste in full, where you can edit her weights and see her memory (and read who she is).",
+					"annotation": "Open the pop-up window: a large piano roll and Magdalena's taste in full, where you can edit her weights and see her memory (and read who she is).",
+					"annotation_name": "window"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "t b",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					],
+					"patching_rect": [
+						806.0,
+						299.0,
+						35.0,
 						22.0
 					],
-					"id": "obj-13"
+					"id": "obj-14"
 				}
 			},
 			{
@@ -420,11 +519,11 @@
 					],
 					"patching_rect": [
 						806.0,
-						299.0,
+						329.0,
 						40.0,
 						22.0
 					],
-					"id": "obj-14"
+					"id": "obj-15"
 				}
 			},
 			{
@@ -438,11 +537,11 @@
 					],
 					"patching_rect": [
 						806.0,
-						329.0,
+						359.0,
 						60.0,
 						22.0
 					],
-					"id": "obj-15"
+					"id": "obj-16"
 				}
 			},
 			{
@@ -460,7 +559,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-16"
+					"id": "obj-17"
 				}
 			},
 			{
@@ -478,7 +577,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-17"
+					"id": "obj-18"
 				}
 			},
 			{
@@ -496,7 +595,7 @@
 						40.0,
 						22.0
 					],
-					"id": "obj-18"
+					"id": "obj-19"
 				}
 			},
 			{
@@ -514,7 +613,7 @@
 						60.0,
 						22.0
 					],
-					"id": "obj-19"
+					"id": "obj-20"
 				}
 			},
 			{
@@ -530,7 +629,7 @@
 						480.0,
 						34.0
 					],
-					"id": "obj-20"
+					"id": "obj-21"
 				}
 			}
 		],
@@ -566,6 +665,18 @@
 						0
 					],
 					"destination": [
+						"obj-16",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-16",
+						0
+					],
+					"destination": [
 						"obj-12",
 						0
 					]
@@ -574,35 +685,35 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-18",
+						0
+					],
+					"destination": [
+						"obj-19",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-19",
+						0
+					],
+					"destination": [
+						"obj-20",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-20",
+						0
+					],
+					"destination": [
 						"obj-17",
-						0
-					],
-					"destination": [
-						"obj-18",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-18",
-						0
-					],
-					"destination": [
-						"obj-19",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-19",
-						0
-					],
-					"destination": [
-						"obj-16",
 						0
 					]
 				}
@@ -614,7 +725,7 @@
 						0
 					],
 					"destination": [
-						"obj-16",
+						"obj-17",
 						0
 					]
 				}
@@ -682,7 +793,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-16",
+						"obj-17",
 						0
 					],
 					"destination": [
