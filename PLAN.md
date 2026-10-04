@@ -1542,9 +1542,11 @@ less-used tools (load a chorale, in C or its own key; the test phrase; stop
 and clear) are in a **tools** menu, and the Max version's plug-in instruments
 in a window of their own (**set up…**). Plain names replace shorthand
 (chorale form, signatures, transpose, listening test…, keep,
-chance, taste report, write clips, test clips); Live's parameters keep their
+taste report, write clips, test clips); Live's parameters keep their
 names, so mappings and automation in saved sets still work. Grey headings
-(PLAY, COMPOSE, EMILY, CLIPS AND VOICES), one look per kind of control, a hint
+(PLAY, COMPOSE, MAGDALENA, CLIPS AND VOICES), each section on a solid colour
+of its own (a [panel] behind it: green, blue, brown) with light text, one look
+per kind of control, a hint
 in the empty piano roll, and a narrower roll (260 px; the pop-up window has the
 large one). `tests/patches.test.js` checks that nothing overlaps or leaves its
 panel.

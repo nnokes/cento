@@ -879,7 +879,7 @@ test("emi.engine: the core feeds the queue and the player, and 'need' comes back
 test("layout: every panel's controls fit inside it, none overlapping", () => {
   const sizes = { "emi.host.max.maxpat": [232, 169], "emi.host.live.maxpat": [170, 169], "emi.panel.maxpat": [300, 169], "emily.panel.maxpat": [130, 169], "emi.instruments.maxpat": [330, 170] };
   for (const [file, [width, height]] of Object.entries(sizes)) {
-    const shown = [...patchFile(file).boxes.values()].filter((b) => b.presentation_rect);
+    const shown = [...patchFile(file).boxes.values()].filter((b) => b.presentation_rect && b.maxclass !== "panel");
     for (const b of shown) {
       const [x, y, w, h] = b.presentation_rect;
       assert.ok(x >= 0 && y >= 0 && x + w <= width && y + h <= height, `${file}: ${b.varname || b.text} at ${b.presentation_rect} is outside ${width} x ${height}`);
@@ -896,7 +896,7 @@ test("layout: every panel's controls fit inside it, none overlapping", () => {
 test("layout: the composing panel starts with compose, the main action; each panel has its heading", () => {
   const p = patchFile("emi.panel.maxpat");
   const [compose] = p.find("compose");
-  const shownControls = [...p.boxes.values()].filter((b) => b.presentation_rect && b.maxclass !== "comment");
+  const shownControls = [...p.boxes.values()].filter((b) => b.presentation_rect && !["comment", "panel"].includes(b.maxclass));
   const top = Math.min(...shownControls.map((b) => b.presentation_rect[1]));
   assert.equal(compose.presentation_rect[1], top, "compose is in the top row");
   assert.equal(compose.presentation_rect[0], 6, "at its left");
@@ -990,7 +990,7 @@ test("plain names on the panels; Live's parameters keep theirs (mappings and aut
   const emily = patchFile("emily.panel.maxpat");
   assert.equal(label(emily, "Accept"), "keep");
   const dial = [...emily.boxes.values()].find((b) => b.varname === "Temperature");
-  assert.deepEqual([dial.saved_attribute_attributes.valueof.parameter_longname, dial.saved_attribute_attributes.valueof.parameter_shortname], ["Temperature", "chance"]);
+  assert.deepEqual([dial.saved_attribute_attributes.valueof.parameter_longname, dial.saved_attribute_attributes.valueof.parameter_shortname], ["Temperature", "temperature"]);
   const [report] = emily.find("taste report");
   const [[t]] = emily.from(report.id);
   const [[taste]] = emily.from(t.id);
@@ -1028,7 +1028,7 @@ test("Magdalena: her panel says what she is (the user's taste); the pop-up windo
   assert.equal(about.text, "emi.magdalena");
   const a = patchFile("emi.magdalena.maxpat");
   const text = [...a.boxes.values()].filter((b) => b.maxclass === "comment" && b.presentation_rect).map((b) => b.text).join(" ");
-  for (const words of ["learns the user's taste", "like and dislike", "chance", "keep writes what you're hearing into Magdalena's notebook", "Anna Magdalena Bach (1701–1760)", "isn't affiliated with David Cope"]) {
+  for (const words of ["learns the user's taste", "like and dislike", "temperature sets how much chance still plays", "keep writes what you're hearing into Magdalena's notebook", "Anna Magdalena Bach (1701–1760)", "isn't affiliated with David Cope"]) {
     assert.ok(text.includes(words), words);
   }
   const shown = [...a.boxes.values()].filter((b) => b.presentation_rect).map((b) => b.presentation_rect);
@@ -1044,4 +1044,23 @@ test("Magdalena: her panel says what she is (the user's taste); the pop-up windo
       }
     }
   }
+});
+
+test("sections: each part of the strip sits on a solid colour of its own, with light text on it", () => {
+  const colours = new Map();
+  for (const [file, width] of [["emi.host.max.maxpat", 232], ["emi.host.live.maxpat", 170], ["emi.panel.maxpat", 300], ["emily.panel.maxpat", 130]]) {
+    const p = readPatcher(path.join(ROOT, "patchers", file));
+    const back = p.boxes[0].box;
+    assert.equal(back.maxclass, "panel", `${file}: the first box (the back) is a [panel]`);
+    assert.deepEqual(back.presentation_rect, [0, 0, width, 169], file);
+    assert.equal(back.ignoreclick, 1, `${file}: clicks pass through it`);
+    colours.set(file, back.bgfillcolor_color.join(","));
+    for (const { box } of p.boxes) {
+      if (box.maxclass !== "comment" || !box.presentation_rect) continue;
+      const [r, g, b] = box.textcolor;
+      assert.ok(Math.min(r, g, b) >= 0.8, `${file}: "${box.text}" is light enough to read on the dark colour`);
+    }
+  }
+  assert.equal(colours.get("emi.host.max.maxpat"), colours.get("emi.host.live.maxpat"), "the left panel: the same colour in both versions");
+  assert.equal(new Set([colours.get("emi.host.max.maxpat"), colours.get("emi.panel.maxpat"), colours.get("emily.panel.maxpat")]).size, 3, "three colours for three jobs");
 });

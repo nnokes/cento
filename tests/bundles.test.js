@@ -1304,10 +1304,10 @@ test("emily: temperature is clamped, saved and restored", () => {
   const folder = tempDir();
   const core = engineIn(folder);
   core.send("startup", "all");
-  assert.deepEqual(lastStatus(core.send("temperature", 0.5)).slice(0, 7), ["status", "chance", "0.50:", "less", "chance,", "more", "taste"]);
+  assert.deepEqual(lastStatus(core.send("temperature", 0.5)).slice(0, 7), ["status", "temperature", "0.50:", "less", "chance,", "more", "taste"]);
   assert.equal(settingsIn(folder).temperature, 0.5);
-  assert.deepEqual(lastStatus(core.send("temperature", 7)).slice(0, 4), ["status", "chance", "3.00:", "more"]);
-  assert.deepEqual(lastStatus(core.send("temperature", 0)).slice(0, 5), ["status", "chance", "0.00:", "only", "Magdalena's"]);
+  assert.deepEqual(lastStatus(core.send("temperature", 7)).slice(0, 4), ["status", "temperature", "3.00:", "more"]);
+  assert.deepEqual(lastStatus(core.send("temperature", 0)).slice(0, 5), ["status", "temperature", "0.00:", "only", "Magdalena's"]);
   core.send("temperature", 1.5);
   const restored = engineIn(folder).send("startup", "all");
   assert.deepEqual(select(restored, "setting").find(([name]) => name === "temperature"), ["temperature", 1.5]);

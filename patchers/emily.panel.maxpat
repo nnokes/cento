@@ -31,6 +31,45 @@
 		"boxes": [
 			{
 				"box": {
+					"maxclass": "panel",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"mode": 0,
+					"border": 0,
+					"rounded": 0,
+					"bgcolor": [
+						0.32,
+						0.2,
+						0.15,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.32,
+						0.2,
+						0.15,
+						1.0
+					],
+					"ignoreclick": 1,
+					"background": 1,
+					"patching_rect": [
+						1250.0,
+						5.0,
+						40.0,
+						30.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						0.0,
+						0.0,
+						130.0,
+						169.0
+					],
+					"id": "obj-26"
+				}
+			},
+			{
+				"box": {
 					"maxclass": "comment",
 					"text": "emily.panel: Magdalena's taste (M9), shared by both products. like and dislike rate the beats selected in the piano roll, or the stream phrase playing, or the piece; temperature sets how much chance still plays; accept keeps what is playing as music of her own (M10). like, dislike, accept and temperature are live.* parameters, so they can be MIDI- or key-mapped. Panel 130 x 169 px.",
 					"numinlets": 1,
@@ -89,9 +128,9 @@
 					"fontsize": 10.0,
 					"fontface": 1,
 					"textcolor": [
-						0.55,
-						0.55,
-						0.55,
+						0.95,
+						0.95,
+						0.93,
 						1.0
 					],
 					"patching_rect": [
@@ -118,9 +157,9 @@
 					"numoutlets": 0,
 					"fontsize": 9.0,
 					"textcolor": [
-						0.55,
-						0.55,
-						0.55,
+						0.84,
+						0.84,
+						0.82,
 						1.0
 					],
 					"patching_rect": [
@@ -446,7 +485,7 @@
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_longname": "Temperature",
-							"parameter_shortname": "chance",
+							"parameter_shortname": "temperature",
 							"parameter_type": 0,
 							"parameter_mmin": 0.0,
 							"parameter_mmax": 3.0,
@@ -460,20 +499,20 @@
 					"patching_rect": [
 						240.0,
 						140.0,
-						44.0,
-						44.0
+						62.0,
+						46.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						6.0,
-						76.0,
-						44.0,
-						44.0
+						2.0,
+						75.0,
+						62.0,
+						46.0
 					],
 					"id": "obj-12",
-					"hint": "How much chance still plays when composing (Magdalena's temperature). 0: only her favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
-					"annotation": "How much chance still plays when composing (Magdalena's temperature). 0: only her favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
-					"annotation_name": "chance"
+					"hint": "How much chance still plays when composing. 0: only Magdalena's favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
+					"annotation": "How much chance still plays when composing. 0: only Magdalena's favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
+					"annotation_name": "temperature"
 				}
 			},
 			{
@@ -522,7 +561,7 @@
 						0.09,
 						1.0
 					],
-					"fontsize": 10.0,
+					"fontsize": 9.0,
 					"patching_rect": [
 						400.0,
 						140.0,
@@ -531,9 +570,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						54.0,
+						66.0,
 						80.0,
-						70.0,
+						58.0,
 						20.0
 					],
 					"id": "obj-14",
@@ -696,7 +735,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "chance (temperature): 0 Magdalena's favourite choices only, 1 as before Magdalena, 3 adventurous. taste report: her taste in the Max window and ten pieces compared; keep (accept, M10)",
+					"text": "temperature: 0 Magdalena's favourite choices only, 1 as before Magdalena, 3 adventurous. taste report: her taste in the Max window and ten pieces compared; keep (accept, M10)",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 3,

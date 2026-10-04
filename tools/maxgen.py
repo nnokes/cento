@@ -241,9 +241,9 @@ HELP = {
                    "where you can edit her weights and see her memory (and read who she is)."),
         "Like": ("Like", LIKE + MAP),
         "Dislike": ("Dislike", DISLIKE + MAP),
-        "Temperature": ("chance", "How much chance still plays when composing (Magdalena's temperature). "
-                        "0: only her favourite choices; 1: as if she weren't there (the default); up to 3: "
-                        "more adventurous."),
+        "Temperature": ("temperature", "How much chance still plays when composing. 0: only Magdalena's "
+                        "favourite choices; 1: as if she weren't there (the default); up to 3: more "
+                        "adventurous."),
         "taste report": ("taste report", TASTE),
         "Accept": ("keep", ACCEPT + MAP),
         "Magdalena": ("Magdalena", "Magdalena in a line: how many ratings she has had, and what she likes "
@@ -681,7 +681,13 @@ TOGGLE_OFF = [0.84, 0.82, 0.78, 1.0]
 TOGGLE_ON = [0.96, 0.70, 0.33, 1.0]
 EMILY_BG = [0.96, 0.84, 0.70, 1.0]
 EMILY_ON = [0.91, 0.62, 0.36, 1.0]
-HEADING = [0.55, 0.55, 0.55, 1.0]
+HEADING = [0.95, 0.95, 0.93, 1.0]   # headings and labels: light, on the dark section colours
+SOFT_TEXT = [0.84, 0.84, 0.82, 1.0]  # notes and subtitles: lighter grey still reads easily
+# Each section of the strip sits on a solid colour of its own (a [panel]
+# behind everything), so the parts read apart: playing, composing, Magdalena.
+PLAY_BG = [0.16, 0.27, 0.20, 1.0]
+COMPOSE_BG = [0.15, 0.21, 0.31, 1.0]
+MAGDALENA_BG = [0.32, 0.20, 0.15, 1.0]
 
 
 def message_look(bg, text=DARK_TEXT, bold=False):
@@ -693,6 +699,21 @@ def message_look(bg, text=DARK_TEXT, bold=False):
 
 BUTTON = message_look(BUTTON_BG)
 MAIN = message_look(MAIN_BG, LIGHT_TEXT, bold=True)
+
+
+def section(p, color, w, h=169):
+    """A solid background for a whole panel (a [panel], first, so it's behind
+    everything; it ignores clicks), and light text for its labels."""
+    box = {"maxclass": "panel", "numinlets": 1, "numoutlets": 0, "mode": 0, "border": 0, "rounded": 0,
+           "bgcolor": color, "bgfillcolor_type": "color", "bgfillcolor_color": color,
+           "ignoreclick": 1, "background": 1}
+    pid = p._add(p._place(box, 1250, 5, 40, 30, (0, 0, w, h)))
+    p.boxes.insert(0, p.boxes.pop())
+    for entry in p.boxes:
+        b = entry["box"]
+        if b["maxclass"] == "comment" and b.get("presentation") and "textcolor" not in b:
+            b["textcolor"] = HEADING
+    return pid
 
 
 def heading(p, text, x, y, pres):
@@ -882,7 +903,7 @@ def panel():
         send(m)
     p.comment("tools: then back to its title; a chorale loads in C (key 0) or its own key (key 1)",
               360, 390, w=260, h=34, linecount=2)
-    p.comment("hover for help", 1180, 300, w=100, pres=(204, 147, 90, 18), fontsize=10.0, textcolor=HEADING)
+    p.comment("hover for help", 1180, 300, w=100, pres=(204, 147, 90, 18), fontsize=10.0, textcolor=SOFT_TEXT)
 
     # From the engine: the status line, and restored or changed settings
     route = p.obj("route status error setting", 20, 560, 2, 4, w=170)
@@ -901,6 +922,7 @@ def panel():
         pre = p.obj("prepend set", 420 + k * 95, 640, 2, 1, w=80)
         p.connect(controls, k, pre, 0)
         p.connect(pre, 0, control, 0)
+    section(p, COMPOSE_BG, PANEL_W)
     return p
 
 
@@ -937,7 +959,7 @@ def emily_panel():
     send = lambda obj: p.connect(obj, 0, out, 0)
 
     heading(p, "MAGDALENA", 20, 100, (6, 1, 64, 18))
-    p.comment("user's taste", 140, 100, w=80, pres=(70, 3, 58, 15), fontsize=9.0, textcolor=HEADING)
+    p.comment("user's taste", 140, 100, w=80, pres=(70, 3, 58, 15), fontsize=9.0, textcolor=SOFT_TEXT)
     # The pop-up window (emi.window, in the top patch): a large piano roll and
     # her taste in full. [send] with "---": unique to each device in Live.
     window = p.msg("window", 600, 300, pres=(67, 53, 57, 20), **BUTTON)
@@ -949,14 +971,14 @@ def emily_panel():
         m = p.msg(word, x, 185, w=55)
         p.connect(button, 0, m, 0)
         send(m)
-    # Temperature, shown as "chance" (its parameter keeps its name, so
-    # mappings and automation in saved sets still find it).
+    # Temperature: how much chance still plays (the dial is wide enough for
+    # its whole name).
     temp = p.ui(
-        "live.dial", 240, 140, 44, 44, 1, 2, ["", "float"], pres=(6, 76, 44, 44),
+        "live.dial", 240, 140, 62, 46, 1, 2, ["", "float"], pres=(2, 75, 62, 46),
         parameter_enable=1, varname="Temperature",
         saved_attribute_attributes={"valueof": {
             "parameter_longname": "Temperature",
-            "parameter_shortname": "chance",
+            "parameter_shortname": "temperature",
             "parameter_type": 0,
             "parameter_mmin": 0.0,
             "parameter_mmax": 3.0,
@@ -968,7 +990,7 @@ def emily_panel():
     temp_pre = p.obj("prepend temperature", 240, 200, 2, 1, w=130)
     p.connect(temp, 0, temp_pre, 0)
     send(temp_pre)
-    labelled(p, "taste report", "taste", 400, 140, (54, 80, 70, 20), out, fontsize=10.0)
+    labelled(p, "taste report", "taste", 400, 140, (66, 80, 58, 20), out, fontsize=9.0)
     # M10: accept keeps what is playing as music of her own (mappable, like
     # like and dislike), shown as "keep"; forget is in the pop-up window.
     accept = p.ui(
@@ -989,7 +1011,7 @@ def emily_panel():
     accept_msg = p.msg("accept", 460, 185, w=55)
     p.connect(accept, 0, accept_msg, 0)
     send(accept_msg)
-    p.comment("chance (temperature): 0 Magdalena's favourite choices only, 1 as before Magdalena, 3 adventurous. "
+    p.comment("temperature: 0 Magdalena's favourite choices only, 1 as before Magdalena, 3 adventurous. "
               "taste report: her taste in the Max window and ten pieces compared; keep (accept, M10)",
               520, 220, w=330, h=48, linecount=3)
 
@@ -1005,6 +1027,7 @@ def emily_panel():
     p.connect(controls, 0, set_temp, 0)
     p.connect(set_temp, 0, temp, 0)
     p.comment("setting temperature <t>: show a restored value without sending it back", 330, 380, w=300)
+    section(p, MAGDALENA_BG, EMILY_W)
     return p
 
 
@@ -1107,7 +1130,7 @@ def host_max():
     p.connect(setup_pc, 0, instruments_window_obj, 0)
     p.comment("set up: the plug-in instruments window (plug <n>, open <n>)", 680, 695, w=250)
     p.comment("Rest the mouse on any control to see what it does (or Window > Clue Window).", 20, 760,
-              w=220, h=34, linecount=2, pres=(6, 112, 220, 34), fontsize=10.0, textcolor=HEADING)
+              w=220, h=34, linecount=2, pres=(6, 112, 220, 34), fontsize=10.0, textcolor=SOFT_TEXT)
 
     route = p.obj("route voice setting meter ended", 20, 400, 2, 5, w=210)
     p.connect(inl, 0, route, 0)
@@ -1163,6 +1186,7 @@ def host_max():
     p.connect(restore, 2, use_vst, 0)
     p.comment("setting <name> <value> from startup: applied (deferred, so the remember it sends back "
               "never re-enters the engine)", 170, 510, w=360, h=34, linecount=2)
+    section(p, PLAY_BG, HOST_MAX_W)
     return p
 
 
@@ -1286,7 +1310,8 @@ def host_live():
     p.connect(midiin, 0, midiout, 0)
     p.comment("track MIDI passes through", 780, 480, w=170)
     p.comment("Voice tracks: Soprano, Alto, Tenor, Bass. For help, hover with the Info View open.",
-              20, 600, w=160, h=48, linecount=3, pres=(6, 123, 158, 44), fontsize=10.0, textcolor=HEADING)
+              20, 600, w=160, h=48, linecount=3, pres=(6, 123, 158, 44), fontsize=10.0, textcolor=SOFT_TEXT)
+    section(p, PLAY_BG, HOST_LIVE_W)
     return p
 
 
@@ -1385,7 +1410,7 @@ MAGDALENA_TEXT = [
     ("learns the user's taste", 11.0, 0, 20),
     ("Magdalena is Cento's listener. She learns the user's taste: like and dislike tell her what you "
      "enjoy in a piece, a stream phrase, or beats you select in the piano roll. Later pieces lean toward "
-     "what you liked, always within Bach's rules. chance sets how much luck still plays: 0, only her "
+     "what you liked, always within Bach's rules. temperature sets how much chance still plays: 0, only her "
      "favourite choices; 1, as if she weren't there; up to 3, more adventurous.", 12.0, 0, 90),
     ("keep writes what you're hearing into Magdalena's notebook: music of her own that later pieces draw on, "
      "alongside Bach's (how much: mix, in the memory tab). novelty lets her vary phrases with notes Bach "

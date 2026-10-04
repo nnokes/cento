@@ -99,9 +99,9 @@
 					"fontface": 0,
 					"linecount": 1,
 					"textcolor": [
-						0.55,
-						0.55,
-						0.55,
+						0.95,
+						0.95,
+						0.93,
 						1.0
 					],
 					"patching_rect": [
@@ -123,7 +123,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "Magdalena is Cento's listener. She learns the user's taste: like and dislike tell her what you enjoy in a piece, a stream phrase, or beats you select in the piano roll. Later pieces lean toward what you liked, always within Bach's rules. chance sets how much luck still plays: 0, only her favourite choices; 1, as if she weren't there; up to 3, more adventurous.",
+					"text": "Magdalena is Cento's listener. She learns the user's taste: like and dislike tell her what you enjoy in a piece, a stream phrase, or beats you select in the piano roll. Later pieces lean toward what you liked, always within Bach's rules. temperature sets how much chance still plays: 0, only her favourite choices; 1, as if she weren't there; up to 3, more adventurous.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"fontsize": 12.0,
@@ -205,9 +205,9 @@
 					"fontface": 0,
 					"linecount": 3,
 					"textcolor": [
-						0.55,
-						0.55,
-						0.55,
+						0.95,
+						0.95,
+						0.93,
 						1.0
 					],
 					"patching_rect": [

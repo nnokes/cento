@@ -31,6 +31,45 @@
 		"boxes": [
 			{
 				"box": {
+					"maxclass": "panel",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"mode": 0,
+					"border": 0,
+					"rounded": 0,
+					"bgcolor": [
+						0.15,
+						0.21,
+						0.31,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.15,
+						0.21,
+						0.31,
+						1.0
+					],
+					"ignoreclick": 1,
+					"background": 1,
+					"patching_rect": [
+						1250.0,
+						5.0,
+						40.0,
+						30.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						0.0,
+						0.0,
+						300.0,
+						169.0
+					],
+					"id": "obj-71"
+				}
+			},
+			{
+				"box": {
 					"maxclass": "comment",
 					"text": "emi.panel: the composing controls, shared by both products (Max version and Live device), in the order you use them (GUI redesign, M12): compose first, then which chorales and how long, then streams; the less-used tools are in the tools menu. Seed, beats, form, stream, phrases, transpose and signatures are live.* parameters: Live saves them with the set; the Max version restores them from the settings file. Panel 300 x 169 px.",
 					"numinlets": 1,
@@ -89,9 +128,9 @@
 					"fontsize": 10.0,
 					"fontface": 1,
 					"textcolor": [
-						0.55,
-						0.55,
-						0.55,
+						0.95,
+						0.95,
+						0.93,
 						1.0
 					],
 					"patching_rect": [
@@ -178,7 +217,13 @@
 						30.0,
 						20.0
 					],
-					"id": "obj-6"
+					"id": "obj-6",
+					"textcolor": [
+						0.95,
+						0.95,
+						0.93,
+						1.0
+					]
 				}
 			},
 			{
@@ -526,7 +571,13 @@
 						34.0,
 						20.0
 					],
-					"id": "obj-19"
+					"id": "obj-19",
+					"textcolor": [
+						0.95,
+						0.95,
+						0.93,
+						1.0
+					]
 				}
 			},
 			{
@@ -841,7 +892,13 @@
 						44.0,
 						20.0
 					],
-					"id": "obj-26"
+					"id": "obj-26",
+					"textcolor": [
+						0.95,
+						0.95,
+						0.93,
+						1.0
+					]
 				}
 			},
 			{
@@ -926,7 +983,13 @@
 						54.0,
 						20.0
 					],
-					"id": "obj-29"
+					"id": "obj-29",
+					"textcolor": [
+						0.95,
+						0.95,
+						0.93,
+						1.0
+					]
 				}
 			},
 			{
@@ -1584,9 +1647,9 @@
 					"numoutlets": 0,
 					"fontsize": 10.0,
 					"textcolor": [
-						0.55,
-						0.55,
-						0.55,
+						0.84,
+						0.84,
+						0.82,
 						1.0
 					],
 					"patching_rect": [

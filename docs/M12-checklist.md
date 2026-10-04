@@ -56,7 +56,7 @@ called:
 | load chorale, original key, pattern, clear (top row) | the **tools** menu (bottom of the composing panel) |
 | compose, seed, next (third row) | the top row; **compose** is the blue button |
 | form, sigs, transp., A/B | **chorale form**, **signatures**, **transpose**, **listening test…** |
-| accept, temperature (temp), taste | **keep**, **chance**, **taste report** |
+| accept, taste | **keep**, **taste report** (temperature stays temperature) |
 | vst~ instead, plug 1–4, open 1–4 (Max) | **plug-in instruments** and **set up…** (a window) |
 | writeclips, testclip (Live) | **write clips**, **test clips** |
 | Emily (her panel, her own music) | **Magdalena**, "user's taste" (her panel), **Magdalena's notebook** (the music you keep); **explain Magdalena** in the pop-up window |
@@ -64,8 +64,9 @@ called:
 The piano roll in the panels is narrower (260 px); **window** has the large
 one. In Live the device is now about 880 px wide.
 
-1. [ ] **Max: the look.** Open `patchers/cento.maxpat`. Four parts with grey
-       headings **PLAY**, **COMPOSE**, **EMILY**, then the piano roll.
+1. [ ] **Max: the look.** Open `patchers/cento.maxpat`. Four parts, each on
+       its own colour: **PLAY** (green), **COMPOSE** (blue), **MAGDALENA**
+       (brown), then the piano roll. Every label reads easily.
        Nothing overlaps or is cut off; every label is readable. (If not, a
        screenshot helps most.)
 2. [ ] **compose first.** Click **compose**, **next**, change **seed**: as
@@ -84,7 +85,7 @@ one. In Live the device is now about 880 px wide.
 5. [ ] **Live: the look.** Reopen your set. The brain device is narrower,
        with **CLIPS AND VOICES**, **COMPOSE** and **EMILY** headings;
        nothing overlaps. **write clips** and **test clips** work. The dial
-       says **chance**. If you mapped **like**, **dislike** or **accept**
+       says **temperature**. If you mapped **like**, **dislike** or **accept**
        (now **keep**) to keys or MIDI notes, the mappings still work.
 
 ## 1. Your Cento folder

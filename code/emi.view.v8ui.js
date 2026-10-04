@@ -243,7 +243,7 @@ function paint() {
   g.rectangle(0, 0, width, height);
   g.fill();
   if (!shown || shown.end <= shown.start) {
-    g.set_source_rgba(0.6, 0.6, 0.6, 1);
+    g.set_source_rgba(0.82, 0.82, 0.82, 1);
     g.select_font_face("Arial");
     g.set_font_size(11);
     g.move_to(8, 18);
@@ -279,7 +279,7 @@ function paint() {
       g.set_source_rgba(1, 1, 1, 0.06);
       g.rectangle(0, y(pitch) + rowHeight - 1, width, 1);
       g.fill();
-      g.set_source_rgba(1, 1, 1, 0.35);
+      g.set_source_rgba(1, 1, 1, 0.65);
       g.move_to(2, y(pitch) + rowHeight - 2);
       g.show_text(NOTE_NAMES[pitch % 12] + (Math.floor(pitch / 12) - 1));
     }
@@ -289,7 +289,7 @@ function paint() {
   if (x(shown.barTicks) - x(0) >= 18) {
     g.select_font_face("Arial");
     g.set_font_size(big ? 12 : 8);
-    g.set_source_rgba(1, 1, 1, 0.45);
+    g.set_source_rgba(1, 1, 1, 0.7);
     for (let t = Math.ceil(shown.start / shown.barTicks) * shown.barTicks; t < shown.end; t += shown.barTicks) {
       g.move_to(Math.round(x(t)) + 3, big ? 13 : 8);
       g.show_text(String(Math.floor(t / shown.barTicks) + 1));

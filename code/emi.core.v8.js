@@ -492,7 +492,7 @@ function temperature(t) {
   temperatureValue = Math.max(0, Math.min(3, Math.round(Number(t) * 100) / 100 || 0));
   save();
   const words = temperatureValue === 0 ? "only Magdalena's favourite choices" : temperatureValue < 1 ? "less chance, more taste" : temperatureValue === 1 ? "as if Magdalena weren't there" : "more adventurous";
-  outlet(0, "status", "chance", temperatureValue.toFixed(2) + ":", ...words.split(" "), "(from", "the", "next", "piece", "or", "phrase)");
+  outlet(0, "status", "temperature", temperatureValue.toFixed(2) + ":", ...words.split(" "), "(from", "the", "next", "piece", "or", "phrase)");
   showTaste();
 }
 

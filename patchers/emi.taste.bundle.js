@@ -127,6 +127,10 @@ const RED = [0.95, 0.42, 0.35];
 const LIMIT = 3; // weights stay within -3..+3 (emily-assoc)
 const ROW = 20;
 const AMBER = [1, 0.75, 0.25];
+// Text on the dark pane: the main text near white, secondary text a light
+// grey that still reads easily (0.4-0.6 was too faint), never dimmer than 0.7.
+const SOFT = 0.82;
+const FAINT = 0.7;
 const STEP = 0.1; // a pinned weight's resolution
 const PURPLE = [0.75, 0.45, 1];
 // The sliders other than the weights: their range, step, value on a
@@ -394,15 +398,33 @@ function paint() {
   paintHelp(width, height);
 }
 
+// A view's title, and a line of lighter text just after it: where the title
+// ends, however long it is (a fixed place made them collide when the titles
+// grew, with Magdalena's name).
+function titleLine(title, text) {
+  const g = mgraphics;
+  g.set_font_size(16);
+  g.set_source_rgba(1, 1, 1, 0.95);
+  g.move_to(12, 24);
+  g.show_text(title);
+  if (!text) return;
+  const measured = g.text_measure ? g.text_measure(title) : null;
+  const width = Array.isArray(measured) && measured[0] > 0 ? measured[0] : title.length * 9;
+  g.set_font_size(12);
+  g.set_source_rgba(1, 1, 1, SOFT);
+  g.move_to(Math.round(12 + width + 18), 24);
+  g.show_text(text);
+}
+titleLine.local = 1;
+
 // The overview: likes, dislikes, ratings, and the last comparison.
 function paintOverview(width, height) {
   const g = mgraphics;
   // The title line.
-  g.set_font_size(16);
-  g.set_source_rgba(1, 1, 1, 0.95);
-  g.move_to(12, 24);
-  g.show_text("Magdalena: the user's taste");
-  if (!shown) return;
+  if (!shown) {
+    titleLine("Magdalena: the user's taste", "");
+    return;
+  }
   const parts = [shown.ratings + (shown.ratings === 1 ? " rating" : " ratings")];
   if (shown.ratings) parts[0] += ` (${shown.likes} liked, ${shown.ratings - shown.likes} disliked)`;
   if (shown.sessions) parts.push(shown.sessions + (shown.sessions === 1 ? " earlier session" : " earlier sessions"));
@@ -410,10 +432,7 @@ function paintOverview(width, height) {
   if (pins) parts.push(pins + (pins === 1 ? " feature pinned" : " features pinned"));
   if (Number(shown.strength) !== 1) parts.push("strength " + Number(shown.strength).toFixed(2));
   parts.push("temperature " + Number(shown.temperature).toFixed(2));
-  g.set_font_size(12);
-  g.set_source_rgba(1, 1, 1, 0.6);
-  g.move_to(130, 24);
-  g.show_text(parts.join("  ·  "));
+  titleLine("Magdalena: the user's taste", parts.join("  ·  "));
 
   if (!shown.ratings) {
     g.set_font_size(13);
@@ -448,13 +467,13 @@ function paintOverview(width, height) {
       g.set_source_rgba(color[0], color[1], color[2], 0.85);
       g.rectangle(barLeft, y + 3, Math.max(2, (Math.abs(weight) / LIMIT) * barRoom), 11);
       g.fill();
-      g.set_source_rgba(1, 1, 1, 0.6);
+      g.set_source_rgba(1, 1, 1, SOFT);
       g.move_to(barLeft + Math.max(2, (Math.abs(weight) / LIMIT) * barRoom) + 5, y + 12);
       g.show_text((weight > 0 ? "+" : "") + Number(weight).toFixed(2));
     });
     if (!list.length) {
       g.set_font_size(12);
-      g.set_source_rgba(1, 1, 1, 0.4);
+      g.set_source_rgba(1, 1, 1, FAINT);
       g.move_to(x0, top + 20);
       g.show_text("none yet");
     }
@@ -493,7 +512,7 @@ function paintOverview(width, height) {
   if (!shown.compare) {
     header(3, "Compared");
     g.set_font_size(12);
-    g.set_source_rgba(1, 1, 1, 0.4);
+    g.set_source_rgba(1, 1, 1, FAINT);
     g.move_to(x3, top + 20);
     g.show_text("click taste to compare ten pieces");
     g.move_to(x3, top + 20 + ROW);
@@ -516,7 +535,7 @@ function paintOverview(width, height) {
     g.set_source_rgba(color[0], color[1], color[2], 0.35);
     g.rectangle(barLeft, y + 10, Math.max(1, (without / 100) * barRoom), 5);
     g.fill();
-    g.set_source_rgba(1, 1, 1, 0.65);
+    g.set_source_rgba(1, 1, 1, SOFT);
     g.move_to(barLeft + barRoom + 6, y + 12);
     g.show_text(`${withTaste}% (${without}%)`);
   });
@@ -546,14 +565,7 @@ paintTabs.local = 1;
 // The weight editor: a column per kind of feature, a slider per feature.
 function paintEditor(width, height) {
   const g = mgraphics;
-  g.set_font_size(16);
-  g.set_source_rgba(1, 1, 1, 0.95);
-  g.move_to(12, 24);
-  g.show_text("Edit Magdalena's weights");
-  g.set_font_size(12);
-  g.set_source_rgba(1, 1, 1, 0.6);
-  g.move_to(175, 24);
-  g.show_text("Drag a slider to pin a feature there (amber). Double-click to release it to what she learned (the thin line).");
+  titleLine("Edit Magdalena's weights", "Drag a slider to pin a feature there (amber). Double-click to release it to what she learned (the thin line).");
   if (!shown) return;
 
   // Strength: 0..2, top right.
@@ -640,19 +652,15 @@ button.local = 1;
 // Her memory (M10): her own works, her snapshots, mix and novelty.
 function paintMemory(width, height) {
   const g = mgraphics;
-  g.set_font_size(16);
-  g.set_source_rgba(1, 1, 1, 0.95);
-  g.move_to(12, 24);
-  g.show_text("Magdalena's memory");
-  if (!shown || !shown.own) return;
+  if (!shown || !shown.own) {
+    titleLine("Magdalena's memory", "");
+    return;
+  }
   const o = shown.own;
-  g.set_font_size(12);
-  g.set_source_rgba(1, 1, 1, 0.6);
-  g.move_to(140, 24);
   const summary = o.works
     ? `Her notebook: ${o.works} ${o.works === 1 ? "work" : "works"}, ${o.beats} beats, ${o.varied} with notes she varied${o.inUse ? "" : " (not in use at mix 0)"}`
     : "Her notebook is empty: keep a piece, a stream phrase, or beats you select.";
-  g.show_text(summary);
+  titleLine("Magdalena's memory", summary);
   // On the second line, as strength is in the editor (the tabs are on the first).
   namedSlider("mix", "mix", width - 520, width - 380, 46);
   namedSlider("novelty", "novelty", width - 230, width - 70, 46);
@@ -676,7 +684,7 @@ function paintMemory(width, height) {
     button("put aside", 12 + column - 90, y, ["unaccept", w.id], RED);
   });
   if (!shown.works.length) {
-    g.set_source_rgba(1, 1, 1, 0.4);
+    g.set_source_rgba(1, 1, 1, FAINT);
     g.move_to(12, top + 22);
     g.show_text("none yet");
   }
@@ -693,13 +701,13 @@ function paintMemory(width, height) {
     g.set_source_rgba(1, 1, 1, 0.9);
     g.move_to(x0, y);
     g.show_text(`#${snap.id}`);
-    g.set_source_rgba(1, 1, 1, 0.65);
+    g.set_source_rgba(1, 1, 1, SOFT);
     g.move_to(x0 + 36, y);
     g.show_text(`${snap.when} · ${snap.label}`);
     button("roll back", x0 + column - 90, y, ["rollback", snap.id], GREEN);
   });
   if (!shown.snapshots.length) {
-    g.set_source_rgba(1, 1, 1, 0.4);
+    g.set_source_rgba(1, 1, 1, FAINT);
     g.move_to(x0, top + 22);
     g.show_text("none yet: one is kept each time a session starts");
   }

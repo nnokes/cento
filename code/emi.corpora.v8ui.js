@@ -120,7 +120,7 @@ function paint() {
   g.move_to(12, 24);
   g.show_text("Corpora");
   g.set_font_size(12);
-  g.set_source_rgba(1, 1, 1, 0.6);
+  g.set_source_rgba(1, 1, 1, 0.82);
   g.move_to(90, 24);
   g.show_text("Composing uses every folder that is on, as one corpus.");
   if (!shown) return;
@@ -134,7 +134,7 @@ function paint() {
   shown.folders.slice(0, rows).forEach((f, i) => paintRow(f, TOP + i * ROW, width));
   if (shown.folders.length > rows) {
     g.set_font_size(11);
-    g.set_source_rgba(1, 1, 1, 0.5);
+    g.set_source_rgba(1, 1, 1, 0.75);
     g.move_to(36, TOP + rows * ROW + 4);
     g.show_text(`and ${shown.folders.length - rows} more (make the window taller to see them)`);
   }

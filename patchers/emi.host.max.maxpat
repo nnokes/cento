@@ -31,6 +31,45 @@
 		"boxes": [
 			{
 				"box": {
+					"maxclass": "panel",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"mode": 0,
+					"border": 0,
+					"rounded": 0,
+					"bgcolor": [
+						0.16,
+						0.27,
+						0.2,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.16,
+						0.27,
+						0.2,
+						1.0
+					],
+					"ignoreclick": 1,
+					"background": 1,
+					"patching_rect": [
+						1250.0,
+						5.0,
+						40.0,
+						30.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						0.0,
+						0.0,
+						232.0,
+						169.0
+					],
+					"id": "obj-59"
+				}
+			},
+			{
+				"box": {
 					"maxclass": "comment",
 					"text": "emi.host.max: the Max version's adapter: transport, MIDI ports, vst~ instruments, and startup (restores the settings file). Panel 232 x 169 px.",
 					"numinlets": 1,
@@ -88,9 +127,9 @@
 					"fontsize": 10.0,
 					"fontface": 1,
 					"textcolor": [
-						0.55,
-						0.55,
-						0.55,
+						0.95,
+						0.95,
+						0.93,
 						1.0
 					],
 					"patching_rect": [
@@ -252,7 +291,13 @@
 						30.0,
 						20.0
 					],
-					"id": "obj-7"
+					"id": "obj-7",
+					"textcolor": [
+						0.95,
+						0.95,
+						0.93,
+						1.0
+					]
 				}
 			},
 			{
@@ -582,7 +627,13 @@
 						46.0,
 						20.0
 					],
-					"id": "obj-24"
+					"id": "obj-24",
+					"textcolor": [
+						0.95,
+						0.95,
+						0.93,
+						1.0
+					]
 				}
 			},
 			{
@@ -702,7 +753,13 @@
 						124.0,
 						20.0
 					],
-					"id": "obj-29"
+					"id": "obj-29",
+					"textcolor": [
+						0.95,
+						0.95,
+						0.93,
+						1.0
+					]
 				}
 			},
 			{
@@ -866,9 +923,9 @@
 					"linecount": 2,
 					"fontsize": 10.0,
 					"textcolor": [
-						0.55,
-						0.55,
-						0.55,
+						0.84,
+						0.84,
+						0.82,
 						1.0
 					],
 					"patching_rect": [
