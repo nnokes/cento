@@ -817,8 +817,10 @@ function dataFolder(patchers) {
   } catch (e) {
     // not known
   }
-  const found = userFolder.find({ patchFolder: patchers, appPath, list: userFolder.listNames, exists: files.exists });
+  const looked = [];
+  const found = userFolder.find({ patchFolder: patchers, appPath, list: userFolder.listNames, exists: files.exists, looked });
   if (!found) {
+    post(`cento: no Cento folder found, so your files stay in patchers/ (looked in ${looked.join(", ") || "no Documents folder"})\n`);
     if (!settingsFile.isCheckout(patchers)) {
       post(`cento: no Cento folder in Documents: put the Cento folder from the download in your Documents folder, then open Cento again\n`);
       outlet(0, "error", "no", "Cento", "folder", "in", "Documents:", "put", "it", "there", "and", "open", "Cento", "again");

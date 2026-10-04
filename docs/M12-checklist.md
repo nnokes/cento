@@ -67,7 +67,10 @@ Then, to be safe, copy `About this folder.txt` from the repository's
          (your disk's and your name, as Max writes them);
        - `cento: copied to your Cento folder from patchers/: cento.settings.json, cento.taste.json, ...`
          (the files you have).
-       Copy both lines into your report.
+       Copy both lines into your report. If it says instead
+       `cento: no Cento folder found, so your files stay in patchers/ (looked in ...)`,
+       copy that line: it says where Cento looked and how many names Max
+       listed there.
 2. [ ] **Nothing lost.** The seed, the corpus window's folders (which are
        on) and Emily's taste (the pop-up window's overview) are as they
        were. The piece composed is the same as before you pulled.

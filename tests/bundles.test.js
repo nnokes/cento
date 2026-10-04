@@ -963,6 +963,14 @@ test("Cento folder (M12): a download's own chorales are found in it; with none, 
   assert.equal(settingsIn(cento).corpora[0].path, path.join(cento, "corpus", "bach-figured-bass"));
   assert.ok(!fs.existsSync(path.join(device, "cento.settings.json")));
 
+  // No Cento folder in a clone of the repository: said in the Max window.
+  const clone = tempDir();
+  fs.mkdirSync(path.join(clone, "patchers"));
+  fs.writeFileSync(path.join(clone, "package.json"), "{}\n");
+  const dev = engineIn(path.join(clone, "patchers"));
+  assert.deepEqual(select(dev.send("startup", "all"), "error"), []);
+  assert.ok(dev.posted.some((line) => line.startsWith("cento: no Cento folder found, so your files stay in patchers/ (looked in ")), dev.posted.join(""));
+
   // No Cento folder, and not the repository: said in the status line.
   const lost = engineIn(tempDir());
   const nothing = lost.send("startup", "all");
