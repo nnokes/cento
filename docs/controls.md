@@ -42,7 +42,8 @@ This page is written from the same table as the hover text (the patch generator)
 | **signatures** | On: Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats. |
 | **Status** | What the engine just did, or what went wrong. |
 | **listening test** | Write a blind listening test: a web page of 10 pairs, each a Bach chorale and a piece composed in its form, in random order. Can listeners tell which is Bach? |
-| **tools** | Less-used tools. Load a chorale: one chorale (a MIDI file) plays as written and is drawn in the piano roll, moved to C major or A minor, or in its own key. Play the test phrase: a built-in phrase (no chorales needed), to check that the voices sound. Stop and clear the queue: what is playing stops at once. |
+| **tools** | Less-used tools. Load a chorale: one chorale (a MIDI file) plays as written and is drawn in the piano roll, in C major or A minor, or in its own key with original key on. Play the test phrase: a built-in phrase (no chorales needed), to check that the voices sound. Stop and clear the queue: what is playing stops at once. |
+| **original key** | On: a chorale you load (tools, load a chorale) keeps its own key. Off: it is moved to C major or A minor (the default). Only for loaded chorales. |
 
 ## Magdalena: the user's taste (both versions)
 

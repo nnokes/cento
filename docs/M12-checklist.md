@@ -53,7 +53,8 @@ called:
 
 | Before | Now |
 |---|---|
-| load chorale, original key, pattern, clear (top row) | the **tools** menu (bottom of the composing panel) |
+| load chorale, pattern, clear (top row) | the **tools** menu (bottom of the composing panel) |
+| original key (top row) | **original key**, bottom right of the composing panel |
 | compose, seed, next (third row) | the top row; **compose** is the blue button |
 | form, sigs, transp., A/B | **chorale form**, **signatures**, **transpose**, **listening test…** |
 | accept, taste | **keep**, **taste report** (temperature stays temperature) |
@@ -72,9 +73,10 @@ one. In Live the device is now about 880 px wide.
        before.
 3. [ ] **The tools menu.** Choose *play the test phrase*: the test phrase
        is drawn and plays (press play), and the menu shows *tools* again.
-       Choose *load a chorale (in its own key)…* and pick any `.mid` from a
-       chorales folder: it loads, as **load chorale** did with **original
-       key** on. Then *stop and clear the queue*.
+       Switch **original key** on (bottom right), choose *load a chorale…* and
+       pick any `.mid` from a chorales folder: it loads in its own key, as
+       **load chorale** did with **original key** on. Then *stop and clear the
+       queue*.
 4. [ ] **The windows.** **corpora** opens *Cento: corpora*. **set up…**
        opens *Cento: plug-in instruments*; click **choose…** for the soprano:
        the plug-in chooser opens (cancel it). **window** opens the pop-up

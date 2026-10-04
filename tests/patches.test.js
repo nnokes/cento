@@ -188,7 +188,7 @@ test("live.* parameters: named, and unique within each product", () => {
     const longnames = params.map((p) => p.longname);
     assert.deepEqual([...new Set(longnames)], longnames, `${product}: duplicate parameter names`);
   }
-  assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Beats", "Form", "Phrases", "Seed", "Signatures", "Stream", "Transpose"]);
+  assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Beats", "Form", "Original Key", "Phrases", "Seed", "Signatures", "Stream", "Transpose"]);
   assert.deepEqual(liveParameters("emi.host.live.maxpat").map((p) => p.longname).sort(), ["All Voices Here", "Clips On Compose", "Play Through Voices"]);
   assert.deepEqual(liveParameters("emily.panel.maxpat").map((p) => p.longname).sort(), ["Accept", "Dislike", "Like", "Temperature"]);
   assert.deepEqual(liveParameters("emi.host.max.maxpat").map((p) => p.longname), ["Play"]);
@@ -207,7 +207,7 @@ test("live.text toggles and buttons all have their parameter (an off/on range), 
       }
     }
   }
-  assert.ok(count >= 10, `${count} live.text`); // 10 now (Original Key went into the tools menu)
+  assert.ok(count >= 11, `${count} live.text`); // 11 now
 });
 
 test("emily.panel (M9): like and dislike are mappable buttons; temperature is saved and shown when restored", () => {
@@ -248,10 +248,10 @@ test("emily.panel (M9): like and dislike are mappable buttons; temperature is sa
 test("emi.panel: each saved control sends its message, and shows restored values without sending", () => {
   const p = patchFile("emi.panel.maxpat");
   const [outlet] = p.find("outlet");
-  const [settings] = p.find("route seed beats form stream phrases transpose sigs");
-  ["Seed", "Beats", "Form", "Stream", "Phrases", "Transpose", "Signatures"].forEach((name, k) => {
+  const [settings] = p.find("route seed beats form key stream phrases transpose sigs");
+  ["Seed", "Beats", "Form", "Original Key", "Stream", "Phrases", "Transpose", "Signatures"].forEach((name, k) => {
     const control = [...p.boxes.values()].find((b) => b.varname === name);
-    const message = { Seed: "seed", Beats: "beats", Form: "form", Stream: "stream", Phrases: "phrases", Transpose: "transpose", Signatures: "sigs" }[name];
+    const message = { Seed: "seed", Beats: "beats", Form: "form", "Original Key": "key", Stream: "stream", Phrases: "phrases", Transpose: "transpose", Signatures: "sigs" }[name];
     const [[pre]] = p.from(control.id, 0);
     assert.equal(pre.text, `prepend ${message}`, name);
     assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id], `${name} goes to the engine`);
@@ -922,28 +922,21 @@ test("tools menu: the less-used tools, then back to its title", () => {
   const [outlet] = p.find("outlet");
   const menu = [...p.boxes.values()].find((b) => b.varname === "Tools");
   assert.equal(menu.maxclass, "umenu");
-  assert.deepEqual(menu.items.filter((i) => i !== ","), ["tools", "load a chorale (in C or A minor)…", "load a chorale (in its own key)…", "play the test phrase", "stop and clear the queue"]);
+  assert.deepEqual(menu.items.filter((i) => i !== ","), ["tools", "load a chorale…", "play the test phrase", "stop and clear the queue"]);
   const [[pick]] = p.from(menu.id, 0);
   assert.equal(pick.text, "t b i");
   const [[back]] = p.from(pick.id, 0);
   assert.equal(back.text, "set 0");
   assert.deepEqual(p.from(back.id).map(([b]) => b.id), [menu.id], "the menu shows its title again");
   const [[sel]] = p.from(pick.id, 1);
-  assert.equal(sel.text, "sel 1 2 3 4");
-  // Items 1 and 2: the key first, then the file dialog, then loadmidi.
-  for (const [k, key] of [[0, "key 0"], [1, "key 1"]]) {
-    const [[t]] = p.from(sel.id, k);
-    assert.equal(t.text, "t b b");
-    const [[keyMsg]] = p.from(t.id, 1);
-    assert.equal(keyMsg.text, key);
-    assert.deepEqual(p.from(keyMsg.id).map(([b]) => b.id), [outlet.id]);
-    const [[dialog]] = p.from(t.id, 0);
-    assert.equal(dialog.text, "opendialog");
-    const [[pre]] = p.from(dialog.id, 0);
-    assert.equal(pre.text, "prepend loadmidi");
-    assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
-  }
-  for (const [k, word] of [[2, "pattern"], [3, "clear"]]) {
+  assert.equal(sel.text, "sel 1 2 3");
+  // Item 1: the file dialog, then loadmidi (in the key original key says).
+  const [[dialog]] = p.from(sel.id, 0);
+  assert.equal(dialog.text, "opendialog");
+  const [[pre]] = p.from(dialog.id, 0);
+  assert.equal(pre.text, "prepend loadmidi");
+  assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
+  for (const [k, word] of [[1, "pattern"], [2, "clear"]]) {
     const [[m]] = p.from(sel.id, k);
     assert.equal(m.text, word);
     assert.deepEqual(p.from(m.id).map(([b]) => b.id), [outlet.id]);

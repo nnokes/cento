@@ -1538,8 +1538,8 @@ own settings and Emily files.
 **The GUI redesign** (before the checks, so the frozen devices and the app
 carry it): the panels follow the order you use them: **compose** first (the
 one strong blue button), then which chorales and how long, then streams. The
-less-used tools (load a chorale, in C or its own key; the test phrase; stop
-and clear) are in a **tools** menu, and the Max version's plug-in instruments
+less-used tools (load a chorale; the test phrase; stop and clear) are in a
+**tools** menu, with the **original key** switch for loaded chorales beside it, and the Max version's plug-in instruments
 in a window of their own (**set up…**). Plain names replace shorthand
 (chorale form, signatures, transpose, listening test…, keep,
 taste report, write clips, test clips); Live's parameters keep their

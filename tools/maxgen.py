@@ -232,9 +232,11 @@ HELP = {
                                  "each a Bach chorale and a piece composed in its form, in random order. Can "
                                  "listeners tell which is Bach?"),
         "Tools": ("tools", "Less-used tools. Load a chorale: one chorale (a MIDI file) plays as written and "
-                  "is drawn in the piano roll, moved to C major or A minor, or in its own key. Play the test "
-                  "phrase: a built-in phrase (no chorales needed), to check that the voices sound. Stop and "
-                  "clear the queue: what is playing stops at once."),
+                  "is drawn in the piano roll, in C major or A minor, or in its own key with original key "
+                  "on. Play the test phrase: a built-in phrase (no chorales needed), to check that the "
+                  "voices sound. Stop and clear the queue: what is playing stops at once."),
+        "Original Key": ("original key", "On: a chorale you load (tools, load a chorale) keeps its own key. "
+                         "Off: it is moved to C major or A minor (the default). Only for loaded chorales."),
     },
     "emily.panel": {
         "window": ("window", "Open the pop-up window: a large piano roll and Magdalena's taste in full, "
@@ -876,34 +878,32 @@ def panel():
               linecount=2)
     tools = p.ui("umenu", 20, 250, 80, 22, 1, 3, ["int", "", ""], pres=(120, 145, 80, 20),
                  parameter_enable=0, varname="Tools",
-                 items=["tools", ",", "load a chorale (in C or A minor)\u2026", ",",
-                        "load a chorale (in its own key)\u2026", ",", "play the test phrase", ",",
+                 items=["tools", ",", "load a chorale\u2026", ",", "play the test phrase", ",",
                         "stop and clear the queue"])
     pick = p.obj("t b i", 20, 285, 1, 2, ["bang", "int"], w=45)
     p.connect(tools, 0, pick, 0)
     back = p.msg("set 0", 20, 320, w=45)
     p.connect(pick, 0, back, 0)
     p.connect(back, 0, tools, 0)
-    sel = p.obj("sel 1 2 3 4", 80, 320, 1, 5, ["bang"] * 4 + [""], w=90)
+    sel = p.obj("sel 1 2 3", 80, 320, 1, 4, ["bang"] * 3 + [""], w=80)
     p.connect(pick, 1, sel, 0)
-    for k, key in enumerate(["key 0", "key 1"]):
-        t = p.obj("t b b", 80 + k * 140, 355, 1, 2, ["bang", "bang"], w=45)
-        p.connect(sel, k, t, 0)
-        key_msg = p.msg(key, 130 + k * 140, 390, w=45)
-        p.connect(t, 1, key_msg, 0)  # the key first, then the dialog
-        send(key_msg)
-        d = p.obj("opendialog", 80 + k * 140, 390, 1, 2, ["", "bang"], w=75)
-        p.connect(t, 0, d, 0)
-        pre = p.obj("prepend loadmidi", 80 + k * 140, 425, 2, 1, w=110)
-        p.connect(d, 0, pre, 0)
-        send(pre)
-    for k, word in [(2, "pattern"), (3, "clear")]:
-        m = p.msg(word, 360 + (k - 2) * 70, 355, w=55)
+    d = p.obj("opendialog", 80, 355, 1, 2, ["", "bang"], w=75)
+    p.connect(sel, 0, d, 0)
+    pre = p.obj("prepend loadmidi", 80, 390, 2, 1, w=110)
+    p.connect(d, 0, pre, 0)
+    send(pre)
+    for k, word in [(1, "pattern"), (2, "clear")]:
+        m = p.msg(word, 220 + (k - 1) * 70, 355, w=55)
         p.connect(sel, k, m, 0)
         send(m)
-    p.comment("tools: then back to its title; a chorale loads in C (key 0) or its own key (key 1)",
-              360, 390, w=260, h=34, linecount=2)
-    p.comment("hover for help", 1180, 300, w=100, pres=(204, 147, 90, 18), fontsize=10.0, textcolor=SOFT_TEXT)
+    p.comment("tools: then back to its title; a chorale loads in C or A minor, or in its own key with "
+              "original key on", 360, 390, w=260, h=34, linecount=2)
+    # Original key (bottom right): a chorale loaded with the tools menu keeps
+    # its own key, or is moved to C major or A minor.
+    key = live_toggle(p, "Original Key", "original key", 640, 250, (204, 145, 90, 20))
+    key_pre = p.obj("prepend key", 640, 285, 2, 1, w=80)
+    p.connect(key, 0, key_pre, 0)
+    send(key_pre)
 
     # From the engine: the status line, and restored or changed settings
     route = p.obj("route status error setting", 20, 560, 2, 4, w=170)
@@ -915,10 +915,10 @@ def panel():
     status = text_box(p, 20, 640, W - 12, 52, (6, 95, W - 12, 46), "Status")
     p.connect(set_status, 0, status, 0)
     p.connect(set_error, 0, status, 0)
-    controls = p.obj("route seed beats form stream phrases transpose sigs", 420, 560, 2, 8, w=330)
+    controls = p.obj("route seed beats form key stream phrases transpose sigs", 420, 560, 2, 9, w=360)
     p.connect(route, 2, controls, 0)
     p.comment("setting <name> <value>: show it without sending it back", 800, 560, w=330)
-    for k, control in enumerate([seed, beats, form, stream, phrases, transpose, sigs]):
+    for k, control in enumerate([seed, beats, form, key, stream, phrases, transpose, sigs]):
         pre = p.obj("prepend set", 420 + k * 95, 640, 2, 1, w=80)
         p.connect(controls, k, pre, 0)
         p.connect(pre, 0, control, 0)

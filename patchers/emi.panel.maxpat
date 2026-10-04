@@ -65,7 +65,7 @@
 						300.0,
 						169.0
 					],
-					"id": "obj-71"
+					"id": "obj-67"
 				}
 			},
 			{
@@ -1353,9 +1353,7 @@
 					"items": [
 						"tools",
 						",",
-						"load a chorale (in C or A minor)\u2026",
-						",",
-						"load a chorale (in its own key)\u2026",
+						"load a chorale\u2026",
 						",",
 						"play the test phrase",
 						",",
@@ -1375,8 +1373,8 @@
 						20.0
 					],
 					"id": "obj-42",
-					"hint": "Less-used tools. Load a chorale: one chorale (a MIDI file) plays as written and is drawn in the piano roll, moved to C major or A minor, or in its own key. Play the test phrase: a built-in phrase (no chorales needed), to check that the voices sound. Stop and clear the queue: what is playing stops at once.",
-					"annotation": "Less-used tools. Load a chorale: one chorale (a MIDI file) plays as written and is drawn in the piano roll, moved to C major or A minor, or in its own key. Play the test phrase: a built-in phrase (no chorales needed), to check that the voices sound. Stop and clear the queue: what is playing stops at once.",
+					"hint": "Less-used tools. Load a chorale: one chorale (a MIDI file) plays as written and is drawn in the piano roll, in C major or A minor, or in its own key with original key on. Play the test phrase: a built-in phrase (no chorales needed), to check that the voices sound. Stop and clear the queue: what is playing stops at once.",
+					"annotation": "Less-used tools. Load a chorale: one chorale (a MIDI file) plays as written and is drawn in the piano roll, in C major or A minor, or in its own key with original key on. Play the test phrase: a built-in phrase (no chorales needed), to check that the voices sound. Stop and clear the queue: what is playing stops at once.",
 					"annotation_name": "tools"
 				}
 			},
@@ -1420,11 +1418,10 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "sel 1 2 3 4",
+					"text": "sel 1 2 3",
 					"numinlets": 1,
-					"numoutlets": 5,
+					"numoutlets": 4,
 					"outlettype": [
-						"bang",
 						"bang",
 						"bang",
 						"bang",
@@ -1433,7 +1430,7 @@
 					"patching_rect": [
 						80.0,
 						320.0,
-						90.0,
+						80.0,
 						22.0
 					],
 					"id": "obj-45"
@@ -1442,17 +1439,17 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "t b b",
+					"text": "opendialog",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
-						"bang",
+						"",
 						"bang"
 					],
 					"patching_rect": [
 						80.0,
 						355.0,
-						45.0,
+						75.0,
 						22.0
 					],
 					"id": "obj-46"
@@ -1460,131 +1457,20 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "key 0",
+					"maxclass": "newobj",
+					"text": "prepend loadmidi",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
 						""
 					],
 					"patching_rect": [
-						130.0,
+						80.0,
 						390.0,
-						45.0,
+						110.0,
 						22.0
 					],
 					"id": "obj-47"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "opendialog",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"bang"
-					],
-					"patching_rect": [
-						80.0,
-						390.0,
-						75.0,
-						22.0
-					],
-					"id": "obj-48"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend loadmidi",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						80.0,
-						425.0,
-						110.0,
-						22.0
-					],
-					"id": "obj-49"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "t b b",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"bang",
-						"bang"
-					],
-					"patching_rect": [
-						220.0,
-						355.0,
-						45.0,
-						22.0
-					],
-					"id": "obj-50"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "message",
-					"text": "key 1",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						270.0,
-						390.0,
-						45.0,
-						22.0
-					],
-					"id": "obj-51"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "opendialog",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"bang"
-					],
-					"patching_rect": [
-						220.0,
-						390.0,
-						75.0,
-						22.0
-					],
-					"id": "obj-52"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend loadmidi",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						220.0,
-						425.0,
-						110.0,
-						22.0
-					],
-					"id": "obj-53"
 				}
 			},
 			{
@@ -1597,12 +1483,12 @@
 						""
 					],
 					"patching_rect": [
-						360.0,
+						220.0,
 						355.0,
 						55.0,
 						22.0
 					],
-					"id": "obj-54"
+					"id": "obj-48"
 				}
 			},
 			{
@@ -1615,18 +1501,18 @@
 						""
 					],
 					"patching_rect": [
-						430.0,
+						290.0,
 						355.0,
 						55.0,
 						22.0
 					],
-					"id": "obj-55"
+					"id": "obj-49"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "tools: then back to its title; a chorale loads in C (key 0) or its own key (key 1)",
+					"text": "tools: then back to its title; a chorale loads in C or A minor, or in its own key with original key on",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -1636,36 +1522,122 @@
 						260.0,
 						34.0
 					],
-					"id": "obj-56"
+					"id": "obj-50"
 				}
 			},
 			{
 				"box": {
-					"maxclass": "comment",
-					"text": "hover for help",
+					"maxclass": "live.text",
 					"numinlets": 1,
-					"numoutlets": 0,
-					"fontsize": 10.0,
-					"textcolor": [
-						0.84,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"parameter_enable": 1,
+					"varname": "Original Key",
+					"mode": 1,
+					"text": "original key",
+					"texton": "original key",
+					"bgcolor": [
 						0.84,
 						0.82,
+						0.78,
 						1.0
 					],
+					"activebgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"bgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"activebgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Original Key",
+							"parameter_shortname": "Original Key",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 1
+						}
+					},
 					"patching_rect": [
-						1180.0,
-						300.0,
+						640.0,
+						250.0,
 						100.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						204.0,
-						147.0,
+						145.0,
 						90.0,
-						18.0
+						20.0
 					],
-					"id": "obj-57"
+					"id": "obj-51",
+					"hint": "On: a chorale you load (tools, load a chorale) keeps its own key. Off: it is moved to C major or A minor (the default). Only for loaded chorales.",
+					"annotation": "On: a chorale you load (tools, load a chorale) keeps its own key. Off: it is moved to C major or A minor (the default). Only for loaded chorales.",
+					"annotation_name": "original key"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend key",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						640.0,
+						285.0,
+						80.0,
+						22.0
+					],
+					"id": "obj-52"
 				}
 			},
 			{
@@ -1686,7 +1658,7 @@
 						170.0,
 						22.0
 					],
-					"id": "obj-58"
+					"id": "obj-53"
 				}
 			},
 			{
@@ -1704,7 +1676,7 @@
 						98.0,
 						22.0
 					],
-					"id": "obj-59"
+					"id": "obj-54"
 				}
 			},
 			{
@@ -1722,7 +1694,7 @@
 						100.0,
 						22.0
 					],
-					"id": "obj-60"
+					"id": "obj-55"
 				}
 			},
 			{
@@ -1754,7 +1726,7 @@
 						288.0,
 						46.0
 					],
-					"id": "obj-61",
+					"id": "obj-56",
 					"hint": "What the engine just did, or what went wrong.",
 					"annotation": "What the engine just did, or what went wrong.",
 					"annotation_name": "Status"
@@ -1763,10 +1735,11 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "route seed beats form stream phrases transpose sigs",
+					"text": "route seed beats form key stream phrases transpose sigs",
 					"numinlets": 2,
-					"numoutlets": 8,
+					"numoutlets": 9,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -1779,10 +1752,10 @@
 					"patching_rect": [
 						420.0,
 						560.0,
-						330.0,
+						360.0,
 						22.0
 					],
-					"id": "obj-62"
+					"id": "obj-57"
 				}
 			},
 			{
@@ -1797,7 +1770,7 @@
 						330.0,
 						20.0
 					],
-					"id": "obj-63"
+					"id": "obj-58"
 				}
 			},
 			{
@@ -1815,7 +1788,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-64"
+					"id": "obj-59"
 				}
 			},
 			{
@@ -1833,7 +1806,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-65"
+					"id": "obj-60"
 				}
 			},
 			{
@@ -1851,7 +1824,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-66"
+					"id": "obj-61"
 				}
 			},
 			{
@@ -1869,7 +1842,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-67"
+					"id": "obj-62"
 				}
 			},
 			{
@@ -1887,7 +1860,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-68"
+					"id": "obj-63"
 				}
 			},
 			{
@@ -1905,7 +1878,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-69"
+					"id": "obj-64"
 				}
 			},
 			{
@@ -1923,7 +1896,25 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-70"
+					"id": "obj-65"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend set",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						1085.0,
+						640.0,
+						80.0,
+						22.0
+					],
+					"id": "obj-66"
 				}
 			}
 		],
@@ -2316,7 +2307,7 @@
 				"patchline": {
 					"source": [
 						"obj-46",
-						1
+						0
 					],
 					"destination": [
 						"obj-47",
@@ -2328,42 +2319,6 @@
 				"patchline": {
 					"source": [
 						"obj-47",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-46",
-						0
-					],
-					"destination": [
-						"obj-48",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-48",
-						0
-					],
-					"destination": [
-						"obj-49",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-49",
 						0
 					],
 					"destination": [
@@ -2379,7 +2334,7 @@
 						1
 					],
 					"destination": [
-						"obj-50",
+						"obj-48",
 						0
 					]
 				}
@@ -2387,55 +2342,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-50",
-						1
-					],
-					"destination": [
-						"obj-51",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-51",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-50",
-						0
-					],
-					"destination": [
-						"obj-52",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-52",
-						0
-					],
-					"destination": [
-						"obj-53",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-53",
+						"obj-48",
 						0
 					],
 					"destination": [
@@ -2451,7 +2358,7 @@
 						2
 					],
 					"destination": [
-						"obj-54",
+						"obj-49",
 						0
 					]
 				}
@@ -2459,7 +2366,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-54",
+						"obj-49",
 						0
 					],
 					"destination": [
@@ -2471,11 +2378,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-45",
-						3
+						"obj-51",
+						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-52",
 						0
 					]
 				}
@@ -2483,7 +2390,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-55",
+						"obj-52",
 						0
 					],
 					"destination": [
@@ -2499,7 +2406,7 @@
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-53",
 						0
 					]
 				}
@@ -2507,11 +2414,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-58",
+						"obj-53",
 						0
 					],
 					"destination": [
-						"obj-59",
+						"obj-54",
 						0
 					]
 				}
@@ -2519,11 +2426,59 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-58",
+						"obj-53",
 						1
 					],
 					"destination": [
-						"obj-60",
+						"obj-55",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-54",
+						0
+					],
+					"destination": [
+						"obj-56",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-55",
+						0
+					],
+					"destination": [
+						"obj-56",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-53",
+						2
+					],
+					"destination": [
+						"obj-57",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-57",
+						0
+					],
+					"destination": [
+						"obj-59",
 						0
 					]
 				}
@@ -2532,54 +2487,6 @@
 				"patchline": {
 					"source": [
 						"obj-59",
-						0
-					],
-					"destination": [
-						"obj-61",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-60",
-						0
-					],
-					"destination": [
-						"obj-61",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-58",
-						2
-					],
-					"destination": [
-						"obj-62",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-62",
-						0
-					],
-					"destination": [
-						"obj-64",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-64",
 						0
 					],
 					"destination": [
@@ -2591,11 +2498,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-62",
+						"obj-57",
 						1
 					],
 					"destination": [
-						"obj-65",
+						"obj-60",
 						0
 					]
 				}
@@ -2603,7 +2510,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-65",
+						"obj-60",
 						0
 					],
 					"destination": [
@@ -2615,11 +2522,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-62",
+						"obj-57",
 						2
 					],
 					"destination": [
-						"obj-66",
+						"obj-61",
 						0
 					]
 				}
@@ -2627,7 +2534,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-66",
+						"obj-61",
 						0
 					],
 					"destination": [
@@ -2639,11 +2546,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-62",
+						"obj-57",
 						3
 					],
 					"destination": [
-						"obj-67",
+						"obj-62",
 						0
 					]
 				}
@@ -2651,7 +2558,31 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-67",
+						"obj-62",
+						0
+					],
+					"destination": [
+						"obj-51",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-57",
+						4
+					],
+					"destination": [
+						"obj-63",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-63",
 						0
 					],
 					"destination": [
@@ -2663,11 +2594,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-62",
-						4
+						"obj-57",
+						5
 					],
 					"destination": [
-						"obj-68",
+						"obj-64",
 						0
 					]
 				}
@@ -2675,7 +2606,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-68",
+						"obj-64",
 						0
 					],
 					"destination": [
@@ -2687,11 +2618,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-62",
-						5
+						"obj-57",
+						6
 					],
 					"destination": [
-						"obj-69",
+						"obj-65",
 						0
 					]
 				}
@@ -2699,7 +2630,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-69",
+						"obj-65",
 						0
 					],
 					"destination": [
@@ -2711,11 +2642,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-62",
-						6
+						"obj-57",
+						7
 					],
 					"destination": [
-						"obj-70",
+						"obj-66",
 						0
 					]
 				}
@@ -2723,7 +2654,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-70",
+						"obj-66",
 						0
 					],
 					"destination": [
