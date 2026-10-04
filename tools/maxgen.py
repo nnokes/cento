@@ -227,8 +227,9 @@ HELP = {
                             "the whole piece on this track's instrument."),
     },
     "emi.panel": {
-        "Compose": ("compose", "Compose a piece with the seed shown (with stream on: start a stream). "
-                    "While playing, the new music starts at the next bar." + MAP),
+        "Compose": ("update composition", "Compose a piece with the seed shown, with the settings and "
+                    "Magdalena's taste as they are now (with stream on: start a stream). While playing, the new "
+                    "music starts at the next bar. The pop-up window has the same button." + MAP),
         "Seed": ("seed", "The random seed: the same seed, chorales, settings and taste always give the same "
                  "piece. Changing it composes at once (once chorales are loaded)."),
         "Next": ("next", "Add 1 to the seed and compose: the quickest way to hear another piece." + MAP),
@@ -241,7 +242,7 @@ HELP = {
                   "chorales at least this long lend their form."),
         "Form": ("chorale form", "On: each piece takes the form of a real chorale: its phrases and cadences "
                  "fall in the same places. Off: beats are joined freely, with no phrase plan."),
-        "Stream": ("stream", "On: compose starts a stream, composed a phrase at a time while it plays, "
+        "Stream": ("stream", "On: update composition starts a stream, composed a phrase at a time while it plays, "
                    "for as many phrases as phrases says. Off: compose makes a whole piece."),
         "Phrases": ("phrases", "How many phrases a stream plays before it ends (0: endless)."),
         "Transpose": ("transpose", "Transpose the music by semitones (-12 to 12): a piece at once, a "
@@ -274,9 +275,10 @@ HELP = {
         "Window Dislike": ("dislike", DISLIKE),
         "Window Keep": ("keep", ACCEPT),
         "Taste Report": ("taste report", TASTE),
-        "Reload Seed": ("reload seed", "Compose the seed shown again, with Magdalena's taste, mix and novelty "
-                        "as they are now, to hear and see what your changes did. With stream on, the stream "
-                        "starts again."),
+        "Update Composition": ("update composition", "The same as the panel's update composition: compose "
+                               "the seed shown again, with Magdalena's taste, mix and novelty as they are now, "
+                               "to hear and see what your changes did. With stream on, the stream starts "
+                               "again."),
         "Release All Pins": ("release all pins", "Release every pinned weight: each goes back to what "
                              "Magdalena learned from your ratings."),
         "Store Taste": ("store taste", "Save Magdalena's whole taste (weights, pins, strength, ratings) to a "
@@ -877,17 +879,19 @@ def panel():
     send = lambda obj: p.connect(obj, 0, out, 0)
 
     # Row 1: compose (the main action), seed, next, export midi
-    labelled(p, "Compose", "compose", "compose", 660, 300, (6, 6, 76, 24), out, look=MAIN, mappable=True,
-             fontsize=12.0)
-    label(p, "seed", 740, 270, (86, 9, 30, 18), w=40)
-    seed = live_numbox(p, "Seed", 740, 300, (116, 9, 50, 18), 1, 99999, 1)
+    # (Compose is shown as "update composition": it composes again with the
+    # settings and taste as they are now; Live's parameter keeps its name.)
+    labelled(p, "Compose", "update composition", "compose", 660, 300, (6, 6, 114, 24), out, look=MAIN,
+             mappable=True, fontsize=11.0)
+    label(p, "seed", 740, 270, (124, 9, 24, 18), w=40)
+    seed = live_numbox(p, "Seed", 740, 300, (148, 9, 42, 18), 1, 99999, 1)
     seed_pre = p.obj("prepend seed", 740, 335, 2, 1, w=90)
     p.connect(seed, 0, seed_pre, 0)
     send(seed_pre)
-    labelled(p, "Next", "next", "next", 860, 300, (172, 8, 44, 20), out, mappable=True)
-    p.comment("seed: composes when changed (once a corpus is loaded); compose: the shown seed again; "
-              "next: seed + 1", 660, 400, w=330, h=34, linecount=2)
-    dialog_button(p, "Export MIDI", "export midi", 1000, 300, (220, 8, 74, 20), "savedialog", "exportmidi",
+    labelled(p, "Next", "next", "next", 860, 300, (194, 8, 34, 20), out, mappable=True)
+    p.comment("seed: composes when changed (once a corpus is loaded); update composition: the shown seed "
+              "again; next: seed + 1", 660, 400, w=330, h=34, linecount=2)
+    dialog_button(p, "Export MIDI", "export midi", 1000, 300, (232, 8, 62, 20), "savedialog", "exportmidi",
                   targets)
 
     # Row 2: corpora (the corpus window, emi.corpora in the top patch:
@@ -1389,20 +1393,22 @@ def window():
     labelled(p, "Window Dislike", "dislike", "dislike", 80, 760, (70, y, 56, 24), out, look=WARM)
     labelled(p, "Window Keep", "keep", "accept", 140, 760, (130, y, 46, 24), out, look=WARM)
     labelled(p, "Taste Report", "taste report", "taste", 200, 760, (180, y, 72, 24), out)
-    # Reload seed: compose the seed shown again, after changing her mix,
-    # novelty or weights, to hear and see what they do.
-    labelled(p, "Reload Seed", "reload seed", "compose", 260, 760, (256, y, 90, 24), out)
+    # Update composition, as on the panel: compose the seed shown again,
+    # after changing her mix, novelty or weights, to hear and see what they
+    # do. (It was "reload seed".)
+    labelled(p, "Update Composition", "update composition", "compose", 260, 760, (256, y, 120, 24), out,
+             look=MAIN, fontsize=11.0)
     # Releasing every pin, and storing or recalling a whole taste as a file.
     # (The taste pane's views are its own tabs.)
-    labelled(p, "Release All Pins", "release all pins", "unpin", 410, 760, (356, y, 120, 24), out)
-    dialog_button(p, "Store Taste", "store taste", 580, 760, (486, y, 95, 24), "savedialog", "storetaste", [(out, 0)])
-    dialog_button(p, "Recall Taste", "recall taste", 720, 760, (587, y, 95, 24), "opendialog", "recalltaste",
+    labelled(p, "Release All Pins", "release all pins", "unpin", 410, 760, (386, y, 120, 24), out)
+    dialog_button(p, "Store Taste", "store taste", 580, 760, (516, y, 95, 24), "savedialog", "storetaste", [(out, 0)])
+    dialog_button(p, "Recall Taste", "recall taste", 720, 760, (617, y, 95, 24), "opendialog", "recalltaste",
                   [(out, 0)])
-    labelled(p, "Forget", "forget", "forget", 860, 760, (688, y, 60, 24), out)
+    labelled(p, "Forget", "forget", "forget", 860, 760, (718, y, 60, 24), out)
     # Who Magdalena is (emi.magdalena, a small window of its own).
-    opener(p, "Explain Magdalena", "explain Magdalena", 1000, 760, (758, y, 130, 24), "emi.magdalena")
+    opener(p, "Explain Magdalena", "explain Magdalena", 1000, 760, (788, y, 130, 24), "emi.magdalena")
     p.comment("Drag across the roll to select beats for like, dislike and keep.", 940, 900, linecount=2,
-              pres=(896, y - 2, 274, 30),
+              pres=(926, y - 2, 244, 30),
               fontsize=LABEL_SIZE)
     window_title(p, "Cento: piano roll and Magdalena", 700)
     return p

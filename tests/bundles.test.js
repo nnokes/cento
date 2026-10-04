@@ -1199,7 +1199,7 @@ test("view: draws one rectangle per note, plus bar lines and seams", () => {
   const view = loadBundle("emi.view");
   const g = view.context.mgraphics;
   view.send("paint");
-  assert.ok(g.calls.some(([name, text]) => name === "show_text" && /^Press compose, then play\.$/.test(text)));
+  assert.ok(g.calls.some(([name, text]) => name === "show_text" && /^Press update composition, then play\.$/.test(text)));
 
   g.calls.length = 0;
   view.send("clear", 4 * Q, 60, 72, 4 * Q);

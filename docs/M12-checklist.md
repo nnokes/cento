@@ -56,7 +56,7 @@ called:
 | load chorale, pattern, clear (top row) | **more features…** (Max version only, in the PLAY panel): **load a chorale…**, **play the test phrase**, **stop and clear the queue** |
 | original key (top row) | **original key**, beside **load a chorale…** in the same window |
 | A/B (the listening test) | **listening test…**, in the same window |
-| compose, seed, next (third row) | the top row; **compose** is the blue button |
+| compose, seed, next (third row) | the top row; **compose**, now **update composition**, is the blue button (the pop-up window has one too, in place of **reload seed**) |
 | form, sigs, transp. | **chorale form**, **signatures**, **transpose** |
 | accept, taste | **keep**; **taste report** is in the pop-up window (the panel keeps her one-line report) |
 | vst~ instead, plug 1–4, open 1–4 (Max) | **plug-in instruments** and **set up…** (a window) |
@@ -68,7 +68,8 @@ The piano roll in the panels is narrower (260 px); **window** (the square
 one. In Live the device is now about 880 px wide. A dark row along the top
 names each section (**PLAY** or **CLIPS AND VOICES**, **COMPOSE**,
 **MAGDALENA**, **PIANO ROLL**), centred above it. Every button is in Live's
-own look (a `live.text`), like the switches. In Live, **compose**, **next**,
+own look (a `live.text`), like the switches. In Live, **update composition**
+(its parameter is still *Compose*), **next**,
 **like**, **dislike**, **keep** and **write clips** can be mapped to keys or
 MIDI notes; the other buttons are hidden from Live's mapping and automation.
 
@@ -114,7 +115,7 @@ MIDI notes; the other buttons are hidden from Live's mapping and automation.
        **temperature** is a slider across Magdalena's panel. If you mapped
        **like**, **dislike** or **accept** (now **keep**) to keys or MIDI
        notes, the mappings still work. In Live's MIDI Map mode (**⌘M**),
-       **compose** and **next** can be mapped too.
+       **update composition** and **next** can be mapped too.
 
 ## 1. Your Cento folder
 

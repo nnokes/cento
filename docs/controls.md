@@ -36,14 +36,14 @@ This page is written from the same table as the hover text (the patch generator)
 
 | Control | What it does |
 | --- | --- |
-| **compose** | Compose a piece with the seed shown (with stream on: start a stream). While playing, the new music starts at the next bar. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
+| **update composition** | Compose a piece with the seed shown, with the settings and Magdalena's taste as they are now (with stream on: start a stream). While playing, the new music starts at the next bar. The pop-up window has the same button. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **seed** | The random seed: the same seed, chorales, settings and taste always give the same piece. Changing it composes at once (once chorales are loaded). |
 | **next** | Add 1 to the seed and compose: the quickest way to hear another piece. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **export midi** | Save the current piece as a MIDI file. For a composed piece or stream, a .json of where every beat came from is saved next to it. |
 | **corpora** | Open the corpus window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; they are loaded by themselves next time. |
 | **beats** | The shortest piece to compose, in beats (4 to 256). With chorale form on, only chorales at least this long lend their form. |
 | **chorale form** | On: each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan. |
-| **stream** | On: compose starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece. |
+| **stream** | On: update composition starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece. |
 | **phrases** | How many phrases a stream plays before it ends (0: endless). |
 | **transpose** | Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase. |
 | **signatures** | On: Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats. |
@@ -98,7 +98,7 @@ This page is written from the same table as the hover text (the patch generator)
 | **dislike** | Tell Magdalena you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. |
 | **keep** | Keep what you're hearing in Magdalena's notebook: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). |
 | **taste report** | Report Magdalena's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing. |
-| **reload seed** | Compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again. |
+| **update composition** | The same as the panel's update composition: compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again. |
 | **release all pins** | Release every pinned weight: each goes back to what Magdalena learned from your ratings. |
 | **store taste** | Save Magdalena's whole taste (weights, pins, strength, ratings) to a file you choose. |
 | **recall taste** | Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot. |

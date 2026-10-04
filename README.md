@@ -66,7 +66,8 @@ licensed), so it composes straight away; music21's are an optional extra
 ([step by step](#more-chorales-from-music21)). Every control explains itself when you hover
 over it (a tooltip in Max, the Info View in Live); [docs/controls.md](docs/controls.md)
 lists them all. The panels are laid out in the order you use them (since the M12
-redesign), under a row naming each section: **compose** first, every button in
+redesign), under a row naming each section: **update composition** first (the
+pop-up window has one too), every button in
 Live's own look, and (in the Max version) the listening test and less-used tools
 in a **more features** window. The full plan
 and milestones are in [PLAN.md](PLAN.md).

@@ -131,9 +131,9 @@
 					"parameter_enable": 1,
 					"varname": "Compose",
 					"mode": 0,
-					"text": "compose",
-					"texton": "compose",
-					"fontsize": 12.0,
+					"text": "update composition",
+					"texton": "update composition",
+					"fontsize": 11.0,
 					"bgcolor": [
 						0.24,
 						0.44,
@@ -189,7 +189,7 @@
 								"on"
 							],
 							"parameter_longname": "Compose",
-							"parameter_shortname": "compose",
+							"parameter_shortname": "update composition",
 							"parameter_type": 2,
 							"parameter_mmax": 1,
 							"parameter_initial": [
@@ -201,20 +201,20 @@
 					"patching_rect": [
 						660.0,
 						300.0,
-						76.0,
+						114.0,
 						24.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
 						6.0,
-						76.0,
+						114.0,
 						24.0
 					],
 					"id": "obj-4",
-					"hint": "Compose a piece with the seed shown (with stream on: start a stream). While playing, the new music starts at the next bar. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
-					"annotation": "Compose a piece with the seed shown (with stream on: start a stream). While playing, the new music starts at the next bar. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
-					"annotation_name": "compose"
+					"hint": "Compose a piece with the seed shown, with the settings and Magdalena's taste as they are now (with stream on: start a stream). While playing, the new music starts at the next bar. The pop-up window has the same button. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation": "Compose a piece with the seed shown, with the settings and Magdalena's taste as they are now (with stream on: start a stream). While playing, the new music starts at the next bar. The pop-up window has the same button. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation_name": "update composition"
 				}
 			},
 			{
@@ -263,14 +263,14 @@
 					"patching_rect": [
 						740.0,
 						270.0,
-						30.0,
+						24.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						86.0,
+						124.0,
 						9.0,
-						30.0,
+						24.0,
 						18.0
 					],
 					"id": "obj-7",
@@ -315,9 +315,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						116.0,
+						148.0,
 						9.0,
-						50.0,
+						42.0,
 						18.0
 					],
 					"id": "obj-8",
@@ -426,14 +426,14 @@
 					"patching_rect": [
 						860.0,
 						300.0,
-						44.0,
+						34.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						172.0,
+						194.0,
 						8.0,
-						44.0,
+						34.0,
 						20.0
 					],
 					"id": "obj-10",
@@ -481,7 +481,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "seed: composes when changed (once a corpus is loaded); compose: the shown seed again; next: seed + 1",
+					"text": "seed: composes when changed (once a corpus is loaded); update composition: the shown seed again; next: seed + 1",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -577,14 +577,14 @@
 					"patching_rect": [
 						1000.0,
 						300.0,
-						74.0,
+						62.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						220.0,
+						232.0,
 						8.0,
-						74.0,
+						62.0,
 						20.0
 					],
 					"id": "obj-14",
@@ -1097,8 +1097,8 @@
 						20.0
 					],
 					"id": "obj-27",
-					"hint": "On: compose starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece.",
-					"annotation": "On: compose starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece.",
+					"hint": "On: update composition starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece.",
+					"annotation": "On: update composition starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece.",
 					"annotation_name": "stream"
 				}
 			},

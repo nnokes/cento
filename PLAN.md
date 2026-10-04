@@ -1587,6 +1587,9 @@ on this track" is now "all voices here" to fit. A comment on show wraps as
 wide as its box in the patching view (and shows presentation_linecount
 lines), so the generator makes both match what's shown: the Live panel's
 voice-tracks note was cut off before; a test now checks every comment fits.
+**compose** is shown as **update composition** (Live's parameter keeps its name,
+*Compose*), and the pop-up window's **reload seed**, which did the same, became
+an **update composition** of its own, in the same blue.
 
 **Subfolders**: `patchers/` holds only what you open (`cento.maxpat`,
 `cento.brain.amxd`, `cento.voice.amxd`); the patches they're made of are in

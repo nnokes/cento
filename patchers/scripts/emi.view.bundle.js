@@ -320,7 +320,7 @@ function paint() {
     g.select_font_face("Arial");
     g.set_font_size(11);
     g.move_to(8, 18);
-    g.show_text("Press compose, then play.");
+    g.show_text("Press update composition, then play.");
     return;
   }
 

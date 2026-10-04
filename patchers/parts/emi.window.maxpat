@@ -724,57 +724,57 @@
 						""
 					],
 					"parameter_enable": 1,
-					"varname": "Reload Seed",
+					"varname": "Update Composition",
 					"mode": 0,
-					"text": "reload seed",
-					"texton": "reload seed",
-					"fontsize": 10.0,
+					"text": "update composition",
+					"texton": "update composition",
+					"fontsize": 11.0,
 					"bgcolor": [
-						0.8,
-						0.85,
-						0.93,
+						0.24,
+						0.44,
+						0.71,
 						1.0
 					],
 					"activebgcolor": [
-						0.8,
-						0.85,
-						0.93,
+						0.24,
+						0.44,
+						0.71,
 						1.0
 					],
 					"bgoncolor": [
-						0.6,
-						0.69,
-						0.84,
+						0.16,
+						0.31,
+						0.52,
 						1.0
 					],
 					"activebgoncolor": [
-						0.6,
-						0.69,
-						0.84,
+						0.16,
+						0.31,
+						0.52,
 						1.0
 					],
 					"textcolor": [
-						0.08,
-						0.08,
-						0.09,
+						1.0,
+						1.0,
+						1.0,
 						1.0
 					],
 					"activetextcolor": [
-						0.08,
-						0.08,
-						0.09,
+						1.0,
+						1.0,
+						1.0,
 						1.0
 					],
 					"textoncolor": [
-						0.08,
-						0.08,
-						0.09,
+						1.0,
+						1.0,
+						1.0,
 						1.0
 					],
 					"activetextoncolor": [
-						0.08,
-						0.08,
-						0.09,
+						1.0,
+						1.0,
+						1.0,
 						1.0
 					],
 					"saved_attribute_attributes": {
@@ -783,8 +783,8 @@
 								"off",
 								"on"
 							],
-							"parameter_longname": "Reload Seed",
-							"parameter_shortname": "reload seed",
+							"parameter_longname": "Update Composition",
+							"parameter_shortname": "update composition",
 							"parameter_type": 2,
 							"parameter_mmax": 1,
 							"parameter_initial": [
@@ -797,20 +797,20 @@
 					"patching_rect": [
 						260.0,
 						760.0,
-						90.0,
+						120.0,
 						24.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						256.0,
 						710.0,
-						90.0,
+						120.0,
 						24.0
 					],
 					"id": "obj-19",
-					"hint": "Compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
-					"annotation": "Compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
-					"annotation_name": "reload seed"
+					"hint": "The same as the panel's update composition: compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
+					"annotation": "The same as the panel's update composition: compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
+					"annotation_name": "update composition"
 				}
 			},
 			{
@@ -937,7 +937,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						356.0,
+						386.0,
 						710.0,
 						120.0,
 						24.0
@@ -1072,7 +1072,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						486.0,
+						516.0,
 						710.0,
 						95.0,
 						24.0
@@ -1226,7 +1226,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						587.0,
+						617.0,
 						710.0,
 						95.0,
 						24.0
@@ -1380,7 +1380,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						688.0,
+						718.0,
 						710.0,
 						60.0,
 						24.0
@@ -1515,7 +1515,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						758.0,
+						788.0,
 						710.0,
 						130.0,
 						24.0
@@ -1610,14 +1610,14 @@
 					"patching_rect": [
 						940.0,
 						900.0,
-						274.0,
+						244.0,
 						30.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						896.0,
+						926.0,
 						708.0,
-						274.0,
+						244.0,
 						30.0
 					],
 					"id": "obj-41"

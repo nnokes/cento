@@ -355,8 +355,12 @@ test("emi.window: a large piano roll and Emily's taste, fed by the engine; selec
     assert.equal(pre.text, message);
     assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
   }
-  // Reload seed: compose the seed shown again (after changing mix, novelty or weights).
-  const reload = named(p, "Reload Seed");
+  // Update composition, as on the panel (it was reload seed): compose the
+  // seed shown again (after changing mix, novelty or weights).
+  const reload = named(p, "Update Composition");
+  assert.equal(reload.text, "update composition");
+  assert.equal(named(patchFile("emi.panel.maxpat"), "Compose").text, "update composition", "the same on the panel");
+  assert.deepEqual(reload.bgcolor, named(patchFile("emi.panel.maxpat"), "Compose").bgcolor, "and the same blue");
   const [[rt]] = p.from(reload.id);
   assert.equal(rt.text, "t b");
   const [[compose]] = p.from(rt.id);
@@ -1154,10 +1158,27 @@ test("text on show fits its box: wrapped at the width shown, in the lines it has
         const lines = box.presentation_linecount || 1;
         if (box.linecount) assert.equal(lines, box.linecount, `${where}: "${box.text}"`);
         // About half the font size per letter (a little more in bold).
+        // (Buttons: below.)
         const size = box.fontsize || 12;
         const needed = box.text.length * size * (box.fontface === 1 ? 0.55 : 0.5);
         assert.ok(needed <= width * lines, `${where}: "${box.text}" needs about ${Math.round(needed)} px, has ${width} x ${lines} lines`);
         assert.ok(height >= lines * size * 1.15, `${where}: "${box.text}": ${lines} lines need more than ${height} px`);
+      }
+    }
+  }
+});
+
+test("button labels fit their buttons (a rough measure)", () => {
+  for (const file of files.filter((f) => f.endsWith(".maxpat"))) {
+    for (const [patcher, where] of patchers(readPatcher(path.join(ROOT, file)), file)) {
+      for (const { box } of patcher.boxes) {
+        if (box.maxclass !== "live.text" || !box.presentation_rect) continue;
+        const width = box.presentation_rect[2];
+        // Live's font: a little under half the font size per letter.
+        for (const text of [box.text, box.texton]) {
+          const needed = text.length * (box.fontsize || 10) * 0.47;
+          assert.ok(needed <= width - 4, `${where}: "${text}" needs about ${Math.round(needed)} px, has ${width}`);
+        }
       }
     }
   }
