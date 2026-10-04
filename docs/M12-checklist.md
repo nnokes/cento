@@ -1,11 +1,11 @@
 # M12 checklist: shipping Cento to others (free)
 
-## Result: under way; waiting on the checks on your Mac (sections 1 to 6)
+## Result: under way; sections 0 and 1 passed on your Mac (1.6 not yet reported); next, sections 2 to 6
 
 | Check | Max version | Live version |
 |---|---|---|
-| The new layout: a row of section names, compose first, every button in Live's look, more features window (Max), plug-in instruments window, plain names, a narrower piano roll; nothing overlaps | ✅ (`npm test`: sizes, overlaps, wiring) | |
-| Your files live in your Cento folder (`~/Documents/cento`), copied there from `patchers/` the first time | | |
+| The new layout: a row of section names, compose first, every button in Live's look, more features window (Max), plug-in instruments window, plain names, a narrower piano roll; nothing overlaps | ✅ (`npm test`: sizes, overlaps, wiring; 0.0–0.4 on the Mac) | ✅ (0.5) |
+| Your files live in your Cento folder (`~/Documents/cento`), copied there from `patchers/` the first time | ✅ (1.1–1.4) | ✅ (1.5) |
 | Both products share them, as before | | |
 | Finding the folder: from a patch in a home folder, from Max's own path, through `/Users` (the app), by a file in it; none: the status line says where it goes | ✅ (`npm test`) | ✅ (the same engine) |
 | Cento's own chorales are found in the Cento folder (as in a download) or the repository | ✅ (`npm test`) | ✅ (the same engine) |
@@ -71,7 +71,7 @@ own look (a `live.text`), like the switches. In Live, **compose**, **next**,
 **like**, **dislike**, **keep** and **write clips** can be mapped to keys or
 MIDI notes; the other buttons are hidden from Live's mapping and automation.
 
-0. [ ] **Subfolders first.** `patchers/` now holds only what you open
+0. [x] **Subfolders first.** `patchers/` now holds only what you open
        (`cento.maxpat` and the two devices); the rest is in
        `patchers/parts/` and `patchers/scripts/`. Max doesn't look in
        subfolders by itself, so:
@@ -83,7 +83,7 @@ MIDI notes; the other buttons are hidden from Live's mapping and automation.
          Live.
        If a patch opens with dashed boxes or a device says "media files are
        missing", this is the step to check.
-1. [ ] **Max: the look.** Open `patchers/cento.maxpat`. A dark row along
+1. [x] **Max: the look.** Open `patchers/cento.maxpat`. A dark row along
        the top says **PLAY**, **COMPOSE**, **MAGDALENA** and **PIANO ROLL**,
        each centred above its part; below it, each part on its own colour:
        green, blue, brown, then the piano roll. *user's taste* is just under
@@ -91,22 +91,22 @@ MIDI notes; the other buttons are hidden from Live's mapping and automation.
        touching anything; the piano roll's bar numbers, triangles and purple
        dots don't cover one another. Nothing overlaps or is cut off, and every
        label reads easily. (If not, a screenshot helps most.)
-2. [ ] **compose first.** Click **compose**, **next**, change **seed**: as
+2. [x] **compose first.** Click **compose**, **next**, change **seed**: as
        before.
-3. [ ] **More features.** Click **more features…** (PLAY panel): *Cento:
+3. [x] **More features.** Click **more features…** (PLAY panel): *Cento:
        more features* opens. Click **play the test phrase**: the test phrase
        is drawn and plays (press play). Switch **original key** on, click
        **load a chorale…** and pick any `.mid` from a chorales folder: it
        loads in its own key. Then **stop and clear the queue**. Close Max
        and open the patch again: **original key** is still on (in the same
        window). **listening test…** asks where to save the test.
-4. [ ] **The windows.** **corpora** opens *Cento: corpora*. **set up…**
+4. [x] **The windows.** **corpora** opens *Cento: corpora*. **set up…**
        opens *Cento: plug-in instruments*; click **choose…** for the soprano:
        the plug-in chooser opens (cancel it). **window** opens the pop-up
        window, whose buttons say **keep** and **taste report**; click
        **explain Magdalena**: *Cento: about Magdalena* opens, with who she
        is and what she does. Every paragraph is whole (nothing cut off).
-5. [ ] **Live: the look.** Reopen your set. The brain device has the same
+5. [x] **Live: the look.** Reopen your set. The brain device has the same
        row of names (**CLIPS AND VOICES**, **COMPOSE**, **MAGDALENA**,
        **PIANO ROLL**), no listening test or tools (those are Max-only now),
        and nothing overlaps. **write clips** and **test clips** work.
@@ -131,7 +131,7 @@ Then, to be safe, copy `About this folder.txt` from the repository's
 
 ### Max version (`patchers/cento.maxpat`)
 
-1. [ ] **Open the patch.** If macOS asks whether **Max** may access files
+1. [x] **Open the patch.** If macOS asks whether **Max** may access files
        in your Documents folder, click **Allow**. In the Max window
        (*Window → Max Console*):
        - `cento: your Cento folder is Macintosh HD:/Users/<you>/Documents/cento (found from the patch's folder)`
@@ -142,21 +142,21 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        `cento: no Cento folder found, so your files stay in patchers/ (looked in ...)`,
        copy that line: it says where Cento looked and how many names Max
        listed there.
-2. [ ] **Nothing lost.** The seed, the corpus window's folders (which are
+2. [x] **Nothing lost.** The seed, the corpus window's folders (which are
        on) and Magdalena's taste (the pop-up window's overview) are as they
        were. The piece composed is the same as before you pulled.
-3. [ ] **Saved there.** In Finder, open `Documents/cento`: it now holds
+3. [x] **Saved there.** In Finder, open `Documents/cento`: it now holds
        `cento.settings.json` (and `cento.taste.json`, ...). Change the
        **seed** in the patch, then look at `cento.settings.json`'s **Date
        Modified** (Finder's list view): it's now. The copy in `patchers/`
        doesn't change any more.
-4. [ ] **Open the patch again.** The Max window says
+4. [x] **Open the patch again.** The Max window says
        `cento: your Cento folder is ...` again, but nothing is copied this
        time.
 
 ### Live version
 
-5. [ ] **Reopen your set.** In a device's editor, open *Window → Max
+5. [x] **Reopen your set.** In a device's editor, open *Window → Max
        Console*: the same `your Cento folder` line (it may say "from Max's
        own folder" or "from the patch's folder"). If macOS asks whether
        **Live** may access your Documents folder, click **Allow**.

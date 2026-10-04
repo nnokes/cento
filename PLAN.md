@@ -1398,8 +1398,10 @@ milestones raise the quality without changing the plumbing.
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
 **Current status: M12 under way, shipping Cento to others for free (below;
-[checklist](docs/M12-checklist.md)): the user folder is built and waits on
-its Mac checks. M11 code done; waiting on its Max and Live checks
+[checklist](docs/M12-checklist.md)): the new layout and the user folder
+passed their Mac checks in Max and Live (sections 0 and 1, but for 1.6:
+both products sharing the files); next, the frozen devices (the freeze test
+from M0), the demo set, the app and the zips. M11 code done; waiting on its Max and Live checks
 ([checklist](docs/M11-checklist.md)). The second style (Palestrina, now
 M13) is on hold. M9 and
 M10 passed in both products; M8 passed in the Max version and waits on its Live checks (its third
