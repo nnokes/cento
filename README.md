@@ -14,9 +14,11 @@ learns from your ratings, and its style drifts as you accept its music.
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M11 code done; waiting on its Max and Live checks
-([M11](docs/M11-checklist.md) checklist). Next, M12: free downloads for
-other people on GitHub's Releases page ([how](docs/releasing.md)). M9 and M10 passed in both
+**Status: M12 under way: free downloads for other people on GitHub's
+Releases page ([M12](docs/M12-checklist.md) checklist, [how](docs/releasing.md));
+first, your files move to your Cento folder in Documents. M11 code done;
+waiting on its Max and Live checks ([M11](docs/M11-checklist.md)
+checklist). M9 and M10 passed in both
 products ([M9](docs/M9-checklist.md), [M10](docs/M10-checklist.md)
 results); M8 passed in the Max version and waits on its Live checks
 ([M8](docs/M8-checklist.md) checklist).**
@@ -94,12 +96,19 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **music21's chorales** (optional) | `~/Documents/cento/corpus/`, `corpus-both/`, `corpus-minor/`, `corpus-3-4/` | Written by `tools/export-chorales.py` ([step 5](#more-chorales-from-music21)); outside the repo, because they're for your own use only |
 | **Exported pieces** | `~/Documents/cento/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
 | **Listening tests** | anywhere, e.g. `~/Documents/cento/` | Written by the **A/B** button: one web page, opened in a browser |
-| **Emily's taste** (M9) | `<repo>/patchers/cento.taste.json` | Your ratings, pins and strength, shared by both products; git-ignored. **forget** and **recall taste** set the old one aside as `cento.taste.backup.json`; delete both to start fresh |
+| **Emily's taste** (M9) | `~/Documents/cento/cento.taste.json` | Your ratings, pins and strength, shared by both products. **forget** and **recall taste** set the old one aside as `cento.taste.backup.json`; delete both to start fresh |
 | **Stored tastes** (optional) | e.g. `~/Documents/cento/emily/` | Written by **store taste** in the pop-up window; read back by **recall taste** |
-| **Emily's own music and snapshots** (M10) | `<repo>/patchers/cento.emily.json`, `cento.snapshots.json` | Every piece or phrase you **accept**, and her last 30 snapshots; git-ignored, shared by both products |
-| **Later: databases, Emily's snapshots** | `~/Documents/cento/db/`, `emily/` | Outside the repo |
+| **Emily's own music and snapshots** (M10) | `~/Documents/cento/cento.emily.json`, `cento.snapshots.json` | Every piece or phrase you **accept**, and her last 30 snapshots; shared by both products |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
-| **Remembered settings** | `<repo>/patchers/cento.settings.json` | The corpus window's folders (which are on), seed and other settings; written by the patches, git-ignored. Delete it to start fresh |
+| **Remembered settings** | `~/Documents/cento/cento.settings.json` | The corpus window's folders (which are on), seed and other settings; written by the patches. Delete it to start fresh |
+
+**Your Cento folder** (M12): the settings and Emily's files live in
+`~/Documents/cento` (any case: `Cento` is the same folder on a Mac). Cento
+uses it if it's there, so make it in Finder if you don't have it yet. The
+first time Cento finds it, it copies the files it kept in `patchers/` until
+M12 (they stay there too, git-ignored; delete them when you like). Without
+that folder, Cento keeps its files in `patchers/` as before. The Max window
+says which folder it uses: `cento: your Cento folder is ...`.
 
 `~` is your home folder, `/Users/<your name>`. `<repo>` is the folder you
 cloned into.
@@ -252,15 +261,18 @@ code/         [v8] wrappers: glue between Max messages and the engine
 code/lib/     the engine: plain JavaScript, no Max APIs, tested in Node
 code/max/     Max-only helpers used by the wrappers (files, Live clips)
 tests/        node --test, including the bundles in a simulated [v8] context
-tools/        build, path check, git hook, chorale export, and maxgen.py,
-              which writes every patch and device (the master copy)
+tools/        build, path check, git hook, chorale export, maxgen.py,
+              which writes every patch and device (the master copy), and
+              package.js, which makes the release zips (npm run package)
+release/      what the downloads carry besides the builds: Read me first.html,
+              and the Cento folder's About this folder.txt
+corpus/       Cento's own chorales (CC BY 4.0: corpus/README.md)
 docs/         milestone checklists; controls.md: what every control does;
               releasing.md: how to publish a version for others
 ```
 
-Your working data (corpus, analyzed databases, generated music) lives in
-`~/Documents/cento/`, outside the repository. The remembered settings and
-Emily's taste are git-ignored files in `patchers/`.
+Your working data (corpus, settings, Emily's taste and music, generated
+music) lives in `~/Documents/cento/`, outside the repository.
 
 ## Development
 

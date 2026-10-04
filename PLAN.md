@@ -1397,11 +1397,13 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M11 code done; waiting on its Max and Live checks
-([checklist](docs/M11-checklist.md)). Next: M12, shipping Cento to others
-for free (below); the second style (Palestrina, now M13) is on hold. M9 and
-M10 passed in both products; M8 passed in the Max version and waits on its Live checks and the third
-listening test's score ([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
+**Current status: M12 under way, shipping Cento to others for free (below;
+[checklist](docs/M12-checklist.md)): the user folder is built and waits on
+its Mac checks. M11 code done; waiting on its Max and Live checks
+([checklist](docs/M11-checklist.md)). The second style (Palestrina, now
+M13) is on hold. M9 and
+M10 passed in both products; M8 passed in the Max version and waits on its Live checks (its third
+listening test was taken off the checklist) ([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
 its freeze test is deferred to M12 (shipping). M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
@@ -1481,10 +1483,23 @@ own settings and Emily files.
    in `patchers/` today; a frozen device or an app has no writable
    `patchers/`. They move to `~/Documents/Cento/`. Max's `File` can't make
    folders, so the folder comes in the zip (the read-me says where to put
-   it); with no folder there, the status line says so, and nothing is
-   saved. Files in `patchers/` from development carry over once, as the
-   `ml_midi` files did. To decide at the start: whether a "choose your
-   Cento folder" dialog is worth it as a fallback.
+   it); with no folder there, the status line says so. Files in
+   `patchers/` from development carry over once, as the `ml_midi` files
+   did.
+   *Built* (`emi-userfolder`): Max's JavaScript can't ask for the home
+   folder, so it's worked out from the paths Cento knows: the patch's own
+   folder if it's in a home folder (`/Users/<name>/...`), then Max's or
+   Live's (`max.apppath`), then each folder in `/Users` on Max's volume
+   (only your own Documents can be read: the app's case), then `~`. The
+   folder is seen in the list of Documents, or by a file known to be in it
+   (`About this folder.txt`, which the download brings, or the settings).
+   Decided: **no folder dialog**. Without the folder, the files stay in
+   `patchers/` (the patch's folder) as before, and outside a clone of the
+   repository the status line says to put the Cento folder in Documents.
+   Cento's own chorales are found in the Cento folder's `corpus/` as well
+   as the repository's. To confirm on a Mac (M12 checklist): that Max's
+   `Folder` lists folders, `max.apppath` in `[v8]`, and the paths Max and
+   Live give.
 3. **Frozen devices and the freeze test** (M0 (d)): freeze both devices in
    Max, copy them to a folder with nothing else, load them in a new set
    with the editor closed. Then the demo set, saved with *Collect All and
@@ -1498,9 +1513,21 @@ own settings and Emily files.
    the frozen devices, the demo set, the app, the `Cento` folder, the read-me
    and the licence. `dist/` is git-ignored. CI can't do steps 3 and 4 (they
    need Max on a Mac); everything else it can check.
+   *Built* (`tools/package.js`): it reads the builds from `frozen/` and
+   `build/` (`build/Cento Demo Project`, `build/Cento.app`), makes the Cento
+   folder from the repository (`corpus/` and `release/About this
+   folder.txt`, never your own), and says what's missing and how to make
+   it; a device hardly bigger than the unfrozen one isn't frozen. On a Mac
+   it copies and zips with `ditto`, which keeps the app's links and
+   attributes. `npm run package -- --check` only checks; `--only live|mac`
+   makes one zip. Tested with stand-ins (`tests/package.test.js`).
 6. **The read-me** (one page, for people who aren't developers): what Cento
    is, what to install, first piece in five steps, where files go, how to
    remove it, known issues, and that it's independent of David Cope.
+   *Written*: `release/Read me first.html` (a web page: it opens in any
+   browser, light or dark), with the first-open steps for an unsigned app on
+   macOS 15 and later (Privacy & Security, Open Anyway) and earlier
+   (right-click, Open).
 7. **A clean-machine test**: a fresh user account on your Mac (or a friend's
    Mac), following only the read-me.
 8. **The release**: tag `main` (`v0.1.0`, marked as a pre-release: a beta

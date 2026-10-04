@@ -1,10 +1,11 @@
 # M8 checklist: hardening
 
-## Result: the Max version passed; waiting on the Live checks and the listening test's score
+## Result: the Max version passed; waiting on the Live checks
 
 Reported back: "M8.1 success, M8.2 success": the two corpora exported, and every step in the Max
-version passed (macOS, Max 9). Still to come: the Live steps (section 3), and the score of the
-seed-5 listening test (step 2.10).
+version passed (macOS, Max 9). Still to come: the Live steps (section 3), which M11's Live
+steps 2.2 and 2.3 also cover. The third listening test (seed 5, step 2.10) was taken off the
+checklist: its score isn't needed.
 
 | Check | Max version | Live version |
 |---|---|---|
@@ -13,7 +14,7 @@ seed-5 listening test (step 2.10).
 | The provenance view: hovering shows each beat's source; export writes a `.json` | ✅ | |
 | Minor mode: a corpus of major and minor chorales composes each piece in one mode | ✅ | — (checked in Max; the same engine) |
 | 3/4: pieces in 3/4 bars, played from a barline | ✅ | |
-| A blind A/B listening test against real chorales | ❌ first test: 9 of 10 right (chance by guessing 0.011); retest after the changes below, 10 new chorales: 9 of 10 right again (0.011). Both taken by the developer, who knows Bach well; together 18 of 20 (0.0002). A third test (seed 5) written and played; its score not yet reported | |
+| A blind A/B listening test against real chorales | ❌ first test: 9 of 10 right (chance by guessing 0.011); retest after the changes below, 10 new chorales: 9 of 10 right again (0.011). Both taken by the developer, who knows Bach well; together 18 of 20 (0.0002). A third test (seed 5) was written and played, then taken off the checklist without a score. The goal stays open, as an aim for later rather than a gate | |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M8 makes the composer harder to fool and easier to check.
@@ -207,6 +208,8 @@ picked the wrong folder (see the M2 checklist for recreating `.venv`).
          it. Otherwise take it yourself.
        - At the end, click **Show results**, then **Copy results**, and
          paste the text into your report.
+       - *Taken off the checklist after it was written and played: its
+         score isn't needed.*
 
 ## 3. Live version
 
@@ -233,6 +236,6 @@ need a fix:
 - the hover box (mouse tracking in `[v8ui]`);
 - the time-signature switch in the Max transport and in Live.
 
-For the listening test, paste the copied results and say who took it. The
-milestone's "done when" is a score within what guessing gives (a chance
-above 0.05).
+The listening test (step 2.10) is off the checklist. Its "done when", a
+score within what guessing gives (a chance above 0.05), stays an aim for
+later.

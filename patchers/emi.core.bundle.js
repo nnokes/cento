@@ -3098,8 +3098,9 @@ exports.setMeter = setMeter;
   factories["emi-settings"] = function (exports, module, require) {
 "use strict";
 // Max-only: remembers settings between sessions in one small JSON file,
-// cento.settings.json, in the folder of the engine's patch (patchers/; the
-// file is git-ignored). Both products use the same file, so the corpora
+// cento.settings.json, in the user's Cento folder (M12: ~/Documents/Cento,
+// emi-userfolder), or else in the folder of the engine's patch (patchers/;
+// the file is git-ignored). Both products use the same file, so the corpora
 // carry over between them.
 //
 //   folderOf(patcher)  the folder of the nearest saved patcher (the [v8]'s own
@@ -3118,6 +3119,9 @@ exports.setMeter = setMeter;
 // The project was called ml_midi until after M11. migrate(folder) copies
 // files with the old names (ml_midi.settings.json, ...) to the new ones the
 // first time, so nothing is lost; the old files stay as they are.
+// carryOver(from, to) copies them from patchers/ to the Cento folder (M12)
+// the same way, and isCheckout(folder) says whether a patchers/ folder is
+// the repository's (package.json beside it): there, files may stay in it.
 
 const files = require("emi-load");
 
@@ -3159,23 +3163,40 @@ function snapshotsPathIn(folder) {
   return folder + "/" + SNAPSHOTS_NAME;
 }
 
-// Copies each file still under its old name (ml_midi.*) to its new name, if
-// the new one isn't there yet. Returns the new names written.
-function migrate(folder) {
+// Copies each of Cento's files from one path to another, if it's there and
+// the other isn't yet. Returns the names written.
+function copyAll(fromPath, toPath) {
   const copied = [];
   for (const name of ALL) {
-    const from = folder + "/" + LEGACY + name.slice(NAME.length);
-    const to = folder + "/" + name;
+    const from = fromPath(name);
+    const to = toPath(name);
     try {
       if (!files.exists(to) && files.exists(from)) {
         files.writeText(to, files.readText(from));
         copied.push(name);
       }
     } catch (e) {
-      // left under its old name
+      // left where it was
     }
   }
   return copied;
+}
+
+// Copies each file still under its old name (ml_midi.*) to its new name, if
+// the new one isn't there yet. Returns the new names written.
+function migrate(folder) {
+  return copyAll((name) => folder + "/" + LEGACY + name.slice(NAME.length), (name) => folder + "/" + name);
+}
+
+// Copies the files in patchers/ (from) to the Cento folder (to), each one
+// that isn't there yet. Returns the names written.
+function carryOver(from, to) {
+  return copyAll((name) => from + "/" + name, (name) => to + "/" + name);
+}
+
+function isCheckout(folder) {
+  const parent = String(folder).slice(0, String(folder).lastIndexOf("/"));
+  return parent.length > 0 && files.exists(parent + "/package.json");
 }
 
 function read(path) {
@@ -3204,6 +3225,8 @@ exports.emilyPathIn = emilyPathIn;
 exports.SNAPSHOTS_NAME = SNAPSHOTS_NAME;
 exports.snapshotsPathIn = snapshotsPathIn;
 exports.migrate = migrate;
+exports.carryOver = carryOver;
+exports.isCheckout = isCheckout;
 exports.LEGACY = LEGACY;
 exports.read = read;
 exports.write = write;
@@ -5369,6 +5392,109 @@ exports.summarize = summarize;
 exports.combine = combine;
   };
 
+  // ---- emi-userfolder.js
+  factories["emi-userfolder"] = function (exports, module, require) {
+"use strict";
+// Max-only (M12): finds the user's Cento folder, ~/Documents/Cento. Each
+// user's files live there (settings, Emily's taste, her works and
+// snapshots), and in the downloads Cento's own chorales too (corpus/): a
+// frozen device or an app has no patchers/ folder of its own to write in.
+//
+// Max's JavaScript can't ask for the home folder, so it's worked out from
+// the paths Cento does know, in this order:
+//   1. the patch's own folder, if it's in a home folder (a folder in
+//      /Users): the repository, or a device in a Live set or Live's User
+//      Library
+//   2. Max's or Live's own path (max.apppath), the same way
+//   3. each folder in /Users, on the volume Max runs from (an app in
+//      /Applications): only the user's own Documents folder can be read
+//   4. "~", in case Max reads it as the home folder
+// The folder must already be there: Max can't make folders, so it comes in
+// the download (for development: ~/Documents/cento, as the README says).
+// It's seen in the list of Documents (in any case: macOS's disks don't tell
+// Cento from cento), or, in case Max lists files only, by a file known to be
+// in it (MARKERS: the one the download brings, or the settings).
+//
+//   find({ patchFolder, appPath, list, exists })  -> { path, how } or null
+//     list(folder): the names of the files and folders in a folder ([] if
+//     it can't be read); listNames below, with Max's Folder object
+//     exists(path): whether a file is there (optional)
+//   homeOf(path), volumeOf(path)
+
+const NAME = "cento";
+const MARKERS = ["About this folder.txt", "cento.settings.json"];
+
+// The home folder a path is in: "Macintosh HD:", then /Users and a name
+// (the volume and the name as Max writes them), or null.
+function homeOf(path) {
+  const m = /^(.*?[/\\]Users[/\\][^/\\]+)(?=[/\\]|$)/.exec(String(path || ""));
+  return m ? m[1] : null;
+}
+
+// Max's paths start with the volume: "Macintosh HD:/Applications/..." ->
+// "Macintosh HD:"; Windows: "C:/..." -> "C:". A plain "/..." has none.
+function volumeOf(path) {
+  const m = /^([^/\\:]+:)(?=[/\\])/.exec(String(path || ""));
+  return m ? m[1] : null;
+}
+
+function find({ patchFolder, appPath, list, exists = () => false }) {
+  const tried = new Set();
+  const marked = (folder) => MARKERS.some((file) => exists(folder + "/" + file));
+  const look = (home, how) => {
+    if (!home || tried.has(home)) return null;
+    tried.add(home);
+    const documents = home + "/Documents";
+    const name = list(documents).find((n) => String(n).toLowerCase() === NAME) || (marked(documents + "/Cento") ? "Cento" : null);
+    return name ? { path: documents + "/" + name, how } : null;
+  };
+  const found = look(homeOf(patchFolder), "from the patch's folder") || look(homeOf(appPath), "from Max's own folder");
+  if (found) return found;
+  // Only with a path in Max's form, so that nothing but Max scans /Users.
+  const volume = volumeOf(appPath) || volumeOf(patchFolder);
+  if (volume) {
+    const users = volume + "/Users";
+    for (const name of list(users)) {
+      if (String(name).startsWith(".") || name === "Shared") continue;
+      const here = look(users + "/" + name, "from the folders in /Users");
+      if (here) return here;
+    }
+  }
+  return look("~", "from ~");
+}
+
+// The names in a folder, files and folders, with Max's Folder object; []
+// if it isn't there or can't be read.
+function listNames(path) {
+  const names = [];
+  let folder;
+  try {
+    folder = new Folder(path);
+    folder.reset();
+    while (!folder.end) {
+      if (folder.filename) names.push(String(folder.filename));
+      folder.next();
+    }
+  } catch (e) {
+    // not there, or not ours to read
+  } finally {
+    try {
+      if (folder) folder.close();
+    } catch (e) {
+      // already closed
+    }
+  }
+  return names;
+}
+
+exports.NAME = NAME;
+exports.MARKERS = MARKERS;
+exports.find = find;
+exports.homeOf = homeOf;
+exports.volumeOf = volumeOf;
+exports.listNames = listNames;
+  };
+
   var cache = {};
   function load(name) {
     if (!Object.prototype.hasOwnProperty.call(cache, name)) {
@@ -5497,9 +5623,12 @@ __emi_require.local = 1;
 //                          (Live version: its controls are saved with the set);
 //                          then compose with the current seed
 //
-// Settings live in cento.settings.json next to this patch (emi-settings).
-// Nothing is written before startup has read the file, so the values controls
-// send while a patch loads can't overwrite what was saved.
+// Settings live in cento.settings.json (emi-settings) in the user's Cento
+// folder, ~/Documents/Cento (M12, emi-userfolder), with Emily's files. With
+// no Cento folder they stay next to this patch, in patchers/, as before M12;
+// the first time the Cento folder is found, the files in patchers/ are
+// copied to it. Nothing is written before startup has read the file, so the
+// values controls send while a patch loads can't overwrite what was saved.
 
 autowatch = 1;
 inlets = 1;
@@ -5526,6 +5655,7 @@ const emily = __emi_require("emily-assoc");
 const variation = __emi_require("emily-vary");
 const emilyMemory = __emi_require("emily-memory");
 const corpora = __emi_require("emi-corpora");
+const userFolder = __emi_require("emi-userfolder");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
@@ -5742,23 +5872,25 @@ function startup(mode) {
   const patcher = this && this.patcher; // `this` is the [v8] object
   host = mode === "corpus" ? "live" : "max";
   attempt(() => {
-    const folder = settingsFile.folderOf(patcher);
-    if (!folder) {
+    const patchers = settingsFile.folderOf(patcher);
+    if (!patchers) {
       outlet(0, "error", "this", "patch", "has", "no", "folder,", "so", "settings", "won't", "be", "saved");
       return;
     }
     // Files saved before the project was renamed (ml_midi.*.json) carry over.
-    const carried = settingsFile.migrate(folder);
+    const carried = settingsFile.migrate(patchers);
     if (carried.length) post(`cento: carried over from ${settingsFile.LEGACY}.*: ${carried.join(", ")}\n`);
+    const folder = dataFolder(patchers);
     settingsPath = settingsFile.pathIn(folder);
     remembered = settingsFile.read(settingsPath);
     folders = corpora.normalize(remembered.corpora, remembered.corpus); // before anything saves
     // A corpus folder under ~/Documents/ml_midi that was renamed to cento.
     const moved = corpora.followRename(folders, hasChorales);
     if (moved) post(`cento: ${moved} corpus ${moved === 1 ? "folder" : "folders"} found under the new name (Documents/cento)\n`);
-    // Cento's own chorales (corpus/, next to patchers/): listed once, the
-    // first time; the first switched on if there's no other corpus.
-    const offered = remembered.bundled ? 0 : offerBundled(folder);
+    // Cento's own chorales (corpus/, in the Cento folder or next to
+    // patchers/): listed once, the first time; the first switched on if
+    // there's no other corpus.
+    const offered = remembered.bundled ? 0 : offerBundled([folder, parentOf(patchers)]);
     if (moved || offered) {
       remembered.corpora = folders.map((f) => ({ ...f })); // the file as read, with the list as now
       try {
@@ -6182,16 +6314,46 @@ function hasChorales(path) {
 }
 hasChorales.local = 1;
 
+function parentOf(path) {
+  return path.slice(0, path.lastIndexOf("/"));
+}
+parentOf.local = 1;
+
+// The folder for the settings and Emily's files (M12): the user's Cento
+// folder, ~/Documents/Cento, if it can be found; the files in patchers/
+// are copied to it the first time. Else patchers/, as before.
+function dataFolder(patchers) {
+  let appPath = null;
+  try {
+    appPath = typeof max !== "undefined" && max.apppath ? String(max.apppath) : null;
+  } catch (e) {
+    // not known
+  }
+  const found = userFolder.find({ patchFolder: patchers, appPath, list: userFolder.listNames, exists: files.exists });
+  if (!found) {
+    if (!settingsFile.isCheckout(patchers)) {
+      post(`cento: no Cento folder in Documents: put the Cento folder from the download in your Documents folder, then open Cento again\n`);
+      outlet(0, "error", "no", "Cento", "folder", "in", "Documents:", "put", "it", "there", "and", "open", "Cento", "again");
+    }
+    return patchers;
+  }
+  const carried = settingsFile.carryOver(patchers, found.path);
+  post(`cento: your Cento folder is ${found.path} (found ${found.how})\n`);
+  if (carried.length) post(`cento: copied to your Cento folder from patchers/: ${carried.join(", ")}\n`);
+  return found.path;
+}
+dataFolder.local = 1;
+
 // Lists Cento's own folders (once: remembered.bundled, set when they were
-// found), off, or the first one on if the list was empty. `patchers` is the
-// engine's folder. Returns how many were listed.
-function offerBundled(patchers) {
-  const root = patchers.slice(0, patchers.lastIndexOf("/"));
+// found), off, or the first one on if the list was empty. Each is looked for
+// in corpus/ in the first of `roots` that has it. Returns how many were
+// listed.
+function offerBundled(roots) {
   const empty = !folders.length;
   let listed = 0;
   for (const [k, name] of BUNDLED.entries()) {
-    const path = root + "/corpus/" + name;
-    if (!hasChorales(path) || folders.some((f) => f.path === path)) continue;
+    const path = roots.map((root) => root + "/corpus/" + name).find(hasChorales);
+    if (!path || folders.some((f) => f.path === path)) continue;
     const index = corpora.add(folders, path);
     folders[index].on = empty && k === 0;
     listed++;

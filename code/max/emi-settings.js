@@ -1,7 +1,8 @@
 "use strict";
 // Max-only: remembers settings between sessions in one small JSON file,
-// cento.settings.json, in the folder of the engine's patch (patchers/; the
-// file is git-ignored). Both products use the same file, so the corpora
+// cento.settings.json, in the user's Cento folder (M12: ~/Documents/Cento,
+// emi-userfolder), or else in the folder of the engine's patch (patchers/;
+// the file is git-ignored). Both products use the same file, so the corpora
 // carry over between them.
 //
 //   folderOf(patcher)  the folder of the nearest saved patcher (the [v8]'s own
@@ -20,6 +21,9 @@
 // The project was called ml_midi until after M11. migrate(folder) copies
 // files with the old names (ml_midi.settings.json, ...) to the new ones the
 // first time, so nothing is lost; the old files stay as they are.
+// carryOver(from, to) copies them from patchers/ to the Cento folder (M12)
+// the same way, and isCheckout(folder) says whether a patchers/ folder is
+// the repository's (package.json beside it): there, files may stay in it.
 
 const files = require("emi-load");
 
@@ -61,23 +65,40 @@ function snapshotsPathIn(folder) {
   return folder + "/" + SNAPSHOTS_NAME;
 }
 
-// Copies each file still under its old name (ml_midi.*) to its new name, if
-// the new one isn't there yet. Returns the new names written.
-function migrate(folder) {
+// Copies each of Cento's files from one path to another, if it's there and
+// the other isn't yet. Returns the names written.
+function copyAll(fromPath, toPath) {
   const copied = [];
   for (const name of ALL) {
-    const from = folder + "/" + LEGACY + name.slice(NAME.length);
-    const to = folder + "/" + name;
+    const from = fromPath(name);
+    const to = toPath(name);
     try {
       if (!files.exists(to) && files.exists(from)) {
         files.writeText(to, files.readText(from));
         copied.push(name);
       }
     } catch (e) {
-      // left under its old name
+      // left where it was
     }
   }
   return copied;
+}
+
+// Copies each file still under its old name (ml_midi.*) to its new name, if
+// the new one isn't there yet. Returns the new names written.
+function migrate(folder) {
+  return copyAll((name) => folder + "/" + LEGACY + name.slice(NAME.length), (name) => folder + "/" + name);
+}
+
+// Copies the files in patchers/ (from) to the Cento folder (to), each one
+// that isn't there yet. Returns the names written.
+function carryOver(from, to) {
+  return copyAll((name) => from + "/" + name, (name) => to + "/" + name);
+}
+
+function isCheckout(folder) {
+  const parent = String(folder).slice(0, String(folder).lastIndexOf("/"));
+  return parent.length > 0 && files.exists(parent + "/package.json");
 }
 
 function read(path) {
@@ -106,6 +127,8 @@ exports.emilyPathIn = emilyPathIn;
 exports.SNAPSHOTS_NAME = SNAPSHOTS_NAME;
 exports.snapshotsPathIn = snapshotsPathIn;
 exports.migrate = migrate;
+exports.carryOver = carryOver;
+exports.isCheckout = isCheckout;
 exports.LEGACY = LEGACY;
 exports.read = read;
 exports.write = write;

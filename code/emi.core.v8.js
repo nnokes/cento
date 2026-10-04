@@ -111,9 +111,12 @@
 //                          (Live version: its controls are saved with the set);
 //                          then compose with the current seed
 //
-// Settings live in cento.settings.json next to this patch (emi-settings).
-// Nothing is written before startup has read the file, so the values controls
-// send while a patch loads can't overwrite what was saved.
+// Settings live in cento.settings.json (emi-settings) in the user's Cento
+// folder, ~/Documents/Cento (M12, emi-userfolder), with Emily's files. With
+// no Cento folder they stay next to this patch, in patchers/, as before M12;
+// the first time the Cento folder is found, the files in patchers/ are
+// copied to it. Nothing is written before startup has read the file, so the
+// values controls send while a patch loads can't overwrite what was saved.
 
 autowatch = 1;
 inlets = 1;
@@ -140,6 +143,7 @@ const emily = require("emily-assoc");
 const variation = require("emily-vary");
 const emilyMemory = require("emily-memory");
 const corpora = require("emi-corpora");
+const userFolder = require("emi-userfolder");
 
 const NO_STEP = 999999; // "streamat" for "never"
 const STEPS_PER_BEAT = 4;
@@ -356,23 +360,25 @@ function startup(mode) {
   const patcher = this && this.patcher; // `this` is the [v8] object
   host = mode === "corpus" ? "live" : "max";
   attempt(() => {
-    const folder = settingsFile.folderOf(patcher);
-    if (!folder) {
+    const patchers = settingsFile.folderOf(patcher);
+    if (!patchers) {
       outlet(0, "error", "this", "patch", "has", "no", "folder,", "so", "settings", "won't", "be", "saved");
       return;
     }
     // Files saved before the project was renamed (ml_midi.*.json) carry over.
-    const carried = settingsFile.migrate(folder);
+    const carried = settingsFile.migrate(patchers);
     if (carried.length) post(`cento: carried over from ${settingsFile.LEGACY}.*: ${carried.join(", ")}\n`);
+    const folder = dataFolder(patchers);
     settingsPath = settingsFile.pathIn(folder);
     remembered = settingsFile.read(settingsPath);
     folders = corpora.normalize(remembered.corpora, remembered.corpus); // before anything saves
     // A corpus folder under ~/Documents/ml_midi that was renamed to cento.
     const moved = corpora.followRename(folders, hasChorales);
     if (moved) post(`cento: ${moved} corpus ${moved === 1 ? "folder" : "folders"} found under the new name (Documents/cento)\n`);
-    // Cento's own chorales (corpus/, next to patchers/): listed once, the
-    // first time; the first switched on if there's no other corpus.
-    const offered = remembered.bundled ? 0 : offerBundled(folder);
+    // Cento's own chorales (corpus/, in the Cento folder or next to
+    // patchers/): listed once, the first time; the first switched on if
+    // there's no other corpus.
+    const offered = remembered.bundled ? 0 : offerBundled([folder, parentOf(patchers)]);
     if (moved || offered) {
       remembered.corpora = folders.map((f) => ({ ...f })); // the file as read, with the list as now
       try {
@@ -796,16 +802,46 @@ function hasChorales(path) {
 }
 hasChorales.local = 1;
 
+function parentOf(path) {
+  return path.slice(0, path.lastIndexOf("/"));
+}
+parentOf.local = 1;
+
+// The folder for the settings and Emily's files (M12): the user's Cento
+// folder, ~/Documents/Cento, if it can be found; the files in patchers/
+// are copied to it the first time. Else patchers/, as before.
+function dataFolder(patchers) {
+  let appPath = null;
+  try {
+    appPath = typeof max !== "undefined" && max.apppath ? String(max.apppath) : null;
+  } catch (e) {
+    // not known
+  }
+  const found = userFolder.find({ patchFolder: patchers, appPath, list: userFolder.listNames, exists: files.exists });
+  if (!found) {
+    if (!settingsFile.isCheckout(patchers)) {
+      post(`cento: no Cento folder in Documents: put the Cento folder from the download in your Documents folder, then open Cento again\n`);
+      outlet(0, "error", "no", "Cento", "folder", "in", "Documents:", "put", "it", "there", "and", "open", "Cento", "again");
+    }
+    return patchers;
+  }
+  const carried = settingsFile.carryOver(patchers, found.path);
+  post(`cento: your Cento folder is ${found.path} (found ${found.how})\n`);
+  if (carried.length) post(`cento: copied to your Cento folder from patchers/: ${carried.join(", ")}\n`);
+  return found.path;
+}
+dataFolder.local = 1;
+
 // Lists Cento's own folders (once: remembered.bundled, set when they were
-// found), off, or the first one on if the list was empty. `patchers` is the
-// engine's folder. Returns how many were listed.
-function offerBundled(patchers) {
-  const root = patchers.slice(0, patchers.lastIndexOf("/"));
+// found), off, or the first one on if the list was empty. Each is looked for
+// in corpus/ in the first of `roots` that has it. Returns how many were
+// listed.
+function offerBundled(roots) {
   const empty = !folders.length;
   let listed = 0;
   for (const [k, name] of BUNDLED.entries()) {
-    const path = root + "/corpus/" + name;
-    if (!hasChorales(path) || folders.some((f) => f.path === path)) continue;
+    const path = roots.map((root) => root + "/corpus/" + name).find(hasChorales);
+    if (!path || folders.some((f) => f.path === path)) continue;
     const index = corpora.add(folders, path);
     folders[index].on = empty && k === 0;
     listed++;

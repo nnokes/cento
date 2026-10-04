@@ -4,9 +4,10 @@ How to put a new version of Cento on GitHub's Releases page, where anyone can
 download it as a zip. People who download it need none of the development
 tools: no git, Python, Node or `tools/`.
 
-**Status:** written before M12. The steps marked *(M12)* depend on things M12
-builds (the user folder, the packaging script, the read-me); until then they
-can't be done. See PLAN.md, §8, "M12 in detail".
+**Status:** M12 built the pieces this needs: the user folder, the packaging
+script (`npm run package`) and the read-me (`release/Read me first.html`).
+The first time through, follow [the M12 checklist](M12-checklist.md), which
+also checks each piece. See PLAN.md, §8, "M12 in detail".
 
 ## What a release is
 
@@ -37,24 +38,32 @@ Mark releases before `v1.0.0` as **pre-releases**.
 
 These need Max on your Mac, so CI can't do them.
 
+0. **The version.** In `package.json`, set `"version"` to the new version
+   (without the `v`), and the same in `code/lib/emi-version.js`; run
+   `npm run build` and `npm test`, and commit. The zips are named after it.
 1. **Freeze the devices.** In Live, open `cento.brain` in the Max editor (the
    device's title bar, the editor button). Click **Freeze Device** in the
    editor's toolbar, then save it into the repository's `frozen/` folder
    (git-ignored), keeping its name. The same for `cento.voice`.
-2. **The demo set** *(M12)*: open it, check that it plays, then
-   **File > Collect All and Save**.
-3. **The app** *(M12)*: open `patchers/cento.maxpat` in Max, then
+2. **The demo set**: open `build/Cento Demo Project/Cento Demo.als` (made
+   once, in the [M12 checklist](M12-checklist.md), section 3). Put the newly
+   frozen devices in it (from `frozen/`, in place of the old ones), check
+   that it plays, then **File > Collect All and Save**.
+3. **The app**: open `patchers/cento.maxpat` in Max, then
    **File > Build Collective / Application...**, choose **Application**, and
-   save it as `Cento` into `build/` (git-ignored).
-4. **The zips** *(M12)*: in Terminal, from the repository folder, run
-   `npm run package`. It writes both zips into `dist/` (git-ignored).
+   save it as `Cento` into `build/` (git-ignored): `build/Cento.app`.
+4. **The zips**: in Terminal, from the repository folder, run
+   `npm run package`. It checks that everything above is there (and that
+   the devices really are frozen), then writes both zips into `dist/`
+   (git-ignored). `npm run package -- --check` only checks.
 
 ## 2. Test like a newcomer
 
 On a fresh user account on your Mac (System Settings > Users & Groups), or a
 friend's Mac: download nothing else, follow only `Read me first`, and check
 that a piece plays within five minutes, in Live and with the app. Note
-anything that was unclear, and fix the read-me before publishing.
+anything that was unclear, and fix the read-me (`release/Read me first.html`)
+before publishing.
 
 ## 3. Publish on GitHub
 

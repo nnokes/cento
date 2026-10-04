@@ -1,0 +1,24 @@
+This is Cento's folder.
+
+Keep it in your Documents folder, named Cento: that's where Cento looks for
+it, every time it opens.
+
+What's in it:
+
+  corpus/                 Cento's own Bach chorales (131 of them), from the
+                          Bach Chorales Figured Bass dataset (CC BY 4.0).
+                          corpus/README.md says where they come from.
+
+  cento.settings.json     Your settings: which chorale folders are on, the
+                          seed, and so on. Cento writes it.
+  cento.taste.json        Emily's taste: your likes and dislikes.
+  cento.emily.json        The pieces you accepted as Emily's own music.
+  cento.snapshots.json    Emily's last 30 snapshots, to roll her back.
+
+The cento.* files appear as you use Cento. Delete one to start that part
+afresh; delete the whole folder to remove everything Cento keeps.
+
+You can keep other folders of chorales here too (MIDI files), and add them
+in Cento's corpora window.
+
+More: https://github.com/nnokes/cento

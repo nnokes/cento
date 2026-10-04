@@ -14,6 +14,8 @@ __pycache__/
 frozen/
 *.app/
 build/
+# The release zips (npm run package; docs/releasing.md).
+dist/
 
 # Working data lives in ~/Documents/cento, outside the repo. These catch
 # corpus files or output copied in here by accident.
@@ -37,3 +39,7 @@ patchers/cento.snapshots.json
 # The same files under the project's old name (ml_midi, until after M11):
 # copied to the names above the first time, then left as they were.
 patchers/ml_midi.*.json
+
+# Since M12 they live in your Cento folder, ~/Documents/Cento. If the
+# repository itself is that folder, they're here: personal too.
+/cento.*.json

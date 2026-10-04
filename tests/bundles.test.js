@@ -902,6 +902,63 @@ test("bundled corpus: the first startup lists Cento's own chorales, and composes
   void other;
 });
 
+test("Cento folder (M12): files move from patchers/ to ~/Documents/Cento, and are saved there", () => {
+  // A pretend Mac: the repository in ann's home, and her Cento folder.
+  const root = tempDir();
+  const home = path.join(root, "Users", "ann");
+  const repo = path.join(home, "GitHub", "cento");
+  const patchers = path.join(repo, "patchers");
+  const cento = path.join(home, "Documents", "Cento");
+  fs.mkdirSync(patchers, { recursive: true });
+  fs.mkdirSync(cento, { recursive: true });
+  fs.writeFileSync(path.join(repo, "package.json"), "{}\n");
+  const theirs = writeCorpus();
+  fs.writeFileSync(path.join(patchers, "cento.settings.json"), JSON.stringify({ corpora: [{ path: theirs, on: true }], seed: 7, beats: 8, bundled: 1 }));
+  fs.writeFileSync(path.join(patchers, "cento.taste.json"), JSON.stringify({ ratings: 0 }));
+
+  const core = engineIn(patchers);
+  const out = core.send("startup", "all");
+  assert.ok(core.posted.includes(`cento: your Cento folder is ${cento} (found from the patch's folder)\n`), core.posted.join(""));
+  assert.ok(core.posted.includes("cento: copied to your Cento folder from patchers/: cento.settings.json, cento.taste.json\n"));
+  assert.deepEqual(select(out, "error"), []);
+  assert.equal(settingsIn(cento).seed, 7);
+  assert.equal(settingsIn(cento).corpora[0].path, theirs);
+
+  // From now on, saved in the Cento folder; patchers/ keeps the old copy.
+  core.send("seed", 9);
+  assert.equal(settingsIn(cento).seed, 9);
+  assert.equal(settingsIn(patchers).seed, 7);
+  const again = engineIn(patchers);
+  again.send("startup", "all");
+  assert.ok(!again.posted.some((line) => /copied to your Cento folder/.test(line)));
+  assert.equal(settingsIn(cento).seed, 9);
+});
+
+test("Cento folder (M12): a download's own chorales are found in it; with none, the status line says where it goes", () => {
+  // As downloaded: the Cento folder (with corpus/) in Documents, and the
+  // patch somewhere else in the home folder (a device in a Live set).
+  const root = tempDir();
+  const home = path.join(root, "Users", "bea");
+  const device = path.join(home, "Music", "Cento Demo Project");
+  const cento = path.join(home, "Documents", "cento");
+  fs.mkdirSync(device, { recursive: true });
+  fs.mkdirSync(path.join(cento, "corpus"), { recursive: true });
+  fs.renameSync(writeCorpus(), path.join(cento, "corpus", "bach-figured-bass"));
+  const core = engineIn(device);
+  core.send("beats", 8);
+  const out = core.send("startup", "corpus");
+  assert.deepEqual(folderRows(out).map(([n, on, , works, , , name]) => [n, on, works, name]), [[1, 1, 3, "bach-figured-bass"]]);
+  assert.ok(select(out, "status").some((words) => words.join(" ").startsWith("corpus 3 chorales")));
+  assert.equal(settingsIn(cento).corpora[0].path, path.join(cento, "corpus", "bach-figured-bass"));
+  assert.ok(!fs.existsSync(path.join(device, "cento.settings.json")));
+
+  // No Cento folder, and not the repository: said in the status line.
+  const lost = engineIn(tempDir());
+  const nothing = lost.send("startup", "all");
+  assert.deepEqual(select(nothing, "error"), [["no", "Cento", "folder", "in", "Documents:", "put", "it", "there", "and", "open", "Cento", "again"]]);
+  assert.ok(lost.posted.some((line) => line.startsWith("cento: no Cento folder in Documents")));
+});
+
 // ---------------------------------------------------------------- core: Live clips
 
 test("core: loading the script doesn't touch the Live API", () => {
