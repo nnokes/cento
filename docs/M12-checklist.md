@@ -49,6 +49,15 @@ it in Finder to see it as people will), and the Cento folder's note is
 Pull the latest code in GitHub Desktop (branch `claude/dazzling-edison-2p29y3`).
 Close Max and Live first.
 
+**No Cento folder yet?** Open your **Documents** folder in Finder.
+- If there's a folder called `ml_midi` (your chorales from music21): rename
+  it to `Cento` (click its name once, wait, type). The corpus window's
+  folders inside it follow by themselves.
+- If not: *File → New Folder* (**⇧⌘N**), and name it `Cento`.
+
+Then, to be safe, copy `About this folder.txt` from the repository's
+`release` folder into it: Cento also recognises its folder by that file.
+
 ### Max version (`patchers/cento.maxpat`)
 
 1. [ ] **Open the patch.** If macOS asks whether **Max** may access files
