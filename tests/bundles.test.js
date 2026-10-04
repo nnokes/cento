@@ -113,12 +113,23 @@ test("each bundle exposes exactly its documented messages", () => {
     "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "playhead", "seam", "selection", "signature", "source", "speac", "variant",
   ]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
-  assert.deepEqual(loadBundle("emi.corpora").handlers(), ["clear", "done", "folder", "onclick", "onidle", "onidleout", "onresize", "paint", "summary"]);
+  assert.deepEqual(loadBundle("emi.corpora").handlers(), ["clear", "done", "folder", "footer", "onclick", "onidle", "onidleout", "onresize", "paint"]);
   assert.deepEqual(loadBundle("emi.text").handlers(), ["alert", "clear", "onresize", "paint", "text"]);
   assert.deepEqual(loadBundle("emi.taste").handlers(), [
     "clear", "compare", "comparing", "dislike", "done", "like", "onclick", "ondblclick", "ondrag", "onidle", "onidleout", "onresize", "own", "paint", "pair", "rating",
     "snapshot", "strength", "weight", "work",
   ]);
+});
+
+// Messages a Max object answers itself, before the script sees them: a
+// script function with the same name is never called ("summary", found in
+// M12: Max 9's [v8ui] took it, with "bad arguments for message summary").
+const MAX_OWN = ["summary"];
+
+test("no script answers a message Max keeps for itself", () => {
+  for (const name of ["emi.hello", "emi.core", "emi.view", "emi.voice", "emi.corpora", "emi.text", "emi.taste"]) {
+    for (const handler of loadBundle(name).handlers()) assert.ok(!MAX_OWN.includes(handler), `${name}: ${handler}`);
+  }
 });
 
 // Convention: one inlet and one outlet per [v8] wrapper. If a script fails to
@@ -623,7 +634,7 @@ test("settings: a corpus that has gone missing is reported, not fatal", () => {
 // The corpus window's rows: [n, on, used, works, meter, modes, name, note].
 const folderRows = (out) => select(out, "corpusview").filter(([kind]) => kind === "folder")
   .map(([, n, on, used, works, meter, modes, name, , ...note]) => [n, on, used, works, meter, modes, name, note.join(" ")]);
-const corpusSummary = (out) => select(out, "corpusview").filter(([kind]) => kind === "summary").map(([, ...words]) => words.join(" ")).at(-1);
+const corpusSummary = (out) => select(out, "corpusview").filter(([kind]) => kind === "footer").map(([, ...words]) => words.join(" ")).at(-1);
 
 test("corpora: folders join the corpus window, on or off; each change builds on the next turn and composes", () => {
   const folder = tempDir();
@@ -770,7 +781,7 @@ test("corpus window: a row per folder, with what it holds; its box, only and rem
   view.send("folder", 2, 1, 1, 295, "4/4", "major+minor", "corpus-both", "/music/cento/corpus-both", "142", "already", "in", "a", "folder", "above");
   view.send("folder", 3, 1, 0, 20, "3/4", "major", "corpus-3-4", "/music/cento/corpus-3-4", "not", "used:", "its", "chorales", "are", "in", "3/4,", "the", "corpus", "in", "4/4");
   view.send("folder", 4, 0, 0, -1, "?", "?", "mine", "/music/mine");
-  view.send("summary", "In", "use:", "295", "chorales");
+  view.send("footer", "In", "use:", "295", "chorales");
   view.send("done");
   const draw = () => {
     g.calls.length = 0;
@@ -807,7 +818,7 @@ test("corpus window: a row per folder, with what it holds; its box, only and rem
   // While a change builds.
   view.send("clear", 1);
   view.send("folder", 1, 1, 0, 142, "4/4", "major", "corpus", "/c");
-  view.send("summary", "Building", "the", "corpus...");
+  view.send("footer", "Building", "the", "corpus...");
   view.send("done");
   const building = draw();
   assert.ok(building.includes("building...") && !building.includes("not used"));

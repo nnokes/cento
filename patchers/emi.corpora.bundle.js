@@ -84,7 +84,8 @@ __emi_require.local = 1;
 // The engine sends the whole list whenever it changes:
 //   clear <building 1|0>          (building: a change waits for its build)
 //   folder <n> <on 1|0> <in use 1|0> <chorales | -1 not read> <meter> <modes> <name> <path> <note...>
-//   summary <words...>
+//   footer <words...>          (the line under the list; not "summary": Max 9's
+//                                 [v8ui] answers that message itself, and fails)
 //   done                          (draw it)
 
 autowatch = 1;
@@ -125,7 +126,7 @@ function folder(n, on, used, works, meter, modes, name, path, ...note) {
   });
 }
 
-function summary(...words) {
+function footer(...words) {
   if (incoming) incoming.summary = words.join(" ");
 }
 

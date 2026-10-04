@@ -6430,7 +6430,7 @@ function showCorpora(building) {
     const n = corpusReport.used.size;
     summary = `In use: ${bachDb.works.length} chorales (${mode}) from ${n} ${n === 1 ? "folder" : "folders"}, in ${bachDb.meter.join("/")}: ${bachDb.groupings.length} beats, ${bachDb.signatures.length} signatures.`;
   }
-  outlet(0, "corpusview", "summary", ...summary.split(" "));
+  outlet(0, "corpusview", "footer", ...summary.split(" ")); // not "summary": see emi.corpora.v8ui.js
   outlet(0, "corpusview", "done");
 }
 showCorpora.local = 1;
