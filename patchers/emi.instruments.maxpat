@@ -10,10 +10,10 @@
 		},
 		"classnamespace": "box",
 		"rect": [
-			60.0,
-			60.0,
-			1240.0,
-			810.0
+			140.0,
+			140.0,
+			470.0,
+			320.0
 		],
 		"openinpresentation": 1,
 		"default_fontsize": 12.0,
@@ -32,14 +32,14 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.window: the pop-up window (both products). A large piano roll (the same script as the panels' roll, emi.view) and Emily's taste in full (emi.taste). Opened by the Emily panel's window button, through [pcontrol] in the top patch.",
+					"text": "emi.instruments: the plug-in instruments window (Max version). Opened by the panel's set up button, through [pcontrol] in emi.host.max.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
 					"patching_rect": [
 						20.0,
-						900.0,
-						900.0,
+						420.0,
+						600.0,
 						34.0
 					],
 					"id": "obj-1"
@@ -48,7 +48,7 @@
 			{
 				"box": {
 					"maxclass": "inlet",
-					"comment": "from emi.engine: view ..., emilyview ...",
+					"comment": "pcontrol: open",
 					"index": 1,
 					"numinlets": 0,
 					"numoutlets": 1,
@@ -67,13 +67,13 @@
 			{
 				"box": {
 					"maxclass": "outlet",
-					"comment": "to emi.engine: select (from the roll), like, dislike, taste",
+					"comment": "to emi.host.max's instruments: plug <n> | open <n>",
 					"index": 1,
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
 						20.0,
-						860.0,
+						380.0,
 						30.0,
 						30.0
 					],
@@ -82,19 +82,21 @@
 			},
 			{
 				"box": {
-					"maxclass": "newobj",
-					"text": "route view emilyview",
-					"numinlets": 2,
-					"numoutlets": 3,
-					"outlettype": [
-						"",
-						"",
-						""
-					],
+					"maxclass": "comment",
+					"text": "soprano",
+					"numinlets": 1,
+					"numoutlets": 0,
 					"patching_rect": [
 						20.0,
 						60.0,
-						140.0,
+						70.0,
+						20.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						10.0,
+						10.0,
+						70.0,
 						22.0
 					],
 					"id": "obj-4"
@@ -102,217 +104,50 @@
 			},
 			{
 				"box": {
-					"maxclass": "v8ui",
-					"filename": "emi.view.bundle.js",
-					"varname": "Piano roll",
-					"textfile": {
-						"filename": "emi.view.bundle.js",
-						"flags": 0,
-						"embed": 0,
-						"autowatch": 1
-					},
-					"numinlets": 1,
+					"maxclass": "message",
+					"text": "choose\u2026",
+					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
 						""
 					],
-					"parameter_enable": 0,
-					"border": 0,
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"varname": "plug 1",
 					"patching_rect": [
 						20.0,
 						100.0,
-						1160.0,
-						430.0
+						65.0,
+						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
+						82.0,
 						10.0,
-						10.0,
-						1160.0,
-						430.0
+						104.0,
+						22.0
 					],
 					"id": "obj-5",
-					"hint": "The current piece, large. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means.",
-					"annotation": "The current piece, large. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Emily varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means.",
-					"annotation_name": "Piano roll"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "v8ui",
-					"filename": "emi.taste.bundle.js",
-					"varname": "Taste",
-					"textfile": {
-						"filename": "emi.taste.bundle.js",
-						"flags": 0,
-						"embed": 0,
-						"autowatch": 1
-					},
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"parameter_enable": 0,
-					"border": 0,
-					"patching_rect": [
-						20.0,
-						540.0,
-						1160.0,
-						250.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						10.0,
-						450.0,
-						1160.0,
-						250.0
-					],
-					"id": "obj-6",
-					"hint": "Emily's taste in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does.",
-					"annotation": "Emily's taste in three views, chosen by the tabs at its top right: overview (what she likes and dislikes most, her latest ratings, the last taste comparison), weights and memory. Hover over a tab, slider or button for what it does.",
-					"annotation_name": "Emily's taste"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "message",
-					"text": "like",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"bgcolor": [
-						0.8,
-						0.85,
-						0.93,
-						1.0
-					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
-						0.8,
-						0.85,
-						0.93,
-						1.0
-					],
-					"textcolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"patching_rect": [
-						20.0,
-						820.0,
-						56.0,
-						22.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						10.0,
-						710.0,
-						56.0,
-						24.0
-					],
-					"id": "obj-7",
-					"hint": "Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes.",
-					"annotation": "Tell Emily you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes.",
-					"annotation_name": "like"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "message",
-					"text": "dislike",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"bgcolor": [
-						0.8,
-						0.85,
-						0.93,
-						1.0
-					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
-						0.8,
-						0.85,
-						0.93,
-						1.0
-					],
-					"textcolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"patching_rect": [
-						80.0,
-						820.0,
-						56.0,
-						22.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						70.0,
-						710.0,
-						56.0,
-						24.0
-					],
-					"id": "obj-8",
-					"hint": "Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features.",
-					"annotation": "Tell Emily you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features.",
-					"annotation_name": "dislike"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "message",
-					"text": "keep",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"bgcolor": [
-						0.8,
-						0.85,
-						0.93,
-						1.0
-					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
-						0.8,
-						0.85,
-						0.93,
-						1.0
-					],
-					"textcolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"patching_rect": [
-						140.0,
-						760.0,
-						44.0,
-						22.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						130.0,
-						710.0,
-						46.0,
-						24.0
-					],
-					"id": "obj-9",
-					"hint": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab).",
-					"annotation": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab).",
-					"annotation_name": "keep"
+					"hint": "Choose the AU or VST3 instrument that plays the soprano (voice 1) when plug-in instruments is on.",
+					"annotation": "Choose the AU or VST3 instrument that plays the soprano (voice 1) when plug-in instruments is on.",
+					"annotation_name": "choose (soprano)"
 				}
 			},
 			{
@@ -325,9 +160,111 @@
 						"bang"
 					],
 					"patching_rect": [
-						140.0,
-						790.0,
+						20.0,
+						130.0,
 						35.0,
+						22.0
+					],
+					"id": "obj-6"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "plug 1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						20.0,
+						160.0,
+						58.0,
+						22.0
+					],
+					"id": "obj-7"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "show editor",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"varname": "open 1",
+					"patching_rect": [
+						130.0,
+						100.0,
+						93.0,
+						22.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						192.0,
+						10.0,
+						120.0,
+						22.0
+					],
+					"id": "obj-8",
+					"hint": "Show the editor window of the soprano's plug-in instrument.",
+					"annotation": "Show the editor window of the soprano's plug-in instrument.",
+					"annotation_name": "show editor (soprano)"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "t b",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					],
+					"patching_rect": [
+						130.0,
+						130.0,
+						35.0,
+						22.0
+					],
+					"id": "obj-9"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "open 1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						130.0,
+						160.0,
+						58.0,
 						22.0
 					],
 					"id": "obj-10"
@@ -335,17 +272,21 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "accept",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
+					"maxclass": "comment",
+					"text": "alto",
+					"numinlets": 1,
+					"numoutlets": 0,
 					"patching_rect": [
-						140.0,
-						820.0,
-						58.0,
+						240.0,
+						60.0,
+						70.0,
+						20.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						10.0,
+						38.0,
+						70.0,
 						22.0
 					],
 					"id": "obj-11"
@@ -354,7 +295,7 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "taste report",
+					"text": "choose\u2026",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -379,24 +320,24 @@
 						0.09,
 						1.0
 					],
-					"fontsize": 10.0,
+					"varname": "plug 2",
 					"patching_rect": [
-						200.0,
-						760.0,
+						240.0,
 						100.0,
+						65.0,
 						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						180.0,
-						710.0,
-						72.0,
-						24.0
+						82.0,
+						38.0,
+						104.0,
+						22.0
 					],
 					"id": "obj-12",
-					"hint": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
-					"annotation": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
-					"annotation_name": "taste report"
+					"hint": "Choose the AU or VST3 instrument that plays the alto (voice 2) when plug-in instruments is on.",
+					"annotation": "Choose the AU or VST3 instrument that plays the alto (voice 2) when plug-in instruments is on.",
+					"annotation_name": "choose (alto)"
 				}
 			},
 			{
@@ -409,8 +350,8 @@
 						"bang"
 					],
 					"patching_rect": [
-						200.0,
-						790.0,
+						240.0,
+						130.0,
 						35.0,
 						22.0
 					],
@@ -420,16 +361,16 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "taste",
+					"text": "plug 2",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
 						""
 					],
 					"patching_rect": [
-						200.0,
-						820.0,
-						51.0,
+						240.0,
+						160.0,
+						58.0,
 						22.0
 					],
 					"id": "obj-14"
@@ -438,7 +379,7 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "reload seed",
+					"text": "show editor",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -463,23 +404,24 @@
 						0.09,
 						1.0
 					],
+					"varname": "open 2",
 					"patching_rect": [
-						260.0,
-						760.0,
-						90.0,
+						350.0,
+						100.0,
+						93.0,
 						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						256.0,
-						710.0,
-						90.0,
-						24.0
+						192.0,
+						38.0,
+						120.0,
+						22.0
 					],
 					"id": "obj-15",
-					"hint": "Compose the seed shown again, with Emily's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
-					"annotation": "Compose the seed shown again, with Emily's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
-					"annotation_name": "reload seed"
+					"hint": "Show the editor window of the alto's plug-in instrument.",
+					"annotation": "Show the editor window of the alto's plug-in instrument.",
+					"annotation_name": "show editor (alto)"
 				}
 			},
 			{
@@ -492,8 +434,8 @@
 						"bang"
 					],
 					"patching_rect": [
-						260.0,
-						790.0,
+						350.0,
+						130.0,
 						35.0,
 						22.0
 					],
@@ -503,16 +445,16 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "compose",
+					"text": "open 2",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
 						""
 					],
 					"patching_rect": [
-						260.0,
-						820.0,
-						60.0,
+						350.0,
+						160.0,
+						58.0,
 						22.0
 					],
 					"id": "obj-17"
@@ -520,8 +462,30 @@
 			},
 			{
 				"box": {
+					"maxclass": "comment",
+					"text": "tenor",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						460.0,
+						60.0,
+						70.0,
+						20.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						10.0,
+						66.0,
+						70.0,
+						22.0
+					],
+					"id": "obj-18"
+				}
+			},
+			{
+				"box": {
 					"maxclass": "message",
-					"text": "release all pins",
+					"text": "choose\u2026",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -546,23 +510,24 @@
 						0.09,
 						1.0
 					],
+					"varname": "plug 3",
 					"patching_rect": [
-						430.0,
-						760.0,
-						120.0,
+						460.0,
+						100.0,
+						65.0,
 						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						356.0,
-						710.0,
-						120.0,
-						24.0
+						82.0,
+						66.0,
+						104.0,
+						22.0
 					],
-					"id": "obj-18",
-					"hint": "Release every pinned weight: each goes back to what Emily learned from your ratings.",
-					"annotation": "Release every pinned weight: each goes back to what Emily learned from your ratings.",
-					"annotation_name": "release all pins"
+					"id": "obj-19",
+					"hint": "Choose the AU or VST3 instrument that plays the tenor (voice 3) when plug-in instruments is on.",
+					"annotation": "Choose the AU or VST3 instrument that plays the tenor (voice 3) when plug-in instruments is on.",
+					"annotation_name": "choose (tenor)"
 				}
 			},
 			{
@@ -575,27 +540,9 @@
 						"bang"
 					],
 					"patching_rect": [
-						410.0,
-						790.0,
+						460.0,
+						130.0,
 						35.0,
-						22.0
-					],
-					"id": "obj-19"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "message",
-					"text": "unpin",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						410.0,
-						820.0,
-						50.0,
 						22.0
 					],
 					"id": "obj-20"
@@ -604,7 +551,25 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "store taste",
+					"text": "plug 3",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						460.0,
+						160.0,
+						58.0,
+						22.0
+					],
+					"id": "obj-21"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "show editor",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -629,42 +594,24 @@
 						0.09,
 						1.0
 					],
+					"varname": "open 3",
 					"patching_rect": [
-						580.0,
-						760.0,
+						570.0,
+						100.0,
 						93.0,
 						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						486.0,
-						710.0,
-						95.0,
-						24.0
-					],
-					"id": "obj-21",
-					"hint": "Save Emily's whole taste (weights, pins, strength, ratings) to a file you choose.",
-					"annotation": "Save Emily's whole taste (weights, pins, strength, ratings) to a file you choose.",
-					"annotation_name": "store taste"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "route store",
-					"numinlets": 2,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"patching_rect": [
-						580.0,
-						790.0,
-						80.0,
+						192.0,
+						66.0,
+						120.0,
 						22.0
 					],
-					"id": "obj-22"
+					"id": "obj-22",
+					"hint": "Show the editor window of the tenor's plug-in instrument.",
+					"annotation": "Show the editor window of the tenor's plug-in instrument.",
+					"annotation_name": "show editor (tenor)"
 				}
 			},
 			{
@@ -677,8 +624,8 @@
 						"bang"
 					],
 					"patching_rect": [
-						580.0,
-						820.0,
+						570.0,
+						130.0,
 						35.0,
 						22.0
 					],
@@ -687,18 +634,17 @@
 			},
 			{
 				"box": {
-					"maxclass": "newobj",
-					"text": "savedialog",
-					"numinlets": 1,
-					"numoutlets": 2,
+					"maxclass": "message",
+					"text": "open 3",
+					"numinlets": 2,
+					"numoutlets": 1,
 					"outlettype": [
-						"",
-						"bang"
+						""
 					],
 					"patching_rect": [
-						580.0,
-						850.0,
-						110.0,
+						570.0,
+						160.0,
+						58.0,
 						22.0
 					],
 					"id": "obj-24"
@@ -706,17 +652,21 @@
 			},
 			{
 				"box": {
-					"maxclass": "newobj",
-					"text": "prepend storetaste",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
+					"maxclass": "comment",
+					"text": "bass",
+					"numinlets": 1,
+					"numoutlets": 0,
 					"patching_rect": [
-						580.0,
-						880.0,
-						120.0,
+						680.0,
+						60.0,
+						70.0,
+						20.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						10.0,
+						94.0,
+						70.0,
 						22.0
 					],
 					"id": "obj-25"
@@ -725,7 +675,7 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "recall taste",
+					"text": "choose\u2026",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -750,42 +700,24 @@
 						0.09,
 						1.0
 					],
+					"varname": "plug 4",
 					"patching_rect": [
-						720.0,
-						760.0,
+						680.0,
 						100.0,
+						65.0,
 						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						587.0,
-						710.0,
-						95.0,
-						24.0
-					],
-					"id": "obj-26",
-					"hint": "Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot.",
-					"annotation": "Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot.",
-					"annotation_name": "recall taste"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "route recall",
-					"numinlets": 2,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"patching_rect": [
-						720.0,
-						790.0,
-						80.0,
+						82.0,
+						94.0,
+						104.0,
 						22.0
 					],
-					"id": "obj-27"
+					"id": "obj-26",
+					"hint": "Choose the AU or VST3 instrument that plays the bass (voice 4) when plug-in instruments is on.",
+					"annotation": "Choose the AU or VST3 instrument that plays the bass (voice 4) when plug-in instruments is on.",
+					"annotation_name": "choose (bass)"
 				}
 			},
 			{
@@ -798,9 +730,27 @@
 						"bang"
 					],
 					"patching_rect": [
-						720.0,
-						820.0,
+						680.0,
+						130.0,
 						35.0,
+						22.0
+					],
+					"id": "obj-27"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "plug 4",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						680.0,
+						160.0,
+						58.0,
 						22.0
 					],
 					"id": "obj-28"
@@ -808,45 +758,8 @@
 			},
 			{
 				"box": {
-					"maxclass": "newobj",
-					"text": "opendialog",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"bang"
-					],
-					"patching_rect": [
-						720.0,
-						850.0,
-						110.0,
-						22.0
-					],
-					"id": "obj-29"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend recalltaste",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						720.0,
-						880.0,
-						120.0,
-						22.0
-					],
-					"id": "obj-30"
-				}
-			},
-			{
-				"box": {
 					"maxclass": "message",
-					"text": "forget",
+					"text": "show editor",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -871,45 +784,82 @@
 						0.09,
 						1.0
 					],
+					"varname": "open 4",
 					"patching_rect": [
-						860.0,
-						820.0,
-						60.0,
+						790.0,
+						100.0,
+						93.0,
 						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						688.0,
-						710.0,
-						60.0,
-						24.0
+						192.0,
+						94.0,
+						120.0,
+						22.0
 					],
-					"id": "obj-31",
-					"hint": "Start a new taste from nothing. The old one is kept as a backup and as a snapshot, so you can roll back to it.",
-					"annotation": "Start a new taste from nothing. The old one is kept as a backup and as a snapshot, so you can roll back to it.",
-					"annotation_name": "forget"
+					"id": "obj-29",
+					"hint": "Show the editor window of the bass's plug-in instrument.",
+					"annotation": "Show the editor window of the bass's plug-in instrument.",
+					"annotation_name": "show editor (bass)"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "t b",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					],
+					"patching_rect": [
+						790.0,
+						130.0,
+						35.0,
+						22.0
+					],
+					"id": "obj-30"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "open 4",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						790.0,
+						160.0,
+						58.0,
+						22.0
+					],
+					"id": "obj-31"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "Drag across the roll to select beats for like, dislike and keep. Hover over anything for what it does; the tabs at the pane's top right choose its view.",
+					"text": "Then switch on plug-in instruments in the panel, and audio (the speaker).",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
 					"fontsize": 10.0,
 					"patching_rect": [
-						940.0,
-						820.0,
-						400.0,
-						30.0
+						20.0,
+						300.0,
+						300.0,
+						34.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						766.0,
-						708.0,
-						404.0,
-						30.0
+						10.0,
+						124.0,
+						300.0,
+						34.0
 					],
 					"id": "obj-32"
 				}
@@ -924,7 +874,7 @@
 						"bang"
 					],
 					"patching_rect": [
-						700.0,
+						500.0,
 						20.0,
 						70.0,
 						22.0
@@ -935,16 +885,16 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "title Cento: piano roll and Emily",
+					"text": "title Cento: plug-in instruments",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
 						""
 					],
 					"patching_rect": [
-						700.0,
+						500.0,
 						55.0,
-						230.0,
+						210.0,
 						22.0
 					],
 					"id": "obj-34"
@@ -961,7 +911,7 @@
 						""
 					],
 					"patching_rect": [
-						700.0,
+						500.0,
 						90.0,
 						80.0,
 						22.0
@@ -974,44 +924,8 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-2",
-						0
-					],
-					"destination": [
-						"obj-4",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						0
-					],
-					"destination": [
 						"obj-5",
 						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-5",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						1
 					],
 					"destination": [
 						"obj-6",
@@ -1026,7 +940,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-7",
 						0
 					]
 				}
@@ -1050,7 +964,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-9",
 						0
 					]
 				}
@@ -1071,18 +985,6 @@
 				"patchline": {
 					"source": [
 						"obj-10",
-						0
-					],
-					"destination": [
-						"obj-11",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-11",
 						0
 					],
 					"destination": [
@@ -1166,18 +1068,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-18",
-						0
-					],
-					"destination": [
-						"obj-19",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-19",
 						0
 					],
@@ -1194,7 +1084,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-21",
 						0
 					]
 				}
@@ -1206,7 +1096,7 @@
 						0
 					],
 					"destination": [
-						"obj-22",
+						"obj-3",
 						0
 					]
 				}
@@ -1239,18 +1129,6 @@
 				"patchline": {
 					"source": [
 						"obj-24",
-						0
-					],
-					"destination": [
-						"obj-25",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-25",
 						0
 					],
 					"destination": [
@@ -1290,31 +1168,31 @@
 						0
 					],
 					"destination": [
-						"obj-29",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-29",
-						0
-					],
-					"destination": [
-						"obj-30",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-30",
-						0
-					],
-					"destination": [
 						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-29",
+						0
+					],
+					"destination": [
+						"obj-30",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-30",
+						0
+					],
+					"destination": [
+						"obj-31",
 						0
 					]
 				}

@@ -214,7 +214,7 @@ test("core: 'clear' empties the queue", () => {
 // ---------------------------------------------------------------- core: corpus and compose
 
 test("core: 'compose' needs a corpus", () => {
-  assert.deepEqual(lastStatus(loadBundle("emi.core").send("compose", 1)), ["error", "load", "a", "corpus", "first"]);
+  assert.deepEqual(lastStatus(loadBundle("emi.core").send("compose", 1)), ["error", "no", "chorales", "yet:", "click", "chorales", "and", "switch", "a", "folder", "on"]);
 });
 
 test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece in a chorale's form", () => {
@@ -649,7 +649,7 @@ test("corpora: folders join the corpus window, on or off; each change builds on 
   out = core.send("corpusadd", abc);
   assert.deepEqual(select(out, "corpusview")[0], ["clear", 1]);
   assert.equal(corpusSummary(out), "Building the corpus...");
-  assert.match(lastStatus(out).join(" "), /^status corpora changed: building the corpus\.\.\.$/);
+  assert.match(lastStatus(out).join(" "), /^status chorales changed: building the corpus\.\.\.$/);
   assert.deepEqual(out.filter((o) => o[1] === "later"), [[0, "later", "corpusbuild", 1]]);
   out = settle(core, out);
   assert.ok(select(out, "status").some((words) => words.join(" ").startsWith("corpus 3 chorales (major), ")), "built");
@@ -675,9 +675,9 @@ test("corpora: folders join the corpus window, on or off; each change builds on 
 
   // All off: no corpus, said plainly.
   out = settle(core, core.send("corpuson", 1, 0));
-  assert.ok(select(out, "status").some((words) => words.join(" ") === "no corpus: switch a folder on in corpora"));
+  assert.ok(select(out, "status").some((words) => words.join(" ") === "no chorales: switch a folder on in the chorales window"));
   assert.equal(corpusSummary(out), "No corpus: switch a folder on.");
-  assert.match(lastStatus(core.send("compose")).join(" "), /^error load a corpus first$/);
+  assert.match(lastStatus(core.send("compose")).join(" "), /^error no chorales yet: click chorales and switch a folder on$/);
 
   // The list is remembered, each folder with what it holds.
   core.send("corpuson", 1, 1);
@@ -706,7 +706,7 @@ test("corpora: quick changes build once; a chorale in two folders counts once; o
   ]);
   // Switching off a folder that gives nothing changes nothing: no build, no compose.
   const same = settle(core, core.send("corpuson", 3, 0));
-  assert.deepEqual(select(same, "status").map((w) => w.join(" ")), ["corpora changed: building the corpus...", "corpus unchanged: 4 chorales"]);
+  assert.deepEqual(select(same, "status").map((w) => w.join(" ")), ["chorales changed: building the corpus...", "corpus unchanged: 4 chorales"]);
   core.send("corpuson", 3, 1);
   // A 3/4 corpus: that folder only.
   const only = settle(core, core.send("corpusonly", 3));
@@ -1157,7 +1157,7 @@ test("view: draws one rectangle per note, plus bar lines and seams", () => {
   const view = loadBundle("emi.view");
   const g = view.context.mgraphics;
   view.send("paint");
-  assert.ok(g.calls.some(([name, text]) => name === "show_text" && /load a chorale/.test(text)));
+  assert.ok(g.calls.some(([name, text]) => name === "show_text" && /^Press compose, then play\.$/.test(text)));
 
   g.calls.length = 0;
   view.send("clear", 4 * Q, 60, 72, 4 * Q);
@@ -1236,7 +1236,7 @@ test("emily: like and dislike learn from the piece or the beats selected, and th
   const core = engineIn(folder);
   const started = core.send("startup", "all");
   assert.deepEqual(select(started, "emily"), [["no", "ratings", "yet"]], "the Emily panel shows her taste");
-  assert.deepEqual(lastStatus(core.send("like")), ["error", "load", "a", "corpus", "first"]);
+  assert.deepEqual(lastStatus(core.send("like")), ["error", "no", "chorales", "yet:", "click", "chorales", "and", "switch", "a", "folder", "on"]);
   core.send("corpus", writeCorpus());
   core.send("beats", 8);
   const composed = core.send("compose", 1);
@@ -1304,10 +1304,10 @@ test("emily: temperature is clamped, saved and restored", () => {
   const folder = tempDir();
   const core = engineIn(folder);
   core.send("startup", "all");
-  assert.deepEqual(lastStatus(core.send("temperature", 0.5)).slice(0, 7), ["status", "temperature", "0.50:", "less", "chance,", "more", "taste"]);
+  assert.deepEqual(lastStatus(core.send("temperature", 0.5)).slice(0, 7), ["status", "chance", "0.50:", "less", "chance,", "more", "taste"]);
   assert.equal(settingsIn(folder).temperature, 0.5);
-  assert.deepEqual(lastStatus(core.send("temperature", 7)).slice(0, 4), ["status", "temperature", "3.00:", "more"]);
-  assert.deepEqual(lastStatus(core.send("temperature", 0)).slice(0, 5), ["status", "temperature", "0.00:", "only", "Emily's"]);
+  assert.deepEqual(lastStatus(core.send("temperature", 7)).slice(0, 4), ["status", "chance", "3.00:", "more"]);
+  assert.deepEqual(lastStatus(core.send("temperature", 0)).slice(0, 5), ["status", "chance", "0.00:", "only", "Emily's"]);
   core.send("temperature", 1.5);
   const restored = engineIn(folder).send("startup", "all");
   assert.deepEqual(select(restored, "setting").find(([name]) => name === "temperature"), ["temperature", 1.5]);
@@ -1721,7 +1721,7 @@ test("emily: accept keeps a piece as her own; mix uses it; mix 0 is Bach alone, 
   const folder = tempDir();
   const core = engineIn(folder);
   core.send("startup", "all");
-  assert.match(lastStatus(core.send("accept")).join(" "), /^error load a corpus first$/);
+  assert.match(lastStatus(core.send("accept")).join(" "), /^error no chorales yet: click chorales and switch a folder on$/);
   core.send("corpus", writeCorpus());
   core.send("beats", 8);
   const before = lastStatus(core.send("compose", 2)).join(" ");

@@ -1535,6 +1535,20 @@ own settings and Emily files.
    link at the top of the README. Every later release follows
    [docs/releasing.md](docs/releasing.md).
 
+**The GUI redesign** (before the checks, so the frozen devices and the app
+carry it): the panels follow the order you use them: **compose** first (the
+one strong blue button), then which chorales and how long, then streams. The
+less-used tools (load a chorale, in C or its own key; the test phrase; stop
+and clear) are in a **tools** menu, and the Max version's plug-in instruments
+in a window of their own (**set up…**). Plain names replace shorthand
+(chorales…, chorale form, signatures, transpose, listening test…, keep,
+chance, taste report, write clips, test clips); Live's parameters keep their
+names, so mappings and automation in saved sets still work. Grey headings
+(PLAY, COMPOSE, EMILY, CLIPS AND VOICES), one look per kind of control, a hint
+in the empty piano roll, and a narrower roll (260 px; the pop-up window has the
+large one). `tests/patches.test.js` checks that nothing overlaps or leaves its
+panel.
+
 **Later, if it's wanted**: a signed app; a Live Pack (one file that installs
 the devices and the demo set into Live's browser); Windows (Max and Live run
 there, but nothing has been tried); Max's Package Manager.

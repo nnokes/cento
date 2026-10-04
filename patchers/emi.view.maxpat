@@ -68,14 +68,14 @@
 					"patching_rect": [
 						20.0,
 						60.0,
-						400.0,
+						260.0,
 						169.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						400.0,
+						260.0,
 						169.0
 					],
 					"id": "obj-2",
@@ -108,7 +108,7 @@
 					"numoutlets": 0,
 					"linecount": 3,
 					"patching_rect": [
-						440.0,
+						300.0,
 						60.0,
 						260.0,
 						48.0

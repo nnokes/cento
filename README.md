@@ -43,25 +43,26 @@ across many chorales (soprano 3-2-1, bass 4-5-1), whole at their cadences,
 shown as gold bands in the piano roll. Since M8, pieces that quote a chorale
 for too long are set aside, the piano roll shows where each beat came from
 when you hover over it, a corpus may mix major and minor chorales, 3/4
-chorales work, and the **A/B** button writes a blind listening test (Bach or
+chorales work, and the **listening test** button writes a blind A/B test (Bach or
 not?) as a web page. Since M9, Emily learns your taste: **like** and
 **dislike** rate the piece, the stream phrase playing or the beats you drag
 across in the piano roll. Later pieces lean toward the features you liked
 (high melodies, 16th notes, modulations, ...), within the same rules, and
-**temp** sets how much chance still plays. The **window** button opens a
+**chance** sets how much chance still plays. The **window** button opens a
 large piano roll with Emily's taste in full, in both products. There you can
 also pin any feature's weight with a slider, set her taste's strength, and
 store and recall whole tastes as files. Since M10, Emily varies pieces with
-notes Bach never wrote (**novelty**), **accept** keeps what you like as music
+notes Bach never wrote (**novelty**), **keep** keeps what you like as music
 of her own that later pieces draw on (**mix**), and snapshots let you roll
-her back to any earlier state. Since M11, the **corpora** window lists folders
+her back to any earlier state. Since M11, the **chorales** window lists folders
 of chorales, each switched on or off: composing uses every folder that is on,
 as one corpus (major and minor, or a 3/4 folder alone). Cento comes with
 131 Bach chorales of its own ([`corpus/`](corpus/README.md), freely
 licensed), so it composes straight away; music21's are an optional extra
 ([step by step](#more-chorales-from-music21)). Every control explains itself when you hover
 over it (a tooltip in Max, the Info View in Live); [docs/controls.md](docs/controls.md)
-lists them all. The full plan
+lists them all. The panels are laid out in the order you use them (since the M12
+redesign): **compose** first, the less-used tools in a **tools** menu. The full plan
 and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
@@ -91,16 +92,16 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | What | Where | Notes |
 |---|---|---|
 | **The repo** (your clone) | wherever you cloned it, e.g. `~/Documents/GitHub/cento` | Run every command below from this folder |
-| **Cento's chorales** | `<repo>/corpus/bach-figured-bass/`, `bach-figured-bass-3-4/` | 118 chorales in 4/4 and 13 in 3/4 that come with Cento (CC BY 4.0: [corpus/README.md](corpus/README.md)). Listed in the **corpora** window the first time Cento opens; the 4/4 folder is switched on if the list was empty |
+| **Cento's chorales** | `<repo>/corpus/bach-figured-bass/`, `bach-figured-bass-3-4/` | 118 chorales in 4/4 and 13 in 3/4 that come with Cento (CC BY 4.0: [corpus/README.md](corpus/README.md)). Listed in the **chorales** window the first time Cento opens; the 4/4 folder is switched on if the list was empty |
 | **Python for music21** (optional) | `<repo>/.venv/` | Made in [step 4](#more-chorales-from-music21) below. About 300 MB, git-ignored, delete it to uninstall |
 | **music21's chorales** (optional) | `~/Documents/cento/corpus/`, `corpus-both/`, `corpus-minor/`, `corpus-3-4/` | Written by `tools/export-chorales.py` ([step 5](#more-chorales-from-music21)); outside the repo, because they're for your own use only |
 | **Exported pieces** | `~/Documents/cento/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
-| **Listening tests** | anywhere, e.g. `~/Documents/cento/` | Written by the **A/B** button: one web page, opened in a browser |
+| **Listening tests** | anywhere, e.g. `~/Documents/cento/` | Written by the **listening test** button: one web page, opened in a browser |
 | **Emily's taste** (M9) | `~/Documents/cento/cento.taste.json` | Your ratings, pins and strength, shared by both products. **forget** and **recall taste** set the old one aside as `cento.taste.backup.json`; delete both to start fresh |
 | **Stored tastes** (optional) | e.g. `~/Documents/cento/emily/` | Written by **store taste** in the pop-up window; read back by **recall taste** |
-| **Emily's own music and snapshots** (M10) | `~/Documents/cento/cento.emily.json`, `cento.snapshots.json` | Every piece or phrase you **accept**, and her last 30 snapshots; shared by both products |
+| **Emily's own music and snapshots** (M10) | `~/Documents/cento/cento.emily.json`, `cento.snapshots.json` | Every piece or phrase you **keep**, and her last 30 snapshots; shared by both products |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
-| **Remembered settings** | `~/Documents/cento/cento.settings.json` | The corpus window's folders (which are on), seed and other settings; written by the patches. Delete it to start fresh |
+| **Remembered settings** | `~/Documents/cento/cento.settings.json` | The chorales window's folders (which are on), seed and other settings; written by the patches. Delete it to start fresh |
 
 **Your Cento folder** (M12): the settings and Emily's files live in
 `~/Documents/cento` (any case: `Cento` is the same folder on a Mac). Cento
@@ -225,7 +226,7 @@ chorale is a `.mid` file and a `.json` file. (`--count 20` writes only the
 first 20, for a quick try.)
 
 **6. Add them in Cento.** In the Max patch or the Live device, click
-**corpora**, then **add folder**, and choose the folder you exported to
+**chorales…**, then **add folder**, and choose the folder you exported to
 (e.g. `Documents/cento/corpus-both`). It's added switched on. Leave Cento's
 own `bach-figured-bass` on too, or use **only** for one folder alone: a
 chorale that's in two folders counts once. Use 3/4 folders on their own
@@ -254,7 +255,8 @@ patchers/     everything Max loads, in one folder:
               (Live version), emi.engine, emi.host.max, emi.host.live,
               emi.panel (the shared controls), emily.panel (Emily's ratings),
               emi.view (piano roll), emi.window (the pop-up window),
-              emi.corpora (the corpus window), and the generated
+              emi.corpora (the chorales window), emi.instruments (the
+              Max version's plug-in instruments), and the generated
               *.bundle.js scripts (npm run build; committed)
 code/         [v8] wrappers: glue between Max messages and the engine
               (emi.core.v8.js), and the piano roll (emi.view.v8ui.js)

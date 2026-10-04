@@ -4,6 +4,7 @@
 
 | Check | Max version | Live version |
 |---|---|---|
+| The new layout: compose first, tools menu, plug-in instruments window, plain names, a narrower piano roll; nothing overlaps | ✅ (`npm test`: sizes, overlaps, wiring) | |
 | Your files live in your Cento folder (`~/Documents/cento`), copied there from `patchers/` the first time | | |
 | Both products share them, as before | | |
 | Finding the folder: from a patch in a home folder, from Max's own path, through `/Users` (the app), by a file in it; none: the status line says where it goes | ✅ (`npm test`) | ✅ (the same engine) |
@@ -44,6 +45,46 @@ it in Finder to see it as people will), and the Cento folder's note is
 
 ---
 
+## 0. The new layout
+
+The panels were rearranged before shipping (the GUI redesign). Nothing
+behaves differently; what changed is where things are and what they're
+called:
+
+| Before | Now |
+|---|---|
+| load chorale, original key, pattern, clear (top row) | the **tools** menu (bottom of the composing panel) |
+| compose, seed, next (third row) | the top row; **compose** is the blue button |
+| corpora | **chorales…** (the window is *Cento: chorales*) |
+| form, sigs, transp., A/B | **chorale form**, **signatures**, **transpose**, **listening test…** |
+| accept, temperature (temp), taste | **keep**, **chance**, **taste report** |
+| vst~ instead, plug 1–4, open 1–4 (Max) | **plug-in instruments** and **set up…** (a window) |
+| writeclips, testclip (Live) | **write clips**, **test clips** |
+
+The piano roll in the panels is narrower (260 px); **window** has the large
+one. In Live the device is now about 880 px wide.
+
+1. [ ] **Max: the look.** Open `patchers/cento.maxpat`. Four parts with grey
+       headings **PLAY**, **COMPOSE**, **EMILY**, then the piano roll.
+       Nothing overlaps or is cut off; every label is readable. (If not, a
+       screenshot helps most.)
+2. [ ] **compose first.** Click **compose**, **next**, change **seed**: as
+       before.
+3. [ ] **The tools menu.** Choose *play the test phrase*: the test phrase
+       is drawn and plays (press play), and the menu shows *tools* again.
+       Choose *load a chorale (in its own key)…* and pick any `.mid` from a
+       chorales folder: it loads, as **load chorale** did with **original
+       key** on. Then *stop and clear the queue*.
+4. [ ] **The windows.** **chorales…** opens *Cento: chorales*. **set up…**
+       opens *Cento: plug-in instruments*; click **choose…** for the soprano:
+       the plug-in chooser opens (cancel it). **window** opens the pop-up
+       window, whose buttons now say **keep** and **taste report**.
+5. [ ] **Live: the look.** Reopen your set. The brain device is narrower,
+       with **CLIPS AND VOICES**, **COMPOSE** and **EMILY** headings;
+       nothing overlaps. **write clips** and **test clips** work. The dial
+       says **chance**. If you mapped **like**, **dislike** or **accept**
+       (now **keep**) to keys or MIDI notes, the mappings still work.
+
 ## 1. Your Cento folder
 
 Pull the latest code in GitHub Desktop (branch `claude/dazzling-edison-2p29y3`).
@@ -51,7 +92,7 @@ Close Max and Live first.
 
 **No Cento folder yet?** Open your **Documents** folder in Finder.
 - If there's a folder called `ml_midi` (your chorales from music21): rename
-  it to `Cento` (click its name once, wait, type). The corpus window's
+  it to `Cento` (click its name once, wait, type). The chorales window's
   folders inside it follow by themselves.
 - If not: *File → New Folder* (**⇧⌘N**), and name it `Cento`.
 
@@ -71,7 +112,7 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        `cento: no Cento folder found, so your files stay in patchers/ (looked in ...)`,
        copy that line: it says where Cento looked and how many names Max
        listed there.
-2. [ ] **Nothing lost.** The seed, the corpus window's folders (which are
+2. [ ] **Nothing lost.** The seed, the chorales window's folders (which are
        on) and Emily's taste (the pop-up window's overview) are as they
        were. The piece composed is the same as before you pulled.
 3. [ ] **Saved there.** In Finder, open `Documents/cento`: it now holds
@@ -89,7 +130,7 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        Console*: the same `your Cento folder` line (it may say "from Max's
        own folder" or "from the patch's folder"). If macOS asks whether
        **Live** may access your Documents folder, click **Allow**.
-6. [ ] **Shared.** The corpus window lists the same folders as in Max. Click
+6. [ ] **Shared.** The chorales window lists the same folders as in Max. Click
        **like** on a piece in Live; then open `cento.maxpat` in Max: the
        pop-up window's overview counts that rating.
 
@@ -117,8 +158,8 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        editor.
 4. [ ] **It works.** The brain composes at once (its piano roll fills).
        **Play Through Voices** on, then Live's Play: the piece plays through
-       the four instruments, from a bar. Then, one at a time: **corpora**
-       opens the corpus window; **window** opens the pop-up window; hover
+       the four instruments, from a bar. Then, one at a time: **chorales…**
+       opens the chorales window; **window** opens the pop-up window; hover
        help shows in the Info View; **like** counts. Last, open the brain's
        editor and *Window → Max Console*: copy the
        `cento: your Cento folder is ...` line. Close the editor.
@@ -150,7 +191,7 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        click **Allow**.
 3. [ ] **It works.** It composes at once with your settings (the same seed
        and corpora as in Max). Click **play**: it plays through the output
-       shown (choose *AU DLS Synth 1* if it's silent). **corpora** and
+       shown (choose *AU DLS Synth 1* if it's silent). **chorales…** and
        **window** open their windows; hover help shows; **export midi**
        saves a file.
 4. [ ] **Where it found your folder.** If the app has a Max Console (the
@@ -197,5 +238,5 @@ likely to need a fix:
 - the app (section 4): whether *Build Collective / Application* takes every
   window and script along, and finds your Cento folder from Applications.
 
-Sections 1 and 2 can be done first; report them before the rest if you
+Sections 0 to 2 can be done first; report them before the rest if you
 like.

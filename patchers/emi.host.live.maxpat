@@ -82,22 +82,29 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "Cento (Live)",
+					"text": "CLIPS AND VOICES",
 					"numinlets": 1,
 					"numoutlets": 0,
+					"fontsize": 10.0,
 					"fontface": 1,
+					"textcolor": [
+						0.55,
+						0.55,
+						0.55,
+						1.0
+					],
 					"patching_rect": [
 						20.0,
-						70.0,
-						110.0,
+						50.0,
+						120.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						4.0,
-						120.0,
-						20.0
+						1.0,
+						158.0,
+						18.0
 					],
 					"id": "obj-4"
 				}
@@ -324,6 +331,71 @@
 			{
 				"box": {
 					"maxclass": "message",
+					"text": "write clips",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"patching_rect": [
+						20.0,
+						100.0,
+						93.0,
+						22.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						6.0,
+						19.0,
+						80.0,
+						20.0
+					],
+					"id": "obj-17",
+					"hint": "Write the current piece as MIDI clips, one per voice, in the first empty clip slot of the Soprano, Alto, Tenor and Bass tracks. Edit them in Live like any clip.",
+					"annotation": "Write the current piece as MIDI clips, one per voice, in the first empty clip slot of the Soprano, Alto, Tenor and Bass tracks. Edit them in Live like any clip.",
+					"annotation_name": "write clips"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "t b",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					],
+					"patching_rect": [
+						20.0,
+						130.0,
+						35.0,
+						22.0
+					],
+					"id": "obj-18"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
 					"text": "writeclips",
 					"numinlets": 2,
 					"numoutlets": 1,
@@ -332,21 +404,76 @@
 					],
 					"patching_rect": [
 						20.0,
+						160.0,
+						86.0,
+						22.0
+					],
+					"id": "obj-19"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
+					"text": "test clips",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"patching_rect": [
+						120.0,
 						100.0,
 						86.0,
 						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						6.0,
-						30.0,
-						80.0,
+						90.0,
+						19.0,
+						74.0,
 						20.0
 					],
-					"id": "obj-17",
-					"hint": "Write the current piece as MIDI clips, one per voice, in the first empty clip slot of the Soprano, Alto, Tenor and Bass tracks. Edit them in Live like any clip.",
-					"annotation": "Write the current piece as MIDI clips, one per voice, in the first empty clip slot of the Soprano, Alto, Tenor and Bass tracks. Edit them in Live like any clip.",
-					"annotation_name": "writeclips"
+					"id": "obj-20",
+					"hint": "Write a short test phrase as clips on the voice tracks: a quick check that the tracks are named and set up.",
+					"annotation": "Write a short test phrase as clips on the voice tracks: a quick check that the tracks are named and set up.",
+					"annotation_name": "test clips"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "t b",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					],
+					"patching_rect": [
+						120.0,
+						130.0,
+						35.0,
+						22.0
+					],
+					"id": "obj-21"
 				}
 			},
 			{
@@ -360,21 +487,11 @@
 					],
 					"patching_rect": [
 						120.0,
-						100.0,
+						160.0,
 						72.0,
 						22.0
 					],
-					"presentation": 1,
-					"presentation_rect": [
-						90.0,
-						30.0,
-						74.0,
-						20.0
-					],
-					"id": "obj-18",
-					"hint": "Write a short test phrase as clips on the voice tracks: a quick check that the tracks are named and set up.",
-					"annotation": "Write a short test phrase as clips on the voice tracks: a quick check that the tracks are named and set up.",
-					"annotation_name": "testclip"
+					"id": "obj-22"
 				}
 			},
 			{
@@ -391,6 +508,54 @@
 					"mode": 1,
 					"text": "clips on compose",
 					"texton": "clips on compose",
+					"bgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"activebgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"bgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"activebgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_enum": [
@@ -416,14 +581,14 @@
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						56.0,
+						45.0,
 						158.0,
 						20.0
 					],
-					"id": "obj-19",
-					"hint": "On: every piece composed is also written as clips (as writeclips does), so nothing you like is lost.",
-					"annotation": "On: every piece composed is also written as clips (as writeclips does), so nothing you like is lost.",
-					"annotation_name": "Clips On Compose"
+					"id": "obj-23",
+					"hint": "On: every piece composed is also written as clips (as write clips does), so nothing you like is lost.",
+					"annotation": "On: every piece composed is also written as clips (as write clips does), so nothing you like is lost.",
+					"annotation_name": "clips on compose"
 				}
 			},
 			{
@@ -441,7 +606,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-20"
+					"id": "obj-24"
 				}
 			},
 			{
@@ -458,6 +623,54 @@
 					"mode": 1,
 					"text": "play through voices",
 					"texton": "play through voices",
+					"bgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"activebgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"bgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"activebgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_enum": [
@@ -483,14 +696,14 @@
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						82.0,
+						71.0,
 						158.0,
 						20.0
 					],
-					"id": "obj-21",
+					"id": "obj-25",
 					"hint": "On: while Live plays, the piece plays through the cento.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice).",
 					"annotation": "On: while Live plays, the piece plays through the cento.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice).",
-					"annotation_name": "Play Through Voices"
+					"annotation_name": "play through voices"
 				}
 			},
 			{
@@ -509,7 +722,7 @@
 						45.0,
 						22.0
 					],
-					"id": "obj-22"
+					"id": "obj-26"
 				}
 			},
 			{
@@ -528,7 +741,7 @@
 						45.0,
 						22.0
 					],
-					"id": "obj-23"
+					"id": "obj-27"
 				}
 			},
 			{
@@ -543,7 +756,7 @@
 						280.0,
 						20.0
 					],
-					"id": "obj-24"
+					"id": "obj-28"
 				}
 			},
 			{
@@ -562,7 +775,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-25"
+					"id": "obj-29"
 				}
 			},
 			{
@@ -580,7 +793,7 @@
 						50.0,
 						22.0
 					],
-					"id": "obj-26"
+					"id": "obj-30"
 				}
 			},
 			{
@@ -595,7 +808,7 @@
 						220.0,
 						20.0
 					],
-					"id": "obj-27"
+					"id": "obj-31"
 				}
 			},
 			{
@@ -617,7 +830,7 @@
 						105.0,
 						22.0
 					],
-					"id": "obj-28"
+					"id": "obj-32"
 				}
 			},
 			{
@@ -633,7 +846,7 @@
 						105.0,
 						22.0
 					],
-					"id": "obj-29"
+					"id": "obj-33"
 				}
 			},
 			{
@@ -649,7 +862,7 @@
 						105.0,
 						22.0
 					],
-					"id": "obj-30"
+					"id": "obj-34"
 				}
 			},
 			{
@@ -665,7 +878,7 @@
 						105.0,
 						22.0
 					],
-					"id": "obj-31"
+					"id": "obj-35"
 				}
 			},
 			{
@@ -681,7 +894,7 @@
 						105.0,
 						22.0
 					],
-					"id": "obj-32"
+					"id": "obj-36"
 				}
 			},
 			{
@@ -696,7 +909,7 @@
 						420.0,
 						20.0
 					],
-					"id": "obj-33"
+					"id": "obj-37"
 				}
 			},
 			{
@@ -713,6 +926,54 @@
 					"mode": 1,
 					"text": "all voices on this track",
 					"texton": "all voices on this track",
+					"bgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"activebgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"bgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"activebgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_enum": [
@@ -738,14 +999,14 @@
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						108.0,
+						97.0,
 						158.0,
 						20.0
 					],
-					"id": "obj-34",
+					"id": "obj-38",
 					"hint": "On: all four voices also come out of this track, to hear the whole piece on this track's instrument.",
 					"annotation": "On: all four voices also come out of this track, to hear the whole piece on this track's instrument.",
-					"annotation_name": "All Voices Here"
+					"annotation_name": "all voices on this track"
 				}
 			},
 			{
@@ -763,7 +1024,7 @@
 						50.0,
 						22.0
 					],
-					"id": "obj-35"
+					"id": "obj-39"
 				}
 			},
 			{
@@ -782,7 +1043,7 @@
 						70.0,
 						22.0
 					],
-					"id": "obj-36"
+					"id": "obj-40"
 				}
 			},
 			{
@@ -801,7 +1062,7 @@
 						75.0,
 						22.0
 					],
-					"id": "obj-37"
+					"id": "obj-41"
 				}
 			},
 			{
@@ -819,7 +1080,7 @@
 						50.0,
 						22.0
 					],
-					"id": "obj-38"
+					"id": "obj-42"
 				}
 			},
 			{
@@ -835,7 +1096,7 @@
 						55.0,
 						22.0
 					],
-					"id": "obj-39"
+					"id": "obj-43"
 				}
 			},
 			{
@@ -850,31 +1111,37 @@
 						170.0,
 						20.0
 					],
-					"id": "obj-40"
+					"id": "obj-44"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "voice tracks: Soprano, Alto, Tenor, Bass",
+					"text": "Voice tracks: Soprano, Alto, Tenor, Bass. For help, hover with the Info View open.",
 					"numinlets": 1,
 					"numoutlets": 0,
-					"linecount": 2,
+					"linecount": 3,
 					"fontsize": 10.0,
+					"textcolor": [
+						0.55,
+						0.55,
+						0.55,
+						1.0
+					],
 					"patching_rect": [
 						20.0,
 						600.0,
 						160.0,
-						34.0
+						48.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						134.0,
+						123.0,
 						158.0,
-						30.0
+						44.0
 					],
-					"id": "obj-41"
+					"id": "obj-45"
 				}
 			}
 		],
@@ -1030,7 +1297,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-18",
 						0
 					]
 				}
@@ -1042,7 +1309,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-19",
 						0
 					]
 				}
@@ -1054,7 +1321,7 @@
 						0
 					],
 					"destination": [
-						"obj-20",
+						"obj-3",
 						0
 					]
 				}
@@ -1066,7 +1333,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-21",
 						0
 					]
 				}
@@ -1087,10 +1354,10 @@
 				"patchline": {
 					"source": [
 						"obj-22",
-						1
+						0
 					],
 					"destination": [
-						"obj-23",
+						"obj-3",
 						0
 					]
 				}
@@ -1099,6 +1366,54 @@
 				"patchline": {
 					"source": [
 						"obj-23",
+						0
+					],
+					"destination": [
+						"obj-24",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-24",
+						0
+					],
+					"destination": [
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-25",
+						0
+					],
+					"destination": [
+						"obj-26",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-26",
+						1
+					],
+					"destination": [
+						"obj-27",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-27",
 						0
 					],
 					"destination": [
@@ -1114,54 +1429,6 @@
 						0
 					],
 					"destination": [
-						"obj-25",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-22",
-						0
-					],
-					"destination": [
-						"obj-26",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-25",
-						0
-					],
-					"destination": [
-						"obj-26",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-26",
-						0
-					],
-					"destination": [
-						"obj-28",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-28",
-						0
-					],
-					"destination": [
 						"obj-29",
 						0
 					]
@@ -1170,8 +1437,8 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-28",
-						1
+						"obj-26",
+						0
 					],
 					"destination": [
 						"obj-30",
@@ -1182,20 +1449,20 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-28",
-						2
+						"obj-29",
+						0
 					],
 					"destination": [
-						"obj-31",
-						0
+						"obj-30",
+						1
 					]
 				}
 			},
 			{
 				"patchline": {
 					"source": [
-						"obj-28",
-						3
+						"obj-30",
+						0
 					],
 					"destination": [
 						"obj-32",
@@ -1206,8 +1473,32 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-32",
+						0
+					],
+					"destination": [
+						"obj-33",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-32",
+						1
+					],
+					"destination": [
 						"obj-34",
 						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-32",
+						2
 					],
 					"destination": [
 						"obj-35",
@@ -1218,47 +1509,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-26",
-						0
-					],
-					"destination": [
-						"obj-35",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-35",
-						0
+						"obj-32",
+						3
 					],
 					"destination": [
 						"obj-36",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-36",
-						1
-					],
-					"destination": [
-						"obj-37",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-37",
-						0
-					],
-					"destination": [
-						"obj-39",
 						0
 					]
 				}
@@ -1271,6 +1526,66 @@
 					],
 					"destination": [
 						"obj-39",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-30",
+						0
+					],
+					"destination": [
+						"obj-39",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-39",
+						0
+					],
+					"destination": [
+						"obj-40",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-40",
+						1
+					],
+					"destination": [
+						"obj-41",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-41",
+						0
+					],
+					"destination": [
+						"obj-43",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-42",
+						0
+					],
+					"destination": [
+						"obj-43",
 						0
 					]
 				}

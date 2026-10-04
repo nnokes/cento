@@ -2,6 +2,12 @@
 
 ## Result: waiting on the Max and Live checks
 
+> Since the GUI redesign (M12), some controls have new names: **corpora** is
+> **chorales…** (its window is called *Cento: chorales*), **load chorale** is
+> in the **tools** menu, and the piano roll is 260 px wide. The steps below
+> use the old names; [the M12 checklist](M12-checklist.md), section 0, lists
+> them all.
+
 | Check | Max version | Live version |
 |---|---|---|
 | The corpus window opens from the panel's **corpora** button and lists the folders | | |

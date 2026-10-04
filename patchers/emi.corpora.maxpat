@@ -133,7 +133,7 @@
 					"id": "obj-5",
 					"hint": "Every folder of chorales on the list: switch one on or off with its box, use it alone (only), or take it off the list (remove). Composing uses every folder that is on, as one corpus, and the seed shown is composed again with it. A chorale in two folders counts once; the corpus has one meter (the first folder's). Hover over a name for its folder's full path.",
 					"annotation": "Every folder of chorales on the list: switch one on or off with its box, use it alone (only), or take it off the list (remove). Composing uses every folder that is on, as one corpus, and the seed shown is composed again with it. A chorale in two folders counts once; the corpus has one meter (the first folder's). Hover over a name for its folder's full path.",
-					"annotation_name": "Corpora"
+					"annotation_name": "Chorales"
 				}
 			},
 			{
@@ -144,6 +144,25 @@
 					"numoutlets": 1,
 					"outlettype": [
 						""
+					],
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
 					],
 					"patching_rect": [
 						20.0,
@@ -159,8 +178,8 @@
 						24.0
 					],
 					"id": "obj-6",
-					"hint": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/cento/corpus-both). It joins the list, switched on.",
-					"annotation": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/cento/corpus-both). It joins the list, switched on.",
+					"hint": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/Cento/corpus-both). It joins the list, switched on.",
+					"annotation": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/Cento/corpus-both). It joins the list, switched on.",
 					"annotation_name": "add folder"
 				}
 			},
@@ -246,6 +265,25 @@
 					"numoutlets": 1,
 					"outlettype": [
 						""
+					],
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
 					],
 					"patching_rect": [
 						160.0,
@@ -347,7 +385,7 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "title Cento: corpora",
+					"text": "title Cento: chorales",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [

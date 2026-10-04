@@ -83,22 +83,29 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "Emily",
+					"text": "EMILY",
 					"numinlets": 1,
 					"numoutlets": 0,
+					"fontsize": 10.0,
 					"fontface": 1,
+					"textcolor": [
+						0.55,
+						0.55,
+						0.55,
+						1.0
+					],
 					"patching_rect": [
 						20.0,
 						100.0,
-						60.0,
+						120.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						4.0,
+						1.0,
 						60.0,
-						20.0
+						18.0
 					],
 					"id": "obj-4"
 				}
@@ -112,6 +119,25 @@
 					"outlettype": [
 						""
 					],
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
 					"patching_rect": [
 						600.0,
 						300.0,
@@ -120,9 +146,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.0,
-						4.0,
-						58.0,
+						67.0,
+						53.0,
+						57.0,
 						20.0
 					],
 					"id": "obj-5",
@@ -161,6 +187,54 @@
 					"mode": 0,
 					"text": "like",
 					"texton": "like",
+					"bgcolor": [
+						0.96,
+						0.84,
+						0.7,
+						1.0
+					],
+					"activebgcolor": [
+						0.96,
+						0.84,
+						0.7,
+						1.0
+					],
+					"bgoncolor": [
+						0.91,
+						0.62,
+						0.36,
+						1.0
+					],
+					"activebgoncolor": [
+						0.91,
+						0.62,
+						0.36,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_enum": [
@@ -186,7 +260,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						26.0,
+						19.0,
 						57.0,
 						30.0
 					],
@@ -210,6 +284,54 @@
 					"mode": 0,
 					"text": "dislike",
 					"texton": "dislike",
+					"bgcolor": [
+						0.96,
+						0.84,
+						0.7,
+						1.0
+					],
+					"activebgcolor": [
+						0.96,
+						0.84,
+						0.7,
+						1.0
+					],
+					"bgoncolor": [
+						0.91,
+						0.62,
+						0.36,
+						1.0
+					],
+					"activebgoncolor": [
+						0.91,
+						0.62,
+						0.36,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_enum": [
@@ -235,7 +357,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						67.0,
-						26.0,
+						19.0,
 						57.0,
 						30.0
 					],
@@ -295,7 +417,7 @@
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_longname": "Temperature",
-							"parameter_shortname": "temp",
+							"parameter_shortname": "chance",
 							"parameter_type": 0,
 							"parameter_mmin": 0.0,
 							"parameter_mmax": 3.0,
@@ -310,19 +432,19 @@
 						240.0,
 						140.0,
 						44.0,
-						48.0
+						44.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						60.0,
+						76.0,
 						44.0,
-						48.0
+						44.0
 					],
 					"id": "obj-11",
-					"hint": "How much chance still plays when composing. 0: only Emily's favourite choices; 1: as before Emily (the default); up to 3: more adventurous.",
-					"annotation": "How much chance still plays when composing. 0: only Emily's favourite choices; 1: as before Emily (the default); up to 3: more adventurous.",
-					"annotation_name": "Temperature"
+					"hint": "How much chance still plays when composing (Emily's temperature). 0: only Emily's favourite choices; 1: as before Emily (the default); up to 3: more adventurous.",
+					"annotation": "How much chance still plays when composing (Emily's temperature). 0: only Emily's favourite choices; 1: as before Emily (the default); up to 3: more adventurous.",
+					"annotation_name": "chance"
 				}
 			},
 			{
@@ -346,6 +468,72 @@
 			{
 				"box": {
 					"maxclass": "message",
+					"text": "taste report",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgfillcolor_type": "color",
+					"bgfillcolor_color": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"fontsize": 10.0,
+					"patching_rect": [
+						400.0,
+						140.0,
+						100.0,
+						22.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						54.0,
+						80.0,
+						70.0,
+						20.0
+					],
+					"id": "obj-13",
+					"hint": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
+					"annotation": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
+					"annotation_name": "taste report"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "t b",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					],
+					"patching_rect": [
+						400.0,
+						170.0,
+						35.0,
+						22.0
+					],
+					"id": "obj-14"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "message",
 					"text": "taste",
 					"numinlets": 2,
 					"numoutlets": 1,
@@ -354,21 +542,11 @@
 					],
 					"patching_rect": [
 						400.0,
-						140.0,
+						200.0,
 						51.0,
 						22.0
 					],
-					"presentation": 1,
-					"presentation_rect": [
-						60.0,
-						62.0,
-						64.0,
-						20.0
-					],
-					"id": "obj-13",
-					"hint": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
-					"annotation": "Report Emily's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
-					"annotation_name": "taste"
+					"id": "obj-15"
 				}
 			},
 			{
@@ -383,8 +561,56 @@
 					"parameter_enable": 1,
 					"varname": "Accept",
 					"mode": 0,
-					"text": "accept",
-					"texton": "accept",
+					"text": "keep",
+					"texton": "keep",
+					"bgcolor": [
+						0.96,
+						0.84,
+						0.7,
+						1.0
+					],
+					"activebgcolor": [
+						0.96,
+						0.84,
+						0.7,
+						1.0
+					],
+					"bgoncolor": [
+						0.91,
+						0.62,
+						0.36,
+						1.0
+					],
+					"activebgoncolor": [
+						0.91,
+						0.62,
+						0.36,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_enum": [
@@ -392,7 +618,7 @@
 								"on"
 							],
 							"parameter_longname": "Accept",
-							"parameter_shortname": "accept",
+							"parameter_shortname": "keep",
 							"parameter_type": 2,
 							"parameter_mmax": 1,
 							"parameter_initial": [
@@ -409,15 +635,15 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						60.0,
-						86.0,
-						64.0,
+						6.0,
+						53.0,
+						57.0,
 						20.0
 					],
-					"id": "obj-14",
+					"id": "obj-16",
 					"hint": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
 					"annotation": "Keep what you're hearing as a work of Emily's own: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
-					"annotation_name": "Accept"
+					"annotation_name": "keep"
 				}
 			},
 			{
@@ -435,23 +661,23 @@
 						55.0,
 						22.0
 					],
-					"id": "obj-15"
+					"id": "obj-17"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "temperature: 0 Emily's favourite choices only, 1 as before Emily, 3 adventurous. taste: her taste in the Max window and ten pieces compared; accept: keep it (M10)",
+					"text": "chance (temperature): 0 Emily's favourite choices only, 1 as before Emily, 3 adventurous. taste report: her taste in the Max window and ten pieces compared; keep (accept, M10)",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 3,
 					"patching_rect": [
 						520.0,
-						140.0,
+						220.0,
 						330.0,
 						48.0
 					],
-					"id": "obj-16"
+					"id": "obj-18"
 				}
 			},
 			{
@@ -471,7 +697,7 @@
 						120.0,
 						22.0
 					],
-					"id": "obj-17"
+					"id": "obj-19"
 				}
 			},
 			{
@@ -489,7 +715,7 @@
 						98.0,
 						22.0
 					],
-					"id": "obj-18"
+					"id": "obj-20"
 				}
 			},
 			{
@@ -512,16 +738,16 @@
 						20.0,
 						380.0,
 						118.0,
-						51.0
+						44.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						112.0,
+						123.0,
 						118.0,
-						51.0
+						43.0
 					],
-					"id": "obj-19",
+					"id": "obj-21",
 					"hint": "Emily in a line: how many ratings she has had, and what she likes and dislikes most.",
 					"annotation": "Emily in a line: how many ratings she has had, and what she likes and dislikes most.",
 					"annotation_name": "Emily"
@@ -543,7 +769,7 @@
 						110.0,
 						22.0
 					],
-					"id": "obj-20"
+					"id": "obj-22"
 				}
 			},
 			{
@@ -561,7 +787,7 @@
 						91.0,
 						22.0
 					],
-					"id": "obj-21"
+					"id": "obj-23"
 				}
 			},
 			{
@@ -576,7 +802,7 @@
 						300.0,
 						20.0
 					],
-					"id": "obj-22"
+					"id": "obj-24"
 				}
 			}
 		],
@@ -672,7 +898,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-14",
 						0
 					]
 				}
@@ -704,31 +930,31 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-16",
+						0
+					],
+					"destination": [
+						"obj-17",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						0
+					],
+					"destination": [
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-2",
-						0
-					],
-					"destination": [
-						"obj-17",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-17",
-						0
-					],
-					"destination": [
-						"obj-18",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-18",
 						0
 					],
 					"destination": [
@@ -740,11 +966,35 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-17",
+						"obj-19",
+						0
+					],
+					"destination": [
+						"obj-20",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-20",
+						0
+					],
+					"destination": [
+						"obj-21",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-19",
 						1
 					],
 					"destination": [
-						"obj-20",
+						"obj-22",
 						0
 					]
 				}
@@ -752,11 +1002,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-20",
+						"obj-22",
 						0
 					],
 					"destination": [
-						"obj-21",
+						"obj-23",
 						0
 					]
 				}
@@ -764,7 +1014,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-21",
+						"obj-23",
 						0
 					],
 					"destination": [
