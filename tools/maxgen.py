@@ -962,20 +962,20 @@ def emily_panel():
     p.comment("user's taste", 140, 100, w=80, pres=(70, 3, 58, 15), fontsize=9.0, textcolor=SOFT_TEXT)
     # The pop-up window (emi.window, in the top patch): a large piano roll and
     # her taste in full. [send] with "---": unique to each device in Live.
-    window = p.msg("window", 600, 300, pres=(67, 53, 57, 20), **BUTTON)
+    window = p.msg("window", 600, 300, pres=(67, 49, 57, 20), **BUTTON)
     to_window = p.obj("s ---emi.window", 600, 335, 1, 0, [], w=110)
     p.connect(window, 0, to_window, 0)
-    like = live_button(p, "Like", "like", 20, 140, (6, 19, 57, 30))
-    dislike = live_button(p, "Dislike", "dislike", 120, 140, (67, 19, 57, 30))
+    like = live_button(p, "Like", "like", 20, 140, (6, 19, 57, 26))
+    dislike = live_button(p, "Dislike", "dislike", 120, 140, (67, 19, 57, 26))
     for button, word, x in [(like, "like", 20), (dislike, "dislike", 120)]:
         m = p.msg(word, x, 185, w=55)
         p.connect(button, 0, m, 0)
         send(m)
-    # Temperature: how much chance still plays (the dial is wide enough for
-    # its whole name).
+    # Temperature: how much chance still plays. A horizontal slider across
+    # the panel, with its name and value.
     temp = p.ui(
-        "live.dial", 240, 140, 62, 46, 1, 2, ["", "float"], pres=(2, 75, 62, 46),
-        parameter_enable=1, varname="Temperature",
+        "live.slider", 240, 140, 118, 30, 1, 2, ["", "float"], pres=(6, 73, 118, 30),
+        parameter_enable=1, varname="Temperature", orientation=1, showname=1, shownumber=1,
         saved_attribute_attributes={"valueof": {
             "parameter_longname": "Temperature",
             "parameter_shortname": "temperature",
@@ -990,11 +990,11 @@ def emily_panel():
     temp_pre = p.obj("prepend temperature", 240, 200, 2, 1, w=130)
     p.connect(temp, 0, temp_pre, 0)
     send(temp_pre)
-    labelled(p, "taste report", "taste", 400, 140, (66, 80, 58, 20), out, fontsize=9.0)
+    labelled(p, "taste report", "taste", 400, 140, (6, 106, 118, 18), out, fontsize=10.0)
     # M10: accept keeps what is playing as music of her own (mappable, like
     # like and dislike), shown as "keep"; forget is in the pop-up window.
     accept = p.ui(
-        "live.text", 460, 140, 64, 20, 1, 2, ["", ""], pres=(6, 53, 57, 20),
+        "live.text", 460, 140, 64, 20, 1, 2, ["", ""], pres=(6, 49, 57, 20),
         parameter_enable=1, varname="Accept", mode=0, text="keep", texton="keep",
         bgcolor=EMILY_BG, activebgcolor=EMILY_BG, bgoncolor=EMILY_ON, activebgoncolor=EMILY_ON,
         textcolor=DARK_TEXT, activetextcolor=DARK_TEXT, textoncolor=DARK_TEXT, activetextoncolor=DARK_TEXT,
@@ -1019,7 +1019,7 @@ def emily_panel():
     p.connect(inl, 0, route, 0)
     set_text = p.obj("prepend text", 20, 340, 2, 1)
     p.connect(route, 0, set_text, 0)
-    text = text_box(p, 20, 380, W - 12, 44, (6, 123, W - 12, 43), "Magdalena")
+    text = text_box(p, 20, 380, W - 12, 44, (6, 127, W - 12, 39), "Magdalena")
     p.connect(set_text, 0, text, 0)
     controls = p.obj("route temperature", 200, 340, 2, 2, w=110)
     p.connect(route, 1, controls, 0)

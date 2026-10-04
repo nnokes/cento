@@ -224,7 +224,7 @@ test("emily.panel (M9): like and dislike are mappable buttons; temperature is sa
     assert.deepEqual(p.from(msg.id).map(([b]) => b.id), [outlet.id], `${name} goes to the engine`);
   }
   const dial = control("Temperature");
-  assert.equal(dial.maxclass, "live.dial");
+  assert.deepEqual([dial.maxclass, dial.orientation], ["live.slider", 1], "temperature is a horizontal slider");
   const range = dial.saved_attribute_attributes.valueof;
   assert.deepEqual([range.parameter_mmin, range.parameter_mmax, range.parameter_initial[0]], [0, 3, 1]);
   const [[pre]] = p.from(dial.id, 0);

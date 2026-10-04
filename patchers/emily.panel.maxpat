@@ -215,7 +215,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						67.0,
-						53.0,
+						49.0,
 						57.0,
 						20.0
 					],
@@ -330,7 +330,7 @@
 						6.0,
 						19.0,
 						57.0,
-						30.0
+						26.0
 					],
 					"id": "obj-8",
 					"hint": "Tell Magdalena you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
@@ -427,7 +427,7 @@
 						67.0,
 						19.0,
 						57.0,
-						30.0
+						26.0
 					],
 					"id": "obj-9",
 					"hint": "Tell Magdalena you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
@@ -473,7 +473,7 @@
 			},
 			{
 				"box": {
-					"maxclass": "live.dial",
+					"maxclass": "live.slider",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -482,6 +482,9 @@
 					],
 					"parameter_enable": 1,
 					"varname": "Temperature",
+					"orientation": 1,
+					"showname": 1,
+					"shownumber": 1,
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_longname": "Temperature",
@@ -499,15 +502,15 @@
 					"patching_rect": [
 						240.0,
 						140.0,
-						62.0,
-						46.0
+						118.0,
+						30.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						2.0,
-						75.0,
-						62.0,
-						46.0
+						6.0,
+						73.0,
+						118.0,
+						30.0
 					],
 					"id": "obj-12",
 					"hint": "How much chance still plays when composing. 0: only Magdalena's favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
@@ -561,7 +564,7 @@
 						0.09,
 						1.0
 					],
-					"fontsize": 9.0,
+					"fontsize": 10.0,
 					"patching_rect": [
 						400.0,
 						140.0,
@@ -570,10 +573,10 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.0,
-						80.0,
-						58.0,
-						20.0
+						6.0,
+						106.0,
+						118.0,
+						18.0
 					],
 					"id": "obj-14",
 					"hint": "Report Magdalena's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing.",
@@ -704,7 +707,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						53.0,
+						49.0,
 						57.0,
 						20.0
 					],
@@ -811,9 +814,9 @@
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						123.0,
+						127.0,
 						118.0,
-						43.0
+						39.0
 					],
 					"id": "obj-22",
 					"hint": "Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Who she is: explain Magdalena, in the pop-up window.",

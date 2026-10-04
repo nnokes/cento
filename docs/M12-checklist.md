@@ -83,8 +83,8 @@ one. In Live the device is now about 880 px wide.
        is and what she does. Every paragraph is whole (nothing cut off).
 5. [ ] **Live: the look.** Reopen your set. The brain device is narrower,
        with **CLIPS AND VOICES**, **COMPOSE** and **EMILY** headings;
-       nothing overlaps. **write clips** and **test clips** work. The dial
-       says **temperature**. If you mapped **like**, **dislike** or **accept**
+       nothing overlaps. **write clips** and **test clips** work. **temperature**
+       is a slider across Magdalena's panel. If you mapped **like**, **dislike** or **accept**
        (now **keep**) to keys or MIDI notes, the mappings still work.
 
 ## 1. Your Cento folder
