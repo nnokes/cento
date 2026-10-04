@@ -14,12 +14,13 @@ This page is written from the same table as the hover text (the patch generator)
 | **Output** | The MIDI port the four voices go to, one channel each: 1 soprano, 2 alto, 3 tenor, 4 bass. AU DLS Synth 1 is the Mac's own instruments. Remembered for next time. |
 | **plug-in instruments** | On: the voices play through four plug-in instruments inside Max (choose them with set up) instead of the MIDI port. Turn audio on (the speaker) to hear them. Remembered for next time. |
 | **set up** | Open the plug-in instruments window: choose the AU or VST3 instrument that plays each voice, and show its editor. |
+| **more features** | Open the more features window: the blind listening test, loading a single chorale, and the test phrase. |
 
 ## Live version: clips and voices (left panel of the cento.brain device)
 
 | Control | What it does |
 | --- | --- |
-| **write clips** | Write the current piece as MIDI clips, one per voice, in the first empty clip slot of the Soprano, Alto, Tenor and Bass tracks. Edit them in Live like any clip. |
+| **write clips** | Write the current piece as MIDI clips, one per voice, in the first empty clip slot of the Soprano, Alto, Tenor and Bass tracks. Edit them in Live like any clip. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **test clips** | Write a short test phrase as clips on the voice tracks: a quick check that the tracks are named and set up. |
 | **clips on compose** | On: every piece composed is also written as clips (as write clips does), so nothing you like is lost. |
 | **play through voices** | On: while Live plays, the piece plays through the cento.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice). |
@@ -29,9 +30,9 @@ This page is written from the same table as the hover text (the patch generator)
 
 | Control | What it does |
 | --- | --- |
-| **compose** | Compose a piece with the seed shown (with stream on: start a stream). While playing, the new music starts at the next bar. |
+| **compose** | Compose a piece with the seed shown (with stream on: start a stream). While playing, the new music starts at the next bar. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **seed** | The random seed: the same seed, chorales, settings and taste always give the same piece. Changing it composes at once (once chorales are loaded). |
-| **next** | Add 1 to the seed and compose: the quickest way to hear another piece. |
+| **next** | Add 1 to the seed and compose: the quickest way to hear another piece. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **export midi** | Save the current piece as a MIDI file. For a composed piece or stream, a .json of where every beat came from is saved next to it. |
 | **corpora** | Open the corpus window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; they are loaded by themselves next time. |
 | **beats** | The shortest piece to compose, in beats (4 to 256). With chorale form on, only chorales at least this long lend their form. |
@@ -41,9 +42,6 @@ This page is written from the same table as the hover text (the patch generator)
 | **transpose** | Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase. |
 | **signatures** | On: Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats. |
 | **Status** | What the engine just did, or what went wrong. |
-| **listening test** | Write a blind listening test: a web page of 10 pairs, each a Bach chorale and a piece composed in its form, in random order. Can listeners tell which is Bach? |
-| **tools** | Less-used tools. Load a chorale: one chorale (a MIDI file) plays as written and is drawn in the piano roll, in C major or A minor, or in its own key with original key on. Play the test phrase: a built-in phrase (no chorales needed), to check that the voices sound. Stop and clear the queue: what is playing stops at once. |
-| **original key** | On: a chorale you load (tools, load a chorale) keeps its own key. Off: it is moved to C major or A minor (the default). Only for loaded chorales. |
 
 ## Magdalena: the user's taste (both versions)
 
@@ -53,9 +51,8 @@ This page is written from the same table as the hover text (the patch generator)
 | **Like** | Tell Magdalena you like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns which musical features it has, and prefers them when she composes. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **Dislike** | Tell Magdalena you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **temperature** | How much chance still plays when composing. 0: only Magdalena's favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous. |
-| **taste report** | Report Magdalena's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing. |
 | **keep** | Keep what you're hearing in Magdalena's notebook: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
-| **Magdalena** | Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Who she is: explain Magdalena, in the pop-up window. |
+| **Magdalena** | Magdalena in a line: how many ratings she has had, and what she likes and dislikes most. Her full report, and who she is: the pop-up window (window). |
 
 ## Piano roll (both versions)
 
@@ -75,6 +72,16 @@ This page is written from the same table as the hover text (the patch generator)
 | **show editor (alto)** | Show the editor window of the alto's plug-in instrument. |
 | **show editor (tenor)** | Show the editor window of the tenor's plug-in instrument. |
 | **show editor (bass)** | Show the editor window of the bass's plug-in instrument. |
+
+## The more features window (Max version: more features, in the left panel)
+
+| Control | What it does |
+| --- | --- |
+| **listening test** | Write a blind listening test: a web page of 10 pairs, each a Bach chorale and a piece composed in its form, in random order. Can listeners tell which is Bach? |
+| **load a chorale** | Load one chorale (a MIDI file): it plays as written and is drawn in the piano roll, in C major or A minor, or in its own key with original key on. |
+| **original key** | On: a chorale you load (load a chorale) keeps its own key. Off: it is moved to C major or A minor (the default). Only for loaded chorales. |
+| **play the test phrase** | Play a built-in phrase (no chorales needed), to check that the voices sound. |
+| **stop and clear the queue** | What is playing stops at once, and nothing is left queued to play. |
 
 ## The pop-up window (both versions: Magdalena's panel, window)
 

@@ -69,14 +69,14 @@
 						20.0,
 						60.0,
 						260.0,
-						169.0
+						149.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						260.0,
-						169.0
+						149.0
 					],
 					"id": "obj-2",
 					"hint": "The current piece. Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: signatures; red marks: new parallel fifths or octaves; purple dots: notes Magdalena varied; yellow line: the playhead. Drag across beats to select them for like, dislike and accept (a click clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along the bottom) for what each means. For a large one: window, in Magdalena's panel.",

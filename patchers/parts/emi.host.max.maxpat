@@ -63,15 +63,15 @@
 						0.0,
 						0.0,
 						232.0,
-						169.0
+						149.0
 					],
-					"id": "obj-59"
+					"id": "obj-63"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.host.max: the Max version's adapter: transport, MIDI ports, vst~ instruments, and startup (restores the settings file). Panel 232 x 169 px.",
+					"text": "emi.host.max: the Max version's adapter: transport, MIDI ports, vst~ instruments, the more features window, and startup (restores the settings file). Panel 232 x 149 px.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
@@ -120,36 +120,6 @@
 			},
 			{
 				"box": {
-					"maxclass": "comment",
-					"text": "PLAY",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"fontsize": 10.0,
-					"fontface": 1,
-					"textcolor": [
-						0.95,
-						0.95,
-						0.93,
-						1.0
-					],
-					"patching_rect": [
-						20.0,
-						50.0,
-						120.0,
-						20.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						6.0,
-						1.0,
-						60.0,
-						18.0
-					],
-					"id": "obj-4"
-				}
-			},
-			{
-				"box": {
 					"maxclass": "live.text",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -162,6 +132,7 @@
 					"mode": 1,
 					"text": "play",
 					"texton": "stop",
+					"fontsize": 12.0,
 					"bgcolor": [
 						0.3,
 						0.69,
@@ -229,11 +200,11 @@
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						19.0,
+						6.0,
 						80.0,
 						26.0
 					],
-					"id": "obj-5",
+					"id": "obj-4",
 					"hint": "play (green): starts Max's transport and plays the current piece (or stream) through the output below, from the next barline; the button turns red and says stop. stop: stops the transport and silences held notes. When a piece (or a stream with a set number of phrases) ends, it stops by itself and says play again.",
 					"annotation": "play (green): starts Max's transport and plays the current piece (or stream) through the output below, from the next barline; the button turns red and says stop. stop: stops the transport and silences held notes. When a piece (or a stream with a set number of phrases) ends, it stops by itself and says play again.",
 					"annotation_name": "Play / stop"
@@ -261,11 +232,11 @@
 					"presentation": 1,
 					"presentation_rect": [
 						92.0,
-						22.0,
+						9.0,
 						44.0,
 						20.0
 					],
-					"id": "obj-6",
+					"id": "obj-5",
 					"hint": "Tempo in beats per minute (20 to 300) for Max's transport. Drag or type. Remembered for next time.",
 					"annotation": "Tempo in beats per minute (20 to 300) for Max's transport. Drag or type. Remembered for next time.",
 					"annotation_name": "Tempo"
@@ -287,11 +258,11 @@
 					"presentation": 1,
 					"presentation_rect": [
 						138.0,
-						23.0,
+						10.0,
 						30.0,
-						20.0
+						18.0
 					],
-					"id": "obj-7",
+					"id": "obj-6",
 					"textcolor": [
 						0.95,
 						0.95,
@@ -315,7 +286,7 @@
 						70.0,
 						22.0
 					],
-					"id": "obj-8"
+					"id": "obj-7"
 				}
 			},
 			{
@@ -333,7 +304,7 @@
 						40.0,
 						22.0
 					],
-					"id": "obj-9"
+					"id": "obj-8"
 				}
 			},
 			{
@@ -359,7 +330,7 @@
 						77.0,
 						22.0
 					],
-					"id": "obj-10"
+					"id": "obj-9"
 				}
 			},
 			{
@@ -377,7 +348,7 @@
 						105.0,
 						22.0
 					],
-					"id": "obj-11"
+					"id": "obj-10"
 				}
 			},
 			{
@@ -397,7 +368,7 @@
 						55.0,
 						22.0
 					],
-					"id": "obj-12"
+					"id": "obj-11"
 				}
 			},
 			{
@@ -417,7 +388,7 @@
 						60.0,
 						22.0
 					],
-					"id": "obj-13"
+					"id": "obj-12"
 				}
 			},
 			{
@@ -437,7 +408,7 @@
 						60.0,
 						22.0
 					],
-					"id": "obj-14"
+					"id": "obj-13"
 				}
 			},
 			{
@@ -455,7 +426,7 @@
 						40.0,
 						22.0
 					],
-					"id": "obj-15"
+					"id": "obj-14"
 				}
 			},
 			{
@@ -473,7 +444,7 @@
 						30.0,
 						22.0
 					],
-					"id": "obj-16"
+					"id": "obj-15"
 				}
 			},
 			{
@@ -491,7 +462,7 @@
 						30.0,
 						22.0
 					],
-					"id": "obj-17"
+					"id": "obj-16"
 				}
 			},
 			{
@@ -509,7 +480,7 @@
 						40.0,
 						22.0
 					],
-					"id": "obj-18"
+					"id": "obj-17"
 				}
 			},
 			{
@@ -527,7 +498,7 @@
 						30.0,
 						22.0
 					],
-					"id": "obj-19"
+					"id": "obj-18"
 				}
 			},
 			{
@@ -545,7 +516,7 @@
 						30.0,
 						22.0
 					],
-					"id": "obj-20"
+					"id": "obj-19"
 				}
 			},
 			{
@@ -563,7 +534,7 @@
 						30.0,
 						22.0
 					],
-					"id": "obj-21"
+					"id": "obj-20"
 				}
 			},
 			{
@@ -579,7 +550,7 @@
 						150.0,
 						34.0
 					],
-					"id": "obj-22"
+					"id": "obj-21"
 				}
 			},
 			{
@@ -598,11 +569,11 @@
 					"presentation": 1,
 					"presentation_rect": [
 						196.0,
-						16.0,
+						4.0,
 						30.0,
 						30.0
 					],
-					"id": "obj-23",
+					"id": "obj-22",
 					"hint": "Audio on or off (Max's DSP). Needed only for plug-in instruments: the MIDI output plays without it.",
 					"annotation": "Audio on or off (Max's DSP). Needed only for plug-in instruments: the MIDI output plays without it.",
 					"annotation_name": "Audio"
@@ -614,6 +585,7 @@
 					"text": "Output",
 					"numinlets": 1,
 					"numoutlets": 0,
+					"fontsize": 10.0,
 					"patching_rect": [
 						20.0,
 						300.0,
@@ -623,11 +595,11 @@
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						53.0,
+						41.0,
 						46.0,
-						20.0
+						18.0
 					],
-					"id": "obj-24",
+					"id": "obj-23",
 					"textcolor": [
 						0.95,
 						0.95,
@@ -651,7 +623,7 @@
 						70.0,
 						22.0
 					],
-					"id": "obj-25"
+					"id": "obj-24"
 				}
 			},
 			{
@@ -670,7 +642,7 @@
 						70.0,
 						22.0
 					],
-					"id": "obj-26"
+					"id": "obj-25"
 				}
 			},
 			{
@@ -695,11 +667,11 @@
 					"presentation": 1,
 					"presentation_rect": [
 						52.0,
-						53.0,
+						40.0,
 						174.0,
 						20.0
 					],
-					"id": "obj-27",
+					"id": "obj-26",
 					"hint": "The MIDI port the four voices go to, one channel each: 1 soprano, 2 alto, 3 tenor, 4 bass. AU DLS Synth 1 is the Mac's own instruments. Remembered for next time.",
 					"annotation": "The MIDI port the four voices go to, one channel each: 1 soprano, 2 alto, 3 tenor, 4 bass. AU DLS Synth 1 is the Mac's own instruments. Remembered for next time.",
 					"annotation_name": "Output"
@@ -707,59 +679,100 @@
 			},
 			{
 				"box": {
-					"maxclass": "toggle",
+					"maxclass": "live.text",
 					"numinlets": 1,
-					"numoutlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
-						"int"
+						"",
+						""
 					],
-					"parameter_enable": 0,
-					"varname": "Use vst~",
+					"parameter_enable": 1,
+					"varname": "Plug-in Instruments",
+					"mode": 1,
+					"text": "plug-in instruments",
+					"texton": "plug-in instruments",
+					"fontsize": 10.0,
+					"bgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"activebgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"bgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"activebgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Plug-in Instruments",
+							"parameter_shortname": "Plug-in Instruments",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0
+						}
+					},
 					"patching_rect": [
 						300.0,
 						300.0,
-						22.0,
-						22.0
+						100.0,
+						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						79.0,
-						20.0,
+						66.0,
+						144.0,
 						20.0
 					],
-					"id": "obj-28",
+					"id": "obj-27",
 					"hint": "On: the voices play through four plug-in instruments inside Max (choose them with set up) instead of the MIDI port. Turn audio on (the speaker) to hear them. Remembered for next time.",
 					"annotation": "On: the voices play through four plug-in instruments inside Max (choose them with set up) instead of the MIDI port. Turn audio on (the speaker) to hear them. Remembered for next time.",
 					"annotation_name": "plug-in instruments"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "comment",
-					"text": "plug-in instruments",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						325.0,
-						300.0,
-						120.0,
-						20.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						28.0,
-						79.0,
-						124.0,
-						20.0
-					],
-					"id": "obj-29",
-					"textcolor": [
-						0.95,
-						0.95,
-						0.93,
-						1.0
-					]
 				}
 			},
 			{
@@ -777,29 +790,46 @@
 						40.0,
 						22.0
 					],
-					"id": "obj-30"
+					"id": "obj-28"
 				}
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "set up\u2026",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Set Up",
+					"mode": 0,
+					"text": "set up\u2026",
+					"texton": "set up\u2026",
+					"fontsize": 10.0,
 					"bgcolor": [
 						0.8,
 						0.85,
 						0.93,
 						1.0
 					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
+					"activebgcolor": [
 						0.8,
 						0.85,
 						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
 						1.0
 					],
 					"textcolor": [
@@ -808,20 +838,55 @@
 						0.09,
 						1.0
 					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Set Up",
+							"parameter_shortname": "set up\u2026",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						560.0,
-						600.0,
-						65.0,
-						22.0
+						560.0,
+						72.0,
+						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						154.0,
-						79.0,
+						66.0,
 						72.0,
 						20.0
 					],
-					"id": "obj-31",
+					"id": "obj-29",
 					"hint": "Open the plug-in instruments window: choose the AU or VST3 instrument that plays each voice, and show its editor.",
 					"annotation": "Open the plug-in instruments window: choose the AU or VST3 instrument that plays each voice, and show its editor.",
 					"annotation_name": "set up"
@@ -838,11 +903,11 @@
 					],
 					"patching_rect": [
 						560.0,
-						630.0,
+						590.0,
 						35.0,
 						22.0
 					],
-					"id": "obj-32"
+					"id": "obj-30"
 				}
 			},
 			{
@@ -856,11 +921,11 @@
 					],
 					"patching_rect": [
 						560.0,
-						660.0,
+						620.0,
 						40.0,
 						22.0
 					],
-					"id": "obj-33"
+					"id": "obj-31"
 				}
 			},
 			{
@@ -874,11 +939,11 @@
 					],
 					"patching_rect": [
 						610.0,
-						660.0,
+						620.0,
 						60.0,
 						22.0
 					],
-					"id": "obj-34"
+					"id": "obj-32"
 				}
 			},
 			{
@@ -892,11 +957,11 @@
 					],
 					"patching_rect": [
 						560.0,
-						695.0,
+						655.0,
 						110.0,
 						22.0
 					],
-					"id": "obj-35"
+					"id": "obj-33"
 				}
 			},
 			{
@@ -907,41 +972,198 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						680.0,
-						695.0,
+						655.0,
 						250.0,
 						20.0
+					],
+					"id": "obj-34"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"parameter_enable": 1,
+					"varname": "More Features",
+					"mode": 0,
+					"text": "more features\u2026",
+					"texton": "more features\u2026",
+					"fontsize": 10.0,
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"activebgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "More Features",
+							"parameter_shortname": "more features\u2026",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
+					"patching_rect": [
+						950.0,
+						560.0,
+						110.0,
+						20.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						6.0,
+						96.0,
+						110.0,
+						20.0
+					],
+					"id": "obj-35",
+					"hint": "Open the more features window: the blind listening test, loading a single chorale, and the test phrase.",
+					"annotation": "Open the more features window: the blind listening test, loading a single chorale, and the test phrase.",
+					"annotation_name": "more features"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "t b",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					],
+					"patching_rect": [
+						950.0,
+						590.0,
+						35.0,
+						22.0
 					],
 					"id": "obj-36"
 				}
 			},
 			{
 				"box": {
+					"maxclass": "message",
+					"text": "open",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						950.0,
+						620.0,
+						40.0,
+						22.0
+					],
+					"id": "obj-37"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "pcontrol",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						1000.0,
+						620.0,
+						60.0,
+						22.0
+					],
+					"id": "obj-38"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "emi.extras",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						950.0,
+						655.0,
+						110.0,
+						22.0
+					],
+					"id": "obj-39"
+				}
+			},
+			{
+				"box": {
 					"maxclass": "comment",
-					"text": "Rest the mouse on any control to see what it does (or Window > Clue Window).",
+					"text": "more features: listening test, load a chorale (original key), test phrase, clear",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
-					"fontsize": 10.0,
-					"textcolor": [
-						0.84,
-						0.84,
-						0.82,
-						1.0
-					],
 					"patching_rect": [
-						20.0,
-						760.0,
+						1070.0,
+						655.0,
 						220.0,
 						34.0
 					],
-					"presentation": 1,
-					"presentation_rect": [
-						6.0,
-						112.0,
-						220.0,
-						34.0
-					],
-					"id": "obj-37"
+					"id": "obj-40"
 				}
 			},
 			{
@@ -963,7 +1185,7 @@
 						210.0,
 						22.0
 					],
-					"id": "obj-38"
+					"id": "obj-41"
 				}
 			},
 			{
@@ -981,7 +1203,7 @@
 						30.0,
 						22.0
 					],
-					"id": "obj-39"
+					"id": "obj-42"
 				}
 			},
 			{
@@ -996,7 +1218,7 @@
 						130.0,
 						20.0
 					],
-					"id": "obj-40"
+					"id": "obj-43"
 				}
 			},
 			{
@@ -1014,7 +1236,7 @@
 						100.0,
 						22.0
 					],
-					"id": "obj-41"
+					"id": "obj-44"
 				}
 			},
 			{
@@ -1029,7 +1251,7 @@
 						200.0,
 						20.0
 					],
-					"id": "obj-42"
+					"id": "obj-45"
 				}
 			},
 			{
@@ -1047,7 +1269,7 @@
 						60.0,
 						22.0
 					],
-					"id": "obj-43"
+					"id": "obj-46"
 				}
 			},
 			{
@@ -1062,7 +1284,7 @@
 						170.0,
 						20.0
 					],
-					"id": "obj-44"
+					"id": "obj-47"
 				}
 			},
 			{
@@ -1081,7 +1303,7 @@
 						60.0,
 						22.0
 					],
-					"id": "obj-45"
+					"id": "obj-48"
 				}
 			},
 			{
@@ -1408,7 +1630,7 @@
 						90.0,
 						22.0
 					],
-					"id": "obj-46"
+					"id": "obj-49"
 				}
 			},
 			{
@@ -2357,11 +2579,11 @@
 					},
 					"patching_rect": [
 						400.0,
-						670.0,
+						500.0,
 						100.0,
 						22.0
 					],
-					"id": "obj-47"
+					"id": "obj-50"
 				}
 			},
 			{
@@ -2379,7 +2601,7 @@
 						65.0,
 						22.0
 					],
-					"id": "obj-48"
+					"id": "obj-51"
 				}
 			},
 			{
@@ -2397,7 +2619,7 @@
 						140.0,
 						22.0
 					],
-					"id": "obj-49"
+					"id": "obj-52"
 				}
 			},
 			{
@@ -2415,7 +2637,7 @@
 						140.0,
 						22.0
 					],
-					"id": "obj-50"
+					"id": "obj-53"
 				}
 			},
 			{
@@ -2433,7 +2655,7 @@
 						140.0,
 						22.0
 					],
-					"id": "obj-51"
+					"id": "obj-54"
 				}
 			},
 			{
@@ -2451,7 +2673,7 @@
 						70.0,
 						22.0
 					],
-					"id": "obj-52"
+					"id": "obj-55"
 				}
 			},
 			{
@@ -2469,7 +2691,7 @@
 						65.0,
 						22.0
 					],
-					"id": "obj-53"
+					"id": "obj-56"
 				}
 			},
 			{
@@ -2487,7 +2709,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-54"
+					"id": "obj-57"
 				}
 			},
 			{
@@ -2503,7 +2725,7 @@
 						330.0,
 						34.0
 					],
-					"id": "obj-55"
+					"id": "obj-58"
 				}
 			},
 			{
@@ -2521,16 +2743,17 @@
 						65.0,
 						22.0
 					],
-					"id": "obj-56"
+					"id": "obj-59"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "route bpm output vst",
+					"text": "route bpm output vst key",
 					"numinlets": 2,
-					"numoutlets": 4,
+					"numoutlets": 5,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -2539,26 +2762,44 @@
 					"patching_rect": [
 						20.0,
 						510.0,
-						140.0,
+						160.0,
 						22.0
 					],
-					"id": "obj-57"
+					"id": "obj-60"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend key",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						200.0,
+						545.0,
+						80.0,
+						22.0
+					],
+					"id": "obj-61"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "setting <name> <value> from startup: applied (deferred, so the remember it sends back never re-enters the engine)",
+					"text": "setting <name> <value> from startup: applied (deferred, so the remember it sends back never re-enters the engine); key: to the more features window's original key",
 					"numinlets": 1,
 					"numoutlets": 0,
-					"linecount": 2,
+					"linecount": 3,
 					"patching_rect": [
-						170.0,
-						510.0,
+						290.0,
+						545.0,
 						360.0,
-						34.0
+						48.0
 					],
-					"id": "obj-58"
+					"id": "obj-62"
 				}
 			}
 		],
@@ -2566,47 +2807,23 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-7",
+						0
+					],
+					"destination": [
+						"obj-8",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-8",
 						0
 					],
 					"destination": [
-						"obj-9",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-9",
-						0
-					],
-					"destination": [
-						"obj-6",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-6",
-						0
-					],
-					"destination": [
-						"obj-11",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-11",
-						0
-					],
-					"destination": [
-						"obj-10",
+						"obj-5",
 						0
 					]
 				}
@@ -2618,6 +2835,42 @@
 						0
 					],
 					"destination": [
+						"obj-10",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-10",
+						0
+					],
+					"destination": [
+						"obj-9",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						0
+					],
+					"destination": [
+						"obj-11",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-11",
+						0
+					],
+					"destination": [
 						"obj-12",
 						0
 					]
@@ -2626,11 +2879,23 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-12",
-						0
+						"obj-11",
+						1
 					],
 					"destination": [
 						"obj-13",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-12",
+						2
+					],
+					"destination": [
+						"obj-18",
 						0
 					]
 				}
@@ -2650,20 +2915,8 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-13",
-						2
-					],
-					"destination": [
-						"obj-19",
+						"obj-12",
 						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-13",
-						1
 					],
 					"destination": [
 						"obj-15",
@@ -2675,7 +2928,7 @@
 				"patchline": {
 					"source": [
 						"obj-13",
-						0
+						2
 					],
 					"destination": [
 						"obj-16",
@@ -2686,8 +2939,8 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-14",
-						2
+						"obj-13",
+						1
 					],
 					"destination": [
 						"obj-17",
@@ -2698,11 +2951,35 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-14",
-						1
+						"obj-13",
+						0
 					],
 					"destination": [
-						"obj-18",
+						"obj-19",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-15",
+						0
+					],
+					"destination": [
+						"obj-9",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-16",
+						0
+					],
+					"destination": [
+						"obj-9",
 						0
 					]
 				}
@@ -2711,6 +2988,30 @@
 				"patchline": {
 					"source": [
 						"obj-14",
+						0
+					],
+					"destination": [
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						0
+					],
+					"destination": [
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-7",
 						0
 					],
 					"destination": [
@@ -2722,11 +3023,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-16",
+						"obj-20",
 						0
 					],
 					"destination": [
-						"obj-10",
+						"obj-9",
 						0
 					]
 				}
@@ -2734,59 +3035,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-17",
+						"obj-24",
 						0
 					],
 					"destination": [
-						"obj-10",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-15",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-18",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-8",
-						0
-					],
-					"destination": [
-						"obj-21",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-21",
-						0
-					],
-					"destination": [
-						"obj-10",
+						"obj-25",
 						0
 					]
 				}
@@ -2806,11 +3059,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-26",
+						"obj-27",
 						0
 					],
 					"destination": [
-						"obj-27",
+						"obj-28",
 						0
 					]
 				}
@@ -2818,11 +3071,23 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-28",
+						"obj-29",
 						0
 					],
 					"destination": [
 						"obj-30",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-30",
+						0
+					],
+					"destination": [
+						"obj-31",
 						0
 					]
 				}
@@ -2854,11 +3119,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-33",
+						"obj-35",
 						0
 					],
 					"destination": [
-						"obj-34",
+						"obj-36",
 						0
 					]
 				}
@@ -2866,11 +3131,47 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-34",
+						"obj-36",
 						0
 					],
 					"destination": [
-						"obj-35",
+						"obj-37",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-37",
+						0
+					],
+					"destination": [
+						"obj-38",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-38",
+						0
+					],
+					"destination": [
+						"obj-39",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-39",
+						0
+					],
+					"destination": [
+						"obj-3",
 						0
 					]
 				}
@@ -2882,7 +3183,7 @@
 						0
 					],
 					"destination": [
-						"obj-38",
+						"obj-41",
 						0
 					]
 				}
@@ -2890,11 +3191,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-38",
+						"obj-41",
 						3
 					],
 					"destination": [
-						"obj-39",
+						"obj-42",
 						0
 					]
 				}
@@ -2902,11 +3203,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-39",
+						"obj-42",
 						0
 					],
 					"destination": [
-						"obj-5",
+						"obj-4",
 						0
 					]
 				}
@@ -2914,11 +3215,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-38",
+						"obj-41",
 						2
 					],
 					"destination": [
-						"obj-41",
+						"obj-44",
 						0
 					]
 				}
@@ -2926,11 +3227,23 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-41",
+						"obj-44",
 						0
 					],
 					"destination": [
-						"obj-10",
+						"obj-9",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-18",
+						0
+					],
+					"destination": [
+						"obj-46",
 						0
 					]
 				}
@@ -2942,66 +3255,6 @@
 						0
 					],
 					"destination": [
-						"obj-43",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-20",
-						0
-					],
-					"destination": [
-						"obj-43",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-38",
-						0
-					],
-					"destination": [
-						"obj-43",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-30",
-						0
-					],
-					"destination": [
-						"obj-45",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-43",
-						0
-					],
-					"destination": [
-						"obj-45",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-45",
-						0
-					],
-					"destination": [
 						"obj-46",
 						0
 					]
@@ -3010,96 +3263,12 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-45",
-						1
-					],
-					"destination": [
-						"obj-47",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-27",
-						1
-					],
-					"destination": [
-						"obj-48",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-48",
+						"obj-41",
 						0
 					],
 					"destination": [
 						"obj-46",
 						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-35",
-						0
-					],
-					"destination": [
-						"obj-47",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-6",
-						0
-					],
-					"destination": [
-						"obj-49",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-49",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-27",
-						0
-					],
-					"destination": [
-						"obj-50",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-50",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
 					]
 				}
 			},
@@ -3110,6 +3279,54 @@
 						0
 					],
 					"destination": [
+						"obj-48",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-46",
+						0
+					],
+					"destination": [
+						"obj-48",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-48",
+						0
+					],
+					"destination": [
+						"obj-49",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-48",
+						1
+					],
+					"destination": [
+						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-26",
+						1
+					],
+					"destination": [
 						"obj-51",
 						0
 					]
@@ -3122,7 +3339,31 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-49",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-33",
+						0
+					],
+					"destination": [
+						"obj-50",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-5",
+						0
+					],
+					"destination": [
+						"obj-52",
 						0
 					]
 				}
@@ -3134,6 +3375,18 @@
 						0
 					],
 					"destination": [
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-26",
+						0
+					],
+					"destination": [
 						"obj-53",
 						0
 					]
@@ -3143,6 +3396,18 @@
 				"patchline": {
 					"source": [
 						"obj-53",
+						0
+					],
+					"destination": [
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-27",
 						0
 					],
 					"destination": [
@@ -3166,8 +3431,8 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-38",
-						1
+						"obj-55",
+						0
 					],
 					"destination": [
 						"obj-56",
@@ -3194,7 +3459,7 @@
 						0
 					],
 					"destination": [
-						"obj-6",
+						"obj-3",
 						0
 					]
 				}
@@ -3202,8 +3467,56 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-57",
+						"obj-41",
 						1
+					],
+					"destination": [
+						"obj-59",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-59",
+						0
+					],
+					"destination": [
+						"obj-60",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-60",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-60",
+						1
+					],
+					"destination": [
+						"obj-26",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-60",
+						2
 					],
 					"destination": [
 						"obj-27",
@@ -3214,11 +3527,23 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-57",
-						2
+						"obj-60",
+						3
 					],
 					"destination": [
-						"obj-28",
+						"obj-61",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-61",
+						0
+					],
+					"destination": [
+						"obj-39",
 						0
 					]
 				}

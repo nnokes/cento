@@ -104,24 +104,41 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "choose\u2026",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Choose 1",
+					"mode": 0,
+					"text": "choose\u2026",
+					"texton": "choose\u2026",
+					"fontsize": 10.0,
 					"bgcolor": [
 						0.8,
 						0.85,
 						0.93,
 						1.0
 					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
+					"activebgcolor": [
 						0.8,
 						0.85,
 						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
 						1.0
 					],
 					"textcolor": [
@@ -130,11 +147,45 @@
 						0.09,
 						1.0
 					],
-					"varname": "plug 1",
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Choose 1",
+							"parameter_shortname": "choose\u2026",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						20.0,
 						100.0,
-						65.0,
+						104.0,
 						22.0
 					],
 					"presentation": 1,
@@ -188,24 +239,41 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "show editor",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Show Editor 1",
+					"mode": 0,
+					"text": "show editor",
+					"texton": "show editor",
+					"fontsize": 10.0,
 					"bgcolor": [
 						0.8,
 						0.85,
 						0.93,
 						1.0
 					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
+					"activebgcolor": [
 						0.8,
 						0.85,
 						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
 						1.0
 					],
 					"textcolor": [
@@ -214,11 +282,45 @@
 						0.09,
 						1.0
 					],
-					"varname": "open 1",
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Show Editor 1",
+							"parameter_shortname": "show editor",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						130.0,
 						100.0,
-						93.0,
+						120.0,
 						22.0
 					],
 					"presentation": 1,
@@ -294,24 +396,41 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "choose\u2026",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Choose 2",
+					"mode": 0,
+					"text": "choose\u2026",
+					"texton": "choose\u2026",
+					"fontsize": 10.0,
 					"bgcolor": [
 						0.8,
 						0.85,
 						0.93,
 						1.0
 					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
+					"activebgcolor": [
 						0.8,
 						0.85,
 						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
 						1.0
 					],
 					"textcolor": [
@@ -320,11 +439,45 @@
 						0.09,
 						1.0
 					],
-					"varname": "plug 2",
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Choose 2",
+							"parameter_shortname": "choose\u2026",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						240.0,
 						100.0,
-						65.0,
+						104.0,
 						22.0
 					],
 					"presentation": 1,
@@ -378,24 +531,41 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "show editor",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Show Editor 2",
+					"mode": 0,
+					"text": "show editor",
+					"texton": "show editor",
+					"fontsize": 10.0,
 					"bgcolor": [
 						0.8,
 						0.85,
 						0.93,
 						1.0
 					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
+					"activebgcolor": [
 						0.8,
 						0.85,
 						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
 						1.0
 					],
 					"textcolor": [
@@ -404,11 +574,45 @@
 						0.09,
 						1.0
 					],
-					"varname": "open 2",
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Show Editor 2",
+							"parameter_shortname": "show editor",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						350.0,
 						100.0,
-						93.0,
+						120.0,
 						22.0
 					],
 					"presentation": 1,
@@ -484,24 +688,41 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "choose\u2026",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Choose 3",
+					"mode": 0,
+					"text": "choose\u2026",
+					"texton": "choose\u2026",
+					"fontsize": 10.0,
 					"bgcolor": [
 						0.8,
 						0.85,
 						0.93,
 						1.0
 					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
+					"activebgcolor": [
 						0.8,
 						0.85,
 						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
 						1.0
 					],
 					"textcolor": [
@@ -510,11 +731,45 @@
 						0.09,
 						1.0
 					],
-					"varname": "plug 3",
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Choose 3",
+							"parameter_shortname": "choose\u2026",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						460.0,
 						100.0,
-						65.0,
+						104.0,
 						22.0
 					],
 					"presentation": 1,
@@ -568,24 +823,41 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "show editor",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Show Editor 3",
+					"mode": 0,
+					"text": "show editor",
+					"texton": "show editor",
+					"fontsize": 10.0,
 					"bgcolor": [
 						0.8,
 						0.85,
 						0.93,
 						1.0
 					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
+					"activebgcolor": [
 						0.8,
 						0.85,
 						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
 						1.0
 					],
 					"textcolor": [
@@ -594,11 +866,45 @@
 						0.09,
 						1.0
 					],
-					"varname": "open 3",
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Show Editor 3",
+							"parameter_shortname": "show editor",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						570.0,
 						100.0,
-						93.0,
+						120.0,
 						22.0
 					],
 					"presentation": 1,
@@ -674,24 +980,41 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "choose\u2026",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Choose 4",
+					"mode": 0,
+					"text": "choose\u2026",
+					"texton": "choose\u2026",
+					"fontsize": 10.0,
 					"bgcolor": [
 						0.8,
 						0.85,
 						0.93,
 						1.0
 					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
+					"activebgcolor": [
 						0.8,
 						0.85,
 						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
 						1.0
 					],
 					"textcolor": [
@@ -700,11 +1023,45 @@
 						0.09,
 						1.0
 					],
-					"varname": "plug 4",
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Choose 4",
+							"parameter_shortname": "choose\u2026",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						680.0,
 						100.0,
-						65.0,
+						104.0,
 						22.0
 					],
 					"presentation": 1,
@@ -758,24 +1115,41 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "show editor",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Show Editor 4",
+					"mode": 0,
+					"text": "show editor",
+					"texton": "show editor",
+					"fontsize": 10.0,
 					"bgcolor": [
 						0.8,
 						0.85,
 						0.93,
 						1.0
 					],
-					"bgfillcolor_type": "color",
-					"bgfillcolor_color": [
+					"activebgcolor": [
 						0.8,
 						0.85,
 						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
 						1.0
 					],
 					"textcolor": [
@@ -784,11 +1158,45 @@
 						0.09,
 						1.0
 					],
-					"varname": "open 4",
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Show Editor 4",
+							"parameter_shortname": "show editor",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						790.0,
 						100.0,
-						93.0,
+						120.0,
 						22.0
 					],
 					"presentation": 1,
@@ -894,7 +1302,7 @@
 					"patching_rect": [
 						500.0,
 						55.0,
-						210.0,
+						242.0,
 						22.0
 					],
 					"id": "obj-34"

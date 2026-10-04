@@ -47,8 +47,8 @@ across many chorales (soprano 3-2-1, bass 4-5-1), whole at their cadences,
 shown as gold bands in the piano roll. Since M8, pieces that quote a chorale
 for too long are set aside, the piano roll shows where each beat came from
 when you hover over it, a corpus may mix major and minor chorales, 3/4
-chorales work, and the **listening test** button writes a blind A/B test (Bach or
-not?) as a web page. Since M9, Magdalena learns your taste: **like** and
+chorales work, and the **listening test** (Max version: **more features…**)
+writes a blind A/B test (Bach or not?) as a web page. Since M9, Magdalena learns your taste: **like** and
 **dislike** rate the piece, the stream phrase playing or the beats you drag
 across in the piano roll. Later pieces lean toward the features you liked
 (high melodies, 16th notes, modulations, ...), within the same rules, and
@@ -66,7 +66,9 @@ licensed), so it composes straight away; music21's are an optional extra
 ([step by step](#more-chorales-from-music21)). Every control explains itself when you hover
 over it (a tooltip in Max, the Info View in Live); [docs/controls.md](docs/controls.md)
 lists them all. The panels are laid out in the order you use them (since the M12
-redesign): **compose** first, the less-used tools in a **tools** menu. The full plan
+redesign), under a row naming each section: **compose** first, every button in
+Live's own look, and (in the Max version) the listening test and less-used tools
+in a **more features** window. The full plan
 and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
@@ -100,7 +102,7 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **Python for music21** (optional) | `<repo>/.venv/` | Made in [step 4](#more-chorales-from-music21) below. About 300 MB, git-ignored, delete it to uninstall |
 | **music21's chorales** (optional) | `~/Documents/cento/corpus/`, `corpus-both/`, `corpus-minor/`, `corpus-3-4/` | Written by `tools/export-chorales.py` ([step 5](#more-chorales-from-music21)); outside the repo, because they're for your own use only |
 | **Exported pieces** | `~/Documents/cento/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
-| **Listening tests** | anywhere, e.g. `~/Documents/cento/` | Written by the **listening test** button: one web page, opened in a browser |
+| **Listening tests** | anywhere, e.g. `~/Documents/cento/` | Written by **listening test…** (Max version, in **more features…**): one web page, opened in a browser |
 | **Magdalena's taste** (M9) | `~/Documents/cento/cento.taste.json` | Your ratings, pins and strength, shared by both products. **forget** and **recall taste** set the old one aside as `cento.taste.backup.json`; delete both to start fresh |
 | **Stored tastes** (optional) | e.g. `~/Documents/cento/emily/` | Written by **store taste** in the pop-up window; read back by **recall taste** |
 | **Magdalena's notebook and snapshots** (M10) | `~/Documents/cento/cento.emily.json`, `cento.snapshots.json` | Every piece or phrase you **keep**, and her last 30 snapshots (the files keep their names from before she was called Magdalena); shared by both products |
@@ -269,7 +271,9 @@ patchers/     what you open: cento.maxpat (Max version), cento.brain.amxd +
               (Magdalena's ratings), emi.view (piano roll), emi.window (the
               pop-up window), emi.corpora (the corpus window),
               emi.instruments (the Max version's plug-in instruments),
-              emi.magdalena (about Magdalena)
+              emi.extras (the Max version's more features: listening
+              test, load a chorale, test phrase), emi.magdalena (about
+              Magdalena)
   scripts/    the generated *.bundle.js scripts (npm run build; committed)
 code/         [v8] wrappers: glue between Max messages and the engine
               (emi.core.v8.js), and the piano roll (emi.view.v8ui.js)

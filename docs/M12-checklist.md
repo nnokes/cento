@@ -4,7 +4,7 @@
 
 | Check | Max version | Live version |
 |---|---|---|
-| The new layout: compose first, tools menu, plug-in instruments window, plain names, a narrower piano roll; nothing overlaps | ✅ (`npm test`: sizes, overlaps, wiring) | |
+| The new layout: a row of section names, compose first, every button in Live's look, more features window (Max), plug-in instruments window, plain names, a narrower piano roll; nothing overlaps | ✅ (`npm test`: sizes, overlaps, wiring) | |
 | Your files live in your Cento folder (`~/Documents/cento`), copied there from `patchers/` the first time | | |
 | Both products share them, as before | | |
 | Finding the folder: from a patch in a home folder, from Max's own path, through `/Users` (the app), by a file in it; none: the status line says where it goes | ✅ (`npm test`) | ✅ (the same engine) |
@@ -53,17 +53,23 @@ called:
 
 | Before | Now |
 |---|---|
-| load chorale, pattern, clear (top row) | the **tools** menu (bottom of the composing panel) |
-| original key (top row) | **original key**, bottom right of the composing panel |
+| load chorale, pattern, clear (top row) | **more features…** (Max version only, in the PLAY panel): **load a chorale…**, **play the test phrase**, **stop and clear the queue** |
+| original key (top row) | **original key**, beside **load a chorale…** in the same window |
+| A/B (the listening test) | **listening test…**, in the same window |
 | compose, seed, next (third row) | the top row; **compose** is the blue button |
-| form, sigs, transp., A/B | **chorale form**, **signatures**, **transpose**, **listening test…** |
-| accept, taste | **keep**, **taste report** (temperature stays temperature) |
+| form, sigs, transp. | **chorale form**, **signatures**, **transpose** |
+| accept, taste | **keep**; **taste report** is in the pop-up window (the panel keeps her one-line report) |
 | vst~ instead, plug 1–4, open 1–4 (Max) | **plug-in instruments** and **set up…** (a window) |
 | writeclips, testclip (Live) | **write clips**, **test clips** |
 | Emily (her panel, her own music) | **Magdalena**, "user's taste" (her panel), **Magdalena's notebook** (the music you keep); **explain Magdalena** in the pop-up window |
 
 The piano roll in the panels is narrower (260 px); **window** has the large
-one. In Live the device is now about 880 px wide.
+one. In Live the device is now about 880 px wide. A dark row along the top
+names each section (**PLAY** or **CLIPS AND VOICES**, **COMPOSE**,
+**MAGDALENA**, **PIANO ROLL**), centred above it. Every button is in Live's
+own look (a `live.text`), like the switches. In Live, **compose**, **next**,
+**like**, **dislike**, **keep** and **write clips** can be mapped to keys or
+MIDI notes; the other buttons are hidden from Live's mapping and automation.
 
 0. [ ] **Subfolders first.** `patchers/` now holds only what you open
        (`cento.maxpat` and the two devices); the rest is in
@@ -77,29 +83,37 @@ one. In Live the device is now about 880 px wide.
          Live.
        If a patch opens with dashed boxes or a device says "media files are
        missing", this is the step to check.
-1. [ ] **Max: the look.** Open `patchers/cento.maxpat`. Four parts, each on
-       its own colour: **PLAY** (green), **COMPOSE** (blue), **MAGDALENA**
-       (brown), then the piano roll. Nothing overlaps or is cut off, and every
+1. [ ] **Max: the look.** Open `patchers/cento.maxpat`. A dark row along
+       the top says **PLAY**, **COMPOSE**, **MAGDALENA** and **PIANO ROLL**,
+       each centred above its part; below it, each part on its own colour:
+       green, blue, brown, then the piano roll. *user's taste* is just under
+       Magdalena's name; **temperature** shows its name and value without
+       touching anything; the piano roll's bar numbers, triangles and purple
+       dots don't cover one another. Nothing overlaps or is cut off, and every
        label reads easily. (If not, a screenshot helps most.)
 2. [ ] **compose first.** Click **compose**, **next**, change **seed**: as
        before.
-3. [ ] **The tools menu.** Choose *play the test phrase*: the test phrase
-       is drawn and plays (press play), and the menu shows *tools* again.
-       Switch **original key** on (bottom right), choose *load a chorale…* and
-       pick any `.mid` from a chorales folder: it loads in its own key, as
-       **load chorale** did with **original key** on. Then *stop and clear the
-       queue*.
+3. [ ] **More features.** Click **more features…** (PLAY panel): *Cento:
+       more features* opens. Click **play the test phrase**: the test phrase
+       is drawn and plays (press play). Switch **original key** on, click
+       **load a chorale…** and pick any `.mid` from a chorales folder: it
+       loads in its own key. Then **stop and clear the queue**. Close Max
+       and open the patch again: **original key** is still on (in the same
+       window). **listening test…** asks where to save the test.
 4. [ ] **The windows.** **corpora** opens *Cento: corpora*. **set up…**
        opens *Cento: plug-in instruments*; click **choose…** for the soprano:
        the plug-in chooser opens (cancel it). **window** opens the pop-up
-       window, whose buttons now say **keep** and **taste report**; click
+       window, whose buttons say **keep** and **taste report**; click
        **explain Magdalena**: *Cento: about Magdalena* opens, with who she
        is and what she does. Every paragraph is whole (nothing cut off).
-5. [ ] **Live: the look.** Reopen your set. The brain device is narrower,
-       with **CLIPS AND VOICES**, **COMPOSE** and **EMILY** headings;
-       nothing overlaps. **write clips** and **test clips** work. **temperature**
-       is a slider across Magdalena's panel. If you mapped **like**, **dislike** or **accept**
-       (now **keep**) to keys or MIDI notes, the mappings still work.
+5. [ ] **Live: the look.** Reopen your set. The brain device has the same
+       row of names (**CLIPS AND VOICES**, **COMPOSE**, **MAGDALENA**,
+       **PIANO ROLL**), no listening test or tools (those are Max-only now),
+       and nothing overlaps. **write clips** and **test clips** work.
+       **temperature** is a slider across Magdalena's panel. If you mapped
+       **like**, **dislike** or **accept** (now **keep**) to keys or MIDI
+       notes, the mappings still work. In Live's MIDI Map mode (**⌘M**),
+       **compose** and **next** can be mapped too.
 
 ## 1. Your Cento folder
 

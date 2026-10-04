@@ -1560,6 +1560,23 @@ does (`emi.magdalena`). Inside, nothing is renamed: the engine's modules
 (`emily-*`), the files (`cento.emily.json`), the messages to the engine and
 Live's parameters keep their names, so saved work and mappings carry on.
 
+**Live's look, a row of names, more features** (after a look on the Mac):
+every button is a `live.text` in button mode, like the switches (live.*
+objects are always parameters: **compose**, **next**, **like**, **dislike**,
+**keep** and **write clips** can be mapped in Live; the other buttons are
+hidden from mapping and automation, `parameter_invisible` 2). A dark row
+along the top of the strip names each section, centred above it (PLAY or
+CLIPS AND VOICES, COMPOSE, MAGDALENA, PIANO ROLL), so each section is 149 px
+high below it; "user's taste" sits just under Magdalena's name. The
+listening test and the less-used tools (load a chorale with its **original
+key** switch, the test phrase, stop and clear) left the shared panel for the
+Max version's **more features…** window (`emi.extras`); Live has none of
+them. The panel's taste report button went (its one-line report stays; the
+full report is in the pop-up window), the "rest the mouse" lines went (the
+hover text itself stays), the temperature slider got the height its name
+and value need, and the piano roll's bar numbers, cadence triangles and
+Magdalena's dots each have a row of their own above the notes.
+
 **Subfolders**: `patchers/` holds only what you open (`cento.maxpat`,
 `cento.brain.amxd`, `cento.voice.amxd`); the patches they're made of are in
 `patchers/parts/` and the script bundles in `patchers/scripts/`. Max doesn't

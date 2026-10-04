@@ -176,6 +176,9 @@ test("emi.host.live: voices reach the voice devices only through the Play gate",
 
 // ---------------------------------------------------------------- M4: shared panel and settings
 
+// A control by its name (its varname: for live.* objects, the parameter's name).
+const named = (p, varname) => [...p.boxes.values()].find((b) => b.varname === varname);
+
 const liveParameters = (name) =>
   [...patchFile(name).boxes.values()]
     .filter((b) => b.maxclass.startsWith("live.") && b.parameter_enable)
@@ -183,8 +186,10 @@ const liveParameters = (name) =>
 
 test("live.* parameters: named, and unique within each product", () => {
   const products = {
-    "Max version": ["cento.maxpat", "emi.host.max.maxpat", "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat"],
-    "emi.brain": ["emi.brain.maxpat", "emi.host.live.maxpat", "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat"],
+    "Max version": ["cento.maxpat", "emi.host.max.maxpat", "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat",
+      "emi.window.maxpat", "emi.corpora.maxpat", "emi.instruments.maxpat", "emi.extras.maxpat", "emi.magdalena.maxpat"],
+    "emi.brain": ["emi.brain.maxpat", "emi.host.live.maxpat", "emi.panel.maxpat", "emily.panel.maxpat", "emi.view.maxpat", "emi.engine.maxpat",
+      "emi.window.maxpat", "emi.corpora.maxpat", "emi.magdalena.maxpat"],
   };
   for (const [product, names] of Object.entries(products)) {
     const params = names.flatMap(liveParameters);
@@ -192,10 +197,32 @@ test("live.* parameters: named, and unique within each product", () => {
     const longnames = params.map((p) => p.longname);
     assert.deepEqual([...new Set(longnames)], longnames, `${product}: duplicate parameter names`);
   }
-  assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Beats", "Form", "Original Key", "Phrases", "Seed", "Signatures", "Stream", "Transpose"]);
-  assert.deepEqual(liveParameters("emi.host.live.maxpat").map((p) => p.longname).sort(), ["All Voices Here", "Clips On Compose", "Play Through Voices"]);
-  assert.deepEqual(liveParameters("emily.panel.maxpat").map((p) => p.longname).sort(), ["Accept", "Dislike", "Like", "Temperature"]);
-  assert.deepEqual(liveParameters("emi.host.max.maxpat").map((p) => p.longname), ["Play"]);
+  assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Beats", "Compose", "Corpora", "Export MIDI", "Form", "Next", "Phrases", "Seed", "Signatures", "Stream", "Transpose"]);
+  assert.deepEqual(liveParameters("emi.host.live.maxpat").map((p) => p.longname).sort(), ["All Voices Here", "Clips On Compose", "Play Through Voices", "Test Clips", "Write Clips"]);
+  assert.deepEqual(liveParameters("emily.panel.maxpat").map((p) => p.longname).sort(), ["Accept", "Dislike", "Like", "Temperature", "Window"]);
+  assert.deepEqual(liveParameters("emi.host.max.maxpat").map((p) => p.longname).sort(), ["More Features", "Play", "Plug-in Instruments", "Set Up"]);
+  assert.deepEqual(liveParameters("emi.extras.maxpat").map((p) => p.longname).sort(), ["Clear Queue", "Listening Test", "Load A Chorale", "Original Key", "Test Phrase"]);
+});
+
+test("buttons: all in Live's look (live.text); in Live, the ones worth mapping show, the rest are hidden", () => {
+  const mappable = ["Compose", "Next", "Like", "Dislike", "Accept", "Write Clips"];
+  let buttons = 0;
+  for (const file of files.filter((f) => f.endsWith(".maxpat"))) {
+    for (const [patcher, where] of patchers(readPatcher(path.join(ROOT, file)), file)) {
+      for (const { box } of patcher.boxes) {
+        if (!box.presentation_rect) continue;
+        // (Output is a menu of MIDI ports; the voice device's Voice, a message box showing its voice.)
+        assert.ok(!["message", "textbutton", "button", "toggle", "umenu"].includes(box.maxclass) || ["Output", "Voice"].includes(box.varname),
+          `${where}: ${box.maxclass} ${box.varname || box.text}: buttons and switches are live.text`);
+        if (box.maxclass !== "live.text" || box.mode !== 0) continue;
+        buttons++;
+        const valueof = box.saved_attribute_attributes.valueof;
+        assert.equal(valueof.parameter_initial_enable, 0, `${where}: ${box.varname} sends nothing when the patch loads`);
+        assert.equal(valueof.parameter_invisible, mappable.includes(box.varname) ? undefined : 2, `${where}: ${box.varname}`);
+      }
+    }
+  }
+  assert.ok(buttons >= 30, `${buttons} buttons`);
 });
 
 test("live.text toggles and buttons all have their parameter (an off/on range), or they don't toggle", () => {
@@ -211,7 +238,7 @@ test("live.text toggles and buttons all have their parameter (an off/on range), 
       }
     }
   }
-  assert.ok(count >= 11, `${count} live.text`); // 11 now
+  assert.ok(count >= 40, `${count} live.text`); // 45 now
 });
 
 test("emily.panel (M9): like and dislike are mappable buttons; temperature is saved and shown when restored", () => {
@@ -223,7 +250,9 @@ test("emily.panel (M9): like and dislike are mappable buttons; temperature is sa
     assert.equal(button.maxclass, "live.text", name);
     assert.equal(button.mode, 0, `${name} is a button (it sends a bang)`);
     assert.equal(button.saved_attribute_attributes.valueof.parameter_initial_enable, 0, `${name} sends nothing when the patch loads`);
-    const [[msg]] = p.from(button.id, 0);
+    const [[t]] = p.from(button.id, 0);
+    assert.equal(t.text, "t b", name);
+    const [[msg]] = p.from(t.id, 0);
     assert.equal(msg.text, message, name);
     assert.deepEqual(p.from(msg.id).map(([b]) => b.id), [outlet.id], `${name} goes to the engine`);
   }
@@ -234,8 +263,7 @@ test("emily.panel (M9): like and dislike are mappable buttons; temperature is sa
   const [[pre]] = p.from(dial.id, 0);
   assert.equal(pre.text, "prepend temperature");
   assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
-  const [taste] = p.find("taste");
-  assert.deepEqual(p.from(taste.id).map(([b]) => b.id), [outlet.id], "taste");
+  assert.deepEqual(p.find("taste"), [], "the taste report is in the pop-up window");
   assert.deepEqual(p.find("forget"), [], "forget is in the pop-up window (M10)");
   const [route] = p.find("route emily setting");
   const [[setText]] = p.from(route.id, 0);
@@ -252,10 +280,10 @@ test("emily.panel (M9): like and dislike are mappable buttons; temperature is sa
 test("emi.panel: each saved control sends its message, and shows restored values without sending", () => {
   const p = patchFile("emi.panel.maxpat");
   const [outlet] = p.find("outlet");
-  const [settings] = p.find("route seed beats form key stream phrases transpose sigs");
-  ["Seed", "Beats", "Form", "Original Key", "Stream", "Phrases", "Transpose", "Signatures"].forEach((name, k) => {
+  const [settings] = p.find("route seed beats form stream phrases transpose sigs");
+  ["Seed", "Beats", "Form", "Stream", "Phrases", "Transpose", "Signatures"].forEach((name, k) => {
     const control = [...p.boxes.values()].find((b) => b.varname === name);
-    const message = { Seed: "seed", Beats: "beats", Form: "form", "Original Key": "key", Stream: "stream", Phrases: "phrases", Transpose: "transpose", Signatures: "sigs" }[name];
+    const message = { Seed: "seed", Beats: "beats", Form: "form", Stream: "stream", Phrases: "phrases", Transpose: "transpose", Signatures: "sigs" }[name];
     const [[pre]] = p.from(control.id, 0);
     assert.equal(pre.text, `prepend ${message}`, name);
     assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id], `${name} goes to the engine`);
@@ -269,9 +297,11 @@ test("emi.panel: each saved control sends its message, and shows restored values
 // the text as the engine wrote it.
 test("emily.panel: the window button sends to the top patch's pop-up window", () => {
   const p = patchFile("emily.panel.maxpat");
-  const [button] = p.find("window");
+  const button = named(p, "Window");
   assert.ok(button.presentation_rect, "shown on the panel");
-  assert.deepEqual(p.from(button.id).map(([b]) => b.text), ["s ---emi.window"]);
+  const [[t]] = p.from(button.id);
+  assert.equal(t.text, "t b");
+  assert.deepEqual(p.from(t.id).map(([b]) => b.text), ["s ---emi.window"]);
 });
 
 test("emi.window: a large piano roll and Emily's taste, fed by the engine; selections and ratings go back", () => {
@@ -285,9 +315,11 @@ test("emi.window: a large piano roll and Emily's taste, fed by the engine; selec
   assert.deepEqual([roll.filename, taste.filename], ["emi.view.bundle.js", "emi.taste.bundle.js"]);
   assert.ok(roll.presentation_rect[2] >= 1000 && roll.presentation_rect[3] >= 400, "the roll is large");
   assert.deepEqual(p.from(roll.id).map(([b]) => b.id), [outlet.id], "selections go to the engine");
-  for (const word of ["like", "dislike", "accept", "taste", "forget"]) {
-    const [button] = p.find(word);
-    assert.deepEqual(p.from(button.id).map(([b]) => b.id), [outlet.id], word);
+  for (const [name, word] of [["Window Like", "like"], ["Window Dislike", "dislike"], ["Window Keep", "accept"], ["Taste Report", "taste"], ["Forget", "forget"]]) {
+    const [[t]] = p.from(named(p, name).id);
+    const [[m]] = p.from(t.id);
+    assert.deepEqual([m.maxclass, m.text], ["message", word], name);
+    assert.deepEqual(p.from(m.id).map(([b]) => b.id), [outlet.id], name);
   }
   const [title] = [...p.boxes.values()].filter((b) => (b.text || "").startsWith("title "));
   assert.deepEqual(p.from(title.id).map(([b]) => b.text), ["thispatcher"]);
@@ -296,7 +328,7 @@ test("emi.window: a large piano roll and Emily's taste, fed by the engine; selec
   assert.deepEqual([...p.find("edit weights"), ...p.find("memory")], []);
   assert.deepEqual(p.into(taste.id).map(([b]) => b.id), [route.id], "only the engine's emilyview feeds it");
   assert.deepEqual(p.from(taste.id).map(([b]) => b.id), [outlet.id]);
-  const [release] = p.find("release all pins");
+  const release = named(p, "Release All Pins");
   const [[t]] = p.from(release.id);
   const [[unpin]] = p.from(t.id);
   assert.equal(unpin.text, "unpin");
@@ -309,14 +341,14 @@ test("emi.window: a large piano roll and Emily's taste, fed by the engine; selec
     assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
   }
   // Reload seed: compose the seed shown again (after changing mix, novelty or weights).
-  const [reload] = p.find("reload seed");
+  const reload = named(p, "Reload Seed");
   const [[rt]] = p.from(reload.id);
   assert.equal(rt.text, "t b");
   const [[compose]] = p.from(rt.id);
   assert.deepEqual([compose.maxclass, compose.text], ["message", "compose"]);
   assert.deepEqual(p.from(compose.id).map(([b]) => b.id), [outlet.id]);
   // The buttons sit in one row, none overlapping, inside the window.
-  const row = [...p.boxes.values()].filter((b) => b.presentation && b.maxclass === "message").map((b) => b.presentation_rect).sort((a, b) => a[0] - b[0]);
+  const row = [...p.boxes.values()].filter((b) => b.presentation && b.maxclass === "live.text").map((b) => b.presentation_rect).sort((a, b) => a[0] - b[0]);
   assert.ok(row.length >= 9);
   row.slice(1).forEach((r, k) => assert.ok(r[0] >= row[k][0] + row[k][2], `button at ${r[0]} overlaps the one before`));
   assert.ok(row.at(-1)[0] + row.at(-1)[2] <= roll.presentation_rect[0] + roll.presentation_rect[2]);
@@ -335,15 +367,15 @@ test("emi.corpora: the corpus window (M11): its list talks to the engine; add fo
   const [[pre]] = p.from(dialog.id, 0);
   assert.equal(pre.text, "prepend corpusadd");
   assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
-  const [rescan] = p.find("rescan");
+  const rescan = named(p, "Rescan");
   const [[t]] = p.from(rescan.id);
   const [[message]] = p.from(t.id);
   assert.deepEqual([message.maxclass, message.text], ["message", "corpusrescan"]);
   assert.deepEqual(p.from(message.id).map(([b]) => b.id), [outlet.id]);
   // The panel's corpora button opens it.
   const panel = patchFile("emi.panel.maxpat");
-  const [button] = panel.find("corpora");
-  assert.deepEqual(panel.from(button.id).map(([b]) => b.text), ["s ---emi.corpora"]);
+  const [[bang]] = panel.from(named(panel, "Corpora").id);
+  assert.deepEqual(panel.from(bang.id).map(([b]) => b.text), ["s ---emi.corpora"]);
   assert.deepEqual(panel.find("load corpus"), [], "the window replaces load corpus");
 });
 
@@ -395,6 +427,23 @@ test("top patches: host panel, shared panel, Emily's panel and piano roll, all w
       assert.deepEqual(p.from(pcontrol.id).map(([b, inlet]) => [b.id, inlet]), [[window.id, 0]], `${file}: ${abstraction}`);
     }
   }
+  // A row along the top names each section, centred above it; the sections
+  // sit below it.
+  for (const [file, host] of [["cento.maxpat", "PLAY"], ["emi.brain.maxpat", "CLIPS AND VOICES"]]) {
+    const p = patchFile(file);
+    const shown = [...p.boxes.values()];
+    const sections = shown.filter((b) => b.maxclass === "bpatcher");
+    const names = [host, "COMPOSE", "MAGDALENA", "PIANO ROLL"].map((word) => p.find(word)[0]);
+    names.forEach((name, k) => {
+      const [x, y, w, h] = name.presentation_rect;
+      const [sx, sy, sw] = sections[k].presentation_rect;
+      assert.deepEqual([x, w, name.textjustification], [sx, sw, 1], `${file}: ${name.text} is centred above its section`);
+      assert.ok(y + h <= sy, `${file}: ${name.text} is above its section`);
+    });
+    const [band] = shown.filter((b) => b.maxclass === "panel");
+    assert.equal(band.presentation_rect[3], sections[0].presentation_rect[1], `${file}: the row's band is as high as the row`);
+    for (const b of sections) assert.equal(b.presentation_rect[1] + b.presentation_rect[3], 169, `${file}: ${b.name} ends at the device's bottom`);
+  }
   // The device is exactly as wide as its four panels.
   const device = readPatcher(locate("cento.brain.amxd"));
   const brain = patchFile("emi.brain.maxpat");
@@ -424,11 +473,16 @@ test("every visible control has hover text, and docs/controls.md gives the same"
       }
     }
   }
-  assert.ok(controls >= 55, `${controls} controls`); // 55 now
-  // The taste report button, in both places, says what it does.
-  for (const file of ["emily.panel.maxpat", "emi.window.maxpat"]) {
-    const [taste] = patchFile(file).find("taste report");
-    assert.match(taste.hint, /^Report Magdalena's taste: .*It changes nothing\.$/);
+  assert.ok(controls >= 60, `${controls} controls`); // 64 now
+  // The taste report button says what it does.
+  assert.match(named(patchFile("emi.window.maxpat"), "Taste Report").hint, /^Report Magdalena's taste: .*It changes nothing\.$/);
+  // No line on a panel or window tells people to hover: the hover text is there anyway.
+  for (const file of files.filter((f) => f.endsWith(".maxpat"))) {
+    for (const [patcher, where] of patchers(readPatcher(path.join(ROOT, file)), file)) {
+      for (const { box } of patcher.boxes) {
+        if (box.maxclass === "comment" && box.presentation_rect) assert.ok(!/hover|rest the mouse/i.test(box.text), `${where}: "${box.text}"`);
+      }
+    }
   }
 });
 
@@ -881,7 +935,8 @@ test("emi.engine: the core feeds the queue and the player, and 'need' comes back
 // Each panel and small window: everything shown fits inside it, and nothing
 // covers anything else.
 test("layout: every panel's controls fit inside it, none overlapping", () => {
-  const sizes = { "emi.host.max.maxpat": [232, 169], "emi.host.live.maxpat": [170, 169], "emi.panel.maxpat": [300, 169], "emily.panel.maxpat": [130, 169], "emi.instruments.maxpat": [330, 170] };
+  // The strip's sections are 149 px high, below the 20-px row of their names (169 in all).
+  const sizes = { "emi.host.max.maxpat": [232, 149], "emi.host.live.maxpat": [170, 149], "emi.panel.maxpat": [300, 149], "emily.panel.maxpat": [130, 149], "emi.instruments.maxpat": [330, 170], "emi.extras.maxpat": [360, 190] };
   for (const [file, [width, height]] of Object.entries(sizes)) {
     const shown = [...patchFile(file).boxes.values()].filter((b) => b.presentation_rect && b.maxclass !== "panel");
     for (const b of shown) {
@@ -897,65 +952,87 @@ test("layout: every panel's controls fit inside it, none overlapping", () => {
   }
 });
 
-test("layout: the composing panel starts with compose, the main action; each panel has its heading", () => {
+test("layout: the composing panel starts with compose, the main action; the names are in the strip's top row", () => {
   const p = patchFile("emi.panel.maxpat");
-  const [compose] = p.find("compose");
+  const compose = named(p, "Compose");
   const shownControls = [...p.boxes.values()].filter((b) => b.presentation_rect && !["comment", "panel"].includes(b.maxclass));
   const top = Math.min(...shownControls.map((b) => b.presentation_rect[1]));
   assert.equal(compose.presentation_rect[1], top, "compose is in the top row");
   assert.equal(compose.presentation_rect[0], 6, "at its left");
-  assert.equal(compose.fontface, 1, "in bold");
+  assert.ok(compose.fontsize > 10, "in larger letters");
   assert.deepEqual(compose.textcolor, [1, 1, 1, 1]);
-  // Every button shown has the same look (a fill colour), and every
-  // on/off switch turns amber when on.
-  for (const file of ["emi.panel.maxpat", "emily.panel.maxpat", "emi.host.max.maxpat", "emi.host.live.maxpat", "emi.window.maxpat", "emi.corpora.maxpat", "emi.instruments.maxpat"]) {
+  // Every button shown has a fill colour, and every on/off switch turns
+  // amber when on.
+  for (const file of ["emi.panel.maxpat", "emily.panel.maxpat", "emi.host.max.maxpat", "emi.host.live.maxpat", "emi.window.maxpat", "emi.corpora.maxpat", "emi.instruments.maxpat", "emi.extras.maxpat"]) {
     for (const b of patchFile(file).boxes.values()) {
-      if (!b.presentation_rect) continue;
-      if (b.maxclass === "message") assert.equal(b.bgfillcolor_type, "color", `${file}: ${b.text}`);
-      if (b.maxclass === "live.text" && b.mode === 1 && b.varname !== "Play") assert.deepEqual(b.bgoncolor, [0.96, 0.7, 0.33, 1], `${file}: ${b.varname}`);
+      if (!b.presentation_rect || b.maxclass !== "live.text") continue;
+      assert.ok(b.bgcolor && b.bgoncolor, `${file}: ${b.varname}`);
+      if (b.mode === 1 && b.varname !== "Play") assert.deepEqual(b.bgoncolor, [0.96, 0.7, 0.33, 1], `${file}: ${b.varname}`);
     }
   }
   for (const [file, word] of [["emi.host.max.maxpat", "PLAY"], ["emi.host.live.maxpat", "CLIPS AND VOICES"], ["emi.panel.maxpat", "COMPOSE"], ["emily.panel.maxpat", "MAGDALENA"]]) {
-    const [heading] = patchFile(file).find(word);
-    assert.deepEqual(heading.presentation_rect.slice(0, 2), [6, 1], `${file}: ${word} at the top left`);
+    assert.deepEqual(patchFile(file).find(word), [], `${file}: ${word} is in the strip's top row, not in the panel`);
   }
 });
 
-test("tools menu: the less-used tools, then back to its title", () => {
-  const p = patchFile("emi.panel.maxpat");
-  const [outlet] = p.find("outlet");
-  const menu = [...p.boxes.values()].find((b) => b.varname === "Tools");
-  assert.equal(menu.maxclass, "umenu");
-  assert.deepEqual(menu.items.filter((i) => i !== ","), ["tools", "load a chorale…", "play the test phrase", "stop and clear the queue"]);
-  const [[pick]] = p.from(menu.id, 0);
-  assert.equal(pick.text, "t b i");
-  const [[back]] = p.from(pick.id, 0);
-  assert.equal(back.text, "set 0");
-  assert.deepEqual(p.from(back.id).map(([b]) => b.id), [menu.id], "the menu shows its title again");
-  const [[sel]] = p.from(pick.id, 1);
-  assert.equal(sel.text, "sel 1 2 3");
-  // Item 1: the file dialog, then loadmidi (in the key original key says).
-  const [[dialog]] = p.from(sel.id, 0);
-  assert.equal(dialog.text, "opendialog");
-  const [[pre]] = p.from(dialog.id, 0);
-  assert.equal(pre.text, "prepend loadmidi");
-  assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id]);
-  for (const [k, word] of [[1, "pattern"], [2, "clear"]]) {
-    const [[m]] = p.from(sel.id, k);
-    assert.equal(m.text, word);
-    assert.deepEqual(p.from(m.id).map(([b]) => b.id), [outlet.id]);
+test("more features (Max version): the listening test and the less-used tools, in a window of their own", () => {
+  const panel = patchFile("emi.panel.maxpat");
+  for (const gone of ["Tools", "Original Key", "Listening Test"]) assert.equal(named(panel, gone), undefined, `${gone} isn't on the composing panel`);
+  assert.deepEqual(panel.find("umenu"), []);
+  const live = patchFile("emi.brain.maxpat");
+  assert.deepEqual(live.find("emi.extras"), [], "not in Live");
+  // The Max panel's more features button opens it; what it sends goes to the engine.
+  const host = patchFile("emi.host.max.maxpat");
+  const [hostOutlet] = host.find("outlet");
+  const [[t]] = host.from(named(host, "More Features").id);
+  const [[open]] = host.from(t.id);
+  assert.equal(open.text, "open");
+  const [[pcontrol]] = host.from(open.id);
+  const [[win]] = host.from(pcontrol.id);
+  assert.equal(win.text, "emi.extras");
+  assert.deepEqual(host.from(win.id).map(([b]) => b.id), [hostOutlet.id]);
+  // A restored original key reaches its switch.
+  const [restore] = host.find("route bpm output vst key");
+  const [[key]] = host.from(restore.id, 3);
+  assert.equal(key.text, "prepend key");
+  assert.deepEqual(host.from(key.id).map(([b, inlet]) => [b.id, inlet]), [[win.id, 0]]);
+  const w = patchFile("emi.extras.maxpat");
+  const [inlet] = w.find("inlet");
+  const [outlet] = w.find("outlet");
+  const [[route]] = w.from(inlet.id);
+  assert.equal(route.text, "route key");
+  const [[set]] = w.from(route.id, 0);
+  assert.equal(set.text, "prepend set");
+  const original = named(w, "Original Key");
+  assert.deepEqual(w.from(set.id).map(([b]) => b.id), [original.id], "shown, not sent back");
+  const [[pre]] = w.from(original.id);
+  assert.equal(pre.text, "prepend key");
+  assert.deepEqual(w.from(pre.id).map(([b]) => b.id), [outlet.id]);
+  // Each button: its dialog or its word, to the engine.
+  for (const [name, dialog, message] of [["Listening Test", "savedialog", "prepend abtest"], ["Load A Chorale", "opendialog", "prepend loadmidi"]]) {
+    const [[bang]] = w.from(named(w, name).id);
+    const [[d]] = w.from(bang.id);
+    assert.equal(d.text, dialog, name);
+    const [[m]] = w.from(d.id, 0);
+    assert.equal(m.text, message, name);
+    assert.deepEqual(w.from(m.id).map(([b]) => b.id), [outlet.id], name);
   }
-  for (const gone of ["load chorale", "pattern", "clear"]) {
-    assert.ok(p.find(gone).every((b) => !b.presentation_rect), `${gone} isn't on the panel any more`);
+  for (const [name, word] of [["Test Phrase", "pattern"], ["Clear Queue", "clear"]]) {
+    const [[bang]] = w.from(named(w, name).id);
+    const [[m]] = w.from(bang.id);
+    assert.equal(m.text, word, name);
+    assert.deepEqual(w.from(m.id).map(([b]) => b.id), [outlet.id], name);
   }
+  const [title] = [...w.boxes.values()].filter((b) => (b.text || "").startsWith("title "));
+  assert.equal(title.text, "title Cento: more features");
 });
 
 test("plug-in instruments: their own window, opened by set up; each choice reaches the vst~ objects", () => {
   const w = patchFile("emi.instruments.maxpat");
   const [outlet] = w.find("outlet");
   for (const [k] of ["soprano", "alto", "tenor", "bass"].entries()) {
-    for (const [word, label] of [["plug", "choose…"], ["open", "show editor"]]) {
-      const button = [...w.boxes.values()].find((b) => b.varname === `${word} ${k + 1}`);
+    for (const [word, name, label] of [["plug", "Choose", "choose…"], ["open", "Show Editor", "show editor"]]) {
+      const button = named(w, `${name} ${k + 1}`);
       assert.equal(button.text, label);
       const [[t]] = w.from(button.id);
       const [[command]] = w.from(t.id);
@@ -964,8 +1041,8 @@ test("plug-in instruments: their own window, opened by set up; each choice reach
     }
   }
   const host = patchFile("emi.host.max.maxpat");
-  const [setup] = host.find("set up…");
-  assert.ok(setup.presentation_rect);
+  const setup = named(host, "Set Up");
+  assert.deepEqual([setup.text, setup.maxclass], ["set up…", "live.text"]);
   const [[t]] = host.from(setup.id);
   const [[open]] = host.from(t.id);
   assert.equal(open.text, "open");
@@ -982,19 +1059,16 @@ test("plain names on the panels; Live's parameters keep theirs (mappings and aut
   const panel = patchFile("emi.panel.maxpat");
   const label = (p, varname) => [...p.boxes.values()].find((b) => b.varname === varname).text;
   assert.deepEqual(["Form", "Signatures", "Stream"].map((v) => label(panel, v)), ["chorale form", "signatures", "stream"]);
-  assert.ok(panel.find("corpora")[0].presentation_rect);
-  assert.ok(panel.find("listening test…")[0].presentation_rect);
+  assert.equal(label(panel, "Corpora"), "corpora");
+  assert.equal(label(panel, "Export MIDI"), "export midi");
   const emily = patchFile("emily.panel.maxpat");
   assert.equal(label(emily, "Accept"), "keep");
   const dial = [...emily.boxes.values()].find((b) => b.varname === "Temperature");
   assert.deepEqual([dial.saved_attribute_attributes.valueof.parameter_longname, dial.saved_attribute_attributes.valueof.parameter_shortname], ["Temperature", "temperature"]);
-  const [report] = emily.find("taste report");
-  const [[t]] = emily.from(report.id);
-  const [[taste]] = emily.from(t.id);
-  assert.equal(taste.text, "taste");
   const live = patchFile("emi.host.live.maxpat");
-  for (const [shown, command] of [["write clips", "writeclips"], ["test clips", "testclip"]]) {
-    const [button] = live.find(shown);
+  for (const [name, shown, command] of [["Write Clips", "write clips", "writeclips"], ["Test Clips", "test clips", "testclip"]]) {
+    const button = named(live, name);
+    assert.equal(button.text, shown);
     const [[bang]] = live.from(button.id);
     const [[m]] = live.from(bang.id);
     assert.equal(m.text, command);
@@ -1012,9 +1086,14 @@ test("the panels' piano roll is narrower (260 px): the pop-up window has the lar
 test("Magdalena: her panel says what she is (the user's taste); the pop-up window explains her", () => {
   const panel = patchFile("emily.panel.maxpat");
   const [subtitle] = panel.find("user's taste");
-  assert.ok(subtitle.presentation_rect, "beside the heading");
+  const [x, y, width] = subtitle.presentation_rect;
+  assert.deepEqual([x, y, width, subtitle.textjustification], [0, 2, 130, 1], "under her name in the top row, centred");
+  const temperature = named(panel, "Temperature");
+  assert.ok(temperature.presentation_rect[3] >= 44, "the slider is tall enough for its name and value");
+  assert.deepEqual(panel.find("taste report"), [], "the report itself stays: the text box");
+  assert.ok(named(panel, "Magdalena").presentation_rect);
   const w = patchFile("emi.window.maxpat");
-  const [explain] = w.find("explain Magdalena");
+  const explain = named(w, "Explain Magdalena");
   assert.ok(explain.presentation_rect && /Anna Magdalena Bach/.test(explain.hint));
   const [[t]] = w.from(explain.id);
   const [[open]] = w.from(t.id);
@@ -1049,7 +1128,7 @@ test("sections: each part of the strip sits on a solid colour of its own, with l
     const p = readPatcher(locate(file));
     const back = p.boxes[0].box;
     assert.equal(back.maxclass, "panel", `${file}: the first box (the back) is a [panel]`);
-    assert.deepEqual(back.presentation_rect, [0, 0, width, 169], file);
+    assert.deepEqual(back.presentation_rect, [0, 0, width, 149], file);
     assert.equal(back.ignoreclick, 1, `${file}: clicks pass through it`);
     colours.set(file, back.bgfillcolor_color.join(","));
     for (const { box } of p.boxes) {
@@ -1063,7 +1142,9 @@ test("sections: each part of the strip sits on a solid colour of its own, with l
 });
 
 test("patchers/: only what you open on top; the parts and the scripts in their own folders", () => {
-  assert.deepEqual(fs.readdirSync(path.join(ROOT, "patchers")).filter((f) => !f.startsWith(".")).sort(), ["cento.brain.amxd", "cento.maxpat", "cento.voice.amxd", "parts", "scripts"]);
+  // (Your own cento.*.json files may be there too, from before the Cento folder.)
+  const top = fs.readdirSync(path.join(ROOT, "patchers")).filter((f) => !f.startsWith(".") && !f.endsWith(".json"));
+  assert.deepEqual(top.sort(), ["cento.brain.amxd", "cento.maxpat", "cento.voice.amxd", "parts", "scripts"]);
   assert.ok(fs.readdirSync(path.join(ROOT, "patchers", "parts")).every((f) => f.endsWith(".maxpat")));
   assert.ok(fs.readdirSync(path.join(ROOT, "patchers", "scripts")).every((f) => f.endsWith(".bundle.js")));
 });

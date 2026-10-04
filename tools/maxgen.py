@@ -178,24 +178,40 @@ HELP = {
                   "output plays without it."),
         "Output": ("Output", "The MIDI port the four voices go to, one channel each: 1 soprano, 2 alto, "
                    "3 tenor, 4 bass. AU DLS Synth 1 is the Mac's own instruments. Remembered for next time."),
-        "Use vst~": ("plug-in instruments", "On: the voices play through four plug-in instruments inside "
-                     "Max (choose them with set up) instead of the MIDI port. Turn audio on (the speaker) "
-                     "to hear them. Remembered for next time."),
-        "set up\u2026": ("set up", "Open the plug-in instruments window: choose the AU or VST3 instrument "
-                         "that plays each voice, and show its editor."),
+        "Plug-in Instruments": ("plug-in instruments", "On: the voices play through four plug-in instruments "
+                                "inside Max (choose them with set up) instead of the MIDI port. Turn audio on "
+                                "(the speaker) to hear them. Remembered for next time."),
+        "Set Up": ("set up", "Open the plug-in instruments window: choose the AU or VST3 instrument that "
+                   "plays each voice, and show its editor."),
+        "More Features": ("more features", "Open the more features window: the blind listening test, "
+                          "loading a single chorale, and the test phrase."),
+    },
+    "emi.extras": {
+        "Listening Test": ("listening test", "Write a blind listening test: a web page of 10 pairs, each a "
+                           "Bach chorale and a piece composed in its form, in random order. Can listeners "
+                           "tell which is Bach?"),
+        "Load A Chorale": ("load a chorale", "Load one chorale (a MIDI file): it plays as written and is "
+                           "drawn in the piano roll, in C major or A minor, or in its own key with original "
+                           "key on."),
+        "Original Key": ("original key", "On: a chorale you load (load a chorale) keeps its own key. Off: it "
+                         "is moved to C major or A minor (the default). Only for loaded chorales."),
+        "Test Phrase": ("play the test phrase", "Play a built-in phrase (no chorales needed), to check that "
+                        "the voices sound."),
+        "Clear Queue": ("stop and clear the queue", "What is playing stops at once, and nothing is left "
+                        "queued to play."),
     },
     "emi.instruments": {
-        **{f"plug {k + 1}": (f"choose ({VOICES[k]})", f"Choose the AU or VST3 instrument that plays the "
-                             f"{VOICES[k]} (voice {k + 1}) when plug-in instruments is on.") for k in range(4)},
-        **{f"open {k + 1}": (f"show editor ({VOICES[k]})", f"Show the editor window of the {VOICES[k]}'s "
-                             "plug-in instrument.") for k in range(4)},
+        **{f"Choose {k + 1}": (f"choose ({VOICES[k]})", f"Choose the AU or VST3 instrument that plays the "
+                               f"{VOICES[k]} (voice {k + 1}) when plug-in instruments is on.") for k in range(4)},
+        **{f"Show Editor {k + 1}": (f"show editor ({VOICES[k]})", f"Show the editor window of the "
+                                    f"{VOICES[k]}'s plug-in instrument.") for k in range(4)},
     },
     "emi.host.live": {
-        "write clips": ("write clips", "Write the current piece as MIDI clips, one per voice, in the first "
-                       "empty clip slot of the Soprano, Alto, Tenor and Bass tracks. Edit them in Live like "
-                       "any clip."),
-        "test clips": ("test clips", "Write a short test phrase as clips on the voice tracks: a quick check "
-                     "that the tracks are named and set up."),
+        "Write Clips": ("write clips", "Write the current piece as MIDI clips, one per voice, in the first "
+                        "empty clip slot of the Soprano, Alto, Tenor and Bass tracks. Edit them in Live like "
+                        "any clip." + MAP),
+        "Test Clips": ("test clips", "Write a short test phrase as clips on the voice tracks: a quick check "
+                       "that the tracks are named and set up."),
         "Clips On Compose": ("clips on compose", "On: every piece composed is also written as clips (as "
                              "write clips does), so nothing you like is lost."),
         "Play Through Voices": ("play through voices", "On: while Live plays, the piece plays through the "
@@ -205,16 +221,16 @@ HELP = {
                             "the whole piece on this track's instrument."),
     },
     "emi.panel": {
-        "compose": ("compose", "Compose a piece with the seed shown (with stream on: start a stream). "
-                    "While playing, the new music starts at the next bar."),
+        "Compose": ("compose", "Compose a piece with the seed shown (with stream on: start a stream). "
+                    "While playing, the new music starts at the next bar." + MAP),
         "Seed": ("seed", "The random seed: the same seed, chorales, settings and taste always give the same "
                  "piece. Changing it composes at once (once chorales are loaded)."),
-        "next": ("next", "Add 1 to the seed and compose: the quickest way to hear another piece."),
-        "export midi": ("export midi", "Save the current piece as a MIDI file. For a composed piece or "
+        "Next": ("next", "Add 1 to the seed and compose: the quickest way to hear another piece." + MAP),
+        "Export MIDI": ("export midi", "Save the current piece as a MIDI file. For a composed piece or "
                         "stream, a .json of where every beat came from is saved next to it."),
-        "corpora": ("corpora", "Open the corpus window: the folders of chorales (MIDI files) to "
+        "Corpora": ("corpora", "Open the corpus window: the folders of chorales (MIDI files) to "
                     "compose from, each switched on or off. Composing uses every folder that is on, as "
-                           "one corpus; they are loaded by themselves next time."),
+                    "one corpus; they are loaded by themselves next time."),
         "Beats": ("beats", "The shortest piece to compose, in beats (4 to 256). With chorale form on, only "
                   "chorales at least this long lend their form."),
         "Form": ("chorale form", "On: each piece takes the form of a real chorale: its phrases and cadences "
@@ -228,50 +244,40 @@ HELP = {
                        "are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences "
                        "are recombined like any other beats."),
         "Status": ("Status", "What the engine just did, or what went wrong."),
-        "listening test\u2026": ("listening test", "Write a blind listening test: a web page of 10 pairs, "
-                                 "each a Bach chorale and a piece composed in its form, in random order. Can "
-                                 "listeners tell which is Bach?"),
-        "Tools": ("tools", "Less-used tools. Load a chorale: one chorale (a MIDI file) plays as written and "
-                  "is drawn in the piano roll, in C major or A minor, or in its own key with original key "
-                  "on. Play the test phrase: a built-in phrase (no chorales needed), to check that the "
-                  "voices sound. Stop and clear the queue: what is playing stops at once."),
-        "Original Key": ("original key", "On: a chorale you load (tools, load a chorale) keeps its own key. "
-                         "Off: it is moved to C major or A minor (the default). Only for loaded chorales."),
     },
     "emily.panel": {
-        "window": ("window", "Open the pop-up window: a large piano roll and Magdalena's taste in full, "
+        "Window": ("window", "Open the pop-up window: a large piano roll and Magdalena's taste in full, "
                    "where you can edit her weights and see her memory (and read who she is)."),
         "Like": ("Like", LIKE + MAP),
         "Dislike": ("Dislike", DISLIKE + MAP),
         "Temperature": ("temperature", "How much chance still plays when composing. 0: only Magdalena's "
                         "favourite choices; 1: as if she weren't there (the default); up to 3: more "
                         "adventurous."),
-        "taste report": ("taste report", TASTE),
         "Accept": ("keep", ACCEPT + MAP),
         "Magdalena": ("Magdalena", "Magdalena in a line: how many ratings she has had, and what she likes "
-                      "and dislikes most. Who she is: explain Magdalena, in the pop-up window."),
+                      "and dislikes most. Her full report, and who she is: the pop-up window (window)."),
     },
     "emi.window": {
         "Piano roll": ("Piano roll", "The current piece, large. " + ROLL),
         "Taste": ("Magdalena's taste", "The user's taste, as Magdalena has learned it, in three views, chosen by the tabs at its top right: "
                   "overview (what she likes and dislikes most, her latest ratings, the last taste "
                   "comparison), weights and memory. Hover over a tab, slider or button for what it does."),
-        "like": ("like", LIKE),
-        "dislike": ("dislike", DISLIKE),
-        "keep": ("keep", ACCEPT),
-        "taste report": ("taste report", TASTE),
-        "reload seed": ("reload seed", "Compose the seed shown again, with Magdalena's taste, mix and novelty "
+        "Window Like": ("like", LIKE),
+        "Window Dislike": ("dislike", DISLIKE),
+        "Window Keep": ("keep", ACCEPT),
+        "Taste Report": ("taste report", TASTE),
+        "Reload Seed": ("reload seed", "Compose the seed shown again, with Magdalena's taste, mix and novelty "
                         "as they are now, to hear and see what your changes did. With stream on, the stream "
                         "starts again."),
-        "release all pins": ("release all pins", "Release every pinned weight: each goes back to what "
+        "Release All Pins": ("release all pins", "Release every pinned weight: each goes back to what "
                              "Magdalena learned from your ratings."),
-        "store taste": ("store taste", "Save Magdalena's whole taste (weights, pins, strength, ratings) to a "
+        "Store Taste": ("store taste", "Save Magdalena's whole taste (weights, pins, strength, ratings) to a "
                         "file you choose."),
-        "recall taste": ("recall taste", "Load a taste saved with store taste and make it hers. The taste "
+        "Recall Taste": ("recall taste", "Load a taste saved with store taste and make it hers. The taste "
                          "it replaces is kept as a backup and as a snapshot."),
-        "forget": ("forget", "Start a new taste from nothing. The old one is kept as a backup and as a "
+        "Forget": ("forget", "Start a new taste from nothing. The old one is kept as a backup and as a "
                    "snapshot, so you can roll back to it."),
-        "explain Magdalena": ("explain Magdalena", "Who Magdalena is and what she does: she learns the "
+        "Explain Magdalena": ("explain Magdalena", "Who Magdalena is and what she does: she learns the "
                               "user's taste, keeps a notebook of the music you keep, and is named after Anna "
                               "Magdalena Bach."),
     },
@@ -281,9 +287,9 @@ HELP = {
                     "is on, as one corpus, and the seed shown is composed again with it. A chorale in two "
                     "folders counts once; the corpus has one meter (the first folder's). Hover over a name for "
                     "its folder's full path."),
-        "add folder": ("add folder", "Choose a folder of chorales (MIDI files, as tools/export-chorales.py "
+        "Add Folder": ("add folder", "Choose a folder of chorales (MIDI files, as tools/export-chorales.py "
                        "writes them, e.g. Documents/Cento/corpus-both). It joins the list, switched on."),
-        "rescan": ("rescan", "Read every folder again, after adding or removing chorales in one. (Folders are "
+        "Rescan": ("rescan", "Read every folder again, after adding or removing chorales in one. (Folders are "
                    "read once, when first switched on.)"),
     },
     "emi.view": {
@@ -330,6 +336,7 @@ def controls_doc():
         ("emily.panel", "Magdalena: the user's taste (both versions)"),
         ("emi.view", "Piano roll (both versions)"),
         ("emi.instruments", "The plug-in instruments window (Max version: set up, in the left panel)"),
+        ("emi.extras", "The more features window (Max version: more features, in the left panel)"),
         ("emi.window", "The pop-up window (both versions: Magdalena's panel, window)"),
         ("emi.corpora", "The corpus window (both versions: the panel's corpora button)"),
         ("emi.voice", "The cento.voice device (Live)"),
@@ -671,14 +678,16 @@ def instruments():
 
 
 # ---------------------------------------------------------------- the look (GUI redesign, M12)
-# One look per kind of control, in every panel: the main action (compose)
-# strong blue, one-shot buttons light blue, on/off switches warm grey that
-# turn amber when on, Magdalena's rating buttons warm. Small grey headings name
-# each panel's job.
+# One look per kind of control, in every panel, all in Live's own look
+# (live.text): the main action (compose) strong blue, one-shot buttons light
+# blue, on/off switches warm grey that turn amber when on, Magdalena's rating
+# buttons warm. A row along the top names each section, centred above it.
 DARK_TEXT = [0.08, 0.08, 0.09, 1.0]
 LIGHT_TEXT = [1.0, 1.0, 1.0, 1.0]
 MAIN_BG = [0.24, 0.44, 0.71, 1.0]
+MAIN_ON = [0.16, 0.31, 0.52, 1.0]
 BUTTON_BG = [0.80, 0.85, 0.93, 1.0]
+BUTTON_ON = [0.60, 0.69, 0.84, 1.0]
 TOGGLE_OFF = [0.84, 0.82, 0.78, 1.0]
 TOGGLE_ON = [0.96, 0.70, 0.33, 1.0]
 EMILY_BG = [0.96, 0.84, 0.70, 1.0]
@@ -690,27 +699,38 @@ SOFT_TEXT = [0.84, 0.84, 0.82, 1.0]  # notes and subtitles: lighter grey still r
 PLAY_BG = [0.16, 0.27, 0.20, 1.0]
 COMPOSE_BG = [0.15, 0.21, 0.31, 1.0]
 MAGDALENA_BG = [0.32, 0.20, 0.15, 1.0]
+# The row of section names along the top of the strip, above the sections.
+HEADER_BG = [0.11, 0.11, 0.12, 1.0]
+HEADER_H = 20
+PANEL_H = 169 - HEADER_H  # each section's height below the row (Live devices are 169 px high)
+LABEL_SIZE = 10.0  # labels, and the text on buttons and switches
 
 
-def message_look(bg, text=DARK_TEXT, bold=False):
-    look = {"bgcolor": bg, "bgfillcolor_type": "color", "bgfillcolor_color": bg, "textcolor": text}
-    if bold:
-        look["fontface"] = 1
-    return look
+def live_text_look(bg, on, text=DARK_TEXT, text_on=None):
+    text_on = text_on or text
+    return {"bgcolor": bg, "activebgcolor": bg, "bgoncolor": on, "activebgoncolor": on,
+            "textcolor": text, "activetextcolor": text, "textoncolor": text_on, "activetextoncolor": text_on}
 
 
-BUTTON = message_look(BUTTON_BG)
-MAIN = message_look(MAIN_BG, LIGHT_TEXT, bold=True)
+BUTTON = live_text_look(BUTTON_BG, BUTTON_ON)
+MAIN = live_text_look(MAIN_BG, MAIN_ON, LIGHT_TEXT)
+WARM = live_text_look(EMILY_BG, EMILY_ON)
+TOGGLE = live_text_look(TOGGLE_OFF, TOGGLE_ON)
 
 
-def section(p, color, w, h=169):
-    """A solid background for a whole panel (a [panel], first, so it's behind
-    everything; it ignores clicks), and light text for its labels."""
+def solid(p, color, pres):
+    """A solid [panel] (it ignores clicks), first in the patch, so it's behind everything."""
     box = {"maxclass": "panel", "numinlets": 1, "numoutlets": 0, "mode": 0, "border": 0, "rounded": 0,
            "bgcolor": color, "bgfillcolor_type": "color", "bgfillcolor_color": color,
            "ignoreclick": 1, "background": 1}
-    pid = p._add(p._place(box, 1250, 5, 40, 30, (0, 0, w, h)))
+    pid = p._add(p._place(box, 1250, 5, 40, 30, pres))
     p.boxes.insert(0, p.boxes.pop())
+    return pid
+
+
+def section(p, color, w, h=PANEL_H):
+    """A solid background for a whole panel, and light text for its labels."""
+    pid = solid(p, color, (0, 0, w, h))
     for entry in p.boxes:
         b = entry["box"]
         if b["maxclass"] == "comment" and b.get("presentation") and "textcolor" not in b:
@@ -718,41 +738,71 @@ def section(p, color, w, h=169):
     return pid
 
 
-def heading(p, text, x, y, pres):
-    """A panel's small grey heading (PLAY, COMPOSE, EMILY...)."""
-    return p.comment(text, x, y, w=120, pres=pres, fontsize=10.0, fontface=1, textcolor=HEADING)
+def label(p, text, x, y, pres, w=None):
+    """A control's name beside it, in the labels' size."""
+    return p.comment(text, x, y, w=w, pres=pres, fontsize=LABEL_SIZE)
 
 
-def labelled(p, label, command, x, y, pres, target, look=BUTTON, **extra):
+def button(p, name, text, x, y, pres, look=BUTTON, mappable=False, fontsize=LABEL_SIZE):
+    """A button in Live's own look (a live.text in button mode): it sends a
+    bang when clicked. live.* objects are always parameters, named name: the
+    mappable ones (compose, next, like...) show in Live's mapping and
+    automation; the others are hidden there (and not saved with the set)."""
+    valueof = {
+        "parameter_enum": ["off", "on"],
+        "parameter_longname": name,
+        "parameter_shortname": text,
+        "parameter_type": 2,
+        "parameter_mmax": 1,
+        "parameter_initial": [0],
+        "parameter_initial_enable": 0,
+    }
+    if not mappable:
+        valueof["parameter_invisible"] = 2
+    return p.ui("live.text", x, y, pres[2], pres[3], 1, 2, ["", ""], pres=pres, parameter_enable=1,
+                varname=name, mode=0, text=text, texton=text, fontsize=fontsize, **look,
+                saved_attribute_attributes={"valueof": valueof})
+
+
+def labelled(p, name, text, command, x, y, pres, target, look=BUTTON, mappable=False, fontsize=LABEL_SIZE):
     """A button labelled for people that sends the engine's own word: the
-    visible message box (its label) bangs a hidden one (the command)."""
-    m = p.msg(label, x, y, pres=pres, **look, **extra)
+    button bangs a hidden message box (the command)."""
+    b = button(p, name, text, x, y, pres, look, mappable, fontsize)
     t = p.obj("t b", x, y + 30, 1, 1, ["bang"], w=35)
     c = p.msg(command, x, y + 60)
-    p.connect(m, 0, t, 0)
+    p.connect(b, 0, t, 0)
     p.connect(t, 0, c, 0)
     p.connect(c, 0, target, 0)
-    return m
+    return b
 
 
-def dialog_button(p, label, x, y, pres, dialog, prefix, targets, look=BUTTON):
-    """A message box that opens a file dialog and sends '<prefix> <path>'."""
-    m = p.msg(label, x, y, pres=pres, **(look if pres else {}))
-    route = p.obj("route " + label.split()[0], x, y + 30, 2, 2, w=80)
-    tb = p.obj("t b", x, y + 60, 1, 1, ["bang"], w=35)
-    d = p.obj(dialog, x, y + 90, 1, 2, ["", "bang"], w=110)
-    pre = p.obj("prepend " + prefix, x, y + 120, 2, 1, w=120)
-    p.connect(m, 0, route, 0)
-    p.connect(route, 0, tb, 0)
+def dialog_button(p, name, text, x, y, pres, dialog, prefix, targets, look=BUTTON):
+    """A button that opens a file dialog and sends '<prefix> <path>'."""
+    b = button(p, name, text, x, y, pres, look)
+    tb = p.obj("t b", x, y + 30, 1, 1, ["bang"], w=35)
+    d = p.obj(dialog, x, y + 60, 1, 2, ["", "bang"], w=110)
+    pre = p.obj("prepend " + prefix, x, y + 90, 2, 1, w=120)
+    p.connect(b, 0, tb, 0)
     p.connect(tb, 0, d, 0)
     p.connect(d, 0, pre, 0)
     for target, inlet in targets:
         p.connect(pre, 0, target, inlet)
+    return b
 
 
-def number(p, x, y, pres, minimum, maximum):
-    return p.ui("number", x, y, 50, 22, 1, 2, ["", "bang"], pres=pres,
-                minimum=minimum, maximum=maximum, parameter_enable=0)
+def opener(p, name, text, x, y, pres, abstraction, look=BUTTON):
+    """A button that opens a window of its own (an abstraction, through
+    [pcontrol]); returns the abstraction, to wire it."""
+    b = button(p, name, text, x, y, pres, look)
+    t = p.obj("t b", x, y + 30, 1, 1, ["bang"], w=35)
+    o = p.msg("open", x, y + 60, w=40)
+    pc = p.obj("pcontrol", x + 50, y + 60, 1, 1, w=60)
+    window = p.obj(abstraction, x, y + 95, 1, 1, w=110)
+    p.connect(b, 0, t, 0)
+    p.connect(t, 0, o, 0)
+    p.connect(o, 0, pc, 0)
+    p.connect(pc, 0, window, 0)
+    return window
 
 
 def live_numbox(p, name, x, y, pres, minimum, maximum, initial):
@@ -773,13 +823,11 @@ def live_numbox(p, name, x, y, pres, minimum, maximum, initial):
     )
 
 
-def live_toggle(p, name, label, x, y, pres, initial=0):
+def live_toggle(p, name, text, x, y, pres, initial=0, initial_enable=1):
     """A live.text toggle showing its label: a parameter, saved with the set."""
     return p.ui(
         "live.text", x, y, 100, 20, 1, 2, ["", ""], pres=pres,
-        parameter_enable=1, varname=name, mode=1, text=label, texton=label,
-        bgcolor=TOGGLE_OFF, activebgcolor=TOGGLE_OFF, bgoncolor=TOGGLE_ON, activebgoncolor=TOGGLE_ON,
-        textcolor=DARK_TEXT, activetextcolor=DARK_TEXT, textoncolor=DARK_TEXT, activetextoncolor=DARK_TEXT,
+        parameter_enable=1, varname=name, mode=1, text=text, texton=text, fontsize=LABEL_SIZE, **TOGGLE,
         saved_attribute_attributes={"valueof": {
             "parameter_enum": ["off", "on"],
             "parameter_longname": name,
@@ -787,7 +835,7 @@ def live_toggle(p, name, label, x, y, pres, initial=0):
             "parameter_type": 2,
             "parameter_mmax": 1,
             "parameter_initial": [initial],
-            "parameter_initial_enable": 1,
+            "parameter_initial_enable": initial_enable,
         }},
     )
 
@@ -804,106 +852,76 @@ def text_box(p, x, y, w, h, pres, varname):
 
 # ---------------------------------------------------------------- emi.panel (shared)
 def panel():
-    W = 300
+    W = PANEL_W
     p = Patch(rect=(60, 60, 1240, 760), presentation=True)
     p.comment("emi.panel: the composing controls, shared by both products (Max version and Live device), in "
               "the order you use them (GUI redesign, M12): compose first, then which chorales and how long, "
-              "then streams; the less-used tools are in the tools menu. Seed, beats, form, stream, phrases, "
-              "transpose and signatures are live.* parameters: Live saves them with the set; the Max version "
-              "restores them from the settings file. Panel 300 x 169 px.",
+              "then streams. The less-used tools are in the Max version's more features window "
+              "(emi.extras). Seed, beats, form, stream, phrases, transpose and signatures are live.* "
+              f"parameters: Live saves them with the set; the Max version restores them from the settings "
+              f"file. Panel {W} x {PANEL_H} px, below the strip's row of section names.",
               20, 5, w=1000, h=48, linecount=3)
     inl = p.inlet(20, 60, "from emi.engine: status, error, setting", 1)
     out = p.outlet(20, 720, "to emi.engine", 1)
     targets = [(out, 0)]
     send = lambda obj: p.connect(obj, 0, out, 0)
-    heading(p, "COMPOSE", 20, 70, (6, 1, 90, 18))
 
     # Row 1: compose (the main action), seed, next, export midi
-    send(p.msg("compose", 660, 300, pres=(6, 19, 76, 24), **MAIN))
-    p.comment("seed", 740, 270, w=40, pres=(86, 22, 30, 20), fontsize=10.0)
-    seed = live_numbox(p, "Seed", 740, 300, (116, 21, 50, 20), 1, 99999, 1)
+    labelled(p, "Compose", "compose", "compose", 660, 300, (6, 6, 76, 24), out, look=MAIN, mappable=True,
+             fontsize=12.0)
+    label(p, "seed", 740, 270, (86, 9, 30, 18), w=40)
+    seed = live_numbox(p, "Seed", 740, 300, (116, 9, 50, 18), 1, 99999, 1)
     seed_pre = p.obj("prepend seed", 740, 335, 2, 1, w=90)
     p.connect(seed, 0, seed_pre, 0)
     send(seed_pre)
-    send(p.msg("next", 860, 300, pres=(170, 21, 44, 20), **BUTTON))
+    labelled(p, "Next", "next", "next", 860, 300, (172, 8, 44, 20), out, mappable=True)
     p.comment("seed: composes when changed (once a corpus is loaded); compose: the shown seed again; "
-              "next: seed + 1", 660, 370, w=330, h=34, linecount=2)
-    dialog_button(p, "export midi", 1000, 300, (218, 21, 76, 20), "savedialog", "exportmidi", targets)
+              "next: seed + 1", 660, 400, w=330, h=34, linecount=2)
+    dialog_button(p, "Export MIDI", "export midi", 1000, 300, (220, 8, 74, 20), "savedialog", "exportmidi",
+                  targets)
 
     # Row 2: corpora (the corpus window, emi.corpora in the top patch:
     # folders of chorales, each on or off), beats, chorale form. [send]
     # with "---": unique to each device in Live.
-    corpora_button = p.msg("corpora", 20, 100, pres=(6, 47, 76, 20), **BUTTON)
-    to_corpora = p.obj("s ---emi.corpora", 20, 135, 1, 0, [], w=110)
-    p.connect(corpora_button, 0, to_corpora, 0)
-    p.comment("corpora: open the corpus window (folders of chorales, each on or off)", 150, 135, w=230,
+    corpora_button = button(p, "Corpora", "corpora", 20, 100, (6, 36, 76, 20))
+    corpora_t = p.obj("t b", 20, 130, 1, 1, ["bang"], w=35)
+    to_corpora = p.obj("s ---emi.corpora", 20, 160, 1, 0, [], w=110)
+    p.connect(corpora_button, 0, corpora_t, 0)
+    p.connect(corpora_t, 0, to_corpora, 0)
+    p.comment("corpora: open the corpus window (folders of chorales, each on or off)", 150, 160, w=230,
               h=34, linecount=2)
-    p.comment("beats", 540, 70, w=40, pres=(86, 48, 34, 20), fontsize=10.0)
-    beats = live_numbox(p, "Beats", 540, 100, (120, 47, 46, 20), 4, 256, 32)
+    label(p, "beats", 540, 70, (86, 37, 34, 18), w=40)
+    beats = live_numbox(p, "Beats", 540, 100, (120, 37, 46, 18), 4, 256, 32)
     beats_pre = p.obj("prepend beats", 540, 135, 2, 1, w=95)
     p.connect(beats, 0, beats_pre, 0)
     send(beats_pre)
-    form = live_toggle(p, "Form", "chorale form", 420, 100, (170, 47, 124, 20), initial=1)
+    form = live_toggle(p, "Form", "chorale form", 420, 100, (172, 36, 122, 20), initial=1)
     form_pre = p.obj("prepend form", 420, 135, 2, 1, w=90)
     p.connect(form, 0, form_pre, 0)
     send(form_pre)
 
     # Row 3: stream, phrases, transpose (M5), signatures (M7)
-    stream = live_toggle(p, "Stream", "stream", 20, 470, (6, 71, 52, 20))
+    stream = live_toggle(p, "Stream", "stream", 20, 470, (6, 62, 52, 20))
     stream_pre = p.obj("prepend stream", 20, 505, 2, 1, w=100)
     p.connect(stream, 0, stream_pre, 0)
     send(stream_pre)
-    p.comment("phrases", 140, 440, w=50, pres=(60, 72, 44, 20), fontsize=10.0)
-    phrases = live_numbox(p, "Phrases", 140, 470, (104, 71, 30, 20), 0, 64, 8)
+    label(p, "phrases", 140, 440, (62, 63, 42, 18), w=50)
+    phrases = live_numbox(p, "Phrases", 140, 470, (104, 63, 30, 18), 0, 64, 8)
     phrases_pre = p.obj("prepend phrases", 140, 505, 2, 1, w=105)
     p.connect(phrases, 0, phrases_pre, 0)
     send(phrases_pre)
-    p.comment("transpose", 270, 440, w=60, pres=(138, 72, 54, 20), fontsize=10.0)
-    transpose = live_numbox(p, "Transpose", 270, 470, (192, 71, 32, 20), -12, 12, 0)
+    label(p, "transpose", 270, 440, (138, 63, 54, 18), w=60)
+    transpose = live_numbox(p, "Transpose", 270, 470, (192, 63, 32, 18), -12, 12, 0)
     transpose_pre = p.obj("prepend transpose", 270, 505, 2, 1, w=115)
     p.connect(transpose, 0, transpose_pre, 0)
     send(transpose_pre)
     p.comment("stream: compose plays phrase by phrase (phrases 0 = endless); transpose: at once for a piece, "
               "from the next phrase in a stream", 400, 470, w=330, h=34, linecount=2)
-    sigs = live_toggle(p, "Signatures", "signatures", 760, 470, (228, 71, 66, 20), initial=1)
+    sigs = live_toggle(p, "Signatures", "signatures", 760, 470, (228, 62, 66, 20), initial=1)
     sigs_pre = p.obj("prepend sigs", 760, 505, 2, 1, w=90)
     p.connect(sigs, 0, sigs_pre, 0)
     send(sigs_pre)
     p.comment("signatures: keep Bach's cadence formulas whole at cadences", 870, 470, w=250, h=34, linecount=2)
-
-    # Bottom row: the blind listening test (M8), and the tools menu: the
-    # less-used tools (a single chorale as written, the test phrase, clear).
-    dialog_button(p, "listening test\u2026", 1180, 100, (6, 145, 110, 20), "savedialog", "abtest", targets)
-    p.comment("listening test: a blind A/B test (a web page) of the corpus in use", 1180, 260, w=200, h=34,
-              linecount=2)
-    tools = p.ui("umenu", 20, 250, 80, 22, 1, 3, ["int", "", ""], pres=(120, 145, 80, 20),
-                 parameter_enable=0, varname="Tools",
-                 items=["tools", ",", "load a chorale\u2026", ",", "play the test phrase", ",",
-                        "stop and clear the queue"])
-    pick = p.obj("t b i", 20, 285, 1, 2, ["bang", "int"], w=45)
-    p.connect(tools, 0, pick, 0)
-    back = p.msg("set 0", 20, 320, w=45)
-    p.connect(pick, 0, back, 0)
-    p.connect(back, 0, tools, 0)
-    sel = p.obj("sel 1 2 3", 80, 320, 1, 4, ["bang"] * 3 + [""], w=80)
-    p.connect(pick, 1, sel, 0)
-    d = p.obj("opendialog", 80, 355, 1, 2, ["", "bang"], w=75)
-    p.connect(sel, 0, d, 0)
-    pre = p.obj("prepend loadmidi", 80, 390, 2, 1, w=110)
-    p.connect(d, 0, pre, 0)
-    send(pre)
-    for k, word in [(1, "pattern"), (2, "clear")]:
-        m = p.msg(word, 220 + (k - 1) * 70, 355, w=55)
-        p.connect(sel, k, m, 0)
-        send(m)
-    p.comment("tools: then back to its title; a chorale loads in C or A minor, or in its own key with "
-              "original key on", 360, 390, w=260, h=34, linecount=2)
-    # Original key (bottom right): a chorale loaded with the tools menu keeps
-    # its own key, or is moved to C major or A minor.
-    key = live_toggle(p, "Original Key", "original key", 640, 250, (204, 145, 90, 20))
-    key_pre = p.obj("prepend key", 640, 285, 2, 1, w=80)
-    p.connect(key, 0, key_pre, 0)
-    send(key_pre)
 
     # From the engine: the status line, and restored or changed settings
     route = p.obj("route status error setting", 20, 560, 2, 4, w=170)
@@ -912,70 +930,54 @@ def panel():
     set_error = p.obj("prepend alert", 150, 600, 2, 1, w=100)
     p.connect(route, 0, set_status, 0)
     p.connect(route, 1, set_error, 0)
-    status = text_box(p, 20, 640, W - 12, 52, (6, 95, W - 12, 46), "Status")
+    status = text_box(p, 20, 640, W - 12, 52, (6, 88, W - 12, 55), "Status")
     p.connect(set_status, 0, status, 0)
     p.connect(set_error, 0, status, 0)
-    controls = p.obj("route seed beats form key stream phrases transpose sigs", 420, 560, 2, 9, w=360)
+    controls = p.obj("route seed beats form stream phrases transpose sigs", 420, 560, 2, 8, w=330)
     p.connect(route, 2, controls, 0)
     p.comment("setting <name> <value>: show it without sending it back", 800, 560, w=330)
-    for k, control in enumerate([seed, beats, form, key, stream, phrases, transpose, sigs]):
+    for k, control in enumerate([seed, beats, form, stream, phrases, transpose, sigs]):
         pre = p.obj("prepend set", 420 + k * 95, 640, 2, 1, w=80)
         p.connect(controls, k, pre, 0)
         p.connect(pre, 0, control, 0)
-    section(p, COMPOSE_BG, PANEL_W)
+    section(p, COMPOSE_BG, W)
     return p
 
 
 # ---------------------------------------------------------------- emily.panel (shared, M9)
-def live_button(p, name, label, x, y, pres):
-    """A live.text button (mappable): a parameter that sends a bang when pressed."""
-    return p.ui(
-        "live.text", x, y, 57, 30, 1, 2, ["", ""], pres=pres,
-        parameter_enable=1, varname=name, mode=0, text=label, texton=label,
-        bgcolor=EMILY_BG, activebgcolor=EMILY_BG, bgoncolor=EMILY_ON, activebgoncolor=EMILY_ON,
-        textcolor=DARK_TEXT, activetextcolor=DARK_TEXT, textoncolor=DARK_TEXT, activetextoncolor=DARK_TEXT,
-        saved_attribute_attributes={"valueof": {
-            "parameter_enum": ["off", "on"],
-            "parameter_longname": name,
-            "parameter_shortname": label,
-            "parameter_type": 2,
-            "parameter_mmax": 1,
-            "parameter_initial": [0],
-            "parameter_initial_enable": 0,
-        }},
-    )
-
-
 def emily_panel():
     W = EMILY_W
     p = Patch(rect=(80, 80, 1000, 620), presentation=True)
     p.comment("emily.panel: Magdalena's taste (M9), shared by both products. like and dislike rate the beats selected "
               "in the piano roll, or the stream phrase playing, or the piece; temperature sets how much chance "
-              "still plays; accept keeps what is playing as music of her own (M10). like, dislike, accept and "
-              "temperature are live.* parameters, so they can be MIDI- or key-mapped. "
-              f"Panel {W} x 169 px.", 20, 5, w=900, h=48, linecount=3)
+              "still plays; keep (accept) keeps what is playing as music of her own (M10). like, dislike, keep "
+              "and temperature are live.* parameters, so they can be MIDI- or key-mapped. "
+              f"Panel {W} x {PANEL_H} px.", 20, 5, w=900, h=48, linecount=3)
     inl = p.inlet(20, 60, "from emi.engine: emily, setting", 1)
     out = p.outlet(20, 560, "to emi.engine", 1)
-    send = lambda obj: p.connect(obj, 0, out, 0)
 
-    heading(p, "MAGDALENA", 20, 100, (6, 1, 64, 18))
-    p.comment("user's taste", 140, 100, w=80, pres=(70, 3, 58, 15), fontsize=9.0, textcolor=SOFT_TEXT)
+    # What she is, under her name (the name is in the strip's row of names).
+    p.comment("user's taste", 140, 100, w=80, pres=(0, 2, W, 16), fontsize=LABEL_SIZE, textcolor=SOFT_TEXT,
+              textjustification=1)
+    labelled(p, "Like", "like", "like", 20, 140, (6, 19, 57, 24), out, look=WARM, mappable=True, fontsize=11.0)
+    labelled(p, "Dislike", "dislike", "dislike", 120, 140, (67, 19, 57, 24), out, look=WARM, mappable=True,
+             fontsize=11.0)
+    # M10: accept keeps what is playing as music of her own (mappable, like
+    # like and dislike), shown as "keep"; forget is in the pop-up window.
+    labelled(p, "Accept", "keep", "accept", 220, 140, (6, 46, 57, 20), out, look=WARM, mappable=True)
     # The pop-up window (emi.window, in the top patch): a large piano roll and
     # her taste in full. [send] with "---": unique to each device in Live.
-    window = p.msg("window", 600, 300, pres=(67, 49, 57, 20), **BUTTON)
-    to_window = p.obj("s ---emi.window", 600, 335, 1, 0, [], w=110)
-    p.connect(window, 0, to_window, 0)
-    like = live_button(p, "Like", "like", 20, 140, (6, 19, 57, 26))
-    dislike = live_button(p, "Dislike", "dislike", 120, 140, (67, 19, 57, 26))
-    for button, word, x in [(like, "like", 20), (dislike, "dislike", 120)]:
-        m = p.msg(word, x, 185, w=55)
-        p.connect(button, 0, m, 0)
-        send(m)
+    window = button(p, "Window", "window", 600, 300, (67, 46, 57, 20))
+    window_t = p.obj("t b", 600, 330, 1, 1, ["bang"], w=35)
+    to_window = p.obj("s ---emi.window", 600, 360, 1, 0, [], w=110)
+    p.connect(window, 0, window_t, 0)
+    p.connect(window_t, 0, to_window, 0)
     # Temperature: how much chance still plays. A horizontal slider across
-    # the panel, with its name and value.
+    # the panel, tall enough for its name (above) and value (below).
     temp = p.ui(
-        "live.slider", 240, 140, 118, 30, 1, 2, ["", "float"], pres=(6, 73, 118, 30),
+        "live.slider", 340, 140, 118, 46, 1, 2, ["", "float"], pres=(6, 68, 118, 46),
         parameter_enable=1, varname="Temperature", orientation=1, showname=1, shownumber=1,
+        textcolor=HEADING,
         saved_attribute_attributes={"valueof": {
             "parameter_longname": "Temperature",
             "parameter_shortname": "temperature",
@@ -987,39 +989,18 @@ def emily_panel():
             "parameter_unitstyle": 1,
         }},
     )
-    temp_pre = p.obj("prepend temperature", 240, 200, 2, 1, w=130)
+    temp_pre = p.obj("prepend temperature", 340, 200, 2, 1, w=130)
     p.connect(temp, 0, temp_pre, 0)
-    send(temp_pre)
-    labelled(p, "taste report", "taste", 400, 140, (6, 106, 118, 18), out, fontsize=10.0)
-    # M10: accept keeps what is playing as music of her own (mappable, like
-    # like and dislike), shown as "keep"; forget is in the pop-up window.
-    accept = p.ui(
-        "live.text", 460, 140, 64, 20, 1, 2, ["", ""], pres=(6, 49, 57, 20),
-        parameter_enable=1, varname="Accept", mode=0, text="keep", texton="keep",
-        bgcolor=EMILY_BG, activebgcolor=EMILY_BG, bgoncolor=EMILY_ON, activebgoncolor=EMILY_ON,
-        textcolor=DARK_TEXT, activetextcolor=DARK_TEXT, textoncolor=DARK_TEXT, activetextoncolor=DARK_TEXT,
-        saved_attribute_attributes={"valueof": {
-            "parameter_enum": ["off", "on"],
-            "parameter_longname": "Accept",
-            "parameter_shortname": "keep",
-            "parameter_type": 2,
-            "parameter_mmax": 1,
-            "parameter_initial": [0],
-            "parameter_initial_enable": 0,
-        }},
-    )
-    accept_msg = p.msg("accept", 460, 185, w=55)
-    p.connect(accept, 0, accept_msg, 0)
-    send(accept_msg)
+    p.connect(temp_pre, 0, out, 0)
     p.comment("temperature: 0 Magdalena's favourite choices only, 1 as before Magdalena, 3 adventurous. "
-              "taste report: her taste in the Max window and ten pieces compared; keep (accept, M10)",
+              "keep: accept (M10). Her full taste report: the pop-up window.",
               520, 220, w=330, h=48, linecount=3)
 
     route = p.obj("route emily setting", 20, 300, 2, 3, w=120)
     p.connect(inl, 0, route, 0)
     set_text = p.obj("prepend text", 20, 340, 2, 1)
     p.connect(route, 0, set_text, 0)
-    text = text_box(p, 20, 380, W - 12, 44, (6, 127, W - 12, 39), "Magdalena")
+    text = text_box(p, 20, 380, W - 12, 44, (6, 116, W - 12, 30), "Magdalena")
     p.connect(set_text, 0, text, 0)
     controls = p.obj("route temperature", 200, 340, 2, 2, w=110)
     p.connect(route, 1, controls, 0)
@@ -1027,7 +1008,7 @@ def emily_panel():
     p.connect(controls, 0, set_temp, 0)
     p.connect(set_temp, 0, temp, 0)
     p.comment("setting temperature <t>: show a restored value without sending it back", 330, 380, w=300)
-    section(p, MAGDALENA_BG, EMILY_W)
+    section(p, MAGDALENA_BG, W)
     return p
 
 
@@ -1038,19 +1019,18 @@ RED_ON = [0.86, 0.29, 0.25, 1.0]
 
 def host_max():
     p = Patch(rect=(40, 40, 1300, 760), presentation=True)
-    p.comment("emi.host.max: the Max version's adapter: transport, MIDI ports, vst~ instruments, and "
-              "startup (restores the settings file). Panel 232 x 169 px.", 20, 5, w=900)
+    p.comment("emi.host.max: the Max version's adapter: transport, MIDI ports, vst~ instruments, the more "
+              f"features window, and startup (restores the settings file). Panel {HOST_MAX_W} x {PANEL_H} px.",
+              20, 5, w=900)
     inl = p.inlet(20, 30, "from emi.engine", 1)
     out = p.outlet(20, 720, "to emi.engine", 1)
 
-    # Heading and transport
-    heading(p, "PLAY", 20, 50, (6, 1, 60, 18))
     # Play/stop: green "play" when stopped, red "stop" while playing. It goes
     # back to play by itself when the piece ends ("ended" from the engine).
     # A live.text toggle needs its parameter (an off/on enum) to toggle at
     # all; it starts off and isn't restored (no initial value).
-    play = p.ui("live.text", 150, 70, 58, 20, 1, 2, ["", ""], pres=(6, 19, 80, 26), parameter_enable=1,
-                varname="Play", mode=1, text="play", texton="stop",
+    play = p.ui("live.text", 150, 70, 58, 20, 1, 2, ["", ""], pres=(6, 6, 80, 26), parameter_enable=1,
+                varname="Play", mode=1, text="play", texton="stop", fontsize=12.0,
                 bgcolor=GREEN_ON, activebgcolor=GREEN_ON, bgoncolor=RED_ON, activebgoncolor=RED_ON,
                 textcolor=DARK_TEXT, activetextcolor=DARK_TEXT, activetextoncolor=LIGHT_TEXT,
                 saved_attribute_attributes={"valueof": {
@@ -1062,9 +1042,9 @@ def host_max():
                     "parameter_initial": [0],
                     "parameter_initial_enable": 0,
                 }})
-    tempo = p.ui("number", 230, 70, 50, 22, 1, 2, ["", "bang"], pres=(92, 22, 44, 20),
+    tempo = p.ui("number", 230, 70, 50, 22, 1, 2, ["", "bang"], pres=(92, 9, 44, 20),
                  minimum=20, maximum=300, parameter_enable=0, varname="BPM")
-    p.comment("bpm", 285, 70, w=40, pres=(138, 23, 30, 20), fontsize=10.0)
+    label(p, "bpm", 285, 70, (138, 10, 30, 18), w=40)
     lb = p.obj("loadbang", 330, 30, 1, 1, ["bang"])
     init_tempo = p.msg("100", 330, 70, w=40)
     p.connect(lb, 0, init_tempo, 0)
@@ -1103,34 +1083,31 @@ def host_max():
     p.connect(lb, 0, stop_at_load, 0)
     p.connect(stop_at_load, 0, transport, 0)
     p.comment("at load: transport stopped, as Play shows", 420, 70, w=150, h=34, linecount=2)
-    p.ui("ezdac~", 720, 70, 32, 32, 2, 0, [], pres=(196, 16, 30, 30), varname="Audio")
+    p.ui("ezdac~", 720, 70, 32, 32, 2, 0, [], pres=(196, 4, 30, 30), varname="Audio")
 
     # Output selection, and plug-in instruments (vst~): the switch here, the
     # instruments themselves in a window of their own (emi.instruments).
-    p.comment("Output", 20, 300, w=50, pres=(6, 53, 46, 20))
+    p.comment("Output", 20, 300, w=50, pres=(6, 41, 46, 18), fontsize=LABEL_SIZE)
     lb2 = p.obj("loadbang", 80, 270, 1, 1, ["bang"])
     midiinfo = p.obj("midiinfo", 80, 300, 2, 2)
-    menu = p.ui("umenu", 80, 335, 170, 22, 1, 3, ["int", "", ""], pres=(52, 53, 174, 20),
+    menu = p.ui("umenu", 80, 335, 170, 22, 1, 3, ["int", "", ""], pres=(52, 40, 174, 20),
                 parameter_enable=0, items=[], varname="Output")
     p.connect(lb2, 0, midiinfo, 0)
     p.connect(midiinfo, 0, menu, 0)
-    use_vst = p.ui("toggle", 300, 300, 22, 22, 1, 1, ["int"], pres=(6, 79, 20, 20), parameter_enable=0,
-                   varname="Use vst~")
-    p.comment("plug-in instruments", 325, 300, w=120, pres=(28, 79, 124, 20))
+    # Not restored by Max at load (no initial value): the settings file does it.
+    use_vst = live_toggle(p, "Plug-in Instruments", "plug-in instruments", 300, 300, (6, 66, 144, 20),
+                          initial_enable=0)
     plus = p.obj("+ 1", 300, 335, 2, 1, ["int"], w=40)
     p.connect(use_vst, 0, plus, 0)
-    setup = p.msg("set up\u2026", 560, 600, pres=(154, 79, 72, 20), **BUTTON)
-    setup_t = p.obj("t b", 560, 630, 1, 1, ["bang"], w=35)
-    setup_open = p.msg("open", 560, 660, w=40)
-    setup_pc = p.obj("pcontrol", 610, 660, 1, 1, w=60)
-    instruments_window_obj = p.obj("emi.instruments", 560, 695, 1, 1, w=110)
-    p.connect(setup, 0, setup_t, 0)
-    p.connect(setup_t, 0, setup_open, 0)
-    p.connect(setup_open, 0, setup_pc, 0)
-    p.connect(setup_pc, 0, instruments_window_obj, 0)
-    p.comment("set up: the plug-in instruments window (plug <n>, open <n>)", 680, 695, w=250)
-    p.comment("Rest the mouse on any control to see what it does (or Window > Clue Window).", 20, 760,
-              w=220, h=34, linecount=2, pres=(6, 112, 220, 34), fontsize=10.0, textcolor=SOFT_TEXT)
+    instruments_window_obj = opener(p, "Set Up", "set up…", 560, 560, (154, 66, 72, 20), "emi.instruments")
+    p.comment("set up: the plug-in instruments window (plug <n>, open <n>)", 680, 655, w=250)
+    # More features (Max version only): the listening test and the less-used
+    # tools, in a window of their own (emi.extras); what they send goes to
+    # the engine, and a restored original key reaches its switch.
+    extras = opener(p, "More Features", "more features…", 950, 560, (6, 96, 110, 20), "emi.extras")
+    p.connect(extras, 0, out, 0)
+    p.comment("more features: listening test, load a chorale (original key), test phrase, clear", 1070, 655,
+              w=220, h=34, linecount=2)
 
     route = p.obj("route voice setting meter ended", 20, 400, 2, 5, w=210)
     p.connect(inl, 0, route, 0)
@@ -1155,7 +1132,7 @@ def host_max():
     p.connect(plus, 0, gate, 0)
     p.connect(play_gate, 0, gate, 1)
     mo = p.sub("p midi-out", 400, 450, midi_out(), 2, 0, w=90)
-    ins = p.sub("p instruments", 400, 670, instruments(), 2, 0, w=100)
+    ins = p.sub("p instruments", 400, 500, instruments(), 2, 0, w=100)
     p.connect(gate, 0, mo, 0)
     p.connect(gate, 1, ins, 0)
     tosym = p.obj("tosymbol", 260, 370, 1, 1, w=65)
@@ -1179,13 +1156,17 @@ def host_max():
               "last corpus and compose", 890, 100, w=330, h=34, linecount=2)
     defer_set = p.obj("deferlow", 20, 470, 1, 1, w=65)
     p.connect(route, 1, defer_set, 0)
-    restore = p.obj("route bpm output vst", 20, 510, 2, 4, w=140)
+    restore = p.obj("route bpm output vst key", 20, 510, 2, 5, w=160)
     p.connect(defer_set, 0, restore, 0)
     p.connect(restore, 0, tempo, 0)
     p.connect(restore, 1, menu, 0)
     p.connect(restore, 2, use_vst, 0)
+    key = p.obj("prepend key", 200, 545, 2, 1, w=80)
+    p.connect(restore, 3, key, 0)
+    p.connect(key, 0, extras, 0)
     p.comment("setting <name> <value> from startup: applied (deferred, so the remember it sends back "
-              "never re-enters the engine)", 170, 510, w=360, h=34, linecount=2)
+              "never re-enters the engine); key: to the more features window's original key", 290, 545,
+              w=360, h=48, linecount=3)
     section(p, PLAY_BG, HOST_MAX_W)
     return p
 
@@ -1204,28 +1185,69 @@ def instruments_window():
         y = 10 + k * 28
         x = 20 + k * 220
         p.comment(voice, x, 60, w=70, pres=(10, y, 70, 22))
-        labelled(p, "choose\u2026", f"plug {k + 1}", x, 100, (82, y, 104, 22), out, varname=f"plug {k + 1}")
-        labelled(p, "show editor", f"open {k + 1}", x + 110, 100, (192, y, 120, 22), out,
-                 varname=f"open {k + 1}")
+        labelled(p, f"Choose {k + 1}", "choose…", f"plug {k + 1}", x, 100, (82, y, 104, 22), out)
+        labelled(p, f"Show Editor {k + 1}", "show editor", f"open {k + 1}", x + 110, 100, (192, y, 120, 22), out)
     p.comment("Then switch on plug-in instruments in the panel, and audio (the speaker).", 20, 300, w=300,
-              h=34, linecount=2, pres=(10, 124, 300, 34), fontsize=10.0)
-    lb = p.obj("loadbang", 500, 20, 1, 1, ["bang"])
-    title = p.msg("title Cento: plug-in instruments", 500, 55, w=210)
-    this = p.obj("thispatcher", 500, 90, 1, 2, ["", ""], w=80)
-    p.connect(lb, 0, title, 0)
-    p.connect(title, 0, this, 0)
+              h=34, linecount=2, pres=(10, 124, 300, 34), fontsize=LABEL_SIZE)
+    window_title(p, "Cento: plug-in instruments", 500)
     return p
+
+
+def extras_window():
+    """emi.extras: the Max version's more features window: the blind
+    listening test (M8), and the less-used tools: a single chorale as written
+    (and its key), the test phrase, and clearing the queue. Opened by the Max
+    panel's more features button; what it sends goes to the engine."""
+    W = 360
+    p = Patch(rect=(160, 160, 160 + W, 160 + 190), presentation=True)
+    p.comment("emi.extras: the more features window (Max version). Opened by the panel's more features "
+              "button, through [pcontrol] in emi.host.max. Its inlet also takes key <0|1> (a restored "
+              "original key).", 20, 640, w=600, h=34, linecount=2)
+    inl = p.inlet(20, 20, "pcontrol: open; key <0|1>: show a restored original key", 1)
+    out = p.outlet(20, 600, "to emi.engine: abtest, loadmidi, key, pattern, clear", 1)
+    targets = [(out, 0)]
+    dialog_button(p, "Listening Test", "listening test…", 20, 80, (10, 10, 150, 22), "savedialog", "abtest",
+                  targets)
+    p.comment("A blind test: a web page of 10 pairs, a chorale and a piece in its form. Which is Bach?",
+              180, 80, w=180, h=34, linecount=2, pres=(166, 8, W - 176, 34), fontsize=LABEL_SIZE)
+    dialog_button(p, "Load A Chorale", "load a chorale…", 200, 200, (10, 56, 150, 22), "opendialog",
+                  "loadmidi", targets)
+    key = live_toggle(p, "Original Key", "original key", 380, 200, (166, 56, 100, 22))
+    key_pre = p.obj("prepend key", 380, 235, 2, 1, w=80)
+    p.connect(key, 0, key_pre, 0)
+    p.connect(key_pre, 0, out, 0)
+    p.comment("One chorale plays as written, in C major or A minor, or in its own key with original key on.",
+              200, 320, w=300, h=34, linecount=2, pres=(10, 82, W - 20, 34), fontsize=LABEL_SIZE)
+    labelled(p, "Test Phrase", "play the test phrase", "pattern", 20, 380, (10, 124, 150, 22), out)
+    labelled(p, "Clear Queue", "stop and clear the queue", "clear", 200, 380, (166, 124, 160, 22), out)
+    p.comment("The test phrase needs no chorales: a check that the voices sound.", 20, 480, w=300,
+              pres=(10, 150, W - 20, 20), fontsize=LABEL_SIZE)
+    restore = p.obj("route key", 380, 20, 2, 2, w=70)
+    p.connect(inl, 0, restore, 0)
+    show = p.obj("prepend set", 380, 55, 2, 1, w=80)
+    p.connect(restore, 0, show, 0)
+    p.connect(show, 0, key, 0)
+    window_title(p, "Cento: more features", 500)
+    return p
+
+
+def window_title(p, title, x):
+    """Sets the window's title when it loads."""
+    lb = p.obj("loadbang", x, 20, 1, 1, ["bang"])
+    t = p.msg("title " + title, x, 55, w=7 * len(title) + 60)
+    this = p.obj("thispatcher", x, 90, 1, 2, ["", ""], w=80)
+    p.connect(lb, 0, t, 0)
+    p.connect(t, 0, this, 0)
 
 
 # ---------------------------------------------------------------- emi.host.live
 def host_live():
     p = Patch(rect=(40, 40, 1300, 760), presentation=True)
     p.comment("emi.host.live: the Live version's adapter: follows Live's transport, sends voices to the "
-              "cento.voice devices, writes clips, and startup (reloads the last corpus). Panel 170 x 169 px.",
-              20, 5, w=1000)
+              "cento.voice devices, writes clips, and startup (reloads the last corpus). "
+              f"Panel {HOST_LIVE_W} x {PANEL_H} px.", 20, 5, w=1000)
     inl = p.inlet(20, 30, "from emi.engine", 1)
     out = p.outlet(20, 720, "to emi.engine", 1)
-    heading(p, "CLIPS AND VOICES", 20, 50, (6, 1, 158, 18))
 
     # Live's stop -> engine (note-offs; the player starts the queue again at
     # the next barline it reaches). Live's play isn't sent: the observer
@@ -1261,20 +1283,20 @@ def host_live():
     p.comment("reload the last corpus and compose; the controls keep the set's values", 960, 170, w=200,
               h=34, linecount=2)
 
-    # Clips (rows 19 and 45)
-    labelled(p, "write clips", "writeclips", 20, 100, (6, 19, 80, 20), out)
-    labelled(p, "test clips", "testclip", 120, 100, (90, 19, 74, 20), out)
-    auto = live_toggle(p, "Clips On Compose", "clips on compose", 260, 100, (6, 45, 158, 20))
+    # Clips (rows 6 and 32)
+    labelled(p, "Write Clips", "write clips", "writeclips", 20, 100, (6, 6, 80, 20), out, mappable=True)
+    labelled(p, "Test Clips", "test clips", "testclip", 120, 100, (90, 6, 74, 20), out)
+    auto = live_toggle(p, "Clips On Compose", "clips on compose", 260, 100, (6, 32, 158, 20))
     auto_pre = p.obj("prepend autoclips", 260, 135, 2, 1, w=110)
     p.connect(auto, 0, auto_pre, 0)
     p.connect(auto_pre, 0, out, 0)
 
-    # Play through voices (row 71): the grid player runs whenever Live's
+    # Play through voices (row 58): the grid player runs whenever Live's
     # transport does; its notes reach the voice devices only while this is
     # on, so written clips don't also get every note a second time. Turning
     # it off first stops the player (note-offs pass while the gate is still
     # open), then closes the gate.
-    play_on = live_toggle(p, "Play Through Voices", "play through voices", 850, 600, (6, 71, 158, 20))
+    play_on = live_toggle(p, "Play Through Voices", "play through voices", 850, 600, (6, 58, 158, 20))
     play_t = p.obj("t i i", 850, 635, 1, 2, ["int", "int"], w=45)
     p.connect(play_on, 0, play_t, 0)
     off = p.obj("sel 0", 950, 635, 2, 2, ["bang", ""], w=45)
@@ -1295,8 +1317,8 @@ def host_live():
         p.connect(vroute, k, snd, 0)
     p.comment("to the cento.voice devices on the Soprano/Alto/Tenor/Bass tracks", 20, 540, w=420)
 
-    # All voices on this track (row 97)
-    here = live_toggle(p, "All Voices Here", "all voices on this track", 600, 360, (6, 97, 158, 20))
+    # All voices on this track (row 84)
+    here = live_toggle(p, "All Voices Here", "all voices on this track", 600, 360, (6, 84, 158, 20))
     gate = p.obj("gate 1", 600, 440, 2, 1, w=50)
     p.connect(here, 0, gate, 0)
     p.connect(voices, 0, gate, 1)
@@ -1309,8 +1331,8 @@ def host_live():
     p.connect(fmt, 0, midiout, 0)
     p.connect(midiin, 0, midiout, 0)
     p.comment("track MIDI passes through", 780, 480, w=170)
-    p.comment("Voice tracks: Soprano, Alto, Tenor, Bass. For help, hover with the Info View open.",
-              20, 600, w=160, h=48, linecount=3, pres=(6, 123, 158, 44), fontsize=10.0, textcolor=SOFT_TEXT)
+    p.comment("Voice tracks: Soprano, Alto, Tenor, Bass.", 20, 600, w=160, h=34, linecount=2,
+              pres=(6, 112, 158, 32), fontsize=LABEL_SIZE, textcolor=SOFT_TEXT)
     section(p, PLAY_BG, HOST_LIVE_W)
     return p
 
@@ -1323,7 +1345,7 @@ def view():
         "maxclass": "v8ui", "filename": "emi.view.bundle.js", "varname": "Piano roll",
         "textfile": {"filename": "emi.view.bundle.js", "flags": 0, "embed": 0, "autowatch": 1},
         "numinlets": 1, "numoutlets": 1, "outlettype": [""], "parameter_enable": 0,
-    }, 20, 60, VIEW_W, 169, (0, 0, VIEW_W, 169)))
+    }, 20, 60, VIEW_W, PANEL_H, (0, 0, VIEW_W, PANEL_H)))
     p.connect(inl, 0, roll, 0)
     out = p.outlet(20, 260, "to emi.engine: select <from> <to> (beats dragged across, for Magdalena's ratings)", 1)
     p.connect(roll, 0, out, 0)
@@ -1358,50 +1380,26 @@ def window():
     p.connect(route, 1, taste_view, 0)
     p.connect(taste_view, 0, out, 0)  # pin, unpin, strength from the weight editor
     y = 30 + ROLL_H + TASTE_H
-    for k, word in enumerate(["like", "dislike"]):
-        m = p.msg(word, 20 + k * 60, 820, w=56, pres=(10 + k * 60, y, 56, 24), **BUTTON)
-        p.connect(m, 0, out, 0)
-    labelled(p, "keep", "accept", 140, 760, (130, y, 46, 24), out)
-    labelled(p, "taste report", "taste", 200, 760, (180, y, 72, 24), out, fontsize=10.0)
+    labelled(p, "Window Like", "like", "like", 20, 760, (10, y, 56, 24), out, look=WARM)
+    labelled(p, "Window Dislike", "dislike", "dislike", 80, 760, (70, y, 56, 24), out, look=WARM)
+    labelled(p, "Window Keep", "keep", "accept", 140, 760, (130, y, 46, 24), out, look=WARM)
+    labelled(p, "Taste Report", "taste report", "taste", 200, 760, (180, y, 72, 24), out)
     # Reload seed: compose the seed shown again, after changing her mix,
     # novelty or weights, to hear and see what they do.
-    reload_label = p.msg("reload seed", 260, 760, w=90, pres=(256, y, 90, 24), **BUTTON)
-    reload_t = p.obj("t b", 260, 790, 1, 1, ["bang"], w=35)
-    reload = p.msg("compose", 260, 820, w=60)
-    p.connect(reload_label, 0, reload_t, 0)
-    p.connect(reload_t, 0, reload, 0)
-    p.connect(reload, 0, out, 0)
+    labelled(p, "Reload Seed", "reload seed", "compose", 260, 760, (256, y, 90, 24), out)
     # Releasing every pin, and storing or recalling a whole taste as a file.
     # (The taste pane's views are its own tabs.)
-    release_label = p.msg("release all pins", 430, 760, w=120, pres=(356, y, 120, 24), **BUTTON)
-    release_t = p.obj("t b", 410, 790, 1, 1, ["bang"], w=35)
-    release = p.msg("unpin", 410, 820, w=50)
-    p.connect(release_label, 0, release_t, 0)
-    p.connect(release_t, 0, release, 0)
-    p.connect(release, 0, out, 0)
-    dialog_button(p, "store taste", 580, 760, (486, y, 95, 24), "savedialog", "storetaste", [(out, 0)])
-    dialog_button(p, "recall taste", 720, 760, (587, y, 95, 24), "opendialog", "recalltaste", [(out, 0)])
-    forget = p.msg("forget", 860, 820, w=60, pres=(688, y, 60, 24), **BUTTON)
-    p.connect(forget, 0, out, 0)
+    labelled(p, "Release All Pins", "release all pins", "unpin", 410, 760, (356, y, 120, 24), out)
+    dialog_button(p, "Store Taste", "store taste", 580, 760, (486, y, 95, 24), "savedialog", "storetaste", [(out, 0)])
+    dialog_button(p, "Recall Taste", "recall taste", 720, 760, (587, y, 95, 24), "opendialog", "recalltaste",
+                  [(out, 0)])
+    labelled(p, "Forget", "forget", "forget", 860, 760, (688, y, 60, 24), out)
     # Who Magdalena is (emi.magdalena, a small window of its own).
-    explain = p.msg("explain Magdalena", 1000, 760, w=130, pres=(758, y, 130, 24), **BUTTON)
-    explain_t = p.obj("t b", 1000, 790, 1, 1, ["bang"], w=35)
-    explain_open = p.msg("open", 1000, 820, w=40)
-    explain_pc = p.obj("pcontrol", 1050, 820, 1, 1, w=60)
-    about = p.obj("emi.magdalena", 1000, 855, 1, 1, w=100)
-    p.connect(explain, 0, explain_t, 0)
-    p.connect(explain_t, 0, explain_open, 0)
-    p.connect(explain_open, 0, explain_pc, 0)
-    p.connect(explain_pc, 0, about, 0)
-    p.comment("Drag across the roll to select beats for like, dislike and keep. Hover over anything for "
-              "what it does; the tabs at the pane's top right choose its view.", 940, 900, w=400, h=44,
-              linecount=3, pres=(896, y - 4, 274, 44), fontsize=10.0)
-    # The window's title.
-    lb = p.obj("loadbang", 700, 20, 1, 1, ["bang"])
-    title = p.msg("title Cento: piano roll and Magdalena", 700, 55, w=250)
-    this = p.obj("thispatcher", 700, 90, 1, 2, ["", ""], w=80)
-    p.connect(lb, 0, title, 0)
-    p.connect(title, 0, this, 0)
+    opener(p, "Explain Magdalena", "explain Magdalena", 1000, 760, (758, y, 130, 24), "emi.magdalena")
+    p.comment("Drag across the roll to select beats for like, dislike and keep. The tabs at the pane's top "
+              "right choose its view.", 940, 900, w=400, h=34, linecount=2, pres=(896, y - 2, 274, 30),
+              fontsize=LABEL_SIZE)
+    window_title(p, "Cento: piano roll and Magdalena", 700)
     return p
 
 
@@ -1437,11 +1435,7 @@ def magdalena_window():
         p.comment(text, 20, 60 + k * 70, w=W - 20, h=h, pres=(12, y, W - 24, h), fontsize=size, fontface=face,
                   linecount=max(1, round(h / (size * 1.4))), **extra)
         y += h + 8
-    lb = p.obj("loadbang", 520, 20, 1, 1, ["bang"])
-    title = p.msg("title Cento: about Magdalena", 520, 55, w=190)
-    this = p.obj("thispatcher", 520, 90, 1, 2, ["", ""], w=80)
-    p.connect(lb, 0, title, 0)
-    p.connect(title, 0, this, 0)
+    window_title(p, "Cento: about Magdalena", 520)
     return p
 
 
@@ -1465,20 +1459,12 @@ def corpora_window():
     p.connect(route, 0, view_box, 0)
     p.connect(view_box, 0, out, 0)  # corpuson, corpusonly, corpusremove
     y = 20 + LIST_H
-    dialog_button(p, "add folder", 20, 460, (10, y, 90, 24), "opendialog fold", "corpusadd", [(out, 0)])
-    rescan_label = p.msg("rescan", 160, 460, w=60, pres=(106, y, 60, 24), **BUTTON)
-    rescan_t = p.obj("t b", 160, 490, 1, 1, ["bang"], w=35)
-    rescan = p.msg("corpusrescan", 160, 520, w=90)
-    p.connect(rescan_label, 0, rescan_t, 0)
-    p.connect(rescan_t, 0, rescan, 0)
-    p.connect(rescan, 0, out, 0)
-    p.comment("Add a folder of chorales (MIDI files), then switch folders on or off. Hover over anything for "
-              "what it does.", 300, 460, w=420, h=30, linecount=2, pres=(176, y - 2, W - 166, 30), fontsize=10.0)
-    lb = p.obj("loadbang", 500, 20, 1, 1, ["bang"])
-    title = p.msg("title Cento: corpora", 500, 55, w=150)
-    this = p.obj("thispatcher", 500, 90, 1, 2, ["", ""], w=80)
-    p.connect(lb, 0, title, 0)
-    p.connect(title, 0, this, 0)
+    dialog_button(p, "Add Folder", "add folder", 20, 460, (10, y, 90, 24), "opendialog fold", "corpusadd",
+                  [(out, 0)])
+    labelled(p, "Rescan", "rescan", "corpusrescan", 160, 460, (106, y, 60, 24), out)
+    p.comment("Add a folder of chorales (MIDI files), then switch folders on or off.", 300, 460, w=420, h=20,
+              pres=(176, y + 2, W - 166, 20), fontsize=LABEL_SIZE)
+    window_title(p, "Cento: corpora", 500)
     return p
 
 
@@ -1490,16 +1476,24 @@ HOST_MAX_W = 232
 HOST_LIVE_W = 170
 
 
-def top(adapter, title, host_w, h=169, abstraction="emi.engine"):
-    """[host adapter panel | shared panel | Magdalena | piano roll], all wired to one engine."""
+def top(adapter, host_name, title, host_w, h=169, abstraction="emi.engine"):
+    """[host adapter panel | shared panel | Magdalena | piano roll], all wired to one engine, under a
+    row naming each section (centred above it)."""
     panel_x = host_w + 8
     emily_x = panel_x + PANEL_W + 8
     view_x = emily_x + EMILY_W + 8
-    p = Patch(rect=(50, 50, max(view_x + VIEW_W + 60, 900), 520), presentation=True)
-    bp = p.bpatcher(adapter, 20, 20, host_w, h, 1, 1, pres=(0, 0, host_w, h))
-    pn = p.bpatcher("emi.panel.maxpat", panel_x + 20, 20, PANEL_W, h, 1, 1, pres=(panel_x, 0, PANEL_W, h))
-    em = p.bpatcher("emily.panel.maxpat", emily_x + 20, 20, EMILY_W, h, 1, 1, pres=(emily_x, 0, EMILY_W, h))
-    vw = p.bpatcher("emi.view.maxpat", view_x + 20, 20, VIEW_W, h, 1, 1, pres=(view_x, 0, VIEW_W, h))
+    p = Patch(rect=(50, 50, max(view_x + VIEW_W + 60, 900), 540), presentation=True)
+    # The row of section names along the top.
+    solid(p, HEADER_BG, (0, 0, view_x + VIEW_W, HEADER_H))
+    for name, x, w in [(host_name, 0, host_w), ("COMPOSE", panel_x, PANEL_W), ("MAGDALENA", emily_x, EMILY_W),
+                       ("PIANO ROLL", view_x, VIEW_W)]:
+        p.comment(name, 20 + x, 2, w=w, h=18, pres=(x, 1, w, 18), fontsize=11.0, fontface=1, textcolor=HEADING,
+                  textjustification=1)
+    y, ph = 20 + HEADER_H, h - HEADER_H
+    bp = p.bpatcher(adapter, 20, y, host_w, ph, 1, 1, pres=(0, HEADER_H, host_w, ph))
+    pn = p.bpatcher("emi.panel.maxpat", panel_x + 20, y, PANEL_W, ph, 1, 1, pres=(panel_x, HEADER_H, PANEL_W, ph))
+    em = p.bpatcher("emily.panel.maxpat", emily_x + 20, y, EMILY_W, ph, 1, 1, pres=(emily_x, HEADER_H, EMILY_W, ph))
+    vw = p.bpatcher("emi.view.maxpat", view_x + 20, y, VIEW_W, ph, 1, 1, pres=(view_x, HEADER_H, VIEW_W, ph))
     eng = p.obj(abstraction, 20, h + 60, 1, 1, w=90)
     rv = p.obj("route view", view_x + 20, h + 60, 2, 2, w=75)
     # The pop-up window: opened by the Magdalena panel's window button.
@@ -1627,13 +1621,15 @@ if __name__ == "__main__":
         {"toolbarvisible": 0, "statusbarvisible": 0}))
     write("patchers/parts/emi.instruments.maxpat", annotate("emi.instruments", instruments_window()).to_json(
         {"toolbarvisible": 0, "statusbarvisible": 0}))
+    write("patchers/parts/emi.extras.maxpat", annotate("emi.extras", extras_window()).to_json(
+        {"toolbarvisible": 0, "statusbarvisible": 0}))
     write("patchers/parts/emi.magdalena.maxpat", magdalena_window().to_json({"toolbarvisible": 0, "statusbarvisible": 0}))
     write("patchers/cento.maxpat", top(
-        "emi.host.max.maxpat",
+        "emi.host.max.maxpat", "PLAY",
         "Max version: the Max adapter and the shared panel above, wired both ways to the shared engine.",
         HOST_MAX_W).to_json())
     write("patchers/parts/emi.brain.maxpat", top(
-        "emi.host.live.maxpat",
+        "emi.host.live.maxpat", "CLIPS AND VOICES",
         "Live version (device content): the Live adapter and the shared panel above, wired both ways "
         "to the shared engine.", HOST_LIVE_W).to_json())
     write("patchers/parts/emi.voice.maxpat", annotate("emi.voice", voice()).to_json())

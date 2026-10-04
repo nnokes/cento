@@ -1093,11 +1093,35 @@ test("view: a signature block is a band behind the notes, with its name (shorten
   view.send("paint");
   assert.deepEqual(texts(g), ["soprano 3-2-1", "B 4-5-1"]);
   const rectangles = boxes(g);
-  const [, x, , w, h] = rectangles[1];
-  assert.ok(Math.abs(x - 45) < 1 && Math.abs(w - 135) < 1 && h === 169, "the first band, over the whole roll");
+  const [, x, y, w, h] = rectangles[1];
+  assert.ok(Math.abs(x - 45) < 1 && Math.abs(w - 135) < 1 && y + h === 169, "the first band, down the whole roll");
+  assert.ok(y > 0 && y < 30, "below the marks along the top");
   const noteAt = g.calls.findIndex((c) => c[0] === "rectangle" && Math.abs(c[1]) < 1 && c[3] < 50);
   const bandAt = g.calls.findIndex((c) => c === rectangles[1]);
   assert.ok(bandAt < noteAt, "bands are drawn first, behind the notes");
+});
+
+test("view: bar numbers, cadence triangles and Magdalena's dots each have a row of their own, above the notes", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics;
+  view.send("clear", 8 * Q, 60, 72, 4 * Q);
+  view.send("note", 4 * Q, Q, 72, 0); // the highest note, in bar 2
+  view.send("cadence", 4 * Q); // on the barline: where bar 2's number is
+  view.send("variant", 4 * Q, "passing");
+  view.send("done");
+  g.calls.length = 0;
+  view.send("paint");
+  const k = g.calls.findIndex(([name, text]) => name === "show_text" && text === "2");
+  const [, , numberBaseline] = g.calls[k - 1]; // its move_to
+  const start = g.calls.findIndex(([name, x]) => name === "move_to" && x === 176); // the triangle: 176..184
+  const triangle = g.calls.slice(start, start + 3);
+  const triangleTop = Math.min(...triangle.map(([, , y]) => y));
+  const triangleBottom = Math.max(...triangle.map(([, , y]) => y));
+  const [, , dotTop, , dotHeight] = g.calls.find(([name]) => name === "ellipse");
+  const [, , noteTop] = g.calls.find(([name, x, , w, h]) => name === "rectangle" && Math.abs(x - 180) < 1 && h > 1 && w < 100);
+  assert.ok(numberBaseline <= triangleTop, `bar number (${numberBaseline}) above the triangle (${triangleTop})`);
+  assert.ok(triangleBottom <= dotTop, `triangle (${triangleBottom}) above the dot (${dotTop})`);
+  assert.ok(dotTop + dotHeight <= noteTop, `dot (${dotTop + dotHeight}) above the highest note (${noteTop})`);
 });
 
 test("view: parallel fifths and octaves are carets above the lane, red when new", () => {
