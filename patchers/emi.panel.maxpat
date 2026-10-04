@@ -430,7 +430,7 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "chorales\u2026",
+					"text": "corpora",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -458,7 +458,7 @@
 					"patching_rect": [
 						20.0,
 						100.0,
-						79.0,
+						65.0,
 						22.0
 					],
 					"presentation": 1,
@@ -469,9 +469,9 @@
 						20.0
 					],
 					"id": "obj-16",
-					"hint": "Open the chorales window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; they are loaded by themselves next time.",
-					"annotation": "Open the chorales window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; they are loaded by themselves next time.",
-					"annotation_name": "chorales"
+					"hint": "Open the corpus window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; they are loaded by themselves next time.",
+					"annotation": "Open the corpus window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; they are loaded by themselves next time.",
+					"annotation_name": "corpora"
 				}
 			},
 			{
@@ -493,7 +493,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "chorales: open the chorales window (folders of chorales, each on or off)",
+					"text": "corpora: open the corpus window (folders of chorales, each on or off)",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,

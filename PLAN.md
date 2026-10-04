@@ -1541,7 +1541,7 @@ one strong blue button), then which chorales and how long, then streams. The
 less-used tools (load a chorale, in C or its own key; the test phrase; stop
 and clear) are in a **tools** menu, and the Max version's plug-in instruments
 in a window of their own (**set up…**). Plain names replace shorthand
-(chorales…, chorale form, signatures, transpose, listening test…, keep,
+(chorale form, signatures, transpose, listening test…, keep,
 chance, taste report, write clips, test clips); Live's parameters keep their
 names, so mappings and automation in saved sets still work. Grey headings
 (PLAY, COMPOSE, EMILY, CLIPS AND VOICES), one look per kind of control, a hint

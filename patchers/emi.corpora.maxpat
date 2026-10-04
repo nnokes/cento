@@ -133,7 +133,7 @@
 					"id": "obj-5",
 					"hint": "Every folder of chorales on the list: switch one on or off with its box, use it alone (only), or take it off the list (remove). Composing uses every folder that is on, as one corpus, and the seed shown is composed again with it. A chorale in two folders counts once; the corpus has one meter (the first folder's). Hover over a name for its folder's full path.",
 					"annotation": "Every folder of chorales on the list: switch one on or off with its box, use it alone (only), or take it off the list (remove). Composing uses every folder that is on, as one corpus, and the seed shown is composed again with it. A chorale in two folders counts once; the corpus has one meter (the first folder's). Hover over a name for its folder's full path.",
-					"annotation_name": "Chorales"
+					"annotation_name": "Corpora"
 				}
 			},
 			{
@@ -385,7 +385,7 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "title Cento: chorales",
+					"text": "title Cento: corpora",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [

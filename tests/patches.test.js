@@ -336,9 +336,9 @@ test("emi.corpora: the corpus window (M11): its list talks to the engine; add fo
   const [[message]] = p.from(t.id);
   assert.deepEqual([message.maxclass, message.text], ["message", "corpusrescan"]);
   assert.deepEqual(p.from(message.id).map(([b]) => b.id), [outlet.id]);
-  // The panel's chorales button opens it.
+  // The panel's corpora button opens it.
   const panel = patchFile("emi.panel.maxpat");
-  const [button] = panel.find("chorales\u2026");
+  const [button] = panel.find("corpora");
   assert.deepEqual(panel.from(button.id).map(([b]) => b.text), ["s ---emi.corpora"]);
   assert.deepEqual(panel.find("load corpus"), [], "the window replaces load corpus");
 });
@@ -985,7 +985,7 @@ test("plain names on the panels; Live's parameters keep theirs (mappings and aut
   const panel = patchFile("emi.panel.maxpat");
   const label = (p, varname) => [...p.boxes.values()].find((b) => b.varname === varname).text;
   assert.deepEqual(["Form", "Signatures", "Stream"].map((v) => label(panel, v)), ["chorale form", "signatures", "stream"]);
-  assert.ok(panel.find("chorales…")[0].presentation_rect);
+  assert.ok(panel.find("corpora")[0].presentation_rect);
   assert.ok(panel.find("listening test…")[0].presentation_rect);
   const emily = patchFile("emily.panel.maxpat");
   assert.equal(label(emily, "Accept"), "keep");

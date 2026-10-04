@@ -214,7 +214,7 @@ test("core: 'clear' empties the queue", () => {
 // ---------------------------------------------------------------- core: corpus and compose
 
 test("core: 'compose' needs a corpus", () => {
-  assert.deepEqual(lastStatus(loadBundle("emi.core").send("compose", 1)), ["error", "no", "chorales", "yet:", "click", "chorales", "and", "switch", "a", "folder", "on"]);
+  assert.deepEqual(lastStatus(loadBundle("emi.core").send("compose", 1)), ["error", "no", "corpus", "yet:", "click", "corpora", "and", "switch", "a", "folder", "on"]);
 });
 
 test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece in a chorale's form", () => {
@@ -649,7 +649,7 @@ test("corpora: folders join the corpus window, on or off; each change builds on 
   out = core.send("corpusadd", abc);
   assert.deepEqual(select(out, "corpusview")[0], ["clear", 1]);
   assert.equal(corpusSummary(out), "Building the corpus...");
-  assert.match(lastStatus(out).join(" "), /^status chorales changed: building the corpus\.\.\.$/);
+  assert.match(lastStatus(out).join(" "), /^status corpora changed: building the corpus\.\.\.$/);
   assert.deepEqual(out.filter((o) => o[1] === "later"), [[0, "later", "corpusbuild", 1]]);
   out = settle(core, out);
   assert.ok(select(out, "status").some((words) => words.join(" ").startsWith("corpus 3 chorales (major), ")), "built");
@@ -675,9 +675,9 @@ test("corpora: folders join the corpus window, on or off; each change builds on 
 
   // All off: no corpus, said plainly.
   out = settle(core, core.send("corpuson", 1, 0));
-  assert.ok(select(out, "status").some((words) => words.join(" ") === "no chorales: switch a folder on in the chorales window"));
+  assert.ok(select(out, "status").some((words) => words.join(" ") === "no corpus: switch a folder on in corpora"));
   assert.equal(corpusSummary(out), "No corpus: switch a folder on.");
-  assert.match(lastStatus(core.send("compose")).join(" "), /^error no chorales yet: click chorales and switch a folder on$/);
+  assert.match(lastStatus(core.send("compose")).join(" "), /^error no corpus yet: click corpora and switch a folder on$/);
 
   // The list is remembered, each folder with what it holds.
   core.send("corpuson", 1, 1);
@@ -706,7 +706,7 @@ test("corpora: quick changes build once; a chorale in two folders counts once; o
   ]);
   // Switching off a folder that gives nothing changes nothing: no build, no compose.
   const same = settle(core, core.send("corpuson", 3, 0));
-  assert.deepEqual(select(same, "status").map((w) => w.join(" ")), ["chorales changed: building the corpus...", "corpus unchanged: 4 chorales"]);
+  assert.deepEqual(select(same, "status").map((w) => w.join(" ")), ["corpora changed: building the corpus...", "corpus unchanged: 4 chorales"]);
   core.send("corpuson", 3, 1);
   // A 3/4 corpus: that folder only.
   const only = settle(core, core.send("corpusonly", 3));
@@ -1236,7 +1236,7 @@ test("emily: like and dislike learn from the piece or the beats selected, and th
   const core = engineIn(folder);
   const started = core.send("startup", "all");
   assert.deepEqual(select(started, "emily"), [["no", "ratings", "yet"]], "the Emily panel shows her taste");
-  assert.deepEqual(lastStatus(core.send("like")), ["error", "no", "chorales", "yet:", "click", "chorales", "and", "switch", "a", "folder", "on"]);
+  assert.deepEqual(lastStatus(core.send("like")), ["error", "no", "corpus", "yet:", "click", "corpora", "and", "switch", "a", "folder", "on"]);
   core.send("corpus", writeCorpus());
   core.send("beats", 8);
   const composed = core.send("compose", 1);
@@ -1721,7 +1721,7 @@ test("emily: accept keeps a piece as her own; mix uses it; mix 0 is Bach alone, 
   const folder = tempDir();
   const core = engineIn(folder);
   core.send("startup", "all");
-  assert.match(lastStatus(core.send("accept")).join(" "), /^error no chorales yet: click chorales and switch a folder on$/);
+  assert.match(lastStatus(core.send("accept")).join(" "), /^error no corpus yet: click corpora and switch a folder on$/);
   core.send("corpus", writeCorpus());
   core.send("beats", 8);
   const before = lastStatus(core.send("compose", 2)).join(" ");

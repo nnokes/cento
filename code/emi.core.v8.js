@@ -265,7 +265,7 @@ function changeCorpora(change) {
     change();
     save();
     showCorpora(true);
-    outlet(0, "status", "chorales", "changed:", "building", "the", "corpus...");
+    outlet(0, "status", "corpora", "changed:", "building", "the", "corpus...");
     outlet(0, "later", "corpusbuild", ++corpusBuilds);
   });
 }
@@ -427,7 +427,7 @@ function exportmidi(path) {
 
 function abtest(path) {
   attempt(() => {
-    if (!db) throw new Error("no chorales yet: click chorales and switch a folder on");
+    if (!db) throw new Error("no corpus yet: click corpora and switch a folder on");
     const target = /\.html?$/i.test(String(path)) ? String(path) : path + ".html";
     const test = abtests.build(db, { seed: currentSeed, signatures: useSignatures });
     if (!test.pairs.length) throw new Error("no chorale's form could be filled for the test; try more chorales");
@@ -561,7 +561,7 @@ function novelty(value) {
 
 function accept() {
   attempt(() => {
-    if (!db) throw new Error("no chorales yet: click chorales and switch a folder on");
+    if (!db) throw new Error("no corpus yet: click corpora and switch a folder on");
     if (!current || !current.score.provenance) throw new Error("Emily keeps composed music: compose a piece first");
     syncTaste();
     syncStore();
@@ -742,7 +742,7 @@ compareStep.local = 1;
 // Rates what is being heard (see like): learns, saves, and says what Emily learned.
 function rateNow(r) {
   attempt(() => {
-    if (!db) throw new Error("no chorales yet: click chorales and switch a folder on");
+    if (!db) throw new Error("no corpus yet: click corpora and switch a folder on");
     if (!current || !current.score.provenance) throw new Error("Emily learns from composed music: compose a piece first");
     const target = ratingTarget();
     syncTaste();
@@ -872,7 +872,7 @@ function buildCorpus() {
     herDb = null;
     db = null;
     builtFor = null;
-    outlet(0, "status", "no", "chorales:", "switch", "a", "folder", "on", "in", "the", "chorales", "window");
+    outlet(0, "status", "no", "corpus:", "switch", "a", "folder", "on", "in", "corpora");
     return false;
   }
   if (bachDb && bachWorks && bachWorks.length === result.works.length && bachWorks.every((w, i) => w === result.works[i])) {
@@ -1260,7 +1260,7 @@ loadCorpus.local = 1;
 // mode, starts a stream instead.
 function composeNow(atStartup) {
   attempt(() => {
-    if (!db) throw new Error("no chorales yet: click chorales and switch a folder on");
+    if (!db) throw new Error("no corpus yet: click corpora and switch a folder on");
     ensureCorpus();
     if (streaming) {
       startStream();

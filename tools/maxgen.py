@@ -212,8 +212,8 @@ HELP = {
         "next": ("next", "Add 1 to the seed and compose: the quickest way to hear another piece."),
         "export midi": ("export midi", "Save the current piece as a MIDI file. For a composed piece or "
                         "stream, a .json of where every beat came from is saved next to it."),
-        "chorales\u2026": ("chorales", "Open the chorales window: the folders of chorales (MIDI files) to "
-                           "compose from, each switched on or off. Composing uses every folder that is on, as "
+        "corpora": ("corpora", "Open the corpus window: the folders of chorales (MIDI files) to "
+                    "compose from, each switched on or off. Composing uses every folder that is on, as "
                            "one corpus; they are loaded by themselves next time."),
         "Beats": ("beats", "The shortest piece to compose, in beats (4 to 256). With chorale form on, only "
                   "chorales at least this long lend their form."),
@@ -271,7 +271,7 @@ HELP = {
                    "snapshot, so you can roll back to it."),
     },
     "emi.corpora": {
-        "Corpora": ("Chorales", "Every folder of chorales on the list: switch one on or off with its box, "
+        "Corpora": ("Corpora", "Every folder of chorales on the list: switch one on or off with its box, "
                     "use it alone (only), or take it off the list (remove). Composing uses every folder that "
                     "is on, as one corpus, and the seed shown is composed again with it. A chorale in two "
                     "folders counts once; the corpus has one meter (the first folder's). Hover over a name for "
@@ -326,7 +326,7 @@ def controls_doc():
         ("emi.view", "Piano roll (both versions)"),
         ("emi.instruments", "The plug-in instruments window (Max version: set up, in the left panel)"),
         ("emi.window", "The pop-up window (both versions: Emily panel, window)"),
-        ("emi.corpora", "The chorales window (both versions: the panel's chorales button)"),
+        ("emi.corpora", "The corpus window (both versions: the panel's corpora button)"),
         ("emi.voice", "The cento.voice device (Live)"),
     ]
     out = ["# Controls", "",
@@ -364,7 +364,7 @@ def controls_doc():
             "| **keep a snapshot** | Keep her whole taste as it is now, to roll back to later. |",
             "| **roll back** | Make this snapshot's taste hers again, exactly: weights, pins, sliders, and "
             "which of her works are in use. The taste she has now is kept as a snapshot first. |", "",
-            "## In the chorales window's list", "",
+            "## In the corpus window's list", "",
             "Drawn by `code/emi.corpora.v8ui.js`, with its help drawn the same way.", "",
             "| Control | What it does |", "| --- | --- |",
             "| **a folder's box** | Switch this folder on or off. Composing uses every folder that is on, as one "
@@ -804,13 +804,13 @@ def panel():
               "next: seed + 1", 660, 370, w=330, h=34, linecount=2)
     dialog_button(p, "export midi", 1000, 300, (218, 21, 76, 20), "savedialog", "exportmidi", targets)
 
-    # Row 2: chorales (the corpus window, emi.corpora in the top patch:
+    # Row 2: corpora (the corpus window, emi.corpora in the top patch:
     # folders of chorales, each on or off), beats, chorale form. [send]
     # with "---": unique to each device in Live.
-    chorales = p.msg("chorales\u2026", 20, 100, pres=(6, 47, 76, 20), **BUTTON)
+    corpora_button = p.msg("corpora", 20, 100, pres=(6, 47, 76, 20), **BUTTON)
     to_corpora = p.obj("s ---emi.corpora", 20, 135, 1, 0, [], w=110)
-    p.connect(chorales, 0, to_corpora, 0)
-    p.comment("chorales: open the chorales window (folders of chorales, each on or off)", 150, 135, w=230,
+    p.connect(corpora_button, 0, to_corpora, 0)
+    p.comment("corpora: open the corpus window (folders of chorales, each on or off)", 150, 135, w=230,
               h=34, linecount=2)
     p.comment("beats", 540, 70, w=40, pres=(86, 48, 34, 20), fontsize=10.0)
     beats = live_numbox(p, "Beats", 540, 100, (120, 47, 46, 20), 4, 256, 32)
@@ -1396,7 +1396,7 @@ def corpora_window():
     p.comment("Add a folder of chorales (MIDI files), then switch folders on or off. Hover over anything for "
               "what it does.", 300, 460, w=420, h=30, linecount=2, pres=(176, y - 2, W - 166, 30), fontsize=10.0)
     lb = p.obj("loadbang", 500, 20, 1, 1, ["bang"])
-    title = p.msg("title Cento: chorales", 500, 55, w=150)
+    title = p.msg("title Cento: corpora", 500, 55, w=150)
     this = p.obj("thispatcher", 500, 90, 1, 2, ["", ""], w=80)
     p.connect(lb, 0, title, 0)
     p.connect(title, 0, this, 0)

@@ -33,7 +33,7 @@ This page is written from the same table as the hover text (the patch generator)
 | **seed** | The random seed: the same seed, chorales, settings and taste always give the same piece. Changing it composes at once (once chorales are loaded). |
 | **next** | Add 1 to the seed and compose: the quickest way to hear another piece. |
 | **export midi** | Save the current piece as a MIDI file. For a composed piece or stream, a .json of where every beat came from is saved next to it. |
-| **chorales** | Open the chorales window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; they are loaded by themselves next time. |
+| **corpora** | Open the corpus window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; they are loaded by themselves next time. |
 | **beats** | The shortest piece to compose, in beats (4 to 256). With chorale form on, only chorales at least this long lend their form. |
 | **chorale form** | On: each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan. |
 | **stream** | On: compose starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece. |
@@ -91,11 +91,11 @@ This page is written from the same table as the hover text (the patch generator)
 | **recall taste** | Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot. |
 | **forget** | Start a new taste from nothing. The old one is kept as a backup and as a snapshot, so you can roll back to it. |
 
-## The chorales window (both versions: the panel's chorales button)
+## The corpus window (both versions: the panel's corpora button)
 
 | Control | What it does |
 | --- | --- |
-| **Chorales** | Every folder of chorales on the list: switch one on or off with its box, use it alone (only), or take it off the list (remove). Composing uses every folder that is on, as one corpus, and the seed shown is composed again with it. A chorale in two folders counts once; the corpus has one meter (the first folder's). Hover over a name for its folder's full path. |
+| **Corpora** | Every folder of chorales on the list: switch one on or off with its box, use it alone (only), or take it off the list (remove). Composing uses every folder that is on, as one corpus, and the seed shown is composed again with it. A chorale in two folders counts once; the corpus has one meter (the first folder's). Hover over a name for its folder's full path. |
 | **add folder** | Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/Cento/corpus-both). It joins the list, switched on. |
 | **rescan** | Read every folder again, after adding or removing chorales in one. (Folders are read once, when first switched on.) |
 
@@ -122,7 +122,7 @@ These are drawn by the window's taste pane (`code/emi.taste.v8ui.js`), so their 
 | **keep a snapshot** | Keep her whole taste as it is now, to roll back to later. |
 | **roll back** | Make this snapshot's taste hers again, exactly: weights, pins, sliders, and which of her works are in use. The taste she has now is kept as a snapshot first. |
 
-## In the chorales window's list
+## In the corpus window's list
 
 Drawn by `code/emi.corpora.v8ui.js`, with its help drawn the same way.
 
