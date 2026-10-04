@@ -66,9 +66,8 @@ one. In Live the device is now about 880 px wide.
 
 1. [ ] **Max: the look.** Open `patchers/cento.maxpat`. Four parts, each on
        its own colour: **PLAY** (green), **COMPOSE** (blue), **MAGDALENA**
-       (brown), then the piano roll. Every label reads easily.
-       Nothing overlaps or is cut off; every label is readable. (If not, a
-       screenshot helps most.)
+       (brown), then the piano roll. Nothing overlaps or is cut off, and every
+       label reads easily. (If not, a screenshot helps most.)
 2. [ ] **compose first.** Click **compose**, **next**, change **seed**: as
        before.
 3. [ ] **The tools menu.** Choose *play the test phrase*: the test phrase
