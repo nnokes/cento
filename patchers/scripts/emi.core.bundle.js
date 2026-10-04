@@ -3103,8 +3103,10 @@ exports.setMeter = setMeter;
 // the file is git-ignored). Both products use the same file, so the corpora
 // carry over between them.
 //
-//   folderOf(patcher)  the folder of the nearest saved patcher (the [v8]'s own
-//                      patcher, then its parents), or null
+//   folderOf(patcher)  the patchers/ folder: the folder of the nearest saved
+//                      patcher (the [v8]'s own patcher, then its parents), or
+//                      its parent if that's patchers/parts/ (where emi.engine
+//                      and the other parts live since the subfolders), or null
 //   pathIn(folder)     the settings file in that folder
 //   read(path)         the settings, or {} if there are none or they're unreadable
 //   write(path, settings)
@@ -3138,7 +3140,7 @@ function folderOf(patcher) {
   for (let p = patcher; p; p = p.parentpatcher) {
     const path = p.filepath ? String(p.filepath) : "";
     const cut = path.lastIndexOf("/");
-    if (cut > 0) return path.slice(0, cut);
+    if (cut > 0) return path.slice(0, cut).replace(/\/parts$/, "");
   }
   return null;
 }
@@ -5522,7 +5524,7 @@ __emi_require.local = 1;
 // ---- code/emi.core.v8.js
 // [v8] wrapper: the engine's core script, inside emi.engine. Glue only: the
 // logic is in code/lib (the engine) and code/max (Max-only file and Live
-// access). Patches load patchers/emi.core.bundle.js.
+// access). Patches load patchers/scripts/emi.core.bundle.js.
 //
 // It holds the *current score* (a loaded chorale, a composed piece, a stream
 // of phrases or the test phrase), queues it for the grid player, draws it in

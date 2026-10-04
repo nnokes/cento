@@ -71,7 +71,7 @@ __emi_require.local = 1;
 // ---- code/emi.corpora.v8ui.js
 // [v8ui] The corpus window's list (M11): every folder of chorales, switched
 // on or off. Composing uses every folder that is on, as one corpus. Patches
-// load patchers/emi.corpora.bundle.js.
+// load patchers/scripts/emi.corpora.bundle.js.
 //
 // A row per folder: a box to switch it on or off ("corpuson <n> 0|1" to the
 // engine), its name, what it holds (chorales, meter, modes), whether it is

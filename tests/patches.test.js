@@ -33,10 +33,14 @@ function* patchers(patcher, where) {
 }
 
 // Everything Max loads lives in patchers/: patches, devices and bundles.
-const files = fs
-  .readdirSync(path.join(ROOT, "patchers"))
-  .filter((f) => f.endsWith(".maxpat") || f.endsWith(".amxd"))
-  .map((f) => path.join("patchers", f));
+// What you open (cento.*) is in patchers/; the parts it's made of in
+// patchers/parts/, and the scripts in patchers/scripts/ (Max finds them all
+// through its search path: patchers/, with Subfolders ticked).
+const FOLDERS = ["patchers", "patchers/parts", "patchers/scripts"];
+const files = FOLDERS.flatMap((dir) =>
+  fs.readdirSync(path.join(ROOT, dir)).filter((f) => f.endsWith(".maxpat") || f.endsWith(".amxd")).map((f) => path.join(dir, f)));
+// A file by name, wherever it is in patchers/.
+const locate = (name) => FOLDERS.map((dir) => path.join(ROOT, dir, name)).find((f) => fs.existsSync(f)) || path.join(ROOT, "patchers", name);
 
 const firstWord = (box) => (box.text || "").split(/\s+/)[0];
 
@@ -73,7 +77,7 @@ for (const file of files) {
         if (box.maxclass !== "v8ui") continue;
         const script = (box.textfile || {}).filename;
         if (!/\.bundle\.js$/.test(script || "") || box.textfile.embed !== 0) problems.push(`${where}: [v8ui] needs textfile {filename: "<name>.bundle.js", embed: 0}`);
-        else if (!fs.existsSync(path.join(ROOT, "patchers", script))) problems.push(`${where}: patchers/${script} is missing`);
+        else if (!fs.existsSync(path.join(ROOT, "patchers", "scripts", script))) problems.push(`${where}: patchers/scripts/${script} is missing`);
       }
 
       // Every [v8] loads a bundle that exists (never code/ directly). Max 9
@@ -83,7 +87,7 @@ for (const file of files) {
         if (firstWord(box) !== "v8") continue;
         const script = box.text.split(/\s+/)[1];
         if (!/\.bundle\.js$/.test(script || "")) problems.push(`${where}: ${label(box)} should load a .bundle.js`);
-        else if (!fs.existsSync(path.join(ROOT, "patchers", script))) problems.push(`${where}: patchers/${script} is missing`);
+        else if (!fs.existsSync(path.join(ROOT, "patchers", "scripts", script))) problems.push(`${where}: patchers/scripts/${script} is missing`);
         const textfile = box.textfile || {};
         if (textfile.filename !== script || textfile.embed !== 0) {
           problems.push(`${where}: ${label(box)} needs textfile {filename: "${script}", embed: 0}`);
@@ -115,7 +119,7 @@ test("every [v8] wrapper source declares one inlet and one outlet", () => {
 // voice devices only while its Play toggle is on.
 
 function patchFile(name) {
-  const patcher = readPatcher(path.join(ROOT, "patchers", name));
+  const patcher = readPatcher(locate(name));
   const boxes = new Map(patcher.boxes.map(({ box }) => [box.id, box]));
   const find = (text) => [...boxes.values()].filter((b) => (b.text || b.maxclass) === text);
   const into = (id, inlet) =>
@@ -392,7 +396,7 @@ test("top patches: host panel, shared panel, Emily's panel and piano roll, all w
     }
   }
   // The device is exactly as wide as its four panels.
-  const device = readPatcher(path.join(ROOT, "patchers", "cento.brain.amxd"));
+  const device = readPatcher(locate("cento.brain.amxd"));
   const brain = patchFile("emi.brain.maxpat");
   const right = Math.max(...[...brain.boxes.values()].filter((b) => b.presentation_rect).map((b) => b.presentation_rect[0] + b.presentation_rect[2]));
   assert.equal(device.devicewidth, right);
@@ -477,7 +481,7 @@ function maxExpr(text, args) {
 
 // The [p grid-player] subpatcher inside emi.engine, with the same helpers.
 function playerPatch() {
-  const engine = readPatcher(path.join(ROOT, "patchers", "emi.engine.maxpat"));
+  const engine = readPatcher(locate("emi.engine.maxpat"));
   const player = engine.boxes.map(({ box }) => box).find((b) => b.text === "p grid-player").patcher;
   const boxes = new Map(player.boxes.map(({ box }) => [box.id, box]));
   const find = (text) => [...boxes.values()].filter((b) => (b.text || b.maxclass) === text);
@@ -494,7 +498,7 @@ function playerPatch() {
 // records the steps read from the queue, the playhead sent and the note-offs.
 function simulatePlayer() {
   const { boxes } = playerPatch();
-  const player = readPatcher(path.join(ROOT, "patchers", "emi.engine.maxpat")).boxes.map(({ box }) => box).find((b) => b.text === "p grid-player").patcher;
+  const player = readPatcher(locate("emi.engine.maxpat")).boxes.map(({ box }) => box).find((b) => b.text === "p grid-player").patcher;
   const wires = new Map();
   for (const { patchline: l } of player.lines) {
     const key = `${l.source[0]}:${l.source[1]}`;
@@ -1001,7 +1005,7 @@ test("the panels' piano roll is narrower (260 px): the pop-up window has the lar
   const view = patchFile("emi.view.maxpat");
   const roll = [...view.boxes.values()].find((b) => b.varname === "Piano roll");
   assert.equal(roll.presentation_rect[2], 260);
-  const device = readPatcher(path.join(ROOT, "patchers", "cento.brain.amxd"));
+  const device = readPatcher(locate("cento.brain.amxd"));
   assert.equal(device.devicewidth, 170 + 8 + 300 + 8 + 130 + 8 + 260);
 });
 
@@ -1042,7 +1046,7 @@ test("Magdalena: her panel says what she is (the user's taste); the pop-up windo
 test("sections: each part of the strip sits on a solid colour of its own, with light text on it", () => {
   const colours = new Map();
   for (const [file, width] of [["emi.host.max.maxpat", 232], ["emi.host.live.maxpat", 170], ["emi.panel.maxpat", 300], ["emily.panel.maxpat", 130]]) {
-    const p = readPatcher(path.join(ROOT, "patchers", file));
+    const p = readPatcher(locate(file));
     const back = p.boxes[0].box;
     assert.equal(back.maxclass, "panel", `${file}: the first box (the back) is a [panel]`);
     assert.deepEqual(back.presentation_rect, [0, 0, width, 169], file);
@@ -1056,4 +1060,10 @@ test("sections: each part of the strip sits on a solid colour of its own, with l
   }
   assert.equal(colours.get("emi.host.max.maxpat"), colours.get("emi.host.live.maxpat"), "the left panel: the same colour in both versions");
   assert.equal(new Set([colours.get("emi.host.max.maxpat"), colours.get("emi.panel.maxpat"), colours.get("emily.panel.maxpat")]).size, 3, "three colours for three jobs");
+});
+
+test("patchers/: only what you open on top; the parts and the scripts in their own folders", () => {
+  assert.deepEqual(fs.readdirSync(path.join(ROOT, "patchers")).filter((f) => !f.startsWith(".")).sort(), ["cento.brain.amxd", "cento.maxpat", "cento.voice.amxd", "parts", "scripts"]);
+  assert.ok(fs.readdirSync(path.join(ROOT, "patchers", "parts")).every((f) => f.endsWith(".maxpat")));
+  assert.ok(fs.readdirSync(path.join(ROOT, "patchers", "scripts")).every((f) => f.endsWith(".bundle.js")));
 });

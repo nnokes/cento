@@ -1616,28 +1616,28 @@ def amxd(bpatcher_name, width, filename, height=169):
 
 
 if __name__ == "__main__":
-    write("patchers/emi.engine.maxpat", engine().to_json())
-    write("patchers/emi.host.max.maxpat", annotate("emi.host.max", host_max()).to_json())
-    write("patchers/emi.host.live.maxpat", annotate("emi.host.live", host_live()).to_json())
-    write("patchers/emi.panel.maxpat", annotate("emi.panel", panel()).to_json())
-    write("patchers/emily.panel.maxpat", annotate("emily.panel", emily_panel()).to_json())
-    write("patchers/emi.window.maxpat", annotate("emi.window", window()).to_json(
+    write("patchers/parts/emi.engine.maxpat", engine().to_json())
+    write("patchers/parts/emi.host.max.maxpat", annotate("emi.host.max", host_max()).to_json())
+    write("patchers/parts/emi.host.live.maxpat", annotate("emi.host.live", host_live()).to_json())
+    write("patchers/parts/emi.panel.maxpat", annotate("emi.panel", panel()).to_json())
+    write("patchers/parts/emily.panel.maxpat", annotate("emily.panel", emily_panel()).to_json())
+    write("patchers/parts/emi.window.maxpat", annotate("emi.window", window()).to_json(
         {"toolbarvisible": 0, "statusbarvisible": 0}))
-    write("patchers/emi.corpora.maxpat", annotate("emi.corpora", corpora_window()).to_json(
+    write("patchers/parts/emi.corpora.maxpat", annotate("emi.corpora", corpora_window()).to_json(
         {"toolbarvisible": 0, "statusbarvisible": 0}))
-    write("patchers/emi.instruments.maxpat", annotate("emi.instruments", instruments_window()).to_json(
+    write("patchers/parts/emi.instruments.maxpat", annotate("emi.instruments", instruments_window()).to_json(
         {"toolbarvisible": 0, "statusbarvisible": 0}))
-    write("patchers/emi.magdalena.maxpat", magdalena_window().to_json({"toolbarvisible": 0, "statusbarvisible": 0}))
+    write("patchers/parts/emi.magdalena.maxpat", magdalena_window().to_json({"toolbarvisible": 0, "statusbarvisible": 0}))
     write("patchers/cento.maxpat", top(
         "emi.host.max.maxpat",
         "Max version: the Max adapter and the shared panel above, wired both ways to the shared engine.",
         HOST_MAX_W).to_json())
-    write("patchers/emi.brain.maxpat", top(
+    write("patchers/parts/emi.brain.maxpat", top(
         "emi.host.live.maxpat",
         "Live version (device content): the Live adapter and the shared panel above, wired both ways "
         "to the shared engine.", HOST_LIVE_W).to_json())
-    write("patchers/emi.voice.maxpat", annotate("emi.voice", voice()).to_json())
-    write("patchers/emi.view.maxpat", annotate("emi.view", view()).to_json())
+    write("patchers/parts/emi.voice.maxpat", annotate("emi.voice", voice()).to_json())
+    write("patchers/parts/emi.view.maxpat", annotate("emi.view", view()).to_json())
     assert ANNOTATED == set(HELP), sorted(set(HELP) - ANNOTATED)
     write("docs/controls.md", controls_doc())
     # The Live devices (their contents are emi.brain and emi.voice).

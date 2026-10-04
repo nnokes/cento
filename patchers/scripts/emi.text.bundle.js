@@ -20,7 +20,7 @@ __emi_require.local = 1;
 
 // ---- code/emi.text.v8ui.js
 // [v8ui] a status box: the panel's status line and Emily's line. Patches load
-// patchers/emi.text.bundle.js.
+// patchers/scripts/emi.text.bundle.js.
 //
 // A message box shows text the way Max writes messages: a word ending in a
 // comma or semicolon gets a backslash ("melody\,"), and a word that is only

@@ -913,6 +913,24 @@ test("bundled corpus: the first startup lists Cento's own chorales, and composes
   void other;
 });
 
+test("subfolders: the engine runs from patchers/parts/, and still finds patchers/ and the chorales beside it", () => {
+  // A clone: package.json, corpus/, and the engine's patch in patchers/parts/.
+  const root = tempDir();
+  const parts = path.join(root, "patchers", "parts");
+  fs.mkdirSync(parts, { recursive: true });
+  fs.writeFileSync(path.join(root, "package.json"), "{}\n");
+  fs.mkdirSync(path.join(root, "corpus"));
+  fs.renameSync(writeCorpus(), path.join(root, "corpus", "bach-figured-bass"));
+  const core = engineIn(parts);
+  core.send("beats", 8);
+  const out = core.send("startup", "all");
+  assert.deepEqual(select(out, "error"), [], "a clone: no complaint about the Cento folder");
+  assert.deepEqual(folderRows(out).map(([n, on, , works, , , name]) => [n, on, works, name]), [[1, 1, 3, "bach-figured-bass"]]);
+  const patchers = path.join(root, "patchers");
+  assert.equal(settingsIn(patchers).corpora[0].path, path.join(root, "corpus", "bach-figured-bass"), "settings in patchers/, not parts/");
+  assert.ok(!fs.existsSync(path.join(parts, "cento.settings.json")));
+});
+
 test("Cento folder (M12): files move from patchers/ to ~/Documents/Cento, and are saved there", () => {
   // A pretend Mac: the repository in ann's home, and her Cento folder.
   const root = tempDir();

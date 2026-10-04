@@ -70,7 +70,7 @@ __emi_require.local = 1;
 
 // ---- code/emi.view.v8ui.js
 // [v8ui] piano roll for the engine's current score, inside emi.view. Patches
-// load patchers/emi.view.bundle.js.
+// load patchers/scripts/emi.view.bundle.js.
 //
 // Notes are colored by source chorale for composed pieces (by voice for a
 // single chorale); thin lines mark bars, bright lines mark seams, where the

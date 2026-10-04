@@ -1,6 +1,6 @@
 // [v8] wrapper: the engine's core script, inside emi.engine. Glue only: the
 // logic is in code/lib (the engine) and code/max (Max-only file and Live
-// access). Patches load patchers/emi.core.bundle.js.
+// access). Patches load patchers/scripts/emi.core.bundle.js.
 //
 // It holds the *current score* (a loaded chorale, a composed piece, a stream
 // of phrases or the test phrase), queues it for the grid player, draws it in

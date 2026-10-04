@@ -137,14 +137,21 @@ Cento's own chorales are already in the repo (`corpus/`). For music21's, see
 Tip: in Terminal, type `cd ` (with a space), then drag the repo folder from
 Finder into the window to paste its exact path.
 
-Everything Max loads (patches, devices and the generated script bundles) is
-in `patchers/`.
+Everything Max loads is in `patchers/`: on top, what you open
+(`cento.maxpat`, `cento.brain.amxd`, `cento.voice.amxd`); in
+`patchers/parts/`, the patches they're made of; in `patchers/scripts/`, the
+generated script bundles. Max doesn't look in subfolders by itself, so both
+Max and Live need `patchers/` on their search path once, **with Subfolders
+ticked**:
 
-- **Max version:** open `patchers/cento.maxpat`. Nothing else to set up.
-- **Live version:** Live's Max needs `patchers/` on its search path, once:
+- **Max version:** in Max, choose *Options → File Preferences*, click **+**,
+  then *Choose* and select the repo's `patchers` folder. Make sure the
+  **Subfolders** box in its row is ticked. Then open `patchers/cento.maxpat`.
+- **Live version:** Live's Max has its own File Preferences:
   1. In Live, drop a *Max MIDI Effect* on a track and click *Edit*.
   2. In that editor, choose *Options → File Preferences*, click **+**, then
-     *Choose* and select the repo's `patchers` folder.
+     *Choose* and select the repo's `patchers` folder. Tick **Subfolders** in
+     its row.
   3. Restart Live. In Live's browser, add the repo folder under *Places*.
      Drag `patchers/cento.brain.amxd` onto one MIDI track, and
      `patchers/cento.voice.amxd` onto four MIDI tracks named **Soprano**,
@@ -157,7 +164,8 @@ in `patchers/`.
 How Max finds files (learned the hard way in M0):
 
 - Standalone Max searches the folder of the patch it opens, plus the search
-  path.
+  path; not the folder's subfolders, unless the search path entry has
+  **Subfolders** ticked.
 - A Max for Live device is a *project*: it finds files that belong to its
   project, plus the search path, but **not** other files in its own folder.
 - `~/Documents/Max 9/Packages/` is on the search path for Max and for Live.
@@ -254,14 +262,15 @@ Finder, **⌘ Shift .** shows hidden folders), and the folders you exported in
 ## Repository layout
 
 ```
-patchers/     everything Max loads, in one folder:
-              cento.maxpat (Max version), cento.brain.amxd + cento.voice.amxd
-              (Live version), emi.engine, emi.host.max, emi.host.live,
-              emi.panel (the shared controls), emily.panel (Magdalena's ratings),
-              emi.view (piano roll), emi.window (the pop-up window),
-              emi.corpora (the corpus window), emi.instruments (the
-              Max version's plug-in instruments), and the generated
-              *.bundle.js scripts (npm run build; committed)
+patchers/     what you open: cento.maxpat (Max version), cento.brain.amxd +
+              cento.voice.amxd (Live version)
+  parts/      the patches they're made of: emi.engine, emi.host.max,
+              emi.host.live, emi.panel (the shared controls), emily.panel
+              (Magdalena's ratings), emi.view (piano roll), emi.window (the
+              pop-up window), emi.corpora (the corpus window),
+              emi.instruments (the Max version's plug-in instruments),
+              emi.magdalena (about Magdalena)
+  scripts/    the generated *.bundle.js scripts (npm run build; committed)
 code/         [v8] wrappers: glue between Max messages and the engine
               (emi.core.v8.js), and the piano roll (emi.view.v8ui.js)
 code/lib/     the engine: plain JavaScript, no Max APIs, tested in Node
@@ -285,7 +294,7 @@ music) lives in `~/Documents/cento/`, outside the repository.
 - Edit the engine in `code/lib/` and the wrappers in `code/`. Keep
   `npm run build:watch` running while Max is open: the `[v8]` objects reload
   their bundles automatically.
-- Never edit `patchers/*.bundle.js` by hand. CI fails if the bundles don't
+- Never edit `patchers/scripts/*.bundle.js` by hand. CI fails if the bundles don't
   match `code/`.
 - The patches and devices in `patchers/` (and `docs/controls.md`) are written
   by `tools/maxgen.py`, the master copy: change a patch there and run

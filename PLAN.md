@@ -1560,6 +1560,16 @@ does (`emi.magdalena`). Inside, nothing is renamed: the engine's modules
 (`emily-*`), the files (`cento.emily.json`), the messages to the engine and
 Live's parameters keep their names, so saved work and mappings carry on.
 
+**Subfolders**: `patchers/` holds only what you open (`cento.maxpat`,
+`cento.brain.amxd`, `cento.voice.amxd`); the patches they're made of are in
+`patchers/parts/` and the script bundles in `patchers/scripts/`. Max doesn't
+search a patch's subfolders by itself, so Max and Live both have `patchers` on
+their search path with **Subfolders** ticked (a development step only: frozen
+devices and the app carry their files inside). The engine's patch is in
+`parts/`, so it takes `parts/`'s parent as the patchers folder. Cento's own
+chorales stay in `corpus/` at the top of the repository: they're data, which
+the packaging script copies into the download's Cento folder.
+
 **Later, if it's wanted**: a signed app; a Live Pack (one file that installs
 the devices and the demo set into Live's browser); Windows (Max and Live run
 there, but nothing has been tried); Max's Package Manager.

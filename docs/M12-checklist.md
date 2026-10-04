@@ -65,6 +65,18 @@ called:
 The piano roll in the panels is narrower (260 px); **window** has the large
 one. In Live the device is now about 880 px wide.
 
+0. [ ] **Subfolders first.** `patchers/` now holds only what you open
+       (`cento.maxpat` and the two devices); the rest is in
+       `patchers/parts/` and `patchers/scripts/`. Max doesn't look in
+       subfolders by itself, so:
+       - **Max:** *Options → File Preferences*. If `patchers` isn't listed,
+         click **+**, *Choose*, and select the repository's `patchers`
+         folder. In its row, tick **Subfolders**. Close the window.
+       - **Live:** in any Max device's editor (a Max MIDI Effect will do),
+         the same: the `patchers` row with **Subfolders** ticked. Restart
+         Live.
+       If a patch opens with dashed boxes or a device says "media files are
+       missing", this is the step to check.
 1. [ ] **Max: the look.** Open `patchers/cento.maxpat`. Four parts, each on
        its own colour: **PLAY** (green), **COMPOSE** (blue), **MAGDALENA**
        (brown), then the piano roll. Nothing overlaps or is cut off, and every

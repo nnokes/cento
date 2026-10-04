@@ -70,7 +70,7 @@ __emi_require.local = 1;
 
 // ---- code/emi.taste.v8ui.js
 // [v8ui] Emily's taste, large, in the pop-up window (emi.window). Patches
-// load patchers/emi.taste.bundle.js.
+// load patchers/scripts/emi.taste.bundle.js.
 //
 // Four columns: what she likes and dislikes most (a bar per feature, its
 // weight from -3 to +3), the last ratings, and the last comparison made with
