@@ -263,8 +263,8 @@
 					"patching_rect": [
 						740.0,
 						270.0,
-						40.0,
-						20.0
+						30.0,
+						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
@@ -807,8 +807,8 @@
 					"patching_rect": [
 						540.0,
 						70.0,
-						40.0,
-						20.0
+						34.0,
+						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
@@ -1130,8 +1130,8 @@
 					"patching_rect": [
 						140.0,
 						440.0,
-						50.0,
-						20.0
+						42.0,
+						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
@@ -1221,8 +1221,8 @@
 					"patching_rect": [
 						270.0,
 						440.0,
-						60.0,
-						20.0
+						54.0,
+						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [

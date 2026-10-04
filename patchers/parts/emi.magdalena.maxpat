@@ -73,10 +73,11 @@
 					"fontsize": 16.0,
 					"fontface": 1,
 					"linecount": 1,
+					"presentation_linecount": 1,
 					"patching_rect": [
 						20.0,
 						60.0,
-						460.0,
+						456.0,
 						24.0
 					],
 					"presentation": 1,
@@ -104,10 +105,11 @@
 						0.93,
 						1.0
 					],
+					"presentation_linecount": 1,
 					"patching_rect": [
 						20.0,
 						130.0,
-						460.0,
+						456.0,
 						20.0
 					],
 					"presentation": 1,
@@ -129,10 +131,11 @@
 					"fontsize": 12.0,
 					"fontface": 0,
 					"linecount": 5,
+					"presentation_linecount": 5,
 					"patching_rect": [
 						20.0,
 						200.0,
-						460.0,
+						456.0,
 						90.0
 					],
 					"presentation": 1,
@@ -154,10 +157,11 @@
 					"fontsize": 12.0,
 					"fontface": 0,
 					"linecount": 5,
+					"presentation_linecount": 5,
 					"patching_rect": [
 						20.0,
 						270.0,
-						460.0,
+						456.0,
 						90.0
 					],
 					"presentation": 1,
@@ -179,10 +183,11 @@
 					"fontsize": 12.0,
 					"fontface": 0,
 					"linecount": 5,
+					"presentation_linecount": 5,
 					"patching_rect": [
 						20.0,
 						340.0,
-						460.0,
+						456.0,
 						76.0
 					],
 					"presentation": 1,
@@ -210,10 +215,11 @@
 						0.93,
 						1.0
 					],
+					"presentation_linecount": 3,
 					"patching_rect": [
 						20.0,
 						410.0,
-						460.0,
+						456.0,
 						36.0
 					],
 					"presentation": 1,

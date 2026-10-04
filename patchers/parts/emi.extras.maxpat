@@ -237,15 +237,16 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "A blind test: a web page of 10 pairs, a chorale and a piece in its form. Which is Bach?",
+					"text": "A blind test of 10 pairs: which is Bach?",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
 					"fontsize": 10.0,
+					"presentation_linecount": 2,
 					"patching_rect": [
 						180.0,
 						80.0,
-						180.0,
+						184.0,
 						34.0
 					],
 					"presentation": 1,
@@ -536,10 +537,11 @@
 					"numoutlets": 0,
 					"linecount": 2,
 					"fontsize": 10.0,
+					"presentation_linecount": 2,
 					"patching_rect": [
 						200.0,
 						320.0,
-						300.0,
+						340.0,
 						34.0
 					],
 					"presentation": 1,
@@ -825,14 +827,14 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "The test phrase needs no chorales: a check that the voices sound.",
+					"text": "The test phrase needs no chorales: it checks the voices.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"fontsize": 10.0,
 					"patching_rect": [
 						20.0,
 						480.0,
-						300.0,
+						340.0,
 						20.0
 					],
 					"presentation": 1,

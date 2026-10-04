@@ -90,7 +90,7 @@
 						20.0,
 						60.0,
 						70.0,
-						20.0
+						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
@@ -382,7 +382,7 @@
 						240.0,
 						60.0,
 						70.0,
-						20.0
+						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
@@ -674,7 +674,7 @@
 						460.0,
 						60.0,
 						70.0,
-						20.0
+						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
@@ -966,7 +966,7 @@
 						680.0,
 						60.0,
 						70.0,
-						20.0
+						22.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
@@ -1256,6 +1256,7 @@
 					"numoutlets": 0,
 					"linecount": 2,
 					"fontsize": 10.0,
+					"presentation_linecount": 2,
 					"patching_rect": [
 						20.0,
 						300.0,

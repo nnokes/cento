@@ -1601,16 +1601,17 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "Drag across the roll to select beats for like, dislike and keep. The tabs at the pane's top right choose its view.",
+					"text": "Drag across the roll to select beats for like, dislike and keep.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
 					"fontsize": 10.0,
+					"presentation_linecount": 2,
 					"patching_rect": [
 						940.0,
 						900.0,
-						400.0,
-						34.0
+						274.0,
+						30.0
 					],
 					"presentation": 1,
 					"presentation_rect": [

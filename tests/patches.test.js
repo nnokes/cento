@@ -1142,6 +1142,27 @@ test("Magdalena: her panel says what she is (the user's taste); the pop-up windo
   }
 });
 
+test("text on show fits its box: wrapped at the width shown, in the lines it has (a rough measure)", () => {
+  for (const file of files.filter((f) => f.endsWith(".maxpat"))) {
+    for (const [patcher, where] of patchers(readPatcher(path.join(ROOT, file)), file)) {
+      for (const { box } of patcher.boxes) {
+        if (box.maxclass !== "comment" || !box.presentation_rect) continue;
+        const [, , width, height] = box.presentation_rect;
+        // Max wraps a comment as wide as its box in the patching view, and
+        // shows presentation_linecount lines: both as on show.
+        assert.equal(box.patching_rect[2], width, `${where}: "${box.text}" wraps at its width on show`);
+        const lines = box.presentation_linecount || 1;
+        if (box.linecount) assert.equal(lines, box.linecount, `${where}: "${box.text}"`);
+        // About half the font size per letter (a little more in bold).
+        const size = box.fontsize || 12;
+        const needed = box.text.length * size * (box.fontface === 1 ? 0.55 : 0.5);
+        assert.ok(needed <= width * lines, `${where}: "${box.text}" needs about ${Math.round(needed)} px, has ${width} x ${lines} lines`);
+        assert.ok(height >= lines * size * 1.15, `${where}: "${box.text}": ${lines} lines need more than ${height} px`);
+      }
+    }
+  }
+});
+
 test("sections: each part of the strip sits on a solid colour of its own, with light text on it", () => {
   const colours = new Map();
   for (const [file, width] of [["emi.host.max.maxpat", 192], ["emi.host.live.maxpat", 130], ["emi.panel.maxpat", 300], ["emily.panel.maxpat", 170]]) {

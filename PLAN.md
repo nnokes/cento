@@ -1583,7 +1583,10 @@ button is a square **↗** at the right end of the row of names (no room there
 for a word), in the top patch rather than Magdalena's panel. The left panel
 (PLAY, or CLIPS AND VOICES) gave Magdalena's panel 40 px (192 and 130 px
 now, Magdalena 170), so the strip is as wide as before; in Live, "all voices
-on this track" is now "all voices here" to fit.
+on this track" is now "all voices here" to fit. A comment on show wraps as
+wide as its box in the patching view (and shows presentation_linecount
+lines), so the generator makes both match what's shown: the Live panel's
+voice-tracks note was cut off before; a test now checks every comment fits.
 
 **Subfolders**: `patchers/` holds only what you open (`cento.maxpat`,
 `cento.brain.amxd`, `cento.voice.amxd`); the patches they're made of are in

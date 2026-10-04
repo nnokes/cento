@@ -68,6 +68,12 @@ class Patch:
         return self._add(self._place(box, x, y, w, 22, pres))
 
     def comment(self, text, x, y, w=None, h=20, pres=None, **extra):
+        if pres is not None:
+            # A comment on show wraps as wide as its box in the patching view,
+            # with presentation_linecount lines when shown: both as shown.
+            w, h = pres[2], pres[3]
+            if "linecount" in extra:
+                extra["presentation_linecount"] = extra["linecount"]
         w = w or max(30, 6.5 * len(text) + 10)
         box = {"maxclass": "comment", "text": text, "numinlets": 1, "numoutlets": 0}
         box.update(extra)
@@ -1207,7 +1213,7 @@ def extras_window():
     targets = [(out, 0)]
     dialog_button(p, "Listening Test", "listening test…", 20, 80, (10, 10, 150, 22), "savedialog", "abtest",
                   targets)
-    p.comment("A blind test: a web page of 10 pairs, a chorale and a piece in its form. Which is Bach?",
+    p.comment("A blind test of 10 pairs: which is Bach?",
               180, 80, w=180, h=34, linecount=2, pres=(166, 8, W - 176, 34), fontsize=LABEL_SIZE)
     dialog_button(p, "Load A Chorale", "load a chorale…", 200, 200, (10, 56, 150, 22), "opendialog",
                   "loadmidi", targets)
@@ -1219,7 +1225,7 @@ def extras_window():
               200, 320, w=300, h=34, linecount=2, pres=(10, 82, W - 20, 34), fontsize=LABEL_SIZE)
     labelled(p, "Test Phrase", "play the test phrase", "pattern", 20, 380, (10, 124, 150, 22), out)
     labelled(p, "Clear Queue", "stop and clear the queue", "clear", 200, 380, (166, 124, 160, 22), out)
-    p.comment("The test phrase needs no chorales: a check that the voices sound.", 20, 480, w=300,
+    p.comment("The test phrase needs no chorales: it checks the voices.", 20, 480, w=300,
               pres=(10, 150, W - 20, 20), fontsize=LABEL_SIZE)
     restore = p.obj("route key", 380, 20, 2, 2, w=70)
     p.connect(inl, 0, restore, 0)
@@ -1330,8 +1336,8 @@ def host_live():
     p.connect(fmt, 0, midiout, 0)
     p.connect(midiin, 0, midiout, 0)
     p.comment("track MIDI passes through", 780, 480, w=170)
-    p.comment("Voice tracks: Soprano, Alto, Tenor, Bass.", 20, 600, w=160, h=34, linecount=2,
-              pres=(6, 112, 118, 34), fontsize=LABEL_SIZE, textcolor=SOFT_TEXT)
+    p.comment("Voice tracks: Soprano, Alto, Tenor, Bass.", 20, 600, linecount=3,
+              pres=(6, 110, 118, 38), fontsize=LABEL_SIZE, textcolor=SOFT_TEXT)
     section(p, PLAY_BG, HOST_LIVE_W)
     return p
 
@@ -1395,8 +1401,8 @@ def window():
     labelled(p, "Forget", "forget", "forget", 860, 760, (688, y, 60, 24), out)
     # Who Magdalena is (emi.magdalena, a small window of its own).
     opener(p, "Explain Magdalena", "explain Magdalena", 1000, 760, (758, y, 130, 24), "emi.magdalena")
-    p.comment("Drag across the roll to select beats for like, dislike and keep. The tabs at the pane's top "
-              "right choose its view.", 940, 900, w=400, h=34, linecount=2, pres=(896, y - 2, 274, 30),
+    p.comment("Drag across the roll to select beats for like, dislike and keep.", 940, 900, linecount=2,
+              pres=(896, y - 2, 274, 30),
               fontsize=LABEL_SIZE)
     window_title(p, "Cento: piano roll and Magdalena", 700)
     return p

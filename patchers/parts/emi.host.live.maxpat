@@ -1235,7 +1235,7 @@
 					"text": "Voice tracks: Soprano, Alto, Tenor, Bass.",
 					"numinlets": 1,
 					"numoutlets": 0,
-					"linecount": 2,
+					"linecount": 3,
 					"fontsize": 10.0,
 					"textcolor": [
 						0.84,
@@ -1243,18 +1243,19 @@
 						0.82,
 						1.0
 					],
+					"presentation_linecount": 3,
 					"patching_rect": [
 						20.0,
 						600.0,
-						160.0,
-						34.0
+						118.0,
+						38.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
-						112.0,
+						110.0,
 						118.0,
-						34.0
+						38.0
 					],
 					"id": "obj-44"
 				}
