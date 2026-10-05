@@ -22,61 +22,6 @@ window, says the same).
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M12 passed: Cento ships as free downloads on GitHub's Releases
-page ([M12](docs/M12-checklist.md) checklist, [how](docs/releasing.md)):
-Cento for Live (frozen devices and a demo set) and Cento for Max (the patch,
-for Max 9), starting with v0.1.0, a beta. M11 code done;
-waiting on its Max and Live checks ([M11](docs/M11-checklist.md)
-checklist). M9 and M10 passed in both
-products ([M9](docs/M9-checklist.md), [M10](docs/M10-checklist.md)
-results); M8 passed in the Max version and waits on its Live checks
-([M8](docs/M8-checklist.md) checklist).**
-Both products load Bach chorales, play them in C major or their own key, and
-compose new chorales by
-recombining beats from the whole corpus. Since M3, each new piece takes the
-form of a chorale from the corpus: its phrases, its cadences and its ending.
-They show pieces in a piano roll colored by source chorale, export them as
-MIDI files, and (in Live) write them as clips ([M0](docs/M0-spikes.md),
-[M1](docs/M1-checklist.md), [M2](docs/M2-checklist.md),
-[M3](docs/M3-checklist.md), [M4](docs/M4-checklist.md),
-[M5](docs/M5-checklist.md), [M6](docs/M6-checklist.md),
-[M7](docs/M7-checklist.md) results). Both share
-one control panel and remember their settings, including the last corpus,
-between sessions. Since M5, pieces start on the next barline wherever Play
-starts. Pieces can also stream phrase by phrase while they play, endlessly or
-ending after a set number of phrases. Since M6, every beat carries Cope's
-SPEAC function (statement, preparation, extension, antecedent, consequent),
-recombination matches beats by function, and the piano roll shows a SPEAC
-lane. Since M7, pieces keep Bach's *signatures*, the cadence formulas found
-across many chorales (soprano 3-2-1, bass 4-5-1), whole at their cadences,
-shown as gold bands in the piano roll. Since M8, pieces that quote a chorale
-for too long are set aside, the piano roll shows where each beat came from
-when you hover over it, a corpus may mix major and minor chorales, 3/4
-chorales work, and the **listening test** (Max version: **more features…**)
-writes a blind A/B test (Bach or not?) as a web page. Since M9, Magdalena learns your taste: **like** and
-**dislike** rate the piece, the stream phrase playing or the beats you drag
-across in the piano roll. Later pieces lean toward the features you liked
-(high melodies, 16th notes, modulations, ...), within the same rules, and
-**temperature** sets how much chance still plays. The **window** button (**↗**, at the top right) opens a
-large piano roll with Magdalena's taste in full, in both products. There you can
-also pin any feature's weight with a slider, set her taste's strength, and
-store and recall whole tastes as files. Since M10, Magdalena varies pieces with
-notes Bach never wrote (**novelty**), **keep** keeps what you like as music
-of her own that later pieces draw on (**mix**), and snapshots let you roll
-her back to any earlier state. Since M11, the **corpora** window lists folders
-of chorales, each switched on or off: composing uses every folder that is on,
-as one corpus (major and minor, or a 3/4 folder alone). Cento comes with
-131 Bach chorales of its own ([`corpus/`](corpus/README.md), freely
-licensed), so it composes straight away; music21's are an optional extra
-([step by step](#more-chorales-from-music21)). Every control explains itself when you hover
-over it (a tooltip in Max, the Info View in Live); [docs/controls.md](docs/controls.md)
-lists them all. The panels are laid out in the order you use them (since the M12
-redesign), under a row naming each section: **update composition** first (the
-pop-up window has one too), every button in
-Live's own look, and (in the Max version) the listening test and less-used tools
-in a **more features** window. The full plan
-and milestones are in [PLAN.md](PLAN.md).
-
 ## Two products, one engine
 
 | | Open this | Plays through |
