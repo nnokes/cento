@@ -19,10 +19,12 @@
 // Cento from cento), or, in case Max lists files only, by a file known to be
 // in it (MARKERS: the one the download brings, or the settings).
 //
-//   find({ patchFolder, appPath, list, exists })  -> { path, how } or null
+//   find({ patchFolder, appPath, list, exists, looked })  -> { path, how } or null
 //     list(folder): the names of the files and folders in a folder ([] if
 //     it can't be read); listNames below, with Max's Folder object
 //     exists(path): whether a file is there (optional)
+//     looked: an array that gets, for each Documents folder looked in,
+//     "<path> (<n> names)" (optional: for the Max window, if none is found)
 //   homeOf(path), volumeOf(path)
 
 const NAME = "cento";
@@ -42,14 +44,16 @@ function volumeOf(path) {
   return m ? m[1] : null;
 }
 
-function find({ patchFolder, appPath, list, exists = () => false }) {
+function find({ patchFolder, appPath, list, exists = () => false, looked = [] }) {
   const tried = new Set();
   const marked = (folder) => MARKERS.some((file) => exists(folder + "/" + file));
   const look = (home, how) => {
     if (!home || tried.has(home)) return null;
     tried.add(home);
     const documents = home + "/Documents";
-    const name = list(documents).find((n) => String(n).toLowerCase() === NAME) || (marked(documents + "/Cento") ? "Cento" : null);
+    const names = list(documents);
+    looked.push(`${documents} (${names.length} ${names.length === 1 ? "name" : "names"})`);
+    const name = names.find((n) => String(n).toLowerCase() === NAME) || (marked(documents + "/Cento") ? "Cento" : null);
     return name ? { path: documents + "/" + name, how } : null;
   };
   const found = look(homeOf(patchFolder), "from the patch's folder") || look(homeOf(appPath), "from Max's own folder");
@@ -68,24 +72,30 @@ function find({ patchFolder, appPath, list, exists = () => false }) {
 }
 
 // The names in a folder, files and folders, with Max's Folder object; []
-// if it isn't there or can't be read.
+// if it isn't there or can't be read. Max lists a folder's files by
+// default (on a Mac, its folders were missing: found in M12), so it's
+// listed twice: as it comes, then with typelist ["fold"], its folders.
 function listNames(path) {
   const names = [];
-  let folder;
-  try {
-    folder = new Folder(path);
-    folder.reset();
-    while (!folder.end) {
-      if (folder.filename) names.push(String(folder.filename));
-      folder.next();
-    }
-  } catch (e) {
-    // not there, or not ours to read
-  } finally {
+  for (const types of [null, ["fold"]]) {
+    let folder;
     try {
-      if (folder) folder.close();
+      folder = new Folder(path);
+      if (types) folder.typelist = types;
+      folder.reset();
+      while (!folder.end) {
+        const name = folder.filename ? String(folder.filename) : "";
+        if (name && !names.includes(name)) names.push(name);
+        folder.next();
+      }
     } catch (e) {
-      // already closed
+      // not there, or not ours to read
+    } finally {
+      try {
+        if (folder) folder.close();
+      } catch (e) {
+        // already closed
+      }
     }
   }
   return names;

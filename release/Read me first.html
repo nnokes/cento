@@ -7,159 +7,311 @@
 <style>
   :root {
     --bg: #fbfaf7; --text: #1f1d1a; --muted: #5e5a53; --line: #e3dfd6;
-    --accent: #7a4b16; --box: #f2eee6; --code: #ece7dc;
+    --accent: #7a4b16; --box: #f2eee6; --code: #ece7dc; --pin: #d9481f;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #1b1a18; --text: #ece8e0; --muted: #aaa397; --line: #3a3732;
-      --accent: #e0a868; --box: #26241f; --code: #302d27;
+      --accent: #e0a868; --box: #26241f; --code: #302d27; --pin: #f0663a;
     }
   }
   html { background: var(--bg); }
   body {
-    margin: 0 auto; max-width: 44rem; padding: 2rem 1rem 4rem;
+    margin: 0 auto; max-width: 52rem; padding: 2rem 1rem 4rem;
     font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
     color: var(--text); background: var(--bg);
   }
   h1 { font-size: 2rem; margin: 0 0 .25rem; }
-  h2 { font-size: 1.3rem; margin: 2.2rem 0 .6rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+  h2 { font-size: 1.3rem; margin: 2.4rem 0 .6rem; padding-top: 1rem; border-top: 1px solid var(--line); }
   h3 { font-size: 1.05rem; margin: 1.4rem 0 .4rem; }
   p, li { margin: .45rem 0; }
   ol, ul { padding-left: 1.4rem; }
   a { color: var(--accent); }
   code, kbd { font: .9em ui-monospace, Menlo, monospace; background: var(--code); padding: .05em .3em; border-radius: 4px; }
-  .lead { color: var(--muted); margin-top: 0; }
+  .lead { color: var(--muted); margin-top: 0; font-size: 1.1rem; }
   .box { background: var(--box); border-radius: 8px; padding: .8rem 1rem; margin: 1rem 0; }
   .small { color: var(--muted); font-size: .92rem; }
+  figure { margin: 1.2rem 0; }
+  figure img { display: block; width: 100%; height: auto; border-radius: 6px; }
+  figcaption { color: var(--muted); font-size: .9rem; margin-top: .4rem; }
+  /* Numbered markers on a screenshot, placed in percent so they stay put at any width. */
+  .pins { position: relative; }
+  .pin, .key {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.45rem; height: 1.45rem; border-radius: 50%;
+    background: var(--pin); color: #fff; font: 700 .8rem/1 -apple-system, sans-serif;
+  }
+  .pin { position: absolute; transform: translate(-50%, -50%); box-shadow: 0 0 0 2px #fff, 0 1px 4px rgba(0,0,0,.4); }
+  .key { margin-right: .45rem; vertical-align: .1em; text-indent: 0; }
+  ol.tour { list-style: none; padding-left: 0; }
+  ol.tour li { margin: .55rem 0; padding-left: 1.9rem; text-indent: -1.9rem; }
 </style>
 </head>
 <body>
 
 <h1>Cento</h1>
-<p class="lead">New chorales in the style of J. S. Bach, made from Bach's own.</p>
+<p class="lead">New chorales in the style of J. S. Bach, made from pieces of Bach's own.</p>
 
-<p>Cento learns Bach's chorales beat by beat, then writes new ones by
-joining beats from different chorales, keeping the voice-leading and the
-shape of a real chorale. Its Emily layer learns what you like as you rate
-what you hear. (Cento is an independent project, inspired by David Cope's
-books; it isn't affiliated with him.)</p>
+<p>Cento has learned Bach's chorales beat by beat. It writes a new chorale by
+joining beats from many different chorales, keeping Bach's voice-leading and
+the shape of a real chorale: its phrases, cadences and key. Each new piece
+takes the form of one of Bach's chorales, and the status line tells you which.</p>
+
+<p>Then there's <strong>Magdalena</strong>, who learns your taste. Tell her
+what you like and dislike as you listen, and later pieces lean toward what you
+liked. She's named after Anna Magdalena Bach, a singer and the copyist of much
+of Bach's music.</p>
+
+<p class="small">Cento is an independent project, inspired by David Cope's
+books on musical intelligence. It isn't affiliated with him.</p>
 
 <div class="box">
 <strong>Which one did you download?</strong>
 <ul>
-<li><strong>Cento for Live</strong>: devices for Ableton Live 12 Suite (or
-Live 12 Standard with Max for Live), version 12.2.1 or later.</li>
-<li><strong>Cento for Mac</strong>: an app. Nothing else to install.</li>
+<li><strong>Cento for Live</strong>: two devices and a demo set for Ableton
+Live 12 Suite (or Live 12 Standard with Max for Live), version 12.2.1 or
+later.</li>
+<li><strong>Cento for Max</strong>: a patch for Max 9. Max is a free download,
+and Cento runs in it without a paid license.</li>
 </ul>
-Both need macOS. Start with step 1, then follow your version's steps.
+Both have been tried on macOS only. Start with step 1, then follow the steps
+for your version.
 </div>
 
-<h2>1. Put the Cento folder in Documents (both versions)</h2>
+<h2>1. Put the Cento folder in Documents</h2>
 <ol>
 <li>Double-click the zip you downloaded, if it isn't unzipped already. A
 folder opens.</li>
-<li>In it, find the folder named <strong>Cento</strong>. Drag it onto
+<li>Inside it, find the folder named <strong>Cento</strong>. Drag it onto
 <strong>Documents</strong> in the sidebar of the Finder window.</li>
 </ol>
-<p>Cento looks for this folder every time it opens. It holds Cento's
-chorales, and later your settings and Emily's memory. Keep its name:
+<p>Cento looks for this folder every time it opens. It holds Bach's chorales,
+and later your settings and everything Magdalena learns. Keep its name:
 <code>Cento</code>.</p>
 <p class="small">Updating from an earlier version? Keep the Cento folder you
-have: it holds your settings and Emily's memory.</p>
+already have: it holds your settings and Magdalena's memory.</p>
 
-<h2>2a. Cento for Live</h2>
+<h2>2a. Cento for Live: play the demo</h2>
 <ol>
 <li>In the unzipped folder, open <strong>Cento Demo Project</strong> and
 double-click <strong>Cento Demo.als</strong>. Live opens a set with five
-tracks: <em>Cento</em> (the brain), and <em>Soprano</em>, <em>Alto</em>,
-<em>Tenor</em> and <em>Bass</em>.</li>
+tracks: <em>Cento</em>, which composes, and <em>Soprano</em>,
+<em>Alto</em>, <em>Tenor</em> and <em>Bass</em>, which play the four
+voices.</li>
 <li>If macOS asks whether Live may access files in your Documents folder,
 click <strong>Allow</strong>.</li>
-<li>Press Live's Play button (or the space bar). The piece plays from the
-next bar, and the brain's piano roll follows it.</li>
-<li>For a new piece, change <strong>Seed</strong> on the brain.</li>
+<li>Press Live's Play button (or the space bar). The piece starts at the next
+bar, and the piano roll on the right follows along.</li>
+<li>For a different piece, click <strong>next</strong>.</li>
 </ol>
-<p><strong>In your own sets:</strong> the devices are in the
+<p><strong>In your own sets:</strong> the two devices are in the
 <strong>Devices</strong> folder. Drag <code>cento.brain.amxd</code> onto a
-MIDI track, and <code>cento.voice.amxd</code> onto four MIDI tracks named
-<em>Soprano</em>, <em>Alto</em>, <em>Tenor</em> and <em>Bass</em>, each with
-an instrument. Tip: drag the Devices folder into Live's browser, under
-<em>Places</em>, to find them there.</p>
+MIDI track. Then drag <code>cento.voice.amxd</code> onto four MIDI tracks
+named <em>Soprano</em>, <em>Alto</em>, <em>Tenor</em> and <em>Bass</em>, each
+with an instrument on it. The track names tell each voice device which part to
+play. Tip: drag the Devices folder into Live's browser, under
+<em>Places</em>, to have them at hand.</p>
 
-<h2>2b. Cento for Mac</h2>
+<h2>2b. Cento for Max: open the patch</h2>
 <ol>
-<li>Drag <strong>Cento</strong> (the app) into your
-<strong>Applications</strong> folder.</li>
-<li><strong>The first time only:</strong> the app isn't signed by Apple, so
-macOS stops it once.
-  <ul>
-  <li>Double-click Cento. macOS says it can't check it ("Cento" Not Opened).
-  Click <strong>Done</strong>.</li>
-  <li>Open <strong>System Settings</strong>, then <strong>Privacy &amp;
-  Security</strong>. Scroll down to <em>"Cento" was blocked</em> and click
-  <strong>Open Anyway</strong>. Confirm with <strong>Open Anyway</strong>
-  and your password.</li>
-  <li>On macOS 14 (Sonoma) and earlier, you can instead right-click (or
-  Control-click) Cento, choose <strong>Open</strong>, then
-  <strong>Open</strong>.</li>
-  </ul>
-  After that, Cento opens like any app.</li>
-<li>If macOS asks whether Cento may access files in your Documents folder,
-click <strong>Allow</strong>.</li>
+<li><strong>Max 9.</strong> If you don't have it, download it from
+<a href="https://cycling74.com/downloads">cycling74.com/downloads</a> and
+install it. You don't need to buy a license: without one, Max still opens and
+runs patches. (A license is only needed to save changes to patches.)</li>
+<li>In the unzipped folder, open <strong>Cento Patch</strong> and double-click
+<strong>cento.maxpat</strong>. Max opens it, and Cento composes a piece. (The
+other files in that folder are its parts. Keep them together, and open only
+<code>cento.maxpat</code>.)</li>
+<li>If macOS asks whether Max may access files in your Documents folder, click
+<strong>Allow</strong>.</li>
 <li>Click the green <strong>play</strong>. If you hear nothing, set
 <strong>Output</strong> to <em>AU DLS Synth 1</em> (the Mac's own
-instruments), and check the Mac's volume.</li>
-<li>For a new piece, change <strong>Seed</strong>.</li>
+instruments) and check the Mac's volume.</li>
+<li>For a different piece, click <strong>next</strong>.</li>
+</ol>
+<p class="small">You can keep the Cento Patch folder anywhere, for example in
+Documents next to the Cento folder.</p>
+
+<h2>3. A quick tour</h2>
+<p>This is Cento in Live. The Max version looks the same, except for its left
+part (see below the list).</p>
+
+<figure>
+<div class="pins">
+<img src="images/cento-brain.png" alt="The cento.brain device in Live: CLIPS AND VOICES, COMPOSE, MAGDALENA and PIANO ROLL, side by side.">
+<span class="pin" style="left:1.6%;top:55.7%">1</span>
+<span class="pin" style="left:16.4%;top:21.5%">2</span>
+<span class="pin" style="left:37.6%;top:20%">3</span>
+<span class="pin" style="left:16.4%;top:37.5%">4</span>
+<span class="pin" style="left:16.4%;top:64%">5</span>
+<span class="pin" style="left:50.6%;top:28.5%">6</span>
+<span class="pin" style="left:50.6%;top:43%">7</span>
+<span class="pin" style="left:50.6%;top:58.5%">8</span>
+<span class="pin" style="left:70.7%;top:22.6%">9</span>
+<span class="pin" style="left:96.4%;top:15.7%">10</span>
+</div>
+<figcaption>The cento.brain device. Rest the mouse on any control to read what
+it does: in Live, open the Info View first (the <strong>?</strong> at the
+bottom left of Live's window).</figcaption>
+</figure>
+
+<ol class="tour">
+<li><span class="key">1</span><strong>play through voices</strong>: when it's
+on, the piece plays through the four voice tracks whenever Live plays.
+<strong>write clips</strong>, above it, writes the piece as MIDI clips on
+those tracks, so you can edit it like any clip.</li>
+<li><span class="key">2</span><strong>update composition</strong> composes
+the piece again, with your settings and Magdalena's taste as they are
+now.</li>
+<li><span class="key">3</span><strong>seed</strong> picks the piece: the same
+seed always gives the same piece. <strong>next</strong> moves on to the next
+seed. <strong>export midi</strong> saves the piece as a MIDI file.</li>
+<li><span class="key">4</span><strong>corpora</strong> chooses which of Bach's
+chorales Cento composes from (see step 5). <strong>beats</strong> sets the
+shortest length of a piece, and <strong>chorale form</strong> keeps the phrase
+plan of a real chorale.</li>
+<li><span class="key">5</span>The <strong>status line</strong> says what Cento
+just made: which chorale's form it took, how many chorales it drew on, and how
+much of it came from Magdalena's notebook.</li>
+<li><span class="key">6</span><strong>like</strong> and
+<strong>dislike</strong> tell Magdalena what you think (see step 4).</li>
+<li><span class="key">7</span><strong>keep</strong> puts what you're hearing
+into Magdalena's notebook: music of her own that later pieces can draw
+on.</li>
+<li><span class="key">8</span><strong>temperature</strong> sets how much
+chance still plays. At 0, Magdalena makes only her favorite choices; at 1,
+it's as if she weren't there; up to 3, things get more adventurous. Under it,
+her taste in one line.</li>
+<li><span class="key">9</span>The <strong>piano roll</strong> shows the piece
+(see "Reading the piano roll" below).</li>
+<li><span class="key">10</span><strong>↗</strong> opens the large window: a
+big piano roll and Magdalena's taste in full.</li>
 </ol>
 
-<h2>3. Things to try</h2>
+<p><strong>In Cento for Max</strong>, the left part is <strong>PLAY</strong>:
+the green <strong>play</strong> button (it turns red and says stop),
+<strong>bpm</strong> for the tempo, the speaker for audio,
+<strong>Output</strong> for where the music goes, and
+<strong>plug-in instruments</strong> with <strong>set up…</strong> to play
+the voices through your own AU or VST3 instruments. <strong>more
+features…</strong> opens a few extras: a blind listening test (can your
+friends tell Bach from Cento?), loading a single chorale, and a test
+phrase.</p>
+
+<h2>4. Teach Magdalena your taste</h2>
+<ol>
+<li>Listen to a piece. When you hear something you like or dislike, click
+<strong>like</strong> or <strong>dislike</strong>. She rates the whole piece,
+or the stream phrase that's playing.</li>
+<li>To rate just a passage, drag across those beats in the piano roll first: a
+blue band marks them. A click in the roll clears it.</li>
+<li>After a few ratings, click <strong>update composition</strong> or
+<strong>next</strong>. New pieces lean toward the musical features you liked
+(high melodies, distant keys, stepwise lines…), always within Bach's
+rules.</li>
+<li>Click <strong>keep</strong> on music you'd like to hear more of: it goes
+into Magdalena's notebook, and later pieces borrow from it.</li>
+</ol>
+
+<figure>
+<div class="pins">
+<img src="images/pop-up-window.webp" alt="The large window: a big piano roll above, Magdalena's taste below, and a row of buttons along the bottom.">
+<span class="pin" style="left:2.6%;top:22%">1</span>
+<span class="pin" style="left:76.6%;top:59.4%">2</span>
+<span class="pin" style="left:25.6%;top:93.6%">3</span>
+<span class="pin" style="left:68.7%;top:93.6%">4</span>
+</div>
+<figcaption>The large window, opened with <strong>↗</strong>.</figcaption>
+</figure>
+<ol class="tour">
+<li><span class="key">1</span>The same piano roll, large: easier for
+dragging across beats to rate them.</li>
+<li><span class="key">2</span>Magdalena's taste, in three views.
+<strong>overview</strong>: what she likes and dislikes most, and your latest
+ratings. <strong>weights</strong>: a slider for each musical feature, to set
+her taste by hand. <strong>memory</strong>: her notebook, and snapshots to
+roll her back to an earlier taste.</li>
+<li><span class="key">3</span><strong>update composition</strong>, as in the
+device: hear what your changes did. Beside it, <strong>store taste</strong>
+and <strong>recall taste</strong> save and load a whole taste as a file, and
+<strong>forget</strong> starts afresh (the old taste is kept as a
+snapshot).</li>
+<li><span class="key">4</span><strong>explain Magdalena</strong>: who she is
+and what she does.</li>
+</ol>
+
+<h2>5. Choose the chorales</h2>
+<figure>
+<img src="images/corpora-window.png" alt="The corpora window: two folders of chorales, bach-figured-bass switched on and bach-figured-bass-3-4 switched off.">
+<figcaption>The corpora window, opened with <strong>corpora</strong>.</figcaption>
+</figure>
+<p>Cento comes with 131 Bach chorales, in two folders:
+<code>bach-figured-bass</code> (118 chorales in 4/4) and
+<code>bach-figured-bass-3-4</code> (13 in 3/4). Click a folder's box to
+switch it on or off; Cento composes from every folder that's on.
+<strong>only</strong> switches on just that folder, so
+<code>bach-figured-bass-3-4</code> alone gives pieces in 3/4.
+<strong>add folder</strong> adds a folder of your own four-part chorales
+(MIDI files).</p>
+
+<h2>6. Keep what you make</h2>
 <ul>
-<li><strong>Hover</strong> over any control to see what it does. In Live,
-open the Info View first (the <strong>?</strong> at the bottom left of
-Live's window).</li>
-<li><strong>like</strong> and <strong>dislike</strong> teach Emily your
-taste: later pieces lean toward what you liked. <strong>window</strong>
-shows her taste in full.</li>
-<li><strong>corpora</strong> chooses which chorales Cento composes from.
-<code>bach-figured-bass-3-4</code> alone gives pieces in 3/4.</li>
-<li><strong>export midi</strong> saves the piece as a MIDI file. In Live,
-<strong>writeclips</strong> writes it as clips.</li>
+<li><strong>export midi</strong> saves the piece as a MIDI file, to open in
+any music program.</li>
+<li>In Live, <strong>write clips</strong> writes it as clips on the voice
+tracks. Switch on <strong>clips on compose</strong> to write every new piece
+as clips, so nothing you like is lost.</li>
+</ul>
+
+<h2>Reading the piano roll</h2>
+<ul>
+<li>Each color is one of Bach's chorales: the one that beat came from. Rest the
+mouse on a beat to see which chorale and bar it came from.</li>
+<li>Numbers along the top are bars. Small triangles mark cadences, where
+Bach's phrases pause.</li>
+<li>Gold bands are Bach's <em>signatures</em>: cadence formulas found in many
+of his chorales, kept whole. "S b3-2-1" means the soprano sings scale steps 3,
+2, 1, with a flat 3 (as in minor); "B" is the bass.</li>
+<li>Purple dots mark beats where Magdalena added notes of her own.</li>
+<li>The letters along the bottom show each beat's job in its phrase:
+S statement, P preparation, E extension, A antecedent, C consequent. Rest the
+mouse on one to read more.</li>
 </ul>
 
 <h2>Where your files are</h2>
-<p>Everything Cento keeps is in <strong>Documents/Cento</strong>: the
-chorales (<code>corpus</code>), your settings and Emily's memory (the
-<code>cento.*.json</code> files). <code>About this folder.txt</code> in it
-says which is which. Pieces you export go where you choose.</p>
+<p>Everything Cento keeps is in <strong>Documents/Cento</strong>: the chorales
+(in <code>corpus</code>), and your settings and Magdalena's memory (the
+<code>cento.*.json</code> files). <code>About this folder.txt</code> in it says
+which file is which. Pieces you export go wherever you choose.</p>
 
 <h2>More chorales</h2>
-<p>Cento comes with 131 Bach chorales. The free music21 toolkit has more
-(296 in 4/4 and 32 in 3/4), for your own use only. Getting them takes a few
-commands in Terminal; the steps are on
+<p>Cento comes with 131 Bach chorales. The free music21 toolkit has more (296
+in 4/4 and 32 in 3/4), for your own use only. Getting them takes a few commands
+in Terminal; the steps are on
 <a href="https://github.com/nnokes/cento#more-chorales-from-music21">Cento's
 page on GitHub</a>.</p>
 
 <h2>Removing Cento</h2>
-<p>Delete the app (or the devices and the demo project), and the Cento
-folder in Documents.</p>
+<p>Delete the Cento Patch folder (or the devices and the demo project), and the
+Cento folder in Documents.</p>
 
 <h2>Known issues</h2>
 <ul>
 <li>This is a beta, tried on macOS only.</li>
-<li>The app isn't signed by Apple: see step 2b.</li>
-<li>Cento for Live needs Live 12.2.1 or later (it includes Max 9). With an
-earlier Live, point Live at a Max 9 installation (Live's Settings, File
-&amp; Folder, Max Application).</li>
+<li>Cento for Live needs Live 12.2.1 or later, which includes Max 9. With an
+earlier Live, point Live at a Max 9 installation (Live's Settings, File &amp;
+Folder, Max Application).</li>
+<li>Cento for Max needs Max 9: it doesn't open in Max 8 or earlier.</li>
 <li>Something wrong? Tell us at
 <a href="https://github.com/nnokes/cento/issues">github.com/nnokes/cento/issues</a>.</li>
 </ul>
 
-<h2>Credits and licence</h2>
-<p class="small">Cento is free software under the MIT licence
+<h2>Credits and license</h2>
+<p class="small">Cento is free software under the MIT license
 (<code>LICENSE.txt</code>). Its chorales come from the <em>Bach Chorales
 Figured Bass</em> dataset (Ju, Yaolong, Sylvain Margot, Cory McKay, Luke
 Dahn, and Ichiro Fujinaga, 2020, ISMIR), under the Creative Commons
-Attribution 4.0 licence: see <code>Cento/corpus/README.md</code>. Cento
+Attribution 4.0 license: see <code>Cento/corpus/README.md</code>. Cento
 implements ideas from David Cope's published books on <em>Experiments in
 Musical Intelligence</em> and <em>Emily Howell</em>.
 <a href="https://github.com/nnokes/cento">github.com/nnokes/cento</a></p>

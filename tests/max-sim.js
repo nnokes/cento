@@ -91,7 +91,7 @@ function recordingGraphics(width = 360, height = 169) {
 }
 
 function loadBundle(name, { LiveAPI, File = FsFile, Folder = FsFolder, mgraphics = recordingGraphics() } = {}) {
-  const file = path.join(ROOT, "patchers", name + ".bundle.js");
+  const file = path.join(ROOT, "patchers", "scripts", name + ".bundle.js");
   const sent = [];
   const posted = []; // what the script printed in the Max window
   const context = {

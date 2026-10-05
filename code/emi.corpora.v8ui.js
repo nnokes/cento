@@ -1,6 +1,6 @@
 // [v8ui] The corpus window's list (M11): every folder of chorales, switched
 // on or off. Composing uses every folder that is on, as one corpus. Patches
-// load patchers/emi.corpora.bundle.js.
+// load patchers/scripts/emi.corpora.bundle.js.
 //
 // A row per folder: a box to switch it on or off ("corpuson <n> 0|1" to the
 // engine), its name, what it holds (chorales, meter, modes), whether it is
@@ -13,7 +13,8 @@
 // The engine sends the whole list whenever it changes:
 //   clear <building 1|0>          (building: a change waits for its build)
 //   folder <n> <on 1|0> <in use 1|0> <chorales | -1 not read> <meter> <modes> <name> <path> <note...>
-//   summary <words...>
+//   footer <words...>          (the line under the list; not "summary": Max 9's
+//                                 [v8ui] answers that message itself, and fails)
 //   done                          (draw it)
 
 autowatch = 1;
@@ -54,7 +55,7 @@ function folder(n, on, used, works, meter, modes, name, path, ...note) {
   });
 }
 
-function summary(...words) {
+function footer(...words) {
   if (incoming) incoming.summary = words.join(" ");
 }
 
@@ -119,7 +120,7 @@ function paint() {
   g.move_to(12, 24);
   g.show_text("Corpora");
   g.set_font_size(12);
-  g.set_source_rgba(1, 1, 1, 0.6);
+  g.set_source_rgba(1, 1, 1, 0.82);
   g.move_to(90, 24);
   g.show_text("Composing uses every folder that is on, as one corpus.");
   if (!shown) return;
@@ -133,7 +134,7 @@ function paint() {
   shown.folders.slice(0, rows).forEach((f, i) => paintRow(f, TOP + i * ROW, width));
   if (shown.folders.length > rows) {
     g.set_font_size(11);
-    g.set_source_rgba(1, 1, 1, 0.5);
+    g.set_source_rgba(1, 1, 1, 0.75);
     g.move_to(36, TOP + rows * ROW + 4);
     g.show_text(`and ${shown.folders.length - rows} more (make the window taller to see them)`);
   }

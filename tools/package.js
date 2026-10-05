@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 // Makes the two downloads for a release (M12; docs/releasing.md), on your
-// Mac, from what you built in Max and Live:
+// Mac, from the repository and what you built in Live:
 //
 //   dist/Cento-for-Live-v<version>.zip
 //     Cento for Live v<version>/
@@ -9,15 +9,21 @@
 //       Cento/                 the folder for Documents: corpus/, About this folder.txt
 //       Cento Demo Project/    the demo set (build/Cento Demo Project)
 //       Devices/               the frozen devices (frozen/cento.brain.amxd, cento.voice.amxd)
-//   dist/Cento-for-Mac-v<version>.zip
-//     Cento for Mac v<version>/
-//       Read me first.html, LICENSE.txt, Cento/, Cento.app (build/Cento.app)
+//   dist/Cento-for-Max-v<version>.zip
+//     Cento for Max v<version>/
+//       Read me first.html, LICENSE.txt, Cento/
+//       Cento Patch/           cento.maxpat and every patch and script it uses,
+//                              side by side: Max finds them in the patch's own
+//                              folder, with no search path to set up
 //
 // The version is package.json's. Nothing personal goes in: the Cento folder
 // is made from the repository (corpus/ and release/), never from your own.
+// The read-me's pictures (release/images/) go inside it, so the read-me is
+// one file that shows them wherever it's moved.
+// (A standalone app was planned instead of the patch; it waits for later.)
 //
 //   npm run package                 both zips (each needs everything it holds)
-//   npm run package -- --only live  one of them: live or mac
+//   npm run package -- --only live  one of them: live or max
 //   npm run package -- --check      only say what's there and what's missing
 //
 // On a Mac, ditto copies and zips (it keeps an app's links, permissions and
@@ -46,13 +52,75 @@ function contents(root) {
     ["Devices/cento.brain.amxd", "frozen/cento.brain.amxd", "freeze the device (docs/releasing.md, step 1.1)"],
     ["Devices/cento.voice.amxd", "frozen/cento.voice.amxd", "freeze the device (docs/releasing.md, step 1.1)"],
   ];
-  const mac = [...shared, ["Cento.app", "build/Cento.app", "build the app in Max (docs/releasing.md, step 1.3)"]];
-  return { live, mac };
+  const max = [
+    ...shared,
+    ...patchFiles(root).map((from) => [`Cento Patch/${path.basename(from)}`, from,
+      "it's in the repository: pull the latest code, or run npm run patches and npm run build"]),
+  ];
+  return { live, max };
+}
+
+// The Max version's files: patchers/cento.maxpat, then every patch and
+// script it uses, found by following its references (bpatchers, abstractions
+// such as [emi.engine], and the scripts of [v8] and [v8ui]), each once.
+// Live's own parts (emi.brain, emi.host.live, emi.voice) aren't among them.
+// A bpatcher's patch or a script that isn't there is listed where it belongs
+// (parts/ or scripts/), so it's reported missing; an object that isn't an
+// abstraction of ours ([zl.iter], [transport]...) is Max's own.
+function patchFiles(root) {
+  const where = (name) =>
+    ["patchers", "patchers/parts", "patchers/scripts"].map((dir) => `${dir}/${name}`).find((p) => fs.existsSync(path.join(root, p)));
+  const found = ["patchers/cento.maxpat"];
+  const add = (name, required) => {
+    const at = where(name) || (required ? `patchers/${name.endsWith(".js") ? "scripts" : "parts"}/${name}` : null);
+    if (at && !found.includes(at)) {
+      found.push(at);
+      if (at.endsWith(".maxpat")) follow(at);
+    }
+  };
+  const walk = (patcher) => {
+    for (const { box } of patcher.boxes || []) {
+      if (box.patcher) walk(box.patcher);
+      if (box.maxclass === "bpatcher" && box.name) add(box.name, true);
+      if (box.textfile && box.textfile.filename) add(box.textfile.filename, true);
+      if (box.maxclass === "v8ui" && box.filename) add(box.filename, true);
+      if (box.maxclass === "newobj" && box.text) add(box.text.split(/\s+/)[0] + ".maxpat", false);
+    }
+  };
+  const follow = (file) => {
+    try {
+      walk(JSON.parse(fs.readFileSync(path.join(root, file), "utf8")).patcher);
+    } catch (e) {
+      // missing or unreadable: reported as missing (or as Max will report it)
+    }
+  };
+  follow(found[0]);
+  return found;
+}
+
+// The read-me's pictures: src="images/..." in release/'s read-me, put inside
+// it as data: URLs when it's packed.
+const IMAGE_TYPES = { ".png": "image/png", ".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".svg": "image/svg+xml" };
+const PICTURE = /src="(images\/[^"]+)"/g;
+
+function pictures(html) {
+  return [...html.matchAll(PICTURE)].map((m) => m[1]);
+}
+
+function inlinePictures(html, dir) {
+  return html.replace(PICTURE, (all, rel) => {
+    const type = IMAGE_TYPES[path.extname(rel).toLowerCase()] || "application/octet-stream";
+    return `src="data:${type};base64,${fs.readFileSync(path.join(dir, rel)).toString("base64")}"`;
+  });
 }
 
 // Problems with what's there, beyond being missing.
 function problemsWith(root, from) {
   const full = path.join(root, from);
+  if (from.endsWith(".html")) {
+    const missing = pictures(fs.readFileSync(full, "utf8")).filter((rel) => !fs.existsSync(path.join(path.dirname(full), rel)));
+    if (missing.length) return `${from} shows pictures that aren't there: ${missing.map((rel) => path.join(path.dirname(from), rel)).join(", ")}`;
+  }
   if (from.startsWith("frozen/")) {
     // A frozen device carries its patches and scripts: many times the size
     // of the unfrozen one in patchers/, which only names them.
@@ -63,9 +131,6 @@ function problemsWith(root, from) {
   }
   if (from === "build/Cento Demo Project" && !fs.readdirSync(full).some((name) => name.endsWith(".als"))) {
     return `${from} has no Live set (.als) in it: save the demo set there with Collect All and Save`;
-  }
-  if (from === "build/Cento.app" && !fs.existsSync(path.join(full, "Contents", "MacOS"))) {
-    return `${from} isn't an app (no Contents/MacOS): build it with Build Collective / Application, as Application`;
   }
   return null;
 }
@@ -81,7 +146,7 @@ function plan(root, only = null) {
   return Object.entries(all)
     .filter(([kind]) => !only || kind === only)
     .map(([kind, entries]) => {
-      const title = kind === "live" ? "Live" : "Mac";
+      const title = kind === "live" ? "Live" : "Max";
       const missing = [];
       for (const [, from, how] of entries) {
         if (!fs.existsSync(path.join(root, from))) missing.push(`${from} is missing: ${how}`);
@@ -107,7 +172,13 @@ function build(root, product, out) {
   const stage = path.join(out, "stage");
   const dest = path.join(stage, product.folder);
   fs.rmSync(dest, { recursive: true, force: true });
-  for (const [to, from] of product.entries) copy(path.join(root, from), path.join(dest, to));
+  for (const [to, from] of product.entries) {
+    copy(path.join(root, from), path.join(dest, to));
+    if (to.endsWith(".html")) {
+      const page = path.join(dest, to);
+      fs.writeFileSync(page, inlinePictures(fs.readFileSync(page, "utf8"), path.dirname(path.join(root, from))));
+    }
+  }
   // Finder's .DS_Store files don't belong in a download.
   const strip = (dir) => {
     for (const name of fs.readdirSync(dir)) {
@@ -129,8 +200,8 @@ function main(argv) {
   const root = path.resolve(__dirname, "..");
   const at = argv.indexOf("--only");
   const only = at >= 0 ? argv[at + 1] : null;
-  if (only && only !== "live" && only !== "mac") {
-    console.error("--only takes live or mac");
+  if (only && only !== "live" && only !== "max") {
+    console.error("--only takes live or max");
     return 2;
   }
   const products = plan(root, only);
@@ -144,7 +215,7 @@ function main(argv) {
   }
   if (argv.includes("--check")) return failed ? 1 : 0;
   if (failed) {
-    console.error("Nothing was made. Fix the above, or make one zip with --only live or --only mac.");
+    console.error("Nothing was made. Fix the above, or make one zip with --only live or --only max.");
     return 1;
   }
   const out = path.join(root, "dist");
@@ -158,4 +229,4 @@ function main(argv) {
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));
 
-module.exports = { plan, build, contents };
+module.exports = { plan, build, contents, patchFiles, pictures };

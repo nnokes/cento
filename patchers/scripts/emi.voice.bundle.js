@@ -105,7 +105,7 @@ __emi_require.local = 1;
 // [v8] wrapper inside emi.voice, the device on each voice track in Live. Glue
 // only: the naming rule is in code/lib/emi-live.js, shared with clip writing,
 // so a track's clips and the notes its device receives always agree. Patches
-// load patchers/emi.voice.bundle.js.
+// load patchers/scripts/emi.voice.bundle.js.
 //
 // The track's name picks the voice: Soprano, Alto, Tenor or Bass (or S, A, T,
 // B; any case). Renaming the track switches the voice.

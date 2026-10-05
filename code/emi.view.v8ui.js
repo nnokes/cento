@@ -1,5 +1,5 @@
 // [v8ui] piano roll for the engine's current score, inside emi.view. Patches
-// load patchers/emi.view.bundle.js.
+// load patchers/scripts/emi.view.bundle.js.
 //
 // Notes are colored by source chorale for composed pieces (by voice for a
 // single chorale); thin lines mark bars, bright lines mark seams, where the
@@ -8,13 +8,15 @@
 // bottom shows each beat's SPEAC label (M6): S statement, P preparation,
 // E extension, A antecedent, C consequent. Gold bands mark signature blocks
 // (M7), named by their signature. Small carets above the lane mark parallel
-// fifths and octaves (M8): grey for Bach's own, red for new ones. With the
+// fifths and octaves (M8): gray for Bach's own, red for new ones. With the
 // mouse over a beat, a box at the top shows where it came from (M8: the
 // provenance view); over the SPEAC lane, a box explains that beat's letter. Dragging across the roll selects whole beats for
 // Emily to rate (M9): a blue band, sent to the engine as "select <from>
 // <to>" (ticks) while dragging; a click clears it ("select"). Bars are
-// numbered along the top and each C is labelled on the left, where there is
-// room. The same script draws the small roll in the panels and the large
+// numbered along the top and each C is labeled on the left, where there is
+// room. Along the top, each in a row of its own so none covers another: the
+// bar numbers, then the cadence triangles, then Magdalena's purple dots; the
+// notes start below them. The same script draws the small roll in the panels and the large
 // one in the pop-up window (emi.window); lettering grows with the size.
 // The engine sends one score as:
 //   clear <endTick> <lowPitch> <highPitch> <barTicks> [startTick] [beatTicks]
@@ -47,7 +49,7 @@ mgraphics.autofill = 0;
 // SPEAC lane colors: tension rising (P, A) warm, resolving (C) cool.
 const SPEAC_COLORS = { S: [0.55, 0.6, 0.7], P: [0.5, 0.8, 0.45], E: [0.35, 0.35, 0.38], A: [0.95, 0.5, 0.3], C: [0.4, 0.65, 0.95] };
 // What each letter means, shown with the mouse over the lane (emi-speac
-// labels each beat by its tension against its neighbours and its phrase).
+// labels each beat by its tension against its neighbors and its phrase).
 const SPEAC_HELP = {
   S: "S, statement: the beat states where the music is. Its tension sits near the phrase's average.",
   P: "P, preparation: the beat leads into the next one. Its tension is close to the next beat's, so it prepares that arrival.",
@@ -243,23 +245,26 @@ function paint() {
   g.rectangle(0, 0, width, height);
   g.fill();
   if (!shown || shown.end <= shown.start) {
-    g.set_source_rgba(0.6, 0.6, 0.6, 1);
+    g.set_source_rgba(0.82, 0.82, 0.82, 1);
     g.select_font_face("Arial");
     g.set_font_size(11);
     g.move_to(8, 18);
-    g.show_text("load a chorale or compose a piece");
+    g.show_text("Press update composition, then play.");
     return;
   }
 
-  // Lettering grows with the roll: the panels' roll is 169 px high, the
+  // Lettering grows with the roll: the panels' roll is 149 px high, the
   // window's about 430.
   const big = height >= 300;
   const lane = Math.max(12, Math.round(height / 20));
   const rollHeight = shown.labels.length ? height - lane : height;
   const rows = shown.high - shown.low + 3; // one empty row above and below
-  const rowHeight = rollHeight / rows;
+  // The rows along the top: bar numbers, cadence triangles, purple dots.
+  const marks = markRows(big);
+  const head = marks.head;
+  const rowHeight = (rollHeight - head) / rows;
   const x = (tick) => ((tick - shown.start) / (shown.end - shown.start)) * width;
-  const y = (pitch) => (shown.high + 1 - pitch) * rowHeight;
+  const y = (pitch) => head + (shown.high + 1 - pitch) * rowHeight;
 
   g.set_line_width(1);
   g.set_source_rgba(1, 1, 1, 0.08);
@@ -279,7 +284,7 @@ function paint() {
       g.set_source_rgba(1, 1, 1, 0.06);
       g.rectangle(0, y(pitch) + rowHeight - 1, width, 1);
       g.fill();
-      g.set_source_rgba(1, 1, 1, 0.35);
+      g.set_source_rgba(1, 1, 1, 0.65);
       g.move_to(2, y(pitch) + rowHeight - 2);
       g.show_text(NOTE_NAMES[pitch % 12] + (Math.floor(pitch / 12) - 1));
     }
@@ -289,9 +294,9 @@ function paint() {
   if (x(shown.barTicks) - x(0) >= 18) {
     g.select_font_face("Arial");
     g.set_font_size(big ? 12 : 8);
-    g.set_source_rgba(1, 1, 1, 0.45);
+    g.set_source_rgba(1, 1, 1, 0.7);
     for (let t = Math.ceil(shown.start / shown.barTicks) * shown.barTicks; t < shown.end; t += shown.barTicks) {
-      g.move_to(Math.round(x(t)) + 3, big ? 13 : 8);
+      g.move_to(Math.round(x(t)) + 3, marks.number);
       g.show_text(String(Math.floor(t / shown.barTicks) + 1));
     }
   }
@@ -304,7 +309,7 @@ function paint() {
     const left = x(start);
     const w = x(end) - left;
     g.set_source_rgba(GOLD[0], GOLD[1], GOLD[2], 0.13);
-    g.rectangle(left, 0, w, rollHeight);
+    g.rectangle(left, head, w, rollHeight - head);
     g.fill();
     g.set_source_rgba(GOLD[0], GOLD[1], GOLD[2], 0.8);
     g.rectangle(left, rollHeight - 2, w, 2);
@@ -312,7 +317,7 @@ function paint() {
     const words = name.split(" ");
     const text = w >= 70 ? name : w >= 32 ? words[0].charAt(0).toUpperCase() + " " + words.slice(1).join(" ") : "";
     if (text) {
-      g.move_to(left + 3, big ? 28 : 17);
+      g.move_to(left + 3, head + (big ? 14 : 10));
       g.show_text(text);
     }
   }
@@ -329,7 +334,7 @@ function paint() {
     else g.set_source_rgba(1, 0.6, 0.15, 0.9);
     for (const [tick, l] of shown.seams) {
       if (l !== level) continue;
-      g.move_to(Math.round(x(tick)) + 0.5, 0);
+      g.move_to(Math.round(x(tick)) + 0.5, head);
       g.line_to(Math.round(x(tick)) + 0.5, rollHeight);
     }
     g.stroke();
@@ -369,7 +374,7 @@ function paint() {
   for (const [tick] of shown.variants || []) {
     const r = big ? 5 : 3;
     g.set_source_rgba(0.75, 0.45, 1, 0.95);
-    g.ellipse(x(tick) + beatWidth / 2 - r, (big ? 18 : 11) - r, 2 * r, 2 * r);
+    g.ellipse(x(tick) + beatWidth / 2 - r, marks.dot - r, 2 * r, 2 * r);
     g.fill();
   }
 
@@ -392,14 +397,14 @@ function paint() {
     const [tick, text] = shown.sources[hovered];
     const left = x(tick);
     g.set_source_rgba(1, 1, 1, 0.12);
-    g.rectangle(left, 0, x(tick + beatOf(shown)) - left, rollHeight);
+    g.rectangle(left, head, x(tick + beatOf(shown)) - left, rollHeight - head);
     g.fill();
     g.select_font_face("Arial");
     const font = big ? 14 : 10;
     g.set_font_size(font);
     const boxWidth = Math.min(width - 4, text.length * font * 0.56 + 10);
     const boxLeft = Math.max(2, Math.min(left, width - boxWidth - 2));
-    const top = big ? 34 : 8;
+    const top = head + 2;
     g.set_source_rgba(0.05, 0.05, 0.06, 0.85);
     g.rectangle(boxLeft, top, boxWidth, font + 6);
     g.fill();
@@ -427,9 +432,9 @@ function paint() {
   g.set_source_rgba(1, 1, 1, 0.85);
   for (const tick of shown.cadences) {
     const cx = x(tick);
-    g.move_to(cx - 4, 0);
-    g.line_to(cx + 4, 0);
-    g.line_to(cx, 6);
+    g.move_to(cx - 4, marks.cadence);
+    g.line_to(cx + 4, marks.cadence);
+    g.line_to(cx, marks.cadence + 6);
     g.close_path();
     g.fill();
   }
@@ -447,6 +452,14 @@ function paint() {
     hover.drawHelp(g, text, { x0: left, x1: left + beatWidth, y0: rollHeight, y1: height }, width, height);
   }
 }
+
+// The rows along the top of the roll, so that no mark covers another: the
+// bar numbers' baseline, the cadence triangles' top, the purple dots'
+// center, and where the notes begin (head).
+function markRows(big) {
+  return big ? { number: 13, cadence: 17, dot: 30, head: 36 } : { number: 8, cadence: 10, dot: 20, head: 24 };
+}
+markRows.local = 1;
 
 function size() {
   if (mgraphics.size) return mgraphics.size;

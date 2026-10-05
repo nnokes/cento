@@ -39,7 +39,7 @@ for (const [name, expected] of Object.entries(FOLDERS)) {
   });
 }
 
-test("bundled corpus: the README's table and credit match, and the licence is there", () => {
+test("bundled corpus: the README's table and credit match, and the license is there", () => {
   const readme = fs.readFileSync(path.join(ROOT, "README.md"), "utf8");
   for (const [name, e] of Object.entries(FOLDERS)) {
     assert.ok(readme.includes(`| \`${name}\` | ${e.works} | ${e.meter.join("/")} | ${e.major} major, ${e.minor} minor |`), name);

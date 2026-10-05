@@ -1,5 +1,9 @@
 # Cento
 
+**Download:** [the latest release](https://github.com/nnokes/cento/releases/latest):
+Cento for Live (devices and a demo set) or Cento for Max (a patch for Max 9).
+Unzip it and open *Read me first*.
+
 A recombinant composer for **Max** and **Max for Live**, in the style of David
 Cope's *Experiments in Musical Intelligence* (EMI) and his later program
 *Emily Howell*. A *cento* is a poem made entirely of lines from other poems;
@@ -8,15 +12,20 @@ Cento makes music the same way, from beats of the works it has learned.
 It analyzes a corpus of music in one style (Bach chorales first) and writes
 new pieces in that style by recombining beats from different works. Each
 recombination must preserve the voice-leading, the structural function of the
-beat (SPEAC) and the composer's recurring signatures. An Emily-style layer then
-learns from your ratings, and its style drifts as you accept its music.
+beat (SPEAC) and the composer's recurring signatures. Then **Magdalena**, a layer
+in the spirit of Cope's Emily Howell, learns the user's taste from your ratings,
+and her style drifts as you keep her music in **Magdalena's notebook**. She is
+named after Anna Magdalena Bach, singer and copyist of Bach's music, whose
+notebooks collected the pieces she loved (**explain Magdalena**, in the pop-up
+window, says the same).
 
 This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
-**Status: M12 under way: free downloads for other people on GitHub's
-Releases page ([M12](docs/M12-checklist.md) checklist, [how](docs/releasing.md));
-first, your files move to your Cento folder in Documents. M11 code done;
+**Status: M12 passed: Cento ships as free downloads on GitHub's Releases
+page ([M12](docs/M12-checklist.md) checklist, [how](docs/releasing.md)):
+Cento for Live (frozen devices and a demo set) and Cento for Max (the patch,
+for Max 9), starting with v0.1.0, a beta. M11 code done;
 waiting on its Max and Live checks ([M11](docs/M11-checklist.md)
 checklist). M9 and M10 passed in both
 products ([M9](docs/M9-checklist.md), [M10](docs/M10-checklist.md)
@@ -43,16 +52,16 @@ across many chorales (soprano 3-2-1, bass 4-5-1), whole at their cadences,
 shown as gold bands in the piano roll. Since M8, pieces that quote a chorale
 for too long are set aside, the piano roll shows where each beat came from
 when you hover over it, a corpus may mix major and minor chorales, 3/4
-chorales work, and the **A/B** button writes a blind listening test (Bach or
-not?) as a web page. Since M9, Emily learns your taste: **like** and
+chorales work, and the **listening test** (Max version: **more features…**)
+writes a blind A/B test (Bach or not?) as a web page. Since M9, Magdalena learns your taste: **like** and
 **dislike** rate the piece, the stream phrase playing or the beats you drag
 across in the piano roll. Later pieces lean toward the features you liked
 (high melodies, 16th notes, modulations, ...), within the same rules, and
-**temp** sets how much chance still plays. The **window** button opens a
-large piano roll with Emily's taste in full, in both products. There you can
+**temperature** sets how much chance still plays. The **window** button (**↗**, at the top right) opens a
+large piano roll with Magdalena's taste in full, in both products. There you can
 also pin any feature's weight with a slider, set her taste's strength, and
-store and recall whole tastes as files. Since M10, Emily varies pieces with
-notes Bach never wrote (**novelty**), **accept** keeps what you like as music
+store and recall whole tastes as files. Since M10, Magdalena varies pieces with
+notes Bach never wrote (**novelty**), **keep** keeps what you like as music
 of her own that later pieces draw on (**mix**), and snapshots let you roll
 her back to any earlier state. Since M11, the **corpora** window lists folders
 of chorales, each switched on or off: composing uses every folder that is on,
@@ -61,7 +70,11 @@ as one corpus (major and minor, or a 3/4 folder alone). Cento comes with
 licensed), so it composes straight away; music21's are an optional extra
 ([step by step](#more-chorales-from-music21)). Every control explains itself when you hover
 over it (a tooltip in Max, the Info View in Live); [docs/controls.md](docs/controls.md)
-lists them all. The full plan
+lists them all. The panels are laid out in the order you use them (since the M12
+redesign), under a row naming each section: **update composition** first (the
+pop-up window has one too), every button in
+Live's own look, and (in the Max version) the listening test and less-used tools
+in a **more features** window. The full plan
 and milestones are in [PLAN.md](PLAN.md).
 
 ## Two products, one engine
@@ -95,14 +108,14 @@ between them is in two thin adapters, `emi.host.max` and `emi.host.live`.
 | **Python for music21** (optional) | `<repo>/.venv/` | Made in [step 4](#more-chorales-from-music21) below. About 300 MB, git-ignored, delete it to uninstall |
 | **music21's chorales** (optional) | `~/Documents/cento/corpus/`, `corpus-both/`, `corpus-minor/`, `corpus-3-4/` | Written by `tools/export-chorales.py` ([step 5](#more-chorales-from-music21)); outside the repo, because they're for your own use only |
 | **Exported pieces** | `~/Documents/cento/out/` | Where to save with **export midi** (a `.mid`, and for a composed piece a `.json` of where each beat came from); outside the repo |
-| **Listening tests** | anywhere, e.g. `~/Documents/cento/` | Written by the **A/B** button: one web page, opened in a browser |
-| **Emily's taste** (M9) | `~/Documents/cento/cento.taste.json` | Your ratings, pins and strength, shared by both products. **forget** and **recall taste** set the old one aside as `cento.taste.backup.json`; delete both to start fresh |
+| **Listening tests** | anywhere, e.g. `~/Documents/cento/` | Written by **listening test…** (Max version, in **more features…**): one web page, opened in a browser |
+| **Magdalena's taste** (M9) | `~/Documents/cento/cento.taste.json` | Your ratings, pins and strength, shared by both products. **forget** and **recall taste** set the old one aside as `cento.taste.backup.json`; delete both to start fresh |
 | **Stored tastes** (optional) | e.g. `~/Documents/cento/emily/` | Written by **store taste** in the pop-up window; read back by **recall taste** |
-| **Emily's own music and snapshots** (M10) | `~/Documents/cento/cento.emily.json`, `cento.snapshots.json` | Every piece or phrase you **accept**, and her last 30 snapshots; shared by both products |
+| **Magdalena's notebook and snapshots** (M10) | `~/Documents/cento/cento.emily.json`, `cento.snapshots.json` | Every piece or phrase you **keep**, and her last 30 snapshots (the files keep their names from before she was called Magdalena); shared by both products |
 | **Live's search path entry** | `<repo>/patchers/` | Added once in *Options → File Preferences* |
 | **Remembered settings** | `~/Documents/cento/cento.settings.json` | The corpus window's folders (which are on), seed and other settings; written by the patches. Delete it to start fresh |
 
-**Your Cento folder** (M12): the settings and Emily's files live in
+**Your Cento folder** (M12): the settings and Magdalena's files live in
 `~/Documents/cento` (any case: `Cento` is the same folder on a Mac). Cento
 uses it if it's there, so make it in Finder if you don't have it yet. The
 first time Cento finds it, it copies the files it kept in `patchers/` until
@@ -132,14 +145,21 @@ Cento's own chorales are already in the repo (`corpus/`). For music21's, see
 Tip: in Terminal, type `cd ` (with a space), then drag the repo folder from
 Finder into the window to paste its exact path.
 
-Everything Max loads (patches, devices and the generated script bundles) is
-in `patchers/`.
+Everything Max loads is in `patchers/`: on top, what you open
+(`cento.maxpat`, `cento.brain.amxd`, `cento.voice.amxd`); in
+`patchers/parts/`, the patches they're made of; in `patchers/scripts/`, the
+generated script bundles. Max doesn't look in subfolders by itself, so both
+Max and Live need `patchers/` on their search path once, **with Subfolders
+ticked**:
 
-- **Max version:** open `patchers/cento.maxpat`. Nothing else to set up.
-- **Live version:** Live's Max needs `patchers/` on its search path, once:
+- **Max version:** in Max, choose *Options → File Preferences*, click **+**,
+  then *Choose* and select the repo's `patchers` folder. Make sure the
+  **Subfolders** box in its row is ticked. Then open `patchers/cento.maxpat`.
+- **Live version:** Live's Max has its own File Preferences:
   1. In Live, drop a *Max MIDI Effect* on a track and click *Edit*.
   2. In that editor, choose *Options → File Preferences*, click **+**, then
-     *Choose* and select the repo's `patchers` folder.
+     *Choose* and select the repo's `patchers` folder. Tick **Subfolders** in
+     its row.
   3. Restart Live. In Live's browser, add the repo folder under *Places*.
      Drag `patchers/cento.brain.amxd` onto one MIDI track, and
      `patchers/cento.voice.amxd` onto four MIDI tracks named **Soprano**,
@@ -152,7 +172,8 @@ in `patchers/`.
 How Max finds files (learned the hard way in M0):
 
 - Standalone Max searches the folder of the patch it opens, plus the search
-  path.
+  path; not the folder's subfolders, unless the search path entry has
+  **Subfolders** ticked.
 - A Max for Live device is a *project*: it finds files that belong to its
   project, plus the search path, but **not** other files in its own folder.
 - `~/Documents/Max 9/Packages/` is on the search path for Max and for Live.
@@ -249,13 +270,17 @@ Finder, **⌘ Shift .** shows hidden folders), and the folders you exported in
 ## Repository layout
 
 ```
-patchers/     everything Max loads, in one folder:
-              cento.maxpat (Max version), cento.brain.amxd + cento.voice.amxd
-              (Live version), emi.engine, emi.host.max, emi.host.live,
-              emi.panel (the shared controls), emily.panel (Emily's ratings),
-              emi.view (piano roll), emi.window (the pop-up window),
-              emi.corpora (the corpus window), and the generated
-              *.bundle.js scripts (npm run build; committed)
+patchers/     what you open: cento.maxpat (Max version), cento.brain.amxd +
+              cento.voice.amxd (Live version)
+  parts/      the patches they're made of: emi.engine, emi.host.max,
+              emi.host.live, emi.panel (the shared controls), emily.panel
+              (Magdalena's ratings), emi.view (piano roll), emi.window (the
+              pop-up window), emi.corpora (the corpus window),
+              emi.instruments (the Max version's plug-in instruments),
+              emi.extras (the Max version's more features: listening
+              test, load a chorale, test phrase), emi.magdalena (about
+              Magdalena)
+  scripts/    the generated *.bundle.js scripts (npm run build; committed)
 code/         [v8] wrappers: glue between Max messages and the engine
               (emi.core.v8.js), and the piano roll (emi.view.v8ui.js)
 code/lib/     the engine: plain JavaScript, no Max APIs, tested in Node
@@ -271,7 +296,7 @@ docs/         milestone checklists; controls.md: what every control does;
               releasing.md: how to publish a version for others
 ```
 
-Your working data (corpus, settings, Emily's taste and music, generated
+Your working data (corpus, settings, Magdalena's taste and notebook, generated
 music) lives in `~/Documents/cento/`, outside the repository.
 
 ## Development
@@ -279,7 +304,7 @@ music) lives in `~/Documents/cento/`, outside the repository.
 - Edit the engine in `code/lib/` and the wrappers in `code/`. Keep
   `npm run build:watch` running while Max is open: the `[v8]` objects reload
   their bundles automatically.
-- Never edit `patchers/*.bundle.js` by hand. CI fails if the bundles don't
+- Never edit `patchers/scripts/*.bundle.js` by hand. CI fails if the bundles don't
   match `code/`.
 - The patches and devices in `patchers/` (and `docs/controls.md`) are written
   by `tools/maxgen.py`, the master copy: change a patch there and run

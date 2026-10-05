@@ -138,18 +138,89 @@
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "add folder",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Add Folder",
+					"mode": 0,
+					"text": "add folder",
+					"texton": "add folder",
+					"fontsize": 10.0,
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"activebgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Add Folder",
+							"parameter_shortname": "add folder",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						20.0,
 						460.0,
-						86.0,
-						22.0
+						90.0,
+						24.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
@@ -159,28 +230,9 @@
 						24.0
 					],
 					"id": "obj-6",
-					"hint": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/cento/corpus-both). It joins the list, switched on.",
-					"annotation": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/cento/corpus-both). It joins the list, switched on.",
+					"hint": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/Cento/corpus-both). It joins the list, switched on.",
+					"annotation": "Choose a folder of chorales (MIDI files, as tools/export-chorales.py writes them, e.g. Documents/Cento/corpus-both). It joins the list, switched on.",
 					"annotation_name": "add folder"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "route add",
-					"numinlets": 2,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"patching_rect": [
-						20.0,
-						490.0,
-						80.0,
-						22.0
-					],
-					"id": "obj-7"
 				}
 			},
 			{
@@ -194,11 +246,11 @@
 					],
 					"patching_rect": [
 						20.0,
-						520.0,
+						490.0,
 						35.0,
 						22.0
 					],
-					"id": "obj-8"
+					"id": "obj-7"
 				}
 			},
 			{
@@ -213,11 +265,11 @@
 					],
 					"patching_rect": [
 						20.0,
-						550.0,
+						520.0,
 						110.0,
 						22.0
 					],
-					"id": "obj-9"
+					"id": "obj-8"
 				}
 			},
 			{
@@ -231,27 +283,98 @@
 					],
 					"patching_rect": [
 						20.0,
-						580.0,
+						550.0,
 						120.0,
 						22.0
 					],
-					"id": "obj-10"
+					"id": "obj-9"
 				}
 			},
 			{
 				"box": {
-					"maxclass": "message",
-					"text": "rescan",
-					"numinlets": 2,
-					"numoutlets": 1,
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
+					"parameter_enable": 1,
+					"varname": "Rescan",
+					"mode": 0,
+					"text": "rescan",
+					"texton": "rescan",
+					"fontsize": 10.0,
+					"bgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"activebgcolor": [
+						0.8,
+						0.85,
+						0.93,
+						1.0
+					],
+					"bgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"activebgoncolor": [
+						0.6,
+						0.69,
+						0.84,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Rescan",
+							"parameter_shortname": "rescan",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 0,
+							"parameter_invisible": 2
+						}
+					},
 					"patching_rect": [
 						160.0,
 						460.0,
 						60.0,
-						22.0
+						24.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
@@ -260,7 +383,7 @@
 						60.0,
 						24.0
 					],
-					"id": "obj-11",
+					"id": "obj-10",
 					"hint": "Read every folder again, after adding or removing chorales in one. (Folders are read once, when first switched on.)",
 					"annotation": "Read every folder again, after adding or removing chorales in one. (Folders are read once, when first switched on.)",
 					"annotation_name": "rescan"
@@ -281,7 +404,7 @@
 						35.0,
 						22.0
 					],
-					"id": "obj-12"
+					"id": "obj-11"
 				}
 			},
 			{
@@ -296,34 +419,33 @@
 					"patching_rect": [
 						160.0,
 						520.0,
-						90.0,
+						100.0,
 						22.0
 					],
-					"id": "obj-13"
+					"id": "obj-12"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "Add a folder of chorales (MIDI files), then switch folders on or off. Hover over anything for what it does.",
+					"text": "Add a folder of chorales (MIDI files), then switch folders on or off.",
 					"numinlets": 1,
 					"numoutlets": 0,
-					"linecount": 2,
 					"fontsize": 10.0,
 					"patching_rect": [
 						300.0,
 						460.0,
-						420.0,
-						30.0
+						594.0,
+						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						176.0,
-						348.0,
+						352.0,
 						594.0,
-						30.0
+						20.0
 					],
-					"id": "obj-14"
+					"id": "obj-13"
 				}
 			},
 			{
@@ -341,7 +463,7 @@
 						70.0,
 						22.0
 					],
-					"id": "obj-15"
+					"id": "obj-14"
 				}
 			},
 			{
@@ -356,10 +478,10 @@
 					"patching_rect": [
 						500.0,
 						55.0,
-						150.0,
+						158.0,
 						22.0
 					],
-					"id": "obj-16"
+					"id": "obj-15"
 				}
 			},
 			{
@@ -378,7 +500,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-17"
+					"id": "obj-16"
 				}
 			}
 		],
@@ -462,7 +584,7 @@
 						0
 					],
 					"destination": [
-						"obj-10",
+						"obj-3",
 						0
 					]
 				}
@@ -474,7 +596,7 @@
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-11",
 						0
 					]
 				}
@@ -498,7 +620,7 @@
 						0
 					],
 					"destination": [
-						"obj-13",
+						"obj-3",
 						0
 					]
 				}
@@ -506,11 +628,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-13",
+						"obj-14",
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-15",
 						0
 					]
 				}
@@ -523,18 +645,6 @@
 					],
 					"destination": [
 						"obj-16",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-16",
-						0
-					],
-					"destination": [
-						"obj-17",
 						0
 					]
 				}

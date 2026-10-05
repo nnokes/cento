@@ -3,7 +3,7 @@
 // on a pretend disk (a map of folders to the names in them).
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { find, homeOf, volumeOf } = require("emi-userfolder");
+const { find, homeOf, volumeOf, listNames } = require("emi-userfolder");
 
 const disk = (folders) => (path) => folders[path] || [];
 // Paths as Max writes them on a Mac. Built from pieces, so that the check
@@ -69,4 +69,42 @@ test("user folder: a plain path (no volume, no Max) never scans /Users", () => {
   const asked = [];
   find({ patchFolder: "/tmp/emi-1/patchers", appPath: null, list: (p) => (asked.push(p), []) });
   assert.deepEqual(asked, ["~/Documents"]);
+});
+
+test("user folder: says where it looked, for the Max window", () => {
+  const looked = [];
+  const list = disk({ [ANN + "/Documents"]: ["GitHub", "Max 9"] });
+  assert.equal(find({ patchFolder: ANN + "/Documents/GitHub/cento/patchers", appPath: null, list, looked }), null);
+  assert.deepEqual(looked, [ANN + "/Documents (2 names)", "~/Documents (0 names)"]);
+});
+
+test("user folder: Max's Folder lists files unless asked for folders, so both are asked for", () => {
+  // As Max's Folder seemed to behave on a Mac: files only, unless its
+  // typelist is ["fold"].
+  global.Folder = class {
+    constructor(path) {
+      this.path = path;
+      this.typelist = [];
+    }
+    reset() {
+      this.names = this.path !== "Docs" ? [] : this.typelist.includes("fold") ? ["Cento", "GitHub"] : ["notes.txt"];
+      this.i = 0;
+    }
+    get end() {
+      return this.i >= this.names.length;
+    }
+    get filename() {
+      return this.names[this.i];
+    }
+    next() {
+      this.i++;
+    }
+    close() {}
+  };
+  try {
+    assert.deepEqual(listNames("Docs"), ["notes.txt", "Cento", "GitHub"]);
+    assert.deepEqual(listNames("nowhere"), []);
+  } finally {
+    delete global.Folder;
+  }
 });

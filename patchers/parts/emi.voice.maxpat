@@ -55,7 +55,7 @@
 					"patching_rect": [
 						20.0,
 						50.0,
-						80.0,
+						100.0,
 						20.0
 					],
 					"presentation": 1,
@@ -312,10 +312,11 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 4,
+					"presentation_linecount": 4,
 					"patching_rect": [
 						460.0,
 						395.0,
-						110.0,
+						108.0,
 						62.0
 					],
 					"presentation": 1,

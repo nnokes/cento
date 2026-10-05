@@ -154,7 +154,8 @@ Emily's memory. Taste Emily learns in one product carries over to the other.
    `live.numbox` / `live.text` parameters. Each host adapter keeps only its
    own controls: 232 px in Max (transport, output, `[vst~]`), 170 px in Live
    (clips, voice routing). Both show the piano roll on the right; the device
-   is 846 px wide.
+   is 846 px wide. (Since the M12 redesign: 192 px in Max, 130 in Live, and
+   Magdalena's panel 170; the device is 884 px wide, the Max strip 946.)
    The engine keeps the settings file. It writes nothing until `startup` has
    read the file, so values that controls send while a patch loads can't
    overwrite it. `startup all` (Max) restores every setting; `startup corpus`
@@ -167,12 +168,17 @@ Emily's memory. Taste Emily learns in one product carries over to the other.
 
 ### Shipping the Max version
 
-*Planned for M12* (§8, "M12 in detail"): the app, in a zip on GitHub
-Releases, unsigned at first.
+*Decided in M12* (§8, "M12 in detail"): the patch, in a zip on GitHub
+Releases (Cento for Max); the app waits for later.
 
-- **As a patch**: anyone with Max 9 clones the repo and opens
-  `patchers/cento.maxpat`. No search-path setup is needed.
-- **As a macOS app**: Max can build a patch into a standalone application
+- **As a patch** (what ships): anyone with Max 9 (free to download; it runs
+  patches without a licence) opens `cento.maxpat` from the download's
+  `Cento Patch` folder, which holds every patch and script it uses, side by
+  side. Max finds them in the patch's own folder: no search-path setup, no
+  build step in Max, and no Gatekeeper warning (a patch is a document; Max
+  is signed). From a clone, `patchers/` goes on the search path with
+  Subfolders ticked.
+- **As a macOS app** (later, if it's wanted): Max can build a patch into a standalone application
   that runs **without Max installed**. Include the starter database; the
   scripts are already single-file bundles (§5.4). To share the app beyond your own Mac, it needs code signing
   and notarization; otherwise macOS Gatekeeper will block it.
@@ -1397,14 +1403,18 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M12 under way, shipping Cento to others for free (below;
-[checklist](docs/M12-checklist.md)): the user folder is built and waits on
-its Mac checks. M11 code done; waiting on its Max and Live checks
+**Current status: M12 passed ([checklist](docs/M12-checklist.md)): Cento
+ships to others for free, as two zips on GitHub's Releases page: Cento for
+Live (frozen devices and a demo set) and Cento for Max (the patch, for Max
+9; the app waits for later). Every check passed on the Mac, from the new
+layout and the Cento folder to the freeze test from M0 and a newcomer
+following only the read-me; v0.1.0 (a pre-release) is published from
+`main` ([releasing.md](docs/releasing.md)). M11 code done; waiting on its Max and Live checks
 ([checklist](docs/M11-checklist.md)). The second style (Palestrina, now
 M13) is on hold. M9 and
 M10 passed in both products; M8 passed in the Max version and waits on its Live checks (its third
 listening test was taken off the checklist) ([checklist](docs/M8-checklist.md)).** M0 passed ([results](docs/M0-spikes.md));
-its freeze test is deferred to M12 (shipping). M1 passed in both products
+its freeze test, deferred to M12 (shipping), passed there too. M1 passed in both products
 ([results](docs/M1-checklist.md)): chorales load, play in C or their own key,
 and write as Live clips, and 20 chorales round-trip with identical notes.
 M2 passed in both products ([results](docs/M2-checklist.md)): new chorales
@@ -1453,7 +1463,7 @@ playhead, the false-start fix and hover help on every control.
 | **M9** | **Emily Tier 1, taste**: rating buttons (mappable), association weights, temperature | After about 10 rating sessions, output measurably shifts toward the liked features |
 | **M10** | **Emily Tier 2, memory and drift**: accept-to-database, variation operators, mix and novelty, snapshots | Accepted variants appear in later output; a rollback restores an earlier taste exactly |
 | **M11** | **Corpora**: a corpus window in both products: folders of chorales, each switched on or off (and **only**, **remove**, **add folder**, **rescan**), combined into one corpus: each chorale once, one meter, in file-name order; remembered between sessions | Switching folders on and off changes what pieces are made from, in both products; two folders compose exactly as one folder holding the same chorales |
-| **M12** | **Ship to others (free)**: two downloads on GitHub Releases, built on your Mac. **Cento for Live**: frozen `cento.brain` + `cento.voice`, a demo set and the starter corpus. **Cento for Mac**: a standalone app (runs without Max), unsigned at first. Each user's files in a user folder, not `patchers/`; a packaging script; a one-page read-me; a release guide ([docs/releasing.md](docs/releasing.md)). Details below. | Someone with a Mac and Live 12 (or no Max at all, for the app) downloads a zip, follows only the read-me, and hears a piece within five minutes, without git, Python, Node or `tools/`; tried on a clean machine; the freeze test deferred from M0 (d) passes. |
+| **M12** | **Ship to others (free)**: two downloads on GitHub Releases, built on your Mac. **Cento for Live**: frozen `cento.brain` + `cento.voice`, a demo set and the starter corpus. **Cento for Max**: the patch and its parts in one folder, for Max 9 (an app was planned; it waits for later). Each user's files in a user folder, not `patchers/`; a packaging script; a one-page read-me; a release guide ([docs/releasing.md](docs/releasing.md)). Details below. | Someone with a Mac and Live 12 (or Max 9, free) downloads a zip, follows only the read-me, and hears a piece within five minutes, without git, Python, Node or `tools/`; tried on a clean machine; the freeze test deferred from M0 (d) passes. |
 | **M13** | **A second style: Palestrina** *(on hold)*: a style profile per folder (voices, beat unit, modes, how cadences are found); export of music21's Palestrina masses; cadences found from their formulas instead of fermatas; modal keys; SPEAC, signatures and quality checks re-tuned; Bach and Palestrina folders on together | Palestrina pieces keep the style's rules (ranges, dissonance prepared and resolved, cadences where the formulas fall), a blind A/B test against real Palestrina, and with both styles on, the joins between them are reported |
 | **M14** | **Stretch**: Emily Tier 3a (text), Live 12 MIDI Tool (§5.5), Alice-style continuation from a MIDI keyboard | — |
 
@@ -1466,10 +1476,14 @@ developers). Nobody needs git, Python, Node, or anything in `tools/`.
 | Download | Contents | What they do | What they need |
 |---|---|---|---|
 | **Cento for Live** | frozen `cento.brain.amxd` and `cento.voice.amxd`; a demo set (five tracks: the brain, and Soprano, Alto, Tenor and Bass with Live's own instruments and **Play through voices** on); the `Cento` folder (starter corpus); `Read me first`; `LICENSE` | unzip; put the `Cento` folder in Documents; open the demo set; press Play | Live 12 Suite (or Standard + Max for Live), with Max 9 (12.2.1 onward bundles it) |
-| **Cento for Mac** | `Cento.app` (built from `cento.maxpat`; it plays through the Mac's built-in AU DLS Synth); the `Cento` folder; `Read me first`; `LICENSE` | unzip; move the app to Applications and the folder to Documents; open the app (the first time: right-click, Open); press **play** | macOS; no Max |
+| **Cento for Max** | `Cento Patch/`: `cento.maxpat` and every patch and script it uses (it plays through the Mac's built-in AU DLS Synth); the `Cento` folder; `Read me first`; `LICENSE` | unzip; put the folder in Documents; install Max 9 if needed; double-click `cento.maxpat`; press **play** | Max 9 (free; no licence needed to run Cento) |
 
-What isn't shipped: `tools/`, `tests/`, `code/` (frozen devices and the app
-carry the bundles), `docs/`, `PLAN.md`, `.github/`, `package.json`, and your
+(The plan was **Cento for Mac**, a standalone app; in M12 it became the
+patch, which needs Max 9 but no build step and no Gatekeeper steps. The app
+can come later.)
+
+What isn't shipped: `tools/`, `tests/`, `code/` (frozen devices and the
+patch folder carry the bundles), `docs/`, `PLAN.md`, `.github/`, `package.json`, and your
 own settings and Emily files.
 
 **The work, in order.**
@@ -1480,8 +1494,8 @@ own settings and Emily files.
    carries `corpus/` with its README and licence, and the engine finds it
    in the user folder (item 2) as well as next to `patchers/`.
 2. **A user folder.** Settings, Emily's taste, her works and snapshots live
-   in `patchers/` today; a frozen device or an app has no writable
-   `patchers/`. They move to `~/Documents/Cento/`. Max's `File` can't make
+   in `patchers/` today; a frozen device or a downloaded patch has no
+   repository `patchers/`. They move to `~/Documents/Cento/`. Max's `File` can't make
    folders, so the folder comes in the zip (the read-me says where to put
    it); with no folder there, the status line says so. Files in
    `patchers/` from development carry over once, as the `ml_midi` files
@@ -1504,30 +1518,37 @@ own settings and Emily files.
    Max, copy them to a folder with nothing else, load them in a new set
    with the editor closed. Then the demo set, saved with *Collect All and
    Save*.
-4. **The app**: *File > Build Collective / Application* in Max, from
-   `cento.maxpat`. Unsigned at first: the read-me explains right-click, Open.
-   Signing and notarization (Apple Developer Program, $99 a year) can come
-   later, so it opens with no warning.
+4. **The Max version**: *Decided:* the patch, not an app (for now). The
+   packaging script copies `cento.maxpat` and every patch and script it
+   uses (found by following its references) into `Cento Patch/`; nothing is
+   built in Max. (The app was to come from *File > Build Collective /
+   Application*, unsigned at first; it, and signing and notarization, can
+   come later.)
 5. **A packaging script** (`npm run package`, on your Mac): makes
-   `dist/Cento-for-Live-vX.Y.Z.zip` and `dist/Cento-for-Mac-vX.Y.Z.zip` from
-   the frozen devices, the demo set, the app, the `Cento` folder, the read-me
-   and the licence. `dist/` is git-ignored. CI can't do steps 3 and 4 (they
-   need Max on a Mac); everything else it can check.
+   `dist/Cento-for-Live-vX.Y.Z.zip` and `dist/Cento-for-Max-vX.Y.Z.zip` from
+   the frozen devices, the demo set, the patch, the `Cento` folder, the
+   read-me and the licence. `dist/` is git-ignored. CI can't do step 3 (it
+   needs Live on a Mac); everything else it can check.
    *Built* (`tools/package.js`): it reads the builds from `frozen/` and
-   `build/` (`build/Cento Demo Project`, `build/Cento.app`), makes the Cento
+   `build/` (`build/Cento Demo Project`), the Max version from `patchers/`
+   (flattened into `Cento Patch/`), makes the Cento
    folder from the repository (`corpus/` and `release/About this
    folder.txt`, never your own), and says what's missing and how to make
    it; a device hardly bigger than the unfrozen one isn't frozen. On a Mac
-   it copies and zips with `ditto`, which keeps the app's links and
-   attributes. `npm run package -- --check` only checks; `--only live|mac`
-   makes one zip. Tested with stand-ins (`tests/package.test.js`).
+   it copies and zips with `ditto`, which keeps links and attributes.
+   `npm run package -- --check` only checks; `--only live|max` makes one
+   zip. Tested with stand-ins (`tests/package.test.js`).
 6. **The read-me** (one page, for people who aren't developers): what Cento
    is, what to install, first piece in five steps, where files go, how to
    remove it, known issues, and that it's independent of David Cope.
    *Written*: `release/Read me first.html` (a web page: it opens in any
-   browser, light or dark), with the first-open steps for an unsigned app on
-   macOS 15 and later (Privacy & Security, Open Anyway) and earlier
-   (right-click, Open).
+   browser, light or dark). For the Max version: install Max 9 (no licence
+   needed), open `Cento Patch/cento.maxpat`. *Reworked before shipping:* a
+   short tutorial with screenshots (`release/images/`: the device, the
+   pop-up window, the corpora window), numbered markers on them, and
+   "Reading the piano roll". `npm run package` puts the pictures inside the
+   page (data: URLs), so the read-me in a zip is one file. The read-me and
+   the hover text use American spelling (color, favorite...).
 7. **A clean-machine test**: a fresh user account on your Mac (or a friend's
    Mac), following only the read-me.
 8. **The release**: tag `main` (`v0.1.0`, marked as a pre-release: a beta
@@ -1535,7 +1556,72 @@ own settings and Emily files.
    link at the top of the README. Every later release follows
    [docs/releasing.md](docs/releasing.md).
 
-**Later, if it's wanted**: a signed app; a Live Pack (one file that installs
+**The GUI redesign** (before the checks, so the frozen devices and the app
+carry it): the panels follow the order you use them: **compose** first (the
+one strong blue button), then which chorales and how long, then streams. The
+less-used tools (load a chorale; the test phrase; stop and clear) are in a
+**tools** menu, with the **original key** switch for loaded chorales beside it, and the Max version's plug-in instruments
+in a window of their own (**set up…**). Plain names replace shorthand
+(chorale form, signatures, transpose, listening test…, keep,
+taste report, write clips, test clips); Live's parameters keep their
+names, so mappings and automation in saved sets still work. Grey headings
+(PLAY, COMPOSE, MAGDALENA, CLIPS AND VOICES), each section on a solid colour
+of its own (a [panel] behind it: green, blue, brown) with light text, one look
+per kind of control, a hint
+in the empty piano roll, and a narrower roll (260 px; the pop-up window has the
+large one). `tests/patches.test.js` checks that nothing overlaps or leaves its
+panel.
+
+**Emily becomes Magdalena** (on screen only): the taste layer is shown as
+**Magdalena**, with "user's taste" beside her panel's heading, so it no longer
+reads as David Cope's Emily Howell. The music you keep is **Magdalena's
+notebook**, after Anna Magdalena Bach's notebooks of favourite pieces; the
+pop-up window's **explain Magdalena** opens a page on who she is and what she
+does (`emi.magdalena`). Inside, nothing is renamed: the engine's modules
+(`emily-*`), the files (`cento.emily.json`), the messages to the engine and
+Live's parameters keep their names, so saved work and mappings carry on.
+
+**Live's look, a row of names, more features** (after a look on the Mac):
+every button is a `live.text` in button mode, like the switches (live.*
+objects are always parameters: **compose**, **next**, **like**, **dislike**,
+**keep** and **write clips** can be mapped in Live; the other buttons are
+hidden from mapping and automation, `parameter_invisible` 2). A dark row
+along the top of the strip names each section, centred above it (PLAY or
+CLIPS AND VOICES, COMPOSE, MAGDALENA, PIANO ROLL), so each section is 149 px
+high below it; "user's taste" sits just under Magdalena's name. The
+listening test and the less-used tools (load a chorale with its **original
+key** switch, the test phrase, stop and clear) left the shared panel for the
+Max version's **more features…** window (`emi.extras`); Live has none of
+them. The panel's taste report button went (its one-line report stays; the
+full report is in the pop-up window), the "rest the mouse" lines went (the
+hover text itself stays), the temperature slider got the height its name
+and value need, and the piano roll's bar numbers, cadence triangles and
+Magdalena's dots each have a row of their own above the notes. The window
+button is a square **↗** at the right end of the row of names (no room there
+for a word), in the top patch rather than Magdalena's panel. The left panel
+(PLAY, or CLIPS AND VOICES) gave Magdalena's panel 40 px (192 and 130 px
+now, Magdalena 170), so the strip is as wide as before; in Live, "all voices
+on this track" is now "all voices here" to fit. A comment on show wraps as
+wide as its box in the patching view (and shows presentation_linecount
+lines), so the generator makes both match what's shown: the Live panel's
+voice-tracks note was cut off before; a test now checks every comment fits.
+**compose** is shown as **update composition** (Live's parameter keeps its name,
+*Compose*), and the pop-up window's **reload seed**, which did the same, became
+an **update composition** of its own, in the same blue.
+
+**Subfolders**: `patchers/` holds only what you open (`cento.maxpat`,
+`cento.brain.amxd`, `cento.voice.amxd`); the patches they're made of are in
+`patchers/parts/` and the script bundles in `patchers/scripts/`. Max doesn't
+search a patch's subfolders by itself, so Max and Live both have `patchers` on
+their search path with **Subfolders** ticked (a development step only: frozen
+devices carry their files inside, and the downloaded patch has its parts
+beside it). The engine's patch is in
+`parts/`, so it takes `parts/`'s parent as the patchers folder. Cento's own
+chorales stay in `corpus/` at the top of the repository: they're data, which
+the packaging script copies into the download's Cento folder.
+
+**Later, if it's wanted**: a standalone app for the Max version (signed and
+notarized, so it opens with no warning); a Live Pack (one file that installs
 the devices and the demo set into Live's browser); Windows (Max and Live run
 there, but nothing has been tried); Max's Package Manager.
 

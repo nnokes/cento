@@ -1,6 +1,6 @@
 // [v8] wrapper: the engine's core script, inside emi.engine. Glue only: the
 // logic is in code/lib (the engine) and code/max (Max-only file and Live
-// access). Patches load patchers/emi.core.bundle.js.
+// access). Patches load patchers/scripts/emi.core.bundle.js.
 //
 // It holds the *current score* (a loaded chorale, a composed piece, a stream
 // of phrases or the test phrase), queues it for the grid player, draws it in
@@ -13,14 +13,14 @@
 //
 // Quality (M8): each composed piece's quotation measures and parallel fifths
 // and octaves (emi-quality) go to the Max window; parallels are marked in the
-// piano roll (grey: Bach's own, red: new).
+// piano roll (gray: Bach's own, red: new).
 //
 // Emily (M9, emily-assoc): "like" and "dislike" rate what you hear: the
 // beats selected in the piano roll (drag across it; a click clears), or
 // else the stream phrase playing (the one before, in its first 1.5 s), or
 // else the whole piece. Emily learns which musical features you like and
 // composing prefers them among the choices the rules allow; "temperature"
-// sets how much chance still plays (0: Emily's favourite choices; 1: as
+// sets how much chance still plays (0: Emily's favorite choices; 1: as
 // before M9; up to 3: more adventurous). Her taste is kept in
 // cento.taste.json next to the settings file, and fades a little at each
 // startup after a session with ratings. Each piece composed with a taste
@@ -427,7 +427,7 @@ function exportmidi(path) {
 
 function abtest(path) {
   attempt(() => {
-    if (!db) throw new Error("load a corpus first");
+    if (!db) throw new Error("no corpus yet: click corpora and switch a folder on");
     const target = /\.html?$/i.test(String(path)) ? String(path) : path + ".html";
     const test = abtests.build(db, { seed: currentSeed, signatures: useSignatures });
     if (!test.pairs.length) throw new Error("no chorale's form could be filled for the test; try more chorales");
@@ -438,7 +438,7 @@ function abtest(path) {
 
 function writeclips() {
   attempt(() => {
-    if (!current) throw new Error("load a chorale or compose a piece first");
+    if (!current) throw new Error("compose a piece first");
     outlet(0, "status", ...clips.writeScore(current.score, current.name).split(" "));
   });
 }
@@ -491,7 +491,7 @@ function select(from, to) {
 function temperature(t) {
   temperatureValue = Math.max(0, Math.min(3, Math.round(Number(t) * 100) / 100 || 0));
   save();
-  const words = temperatureValue === 0 ? "only Emily's favourite choices" : temperatureValue < 1 ? "less chance, more taste" : temperatureValue === 1 ? "as before Emily" : "more adventurous";
+  const words = temperatureValue === 0 ? "only Magdalena's favorite choices" : temperatureValue < 1 ? "less chance, more taste" : temperatureValue === 1 ? "as if Magdalena weren't there" : "more adventurous";
   outlet(0, "status", "temperature", temperatureValue.toFixed(2) + ":", ...words.split(" "), "(from", "the", "next", "piece", "or", "phrase)");
   showTaste();
 }
@@ -508,7 +508,7 @@ function forget() {
     saveTaste();
     outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
     showTaste();
-    outlet(0, "status", "Emily", "forgot", "her", "taste", "(" + was, "ratings,", "kept", "in", settingsFile.BACKUP_NAME + ")");
+    outlet(0, "status", "Magdalena", "forgot", "her", "taste", "(" + was, "ratings,", "kept", "in", settingsFile.BACKUP_NAME + ")");
   });
 }
 
@@ -519,7 +519,7 @@ function pin(feature, weight) {
     if (value === null) throw new Error("not a feature: " + feature);
     const learned = memory.weights[String(feature)] || 0;
     changedTaste();
-    outlet(0, "status", ...`Emily: ${emily.nameOf(String(feature))} pinned at ${signedWeight(value)} (she learned ${signedWeight(learned)})`.split(" "));
+    outlet(0, "status", ...`Magdalena: ${emily.nameOf(String(feature))} pinned at ${signedWeight(value)} (she learned ${signedWeight(learned)})`.split(" "));
   });
 }
 
@@ -529,13 +529,13 @@ function unpin(feature) {
     if (feature === undefined) {
       const count = emily.unpin(memory);
       changedTaste();
-      outlet(0, "status", ...(count ? `Emily: ${count} ${count === 1 ? "pin" : "pins"} released; she uses what she learned` : "Emily: no pins to release").split(" "));
+      outlet(0, "status", ...(count ? `Magdalena: ${count} ${count === 1 ? "pin" : "pins"} released; she uses what she learned` : "Magdalena: no pins to release").split(" "));
       return;
     }
     const name = String(feature);
     if (!emily.unpin(memory, name)) return;
     changedTaste();
-    outlet(0, "status", ...`Emily: ${emily.nameOf(name)} released (back to ${signedWeight(memory.weights[name] || 0)}, what she learned)`.split(" "));
+    outlet(0, "status", ...`Magdalena: ${emily.nameOf(name)} released (back to ${signedWeight(memory.weights[name] || 0)}, what she learned)`.split(" "));
   });
 }
 
@@ -545,7 +545,7 @@ function strength(value) {
     const v = emily.setStrength(memory, value);
     changedTaste();
     const words = v === 0 ? "no taste" : v === 1 ? "as learned" : v < 1 ? "weaker than learned" : "stronger than learned";
-    outlet(0, "status", ...`Emily's taste at strength ${v.toFixed(2)}: ${words} (from the next piece or phrase)`.split(" "));
+    outlet(0, "status", ...`Magdalena's taste at strength ${v.toFixed(2)}: ${words} (from the next piece or phrase)`.split(" "));
   });
 }
 
@@ -561,8 +561,8 @@ function novelty(value) {
 
 function accept() {
   attempt(() => {
-    if (!db) throw new Error("load a corpus first");
-    if (!current || !current.score.provenance) throw new Error("Emily keeps composed music: compose a piece first");
+    if (!db) throw new Error("no corpus yet: click corpora and switch a folder on");
+    if (!current || !current.score.provenance) throw new Error("Magdalena keeps composed music: compose a piece first");
     syncTaste();
     syncStore();
     const target = ratingTarget();
@@ -578,7 +578,7 @@ function accept() {
     const beats = Math.round(work.events.reduce((end, e) => Math.max(end, e[0] + e[2]), 0) / work.ppq - work.padTicks / work.ppq);
     const varied = work.variants.length ? `, ${work.variants.length} varied` : "";
     const counted = herDb ? emilyMemory.counts(herDb).works : 0;
-    outlet(0, "status", ...`accepted ${target.what} as ${id} (generation ${work.gen}, ${beats} beats${varied}); Emily has ${counted} ${counted === 1 ? "work" : "works"} of her own`.split(" "));
+    outlet(0, "status", ...`kept ${target.what} as ${id} (generation ${work.gen}, ${beats} beats${varied}); Magdalena's notebook has ${counted} ${counted === 1 ? "work" : "works"}`.split(" "));
     const own = ownLine();
     if (own) post(own + "\n");
   });
@@ -589,10 +589,10 @@ function unaccept(id) {
     syncTaste();
     const before = memory.accepted.length;
     memory.accepted = memory.accepted.filter((a) => a !== String(id));
-    if (memory.accepted.length === before) throw new Error(`${id} isn't one of Emily's works in use`);
+    if (memory.accepted.length === before) throw new Error(`${id} isn't one of the works in use from Magdalena's notebook`);
     changedTaste();
     ensureCorpus();
-    outlet(0, "status", ...`${id} put aside: Emily no longer uses it (it stays in ${settingsFile.EMILY_NAME})`.split(" "));
+    outlet(0, "status", ...`${id} put aside: Magdalena no longer uses it (it stays in ${settingsFile.EMILY_NAME})`.split(" "));
   });
 }
 
@@ -602,8 +602,8 @@ function mix(value) {
     const v = emily.setMix(memory, value);
     changedTaste();
     ensureCorpus();
-    const words = v === 0 ? "Bach only" : v === 0.5 ? "her own music counts as much as Bach's" : v < 0.5 ? "her own music counts less than Bach's" : "her own music counts more than Bach's";
-    const none = memory.accepted.length ? "" : "; she has no music of her own yet: accept some";
+    const words = v === 0 ? "Bach only" : v === 0.5 ? "her notebook counts as much as Bach's" : v < 0.5 ? "her notebook counts less than Bach's" : "her notebook counts more than Bach's";
+    const none = memory.accepted.length ? "" : "; her notebook is empty: keep some music first";
     outlet(0, "status", ...`mix ${v.toFixed(2)}: ${words} (from the next piece or phrase)${none}`.split(" "));
   });
 }
@@ -637,7 +637,7 @@ function storetaste(path) {
     syncTaste();
     const target = /\.json$/i.test(String(path)) ? String(path) : path + ".json";
     files.writeText(target, JSON.stringify(memory, null, 1) + "\n");
-    outlet(0, "status", ...`stored Emily's taste in ${files.fileName(target)} (${tasteCounts()})`.split(" "));
+    outlet(0, "status", ...`stored Magdalena's taste in ${files.fileName(target)} (${tasteCounts()})`.split(" "));
   });
 }
 
@@ -651,7 +651,7 @@ function recalltaste(path) {
     memory = emily.normalize(stored);
     changedTaste();
     const backup = tasteBackupPath ? `; the one before is in ${settingsFile.BACKUP_NAME}` : "";
-    outlet(0, "status", ...`recalled Emily's taste from ${files.fileName(path)} (${tasteCounts()})${backup}`.split(" "));
+    outlet(0, "status", ...`recalled Magdalena's taste from ${files.fileName(path)} (${tasteCounts()})${backup}`.split(" "));
   });
 }
 
@@ -661,12 +661,12 @@ function taste() {
   attempt(() => {
     syncTaste();
     const earlier = memory.sessions ? `; ${memory.sessions} earlier ${memory.sessions === 1 ? "session" : "sessions"}` : "";
-    post(`cento: Emily's taste: ${emily.summary(memory, 6)}${earlier}\n`);
+    post(`cento: Magdalena's taste: ${emily.summary(memory, 6)}${earlier}\n`);
     const { likes, dislikes } = emily.opinions(memory, 8, 0.05);
     if (likes.length) post("  likes: " + likes.map(([f, w]) => `${emily.nameOf(f)} +${w.toFixed(2)}`).join(", ") + "\n");
     if (dislikes.length) post("  dislikes: " + dislikes.map(([f, w]) => `${emily.nameOf(f)} ${w.toFixed(2)}`).join(", ") + "\n");
     if (!db || !useForm || !memory.ratings) {
-      outlet(0, "status", ...("Emily: " + emily.summary(memory)).split(" "));
+      outlet(0, "status", ...("Magdalena: " + emily.summary(memory)).split(" "));
       return;
     }
     // Twenty pieces take a few seconds: composed one at a time, each on its
@@ -677,7 +677,7 @@ function taste() {
       options: { beats: minBeats, signatures: useSignatures }, likes, dislikes,
     };
     outlet(0, "emilyview", "comparing", 0, COMPARE_PAIRS);
-    outlet(0, "status", ...`Emily: comparing ${COMPARE_PAIRS} pieces with her taste and without...`.split(" "));
+    outlet(0, "status", ...`Magdalena: comparing ${COMPARE_PAIRS} pieces with her taste and without...`.split(" "));
     outlet(0, "later", "tastestep", comparing.id);
   });
 }
@@ -706,7 +706,7 @@ function compareStep(job) {
   job.scheduled = false;
   syncTaste();
   if (job.version !== tasteVersion || job.db !== db) {
-    outlet(0, "status", ...`Emily: comparison stopped (her taste or the corpus changed); click taste again`.split(" "));
+    outlet(0, "status", ...`Magdalena: comparison stopped (her taste or the corpus changed); click taste report again`.split(" "));
     return;
   }
   const pair = Math.floor(job.k / 2);
@@ -733,7 +733,7 @@ function compareStep(job) {
   const top = [job.likes[0], job.dislikes[0]].filter(Boolean).map(([f]) => compared.features.find(([g]) => g === f)).filter(Boolean);
   const words = top.map(([f, a, b], k) => `${emily.nameOf(f)} ${Math.round(100 * a)}%${k === 0 ? " of beats" : ""} (${Math.round(100 * b)}%${k === 0 ? " without her taste" : ""})`);
   const text = words.length ? words.join(", ") : comparisonText(compared);
-  outlet(0, "status", ...(`Emily, seeds ${job.first}-${last}: ${text}; more in the Max window`).split(" "));
+  outlet(0, "status", ...(`Magdalena, seeds ${job.first}-${last}: ${text}; more in the Max window`).split(" "));
 }
 compareStep.local = 1;
 
@@ -742,8 +742,8 @@ compareStep.local = 1;
 // Rates what is being heard (see like): learns, saves, and says what Emily learned.
 function rateNow(r) {
   attempt(() => {
-    if (!db) throw new Error("load a corpus first");
-    if (!current || !current.score.provenance) throw new Error("Emily learns from composed music: compose a piece first");
+    if (!db) throw new Error("no corpus yet: click corpora and switch a folder on");
+    if (!current || !current.score.provenance) throw new Error("Magdalena learns from composed music: compose a piece first");
     const target = ratingTarget();
     syncTaste();
     const region = emily.regionOf(db, current.score, target.from, target.to);
@@ -758,7 +758,7 @@ function rateNow(r) {
     outlet(0, "status", ...text.split(" "));
     outlet(0, "emily", ...emily.summary(memory, 1).split(" "));
     showTaste();
-    post(`cento: Emily ${text}\n`);
+    post(`cento: Magdalena ${text}\n`);
   });
 }
 rateNow.local = 1;
@@ -817,8 +817,10 @@ function dataFolder(patchers) {
   } catch (e) {
     // not known
   }
-  const found = userFolder.find({ patchFolder: patchers, appPath, list: userFolder.listNames, exists: files.exists });
+  const looked = [];
+  const found = userFolder.find({ patchFolder: patchers, appPath, list: userFolder.listNames, exists: files.exists, looked });
   if (!found) {
+    post(`cento: no Cento folder found, so your files stay in patchers/ (looked in ${looked.join(", ") || "no Documents folder"})\n`);
     if (!settingsFile.isCheckout(patchers)) {
       post(`cento: no Cento folder in Documents: put the Cento folder from the download in your Documents folder, then open Cento again\n`);
       outlet(0, "error", "no", "Cento", "folder", "in", "Documents:", "put", "it", "there", "and", "open", "Cento", "again");
@@ -918,7 +920,7 @@ function showCorpora(building) {
     const n = corpusReport.used.size;
     summary = `In use: ${bachDb.works.length} chorales (${mode}) from ${n} ${n === 1 ? "folder" : "folders"}, in ${bachDb.meter.join("/")}: ${bachDb.groupings.length} beats, ${bachDb.signatures.length} signatures.`;
   }
-  outlet(0, "corpusview", "summary", ...summary.split(" "));
+  outlet(0, "corpusview", "footer", ...summary.split(" ")); // not "summary": see emi.corpora.v8ui.js
   outlet(0, "corpusview", "done");
 }
 showCorpora.local = 1;
@@ -954,14 +956,14 @@ function ownBeats(piece) {
 }
 ownBeats.local = 1;
 
-// "cento: Emily's own music: 3 works (generation 1: 2, generation 2: 1), 160 beats, 12 varied; 1 signature of her own"
+// "cento: Magdalena's notebook: 3 works (generation 1: 2, generation 2: 1), 160 beats, 12 varied; 1 signature in it"
 function ownLine() {
   if (!herDb) return null;
   const c = emilyMemory.counts(herDb);
   const gens = [...c.gens].sort((a, b) => a[0] - b[0]).map(([g, n]) => `generation ${g}: ${n}`).join(", ");
   const sigs = herDb.signatures.filter((sig) => sig.emily).length;
-  let text = `cento: Emily's own music: ${c.works} ${c.works === 1 ? "work" : "works"} (${gens}), ${c.beats} beats, ${c.varied} varied`;
-  if (sigs) text += `; ${sigs} ${sigs === 1 ? "signature" : "signatures"} of her own`;
+  let text = `cento: Magdalena's notebook: ${c.works} ${c.works === 1 ? "work" : "works"} (${gens}), ${c.beats} beats, ${c.varied} varied`;
+  if (sigs) text += `; ${sigs} ${sigs === 1 ? "signature" : "signatures"} in it`;
   if (db !== herDb) text += "; not in use at mix 0";
   return text;
 }
@@ -1012,7 +1014,7 @@ function saveStore() {
     files.writeText(storePath, text);
     storeText = text;
   } catch (e) {
-    outlet(0, "error", "can't", "save", "Emily's", "music:", ...String(e.message).split(" "));
+    outlet(0, "error", "can't", "save", "Magdalena's", "notebook:", ...String(e.message).split(" "));
   }
 }
 saveStore.local = 1;
@@ -1138,7 +1140,7 @@ function saveTaste() {
     files.writeText(tastePath, text);
     tasteText = text;
   } catch (e) {
-    outlet(0, "error", "can't", "save", "Emily's", "taste:", ...String(e.message).split(" "));
+    outlet(0, "error", "can't", "save", "Magdalena's", "taste:", ...String(e.message).split(" "));
   }
 }
 saveTaste.local = 1;
@@ -1159,14 +1161,14 @@ function signedWeight(w) {
 }
 signedWeight.local = 1;
 
-// "12 ratings, 3 pins, strength 1.50, 2 works of her own"
+// "12 ratings, 3 pins, strength 1.50, 2 works in her notebook"
 function tasteCounts(m = memory) {
   const pins = Object.keys(m.pins || {}).length;
   const parts = [m.ratings + (m.ratings === 1 ? " rating" : " ratings")];
   if (pins) parts.push(pins + (pins === 1 ? " pin" : " pins"));
   if (m.strength !== 1) parts.push("strength " + m.strength.toFixed(2));
   const works = (m.accepted || []).length;
-  if (works) parts.push(works + (works === 1 ? " work of her own" : " works of her own"));
+  if (works) parts.push(works + (works === 1 ? " work in her notebook" : " works in her notebook"));
   return parts.join(", ");
 }
 
@@ -1211,7 +1213,7 @@ function saveSnapshots() {
     files.writeText(snapshotsPath, text);
     snapshotsText = text;
   } catch (e) {
-    outlet(0, "error", "can't", "save", "Emily's", "snapshots:", ...String(e.message).split(" "));
+    outlet(0, "error", "can't", "save", "Magdalena's", "snapshots:", ...String(e.message).split(" "));
   }
 }
 saveSnapshots.local = 1;
@@ -1258,7 +1260,7 @@ loadCorpus.local = 1;
 // mode, starts a stream instead.
 function composeNow(atStartup) {
   attempt(() => {
-    if (!db) throw new Error("load a corpus first");
+    if (!db) throw new Error("no corpus yet: click corpora and switch a folder on");
     ensureCorpus();
     if (streaming) {
       startStream();
@@ -1407,7 +1409,7 @@ function describePiece(piece) {
   if (piece.form.signatures !== undefined) text += ", " + piece.form.signatures + (piece.form.signatures === 1 ? " signature" : " signatures");
   if (piece.variants && piece.variants.length) text += ", " + piece.variants.length + (piece.variants.length === 1 ? " variant" : " variants");
   const own = ownBeats(piece);
-  if (own.beats) text += `, ${own.beats} of Emily's own ${own.beats === 1 ? "beat" : "beats"}` + (own.varied ? ` (${own.varied} with her variants)` : "");
+  if (own.beats) text += `, ${own.beats} ${own.beats === 1 ? "beat" : "beats"} from Magdalena's notebook` + (own.varied ? ` (${own.varied} with her variants)` : "");
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
   if (piece.form.relaxed === 3) relaxed.push("any cadence bass");
@@ -1625,7 +1627,7 @@ sourcesFor.local = 1;
 
 // The SPEAC lane: one beat label per beat, as [tick, label]. A composed
 // piece shows the labels its beats bring from their chorales; a chorale (or
-// the test phrase) is analysed itself.
+// the test phrase) is analyzed itself.
 function labelsFor(score) {
   try {
     if (score.provenance && db) {

@@ -2,8 +2,8 @@
 "use strict";
 // Bundles each [v8] / [v8ui] wrapper (code/*.v8.js, code/*.v8ui.js) together with the modules it
 // requires (code/lib: the engine, no Max APIs; code/max: Max-only helpers
-// such as file reading) into one self-contained file: patchers/<name>.bundle.js, next to
-// the patches that load it (Max always searches a patch's own folder).
+// such as file reading) into one self-contained file: patchers/scripts/<name>.bundle.js,
+// which Max finds through its search path (patchers/, with Subfolders ticked).
 //
 // Why bundle: frozen Max for Live devices and built apps don't reliably find
 // files that a script loads with require(). A bundle has no runtime requires,
@@ -21,7 +21,7 @@ const ROOT = path.resolve(__dirname, "..");
 const CODE = path.join(ROOT, "code");
 const LIB = path.join(CODE, "lib");
 const MAX = path.join(CODE, "max");
-const OUT = path.join(ROOT, "patchers");
+const OUT = path.join(ROOT, "patchers", "scripts");
 const REQUIRE = /\brequire\(\s*(["'])([^"']+)\1\s*\)/g;
 
 const relative = (file) => path.relative(ROOT, file).split(path.sep).join("/");
@@ -83,7 +83,7 @@ function bundle(wrapperFile) {
   return out.join("\n");
 }
 
-// Returns { "patchers/<name>.bundle.js": contents } for every wrapper.
+// Returns { "patchers/scripts/<name>.bundle.js": contents } for every wrapper.
 function buildAll() {
   const outputs = {};
   const wrappers = fs
