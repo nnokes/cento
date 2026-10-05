@@ -7,23 +7,23 @@
 | The new layout: a row of section names, compose first, every button in Live's look, more features window (Max), plug-in instruments window, plain names, a narrower piano roll; nothing overlaps | ✅ (`npm test`: sizes, overlaps, wiring; 0.0–0.4 on the Mac) | ✅ (0.5) |
 | Your files live in your Cento folder (`~/Documents/cento`), copied there from `patchers/` the first time | ✅ (1.1–1.4) | ✅ (1.5) |
 | Both products share them, as before | ✅ (1.6) | ✅ (1.6) |
-| Finding the folder: from a patch in a home folder, from Max's own path, through `/Users` (the app), by a file in it; none: the status line says where it goes | ✅ (`npm test`) | ✅ (the same engine) |
+| Finding the folder: from a patch in a home folder, from Max's own path, through `/Users` (for an app, later), by a file in it; none: the status line says where it goes | ✅ (`npm test`) | ✅ (the same engine) |
 | Cento's own chorales are found in the Cento folder (as in a download) or the repository | ✅ (`npm test`) | ✅ (the same engine) |
 | Frozen devices work on their own (the freeze test deferred from M0) | — | ✅ (2.1–2.4) |
 | The demo set | — | ✅ (section 3) |
-| The app, from Applications | | — |
+| Cento for Max: the patch from its download, with nothing on the search path | | — |
 | The zips (`npm run package`): what's in them, and what's missing if not | ✅ (`npm test`, with stand-ins) | ✅ |
 | A newcomer, following only the read-me, hears a piece within five minutes | | |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M12 makes Cento something other people can download from GitHub and use
 without git, Python, Node or `tools/`: two zips on GitHub's Releases page,
-**Cento for Live** (frozen devices and a demo set) and **Cento for Mac** (an
-app). The plan is in [PLAN.md](../PLAN.md) (§8, "M12 in detail"); publishing
+**Cento for Live** (frozen devices and a demo set) and **Cento for Max** (a
+patch for Max 9; a standalone app waits for later). The plan is in [PLAN.md](../PLAN.md) (§8, "M12 in detail"); publishing
 is in [releasing.md](releasing.md).
 
-**First: your Cento folder.** A frozen device or an app has no `patchers/`
-folder to write in, so each user's files (settings, Magdalena's taste, her notebook
+**First: your Cento folder.** A frozen device or a downloaded patch has no
+repository `patchers/` folder to write in, so each user's files (settings, Magdalena's taste, her notebook
 and snapshots) now live in a folder called Cento in Documents:
 `~/Documents/Cento`. On your Mac that's the `cento` folder you already have
 (a Mac's disk doesn't tell `Cento` from `cento`). The first time Cento finds
@@ -35,9 +35,9 @@ from the paths it does know, and the Max window says how:
 `cento: your Cento folder is ... (found from the patch's folder)`. Section 1
 checks that it works on a real Mac, in Max and in Live.
 
-**Then the downloads.** Sections 2 to 5 make, once, the things only Max and
-Live can make, and check each: frozen devices, the demo set, the app, and
-the zips from `npm run package`. Section 6 is the real test: someone new
+**Then the downloads.** Sections 2 to 5 make, once, the things only Live can
+make, and check each download: frozen devices, the demo set, the Max patch
+from its zip, and the zips from `npm run package`. Section 6 is the real test: someone new
 following only the read-me. The read-me is
 [`release/Read me first.html`](../release/Read%20me%20first.html) (double-click
 it in Finder to see it as people will), and the Cento folder's note is
@@ -197,7 +197,7 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        `cento: your Cento folder is ...` line. Close the editor.
        (Your settings, Magdalena's taste and her notebook are there as
        before: they live in your Cento folder, not in the device, so every
-       copy of Cento finds them: the patch, frozen devices and the app. A
+       copy of Cento finds them: the patch, frozen devices, a downloaded patch. A
        newcomer's Cento folder, from the download, starts empty: section 6.)
        *Passed:* `cento: your Cento folder is Macintosh HD:/Users/<you>/Documents/Cento (found from the patch's folder)`,
        from a frozen device in a folder of its own, with `patchers` off the
@@ -218,26 +218,37 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        Preferences*, **+**, *Choose*, the repository's `patchers` folder,
        and tick **Subfolders** in its row. Restart Live.
 
-## 4. The app
+## 4. Cento for Max (the patch, from its download)
 
-1. [ ] **Build it.** In Max, open `patchers/cento.maxpat`. *File → Build
-       Collective / Application...*: choose **Application**, name it
-       `Cento`, and save it into the repository's `build/` folder. Close
-       Max.
-2. [ ] **From Applications.** Drag `build/Cento.app` into Applications
-       (hold **⌥ Option** to copy it rather than move it). Open it from
-       there. If macOS asks whether Cento may access your Documents folder,
-       click **Allow**.
-3. [ ] **It works.** It composes at once with your settings (the same seed
-       and corpora as in Max). Click **play**: it plays through the output
-       shown (choose *AU DLS Synth 1* if it's silent). **corpora**, **↗**
-       (top right), **set up…** and **more features…** open their windows,
-       and **explain Magdalena** (in the pop-up window) opens its own; hover
-       help shows; **export midi** saves a file.
-4. [ ] **Where it found your folder.** If the app has a Max Console (the
-       Window menu), copy its `cento: your Cento folder is ...` line: from
-       Applications it should say "from the folders in /Users".
-5. [ ] Delete the copy in Applications (it's a build, not a release).
+The Max version ships as a patch, not an app (the app waits for later). It
+needs no building: the packaging script copies `cento.maxpat` and every
+patch and script it uses into one folder, `Cento Patch`, where Max finds
+them with nothing on its search path.
+
+1. [ ] **Make the zip.** In Terminal, in the repository folder:
+       ```sh
+       npm run package -- --only max
+       ```
+       It ends with `wrote dist/Cento-for-Max-v0.1.0.zip (0.3 MB)`.
+       Double-click the zip in `dist/` (in Finder): a folder
+       `Cento for Max v0.1.0` opens beside it.
+2. [ ] **Hide the originals.** So the patch can't quietly use the
+       repository's files: in Max, *Options → File Preferences*, select the
+       `patchers` entry and click **−**. Quit Max.
+3. [ ] **Open it.** In the unzipped folder, open `Cento Patch` and
+       double-click `cento.maxpat`. It opens in Max and composes at once,
+       with your settings (the same seed and corpora as before: they're in
+       your Cento folder). The Max Console (*Window → Max Console*) says
+       `cento: your Cento folder is ... (found from the patch's folder)`:
+       copy that line, and any red text.
+4. [ ] **It works.** Click **play**: it plays through the Output shown
+       (choose *AU DLS Synth 1* if it's silent). **corpora**, **↗** (top
+       right), **set up…** and **more features…** open their windows, and
+       **explain Magdalena** (in the pop-up window) opens its own; hover help
+       shows; **export midi** saves a file.
+5. [ ] **Put the `patchers` entry back**: *Options → File Preferences*,
+       **+**, *Choose*, the repository's `patchers` folder, and tick
+       **Subfolders**. (`dist/` is git-ignored: delete it whenever you like.)
 
 ## 5. The zips
 
@@ -245,12 +256,13 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        ```sh
        npm run package
        ```
-       It ends with two lines like `wrote dist/Cento-for-Live-v0.1.0.zip (12.3 MB)`.
+       It ends with two lines like `wrote dist/Cento-for-Live-v0.1.0.zip (12.3 MB)`
+       and `wrote dist/Cento-for-Max-v0.1.0.zip (0.3 MB)`.
        (If something is missing it says what, and how to make it.)
 2. [ ] Double-click each zip in `dist/`. Each opens to a folder with
        `Read me first.html`, `LICENSE.txt`, the `Cento` folder (with
        `corpus` and `About this folder.txt`), and `Cento Demo Project` and
-       `Devices` (Live) or `Cento.app` (Mac). Note the zips' sizes for your
+       `Devices` (Live) or `Cento Patch` (Max). Note the zips' sizes for your
        report.
 
 ## 6. A newcomer (the "done when")
@@ -259,8 +271,11 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        User*), or ask a friend with a Mac. Copy the two zips to it (AirDrop,
        or a USB stick).
 2. [ ] As that user, follow **only** `Read me first.html`, first for Cento
-       for Mac, then (if Live is there) for Cento for Live. Time it: a piece
-       should play within five minutes.
+       for Max, then (if Live is there) for Cento for Live. Time it: a piece
+       should play within five minutes. (On your own Mac, Max 9 is already
+       installed for every account: skip that step, but note what Max asks
+       the new user the first time, such as signing in or a trial, and
+       that Cento runs without a licence.)
 3. [ ] Note every place the read-me was unclear or wrong, and anything
        macOS asked. Delete the account afterwards if you like.
 
@@ -269,14 +284,15 @@ Then, to be safe, copy `About this folder.txt` from the repository's
 ## Reporting back
 
 For each box, say whether it passed, and paste the `cento:` lines from 1.1,
-1.5, 2.4 and 4.4. Copy any red text from the Max window. The parts most
+1.5, 2.4 and 4.3. Copy any red text from the Max window. The parts most
 likely to need a fix:
 - how Max lists folders and writes paths (section 1), which can't be tried
   without a Mac;
 - the frozen devices' windows (2.4): whether freezing takes the corpus
   window and the pop-up window along;
-- the app (section 4): whether *Build Collective / Application* takes every
-  window and script along, and finds your Cento folder from Applications.
+- the Max patch from its download (section 4): whether `Cento Patch` holds
+  everything it needs (red text in the Max Console names anything missing);
+- what Max asks a new user, and whether Cento runs without a licence (6.2).
 
 Sections 0 to 2 can be done first; report them before the rest if you
 like.

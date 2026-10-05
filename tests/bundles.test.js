@@ -931,6 +931,26 @@ test("subfolders: the engine runs from patchers/parts/, and still finds patchers
   assert.ok(!fs.existsSync(path.join(parts, "cento.settings.json")));
 });
 
+test("Cento for Max (M12): the engine runs from the download's Cento Patch folder, and uses the Cento folder in Documents", () => {
+  // A pretend Mac: the download unzipped in ann's Downloads, its Cento folder
+  // (with Cento's own chorales) dragged into Documents.
+  const root = tempDir();
+  const home = path.join(root, "Users", "ann");
+  const patch = path.join(home, "Downloads", "Cento for Max v0.1.0", "Cento Patch");
+  const cento = path.join(home, "Documents", "Cento");
+  fs.mkdirSync(patch, { recursive: true });
+  fs.mkdirSync(path.join(cento, "corpus"), { recursive: true });
+  fs.renameSync(writeCorpus(), path.join(cento, "corpus", "bach-figured-bass"));
+  const core = engineIn(patch);
+  core.send("beats", 8);
+  const out = core.send("startup", "all");
+  assert.ok(core.posted.includes(`cento: your Cento folder is ${cento} (found from the patch's folder)\n`), core.posted.join(""));
+  assert.deepEqual(select(out, "error"), []);
+  assert.deepEqual(folderRows(out).map(([n, on, , works, , , name]) => [n, on, works, name]), [[1, 1, 3, "bach-figured-bass"]], "Cento's own chorales, on");
+  assert.ok(fs.existsSync(path.join(cento, "cento.settings.json")), "settings in the Cento folder");
+  assert.deepEqual(fs.readdirSync(patch), [], "nothing written beside the patch");
+});
+
 test("Cento folder (M12): files move from patchers/ to ~/Documents/Cento, and are saved there", () => {
   // A pretend Mac: the repository in ann's home, and her Cento folder.
   const root = tempDir();

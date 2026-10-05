@@ -51,9 +51,11 @@ books; it isn't affiliated with him.)</p>
 <ul>
 <li><strong>Cento for Live</strong>: devices for Ableton Live 12 Suite (or
 Live 12 Standard with Max for Live), version 12.2.1 or later.</li>
-<li><strong>Cento for Mac</strong>: an app. Nothing else to install.</li>
+<li><strong>Cento for Max</strong>: a patch for Max 9, which is free to
+download and runs Cento without a paid licence.</li>
 </ul>
-Both need macOS. Start with step 1, then follow your version's steps.
+Both have been tried on macOS only. Start with step 1, then follow your
+version's steps.
 </div>
 
 <h2>1. Put the Cento folder in Documents (both versions)</h2>
@@ -88,31 +90,26 @@ MIDI track, and <code>cento.voice.amxd</code> onto four MIDI tracks named
 an instrument. Tip: drag the Devices folder into Live's browser, under
 <em>Places</em>, to find them there.</p>
 
-<h2>2b. Cento for Mac</h2>
+<h2>2b. Cento for Max</h2>
 <ol>
-<li>Drag <strong>Cento</strong> (the app) into your
-<strong>Applications</strong> folder.</li>
-<li><strong>The first time only:</strong> the app isn't signed by Apple, so
-macOS stops it once.
-  <ul>
-  <li>Double-click Cento. macOS says it can't check it ("Cento" Not Opened).
-  Click <strong>Done</strong>.</li>
-  <li>Open <strong>System Settings</strong>, then <strong>Privacy &amp;
-  Security</strong>. Scroll down to <em>"Cento" was blocked</em> and click
-  <strong>Open Anyway</strong>. Confirm with <strong>Open Anyway</strong>
-  and your password.</li>
-  <li>On macOS 14 (Sonoma) and earlier, you can instead right-click (or
-  Control-click) Cento, choose <strong>Open</strong>, then
-  <strong>Open</strong>.</li>
-  </ul>
-  After that, Cento opens like any app.</li>
-<li>If macOS asks whether Cento may access files in your Documents folder,
+<li><strong>Max 9</strong>: if you don't have it, download it from
+<a href="https://cycling74.com/downloads">cycling74.com/downloads</a> and
+install it. You don't need to buy a licence to use Cento: without one, Max
+still opens and runs patches (a licence is only needed to save changes to
+them).</li>
+<li>In the unzipped folder, open <strong>Cento Patch</strong> and
+double-click <strong>cento.maxpat</strong>. Max opens it. (The other files in
+that folder are its parts: keep them together, and open only
+<code>cento.maxpat</code>.)</li>
+<li>If macOS asks whether Max may access files in your Documents folder,
 click <strong>Allow</strong>.</li>
 <li>Click the green <strong>play</strong>. If you hear nothing, set
 <strong>Output</strong> to <em>AU DLS Synth 1</em> (the Mac's own
 instruments), and check the Mac's volume.</li>
 <li>For a new piece, change <strong>Seed</strong>.</li>
 </ol>
+<p class="small">You can keep the <strong>Cento Patch</strong> folder
+anywhere, for example in Documents beside the Cento folder.</p>
 
 <h2>3. Things to try</h2>
 <ul>
@@ -144,16 +141,16 @@ commands in Terminal; the steps are on
 page on GitHub</a>.</p>
 
 <h2>Removing Cento</h2>
-<p>Delete the app (or the devices and the demo project), and the Cento
-folder in Documents.</p>
+<p>Delete the <strong>Cento Patch</strong> folder (or the devices and the demo
+project), and the Cento folder in Documents.</p>
 
 <h2>Known issues</h2>
 <ul>
 <li>This is a beta, tried on macOS only.</li>
-<li>The app isn't signed by Apple: see step 2b.</li>
 <li>Cento for Live needs Live 12.2.1 or later (it includes Max 9). With an
 earlier Live, point Live at a Max 9 installation (Live's Settings, File
 &amp; Folder, Max Application).</li>
+<li>Cento for Max needs Max 9: it doesn't open in Max 8 or earlier.</li>
 <li>Something wrong? Tell us at
 <a href="https://github.com/nnokes/cento/issues">github.com/nnokes/cento/issues</a>.</li>
 </ul>

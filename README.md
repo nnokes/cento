@@ -19,8 +19,10 @@ This is an independent project. It is not affiliated with David Cope; it
 implements ideas from his published books (see [PLAN.md](PLAN.md#11-references)).
 
 **Status: M12 under way: free downloads for other people on GitHub's
-Releases page ([M12](docs/M12-checklist.md) checklist, [how](docs/releasing.md));
-first, your files move to your Cento folder in Documents. M11 code done;
+Releases page ([M12](docs/M12-checklist.md) checklist, [how](docs/releasing.md)):
+Cento for Live (frozen devices and a demo set) and Cento for Max (the patch,
+for Max 9). Your files live in your Cento folder in Documents; the frozen
+devices and the demo set have passed their checks. M11 code done;
 waiting on its Max and Live checks ([M11](docs/M11-checklist.md)
 checklist). M9 and M10 passed in both
 products ([M9](docs/M9-checklist.md), [M10](docs/M10-checklist.md)

@@ -18,7 +18,7 @@ also checks each piece. See PLAN.md, §8, "M12 in detail".
   `main`. The release page creates the tag for you when you publish.
 - GitHub attaches the source code as zips to every release by itself. Those
   are for developers. The files you attach are the ones people want:
-  `Cento-for-Live-vX.Y.Z.zip` and `Cento-for-Mac-vX.Y.Z.zip`.
+  `Cento-for-Live-vX.Y.Z.zip` and `Cento-for-Max-vX.Y.Z.zip`.
 - `https://github.com/nnokes/cento/releases/latest` always points to the
   newest release, so the README's Download link never needs changing.
 
@@ -36,7 +36,10 @@ Mark releases before `v1.0.0` as **pre-releases**.
 
 ## 1. Build on your Mac
 
-These need Max on your Mac, so CI can't do them.
+The devices and the demo set need Live on your Mac, so CI can't make them.
+The Max version needs no building: the packaging script takes
+`cento.maxpat` and the patches and scripts it uses straight from the
+repository.
 
 0. **The version.** In `package.json`, set `"version"` to the new version
    (without the `v`), and the same in `code/lib/emi-version.js`; run
@@ -49,19 +52,19 @@ These need Max on your Mac, so CI can't do them.
    once, in the [M12 checklist](M12-checklist.md), section 3). Put the newly
    frozen devices in it (from `frozen/`, in place of the old ones), check
    that it plays, then **File > Collect All and Save**.
-3. **The app**: open `patchers/cento.maxpat` in Max, then
-   **File > Build Collective / Application...**, choose **Application**, and
-   save it as `Cento` into `build/` (git-ignored): `build/Cento.app`.
-4. **The zips**: in Terminal, from the repository folder, run
+3. **The zips**: in Terminal, from the repository folder, run
    `npm run package`. It checks that everything above is there (and that
    the devices really are frozen), then writes both zips into `dist/`
-   (git-ignored). `npm run package -- --check` only checks.
+   (git-ignored): Cento for Live, and Cento for Max (the read-me, the Cento
+   folder, and `Cento Patch/`: `cento.maxpat` with every patch and script it
+   uses, in one folder). `npm run package -- --check` only checks;
+   `npm run package -- --only max` makes just the Max one.
 
 ## 2. Test like a newcomer
 
 On a fresh user account on your Mac (System Settings > Users & Groups), or a
 friend's Mac: download nothing else, follow only `Read me first`, and check
-that a piece plays within five minutes, in Live and with the app. Note
+that a piece plays within five minutes, in Live and in Max. Note
 anything that was unclear, and fix the read-me (`release/Read me first.html`)
 before publishing.
 
@@ -91,14 +94,13 @@ affiliated with David Cope.)
 
 Download one:
 - Cento-for-Live: for Ableton Live 12 Suite (or Standard + Max for Live).
-- Cento-for-Mac: a standalone app; no Max needed.
+- Cento-for-Max: a patch for Max 9 (a free download; no licence needed).
 Then follow "Read me first" in the zip.
 
 What's new:
 - ...
 
 Known issues:
-- The app isn't signed: the first time, right-click it and choose Open.
 - Tested on macOS only.
 ```
 
