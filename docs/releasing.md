@@ -19,8 +19,10 @@ also checks each piece. See PLAN.md, §8, "M12 in detail".
 - GitHub attaches the source code as zips to every release by itself. Those
   are for developers. The files you attach are the ones people want:
   `Cento-for-Live-vX.Y.Z.zip` and `Cento-for-Max-vX.Y.Z.zip`.
-- `https://github.com/nnokes/cento/releases/latest` always points to the
-  newest release, so the README's Download link never needs changing.
+- `https://github.com/nnokes/cento/releases` lists every release, newest
+  first, pre-releases included: the README's Download link points there.
+  (`.../releases/latest` skips pre-releases, so it finds nothing until
+  `v1.0.0`, or whichever release is the first not marked pre-release.)
 
 **Version numbers**: `v0.1.0` for the first beta. Then `v0.1.1` for fixes
 only, `v0.2.0` for new features, and `v1.0.0` when you consider it finished.
@@ -82,8 +84,9 @@ On github.com, on the repository's main page:
 6. Tick **Set as a pre-release** (until `v1.0.0`).
 7. Click **Publish release**.
 
-Then send people the link to the release, or to
-`https://github.com/nnokes/cento/releases/latest`.
+Then send people the link to the release (for v0.1.0:
+`https://github.com/nnokes/cento/releases/tag/v0.1.0`), or to
+`https://github.com/nnokes/cento/releases`.
 
 ### Description template
 
