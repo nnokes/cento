@@ -1,6 +1,6 @@
 # M12 checklist: shipping Cento to others (free)
 
-## Result: under way; sections 0 and 1 passed on your Mac; next, sections 2 to 6
+## Result: under way; sections 0 to 2 passed on your Mac (the freeze test too); next, sections 3 to 6
 
 | Check | Max version | Live version |
 |---|---|---|
@@ -9,7 +9,7 @@
 | Both products share them, as before | ✅ (1.6) | ✅ (1.6) |
 | Finding the folder: from a patch in a home folder, from Max's own path, through `/Users` (the app), by a file in it; none: the status line says where it goes | ✅ (`npm test`) | ✅ (the same engine) |
 | Cento's own chorales are found in the Cento folder (as in a download) or the repository | ✅ (`npm test`) | ✅ (the same engine) |
-| Frozen devices work on their own (the freeze test deferred from M0) | — | |
+| Frozen devices work on their own (the freeze test deferred from M0) | — | ✅ (2.1–2.4) |
 | The demo set | — | |
 | The app, from Applications | | — |
 | The zips (`npm run package`): what's in them, and what's missing if not | ✅ (`npm test`, with stand-ins) | ✅ |
@@ -171,24 +171,24 @@ Then, to be safe, copy `About this folder.txt` from the repository's
 *Freezing* packs everything a device uses (its patches and scripts) into the
 `.amxd` file, so it works without the repository.
 
-1. [ ] **Freeze.** In Live, on the track with `cento.brain`, open the device
+1. [x] **Freeze.** In Live, on the track with `cento.brain`, open the device
        in the Max editor (the editor button in the device's title bar).
        Click **Freeze Device** (the snowflake in the editor's toolbar), then
        *File → Save As* into the repository's `frozen/` folder, as
        `cento.brain.amxd` (Max may make the folder for you; if not, make it
        in Finder first). Close the editor. The same for `cento.voice`, as
        `frozen/cento.voice.amxd`.
-2. [ ] **Hide the originals.** So the frozen devices can't quietly use the
+2. [x] **Hide the originals.** So the frozen devices can't quietly use the
        files in `patchers/`: in a device editor, *Options → File
        Preferences*, select the `patchers` entry and click **−** to remove
        it. Restart Live.
-3. [ ] **A new set.** Make five MIDI tracks: `Cento`, `Soprano`, `Alto`,
+3. [x] **A new set.** Make five MIDI tracks: `Cento`, `Soprano`, `Alto`,
        `Tenor` and `Bass`. Put an instrument on the four voice tracks:
        **Drift** (it comes with every edition of Live 12), with a gentle
        preset. Drag `frozen/cento.brain.amxd` onto `Cento` and
        `frozen/cento.voice.amxd` onto the four voice tracks. Don't open an
        editor.
-4. [ ] **It works.** The brain composes at once (its piano roll fills).
+4. [x] **It works.** The brain composes at once (its piano roll fills).
        **Play Through Voices** on, then Live's Play: the piece plays through
        the four instruments, from a bar. Then, one at a time: **corpora**
        opens the corpus window; **↗** (top right) opens the pop-up window; hover
@@ -199,6 +199,9 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        before: they live in your Cento folder, not in the device, so every
        copy of Cento finds them: the patch, frozen devices and the app. A
        newcomer's Cento folder, from the download, starts empty: section 6.)
+       *Passed:* `cento: your Cento folder is Macintosh HD:/Users/<you>/Documents/Cento (found from the patch's folder)`,
+       from a frozen device in a folder of its own, with `patchers` off the
+       search path.
 5. [ ] Leave the set open for section 3.
 
 ## 3. The demo set (made once)

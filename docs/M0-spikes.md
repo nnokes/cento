@@ -7,7 +7,7 @@
 | (a) `hello` prints `627 2 527 981`, same as `npm test` | ✅ | ✅ |
 | (b) `testclip` writes one 2-bar clip per voice track | n/a | ✅ |
 | (c) `pattern` + Play: in sync, clean stop, no hanging notes | ✅ (AU DLS Synth) | ✅ |
-| (d) frozen device works on its own | n/a | deferred to M12 (shipping; numbered M11 when this was written) |
+| (d) frozen device works on its own | n/a | ✅ in M12 ([M12 checklist](M12-checklist.md), section 2) |
 
 Fixed along the way (details in PLAN.md and the commit history):
 
@@ -172,8 +172,11 @@ notes, report it. The fix is to store empty steps in the queue.
 
 ## (d) A frozen device works on its own
 
-**Deferred to M12** (shipping; numbered M11 when this was written), where frozen devices are needed. Until then
-the devices run unfrozen from `patchers/`. The steps below are kept for M12.
+**Passed in M12** (shipping), where frozen devices are needed: a frozen
+`cento.brain` and `cento.voice`, with `patchers` off the search path, compose,
+play, open their windows and find the Cento folder
+([M12 checklist](M12-checklist.md), section 2). The steps below are the
+original plan; the M12 checklist's are the ones that were run.
 
 *Freezing* packs everything a device uses (its patches and scripts) into the
 `.amxd` file itself, so it runs without the repo or any search-path setup.
