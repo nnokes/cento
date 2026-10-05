@@ -102,7 +102,7 @@ test("form: reports failure when no template is long enough", () => {
   assert.deepEqual(result.stats.tried, []);
 });
 
-test("form: a corpus records its mode, and minor pieces are labelled A minor", () => {
+test("form: a corpus records its mode, and minor pieces are labeled A minor", () => {
   const major = lexicon.build(same);
   assert.equal(major.mode, "major");
   assert.deepEqual(form.compose(major, { seed: 1, beats: 8 }).piece.key, { tonic: 0, mode: "major", from: "composed" });

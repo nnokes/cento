@@ -167,9 +167,9 @@ TASTE = ("Report Magdalena's taste: what she likes and dislikes most, in the Max
          "composed with and without her taste, compared feature by feature. The pop-up window shows its "
          "progress (it composes a piece at a time, so you can go on playing) and the result. It changes "
          "nothing.")
-ROLL = ("Colours: the chorale each beat came from. Bright lines: seams between beats; gold bands: "
+ROLL = ("Colors: the chorale each beat came from. Bright lines: seams between beats; gold bands: "
         "signatures; red marks: new parallel fifths or octaves; purple dots: notes Magdalena varied; yellow "
-        "line: the playhead. Drag across beats to select them for like, dislike and accept (a click "
+        "line: the playhead. Drag across beats to select them for like, dislike and keep (a click "
         "clears); hover over a beat to see where it came from, and over the SPEAC lane's letters (along "
         "the bottom) for what each means.")
 HELP = {
@@ -260,7 +260,7 @@ HELP = {
         "Like": ("Like", LIKE + MAP),
         "Dislike": ("Dislike", DISLIKE + MAP),
         "Temperature": ("temperature", "How much chance still plays when composing. 0: only Magdalena's "
-                        "favourite choices; 1: as if she weren't there (the default); up to 3: more "
+                        "favorite choices; 1: as if she weren't there (the default); up to 3: more "
                         "adventurous."),
         "Accept": ("keep", ACCEPT + MAP),
         "Magdalena": ("Magdalena", "Magdalena in a line: how many ratings she has had, and what she likes "
@@ -381,7 +381,7 @@ def controls_doc():
             "| **mix** | How much the works in her notebook (the ones you kept) count against Bach's when "
             "composing. 0: Bach only; 0.75: mostly hers. Double-click for 0.5. |",
             "| **novelty** | The chance that each phrase gets a variant of her own: a passing tone, a "
-            "neighbour note, a suspension, a re-voiced chord... 0: never; 1: every phrase. Double-click for 0. |",
+            "neighbor note, a suspension, a re-voiced chord... 0: never; 1: every phrase. Double-click for 0. |",
             "| **put aside** | Stop composing from this work of hers. It stays in her memory file: roll back to "
             "a snapshot from when it was in use to bring it back. |",
             "| **keep a snapshot** | Keep her whole taste as it is now, to roll back to later. |",
@@ -691,8 +691,8 @@ def instruments():
 # ---------------------------------------------------------------- the look (GUI redesign, M12)
 # One look per kind of control, in every panel, all in Live's own look
 # (live.text): the main action (compose) strong blue, one-shot buttons light
-# blue, on/off switches warm grey that turn amber when on, Magdalena's rating
-# buttons warm. A row along the top names each section, centred above it.
+# blue, on/off switches warm gray that turn amber when on, Magdalena's rating
+# buttons warm. A row along the top names each section, centered above it.
 DARK_TEXT = [0.08, 0.08, 0.09, 1.0]
 LIGHT_TEXT = [1.0, 1.0, 1.0, 1.0]
 MAIN_BG = [0.24, 0.44, 0.71, 1.0]
@@ -703,9 +703,9 @@ TOGGLE_OFF = [0.84, 0.82, 0.78, 1.0]
 TOGGLE_ON = [0.96, 0.70, 0.33, 1.0]
 EMILY_BG = [0.96, 0.84, 0.70, 1.0]
 EMILY_ON = [0.91, 0.62, 0.36, 1.0]
-HEADING = [0.95, 0.95, 0.93, 1.0]   # headings and labels: light, on the dark section colours
-SOFT_TEXT = [0.84, 0.84, 0.82, 1.0]  # notes and subtitles: lighter grey still reads easily
-# Each section of the strip sits on a solid colour of its own (a [panel]
+HEADING = [0.95, 0.95, 0.93, 1.0]   # headings and labels: light, on the dark section colors
+SOFT_TEXT = [0.84, 0.84, 0.82, 1.0]  # notes and subtitles: lighter gray still reads easily
+# Each section of the strip sits on a solid color of its own (a [panel]
 # behind everything), so the parts read apart: playing, composing, Magdalena.
 PLAY_BG = [0.16, 0.27, 0.20, 1.0]
 COMPOSE_BG = [0.15, 0.21, 0.31, 1.0]
@@ -776,8 +776,8 @@ def button(p, name, text, x, y, pres, look=BUTTON, mappable=False, fontsize=LABE
                 saved_attribute_attributes={"valueof": valueof})
 
 
-def labelled(p, name, text, command, x, y, pres, target, look=BUTTON, mappable=False, fontsize=LABEL_SIZE):
-    """A button labelled for people that sends the engine's own word: the
+def labeled(p, name, text, command, x, y, pres, target, look=BUTTON, mappable=False, fontsize=LABEL_SIZE):
+    """A button labeled for people that sends the engine's own word: the
     button bangs a hidden message box (the command)."""
     b = button(p, name, text, x, y, pres, look, mappable, fontsize)
     t = p.obj("t b", x, y + 30, 1, 1, ["bang"], w=35)
@@ -881,14 +881,14 @@ def panel():
     # Row 1: compose (the main action), seed, next, export midi
     # (Compose is shown as "update composition": it composes again with the
     # settings and taste as they are now; Live's parameter keeps its name.)
-    labelled(p, "Compose", "update composition", "compose", 660, 300, (6, 6, 114, 24), out, look=MAIN,
+    labeled(p, "Compose", "update composition", "compose", 660, 300, (6, 6, 114, 24), out, look=MAIN,
              mappable=True, fontsize=11.0)
     label(p, "seed", 740, 270, (124, 9, 24, 18), w=40)
     seed = live_numbox(p, "Seed", 740, 300, (148, 9, 42, 18), 1, 99999, 1)
     seed_pre = p.obj("prepend seed", 740, 335, 2, 1, w=90)
     p.connect(seed, 0, seed_pre, 0)
     send(seed_pre)
-    labelled(p, "Next", "next", "next", 860, 300, (194, 8, 34, 20), out, mappable=True)
+    labeled(p, "Next", "next", "next", 860, 300, (194, 8, 34, 20), out, mappable=True)
     p.comment("seed: composes when changed (once a corpus is loaded); update composition: the shown seed "
               "again; next: seed + 1", 660, 400, w=330, h=34, linecount=2)
     dialog_button(p, "Export MIDI", "export midi", 1000, 300, (232, 8, 62, 20), "savedialog", "exportmidi",
@@ -973,12 +973,12 @@ def emily_panel():
     # What she is, under her name (the name is in the strip's row of names).
     p.comment("user's taste", 140, 100, w=80, pres=(0, 2, W, 16), fontsize=LABEL_SIZE, textcolor=SOFT_TEXT,
               textjustification=1)
-    labelled(p, "Like", "like", "like", 20, 140, (6, 19, 77, 24), out, look=WARM, mappable=True, fontsize=11.0)
-    labelled(p, "Dislike", "dislike", "dislike", 120, 140, (87, 19, 77, 24), out, look=WARM, mappable=True,
+    labeled(p, "Like", "like", "like", 20, 140, (6, 19, 77, 24), out, look=WARM, mappable=True, fontsize=11.0)
+    labeled(p, "Dislike", "dislike", "dislike", 120, 140, (87, 19, 77, 24), out, look=WARM, mappable=True,
              fontsize=11.0)
     # M10: accept keeps what is playing as music of her own (mappable, like
     # like and dislike), shown as "keep"; forget is in the pop-up window.
-    labelled(p, "Accept", "keep", "accept", 220, 140, (6, 46, W - 12, 20), out, look=WARM, mappable=True)
+    labeled(p, "Accept", "keep", "accept", 220, 140, (6, 46, W - 12, 20), out, look=WARM, mappable=True)
     # (The pop-up window, a large piano roll and her taste in full, opens
     # from the square button at the strip's top right, in the top patch.)
     # Temperature: how much chance still plays. A horizontal slider across
@@ -1001,7 +1001,7 @@ def emily_panel():
     temp_pre = p.obj("prepend temperature", 340, 200, 2, 1, w=130)
     p.connect(temp, 0, temp_pre, 0)
     p.connect(temp_pre, 0, out, 0)
-    p.comment("temperature: 0 Magdalena's favourite choices only, 1 as before Magdalena, 3 adventurous. "
+    p.comment("temperature: 0 Magdalena's favorite choices only, 1 as before Magdalena, 3 adventurous. "
               "keep: accept (M10). Her full taste report: the pop-up window.",
               520, 220, w=330, h=48, linecount=3)
 
@@ -1194,8 +1194,8 @@ def instruments_window():
         y = 10 + k * 28
         x = 20 + k * 220
         p.comment(voice, x, 60, w=70, pres=(10, y, 70, 22))
-        labelled(p, f"Choose {k + 1}", "choose…", f"plug {k + 1}", x, 100, (82, y, 104, 22), out)
-        labelled(p, f"Show Editor {k + 1}", "show editor", f"open {k + 1}", x + 110, 100, (192, y, 120, 22), out)
+        labeled(p, f"Choose {k + 1}", "choose…", f"plug {k + 1}", x, 100, (82, y, 104, 22), out)
+        labeled(p, f"Show Editor {k + 1}", "show editor", f"open {k + 1}", x + 110, 100, (192, y, 120, 22), out)
     p.comment("Then switch on plug-in instruments in the panel, and audio (the speaker).", 20, 300, w=300,
               h=34, linecount=2, pres=(10, 124, 300, 34), fontsize=LABEL_SIZE)
     window_title(p, "Cento: plug-in instruments", 500)
@@ -1227,8 +1227,8 @@ def extras_window():
     p.connect(key_pre, 0, out, 0)
     p.comment("One chorale plays as written, in C major or A minor, or in its own key with original key on.",
               200, 320, w=300, h=34, linecount=2, pres=(10, 82, W - 20, 34), fontsize=LABEL_SIZE)
-    labelled(p, "Test Phrase", "play the test phrase", "pattern", 20, 380, (10, 124, 150, 22), out)
-    labelled(p, "Clear Queue", "stop and clear the queue", "clear", 200, 380, (166, 124, 160, 22), out)
+    labeled(p, "Test Phrase", "play the test phrase", "pattern", 20, 380, (10, 124, 150, 22), out)
+    labeled(p, "Clear Queue", "stop and clear the queue", "clear", 200, 380, (166, 124, 160, 22), out)
     p.comment("The test phrase needs no chorales: it checks the voices.", 20, 480, w=300,
               pres=(10, 150, W - 20, 20), fontsize=LABEL_SIZE)
     restore = p.obj("route key", 380, 20, 2, 2, w=70)
@@ -1293,8 +1293,8 @@ def host_live():
               h=34, linecount=2)
 
     # Clips (rows 6 and 32)
-    labelled(p, "Write Clips", "write clips", "writeclips", 20, 100, (6, 6, 60, 20), out, mappable=True)
-    labelled(p, "Test Clips", "test clips", "testclip", 120, 100, (70, 6, 54, 20), out)
+    labeled(p, "Write Clips", "write clips", "writeclips", 20, 100, (6, 6, 60, 20), out, mappable=True)
+    labeled(p, "Test Clips", "test clips", "testclip", 120, 100, (70, 6, 54, 20), out)
     auto = live_toggle(p, "Clips On Compose", "clips on compose", 260, 100, (6, 32, 118, 20))
     auto_pre = p.obj("prepend autoclips", 260, 135, 2, 1, w=110)
     p.connect(auto, 0, auto_pre, 0)
@@ -1389,22 +1389,22 @@ def window():
     p.connect(route, 1, taste_view, 0)
     p.connect(taste_view, 0, out, 0)  # pin, unpin, strength from the weight editor
     y = 30 + ROLL_H + TASTE_H
-    labelled(p, "Window Like", "like", "like", 20, 760, (10, y, 56, 24), out, look=WARM)
-    labelled(p, "Window Dislike", "dislike", "dislike", 80, 760, (70, y, 56, 24), out, look=WARM)
-    labelled(p, "Window Keep", "keep", "accept", 140, 760, (130, y, 46, 24), out, look=WARM)
-    labelled(p, "Taste Report", "taste report", "taste", 200, 760, (180, y, 72, 24), out)
+    labeled(p, "Window Like", "like", "like", 20, 760, (10, y, 56, 24), out, look=WARM)
+    labeled(p, "Window Dislike", "dislike", "dislike", 80, 760, (70, y, 56, 24), out, look=WARM)
+    labeled(p, "Window Keep", "keep", "accept", 140, 760, (130, y, 46, 24), out, look=WARM)
+    labeled(p, "Taste Report", "taste report", "taste", 200, 760, (180, y, 72, 24), out)
     # Update composition, as on the panel: compose the seed shown again,
     # after changing her mix, novelty or weights, to hear and see what they
     # do. (It was "reload seed".)
-    labelled(p, "Update Composition", "update composition", "compose", 260, 760, (256, y, 120, 24), out,
+    labeled(p, "Update Composition", "update composition", "compose", 260, 760, (256, y, 120, 24), out,
              look=MAIN, fontsize=11.0)
     # Releasing every pin, and storing or recalling a whole taste as a file.
     # (The taste pane's views are its own tabs.)
-    labelled(p, "Release All Pins", "release all pins", "unpin", 410, 760, (386, y, 120, 24), out)
+    labeled(p, "Release All Pins", "release all pins", "unpin", 410, 760, (386, y, 120, 24), out)
     dialog_button(p, "Store Taste", "store taste", 580, 760, (516, y, 95, 24), "savedialog", "storetaste", [(out, 0)])
     dialog_button(p, "Recall Taste", "recall taste", 720, 760, (617, y, 95, 24), "opendialog", "recalltaste",
                   [(out, 0)])
-    labelled(p, "Forget", "forget", "forget", 860, 760, (718, y, 60, 24), out)
+    labeled(p, "Forget", "forget", "forget", 860, 760, (718, y, 60, 24), out)
     # Who Magdalena is (emi.magdalena, a small window of its own).
     opener(p, "Explain Magdalena", "explain Magdalena", 1000, 760, (788, y, 130, 24), "emi.magdalena")
     p.comment("Drag across the roll to select beats for like, dislike and keep.", 940, 900, linecount=2,
@@ -1420,7 +1420,7 @@ MAGDALENA_TEXT = [
     ("Magdalena is Cento's listener. She learns the user's taste: like and dislike tell her what you "
      "enjoy in a piece, a stream phrase, or beats you select in the piano roll. Later pieces lean toward "
      "what you liked, always within Bach's rules. temperature sets how much chance still plays: 0, only her "
-     "favourite choices; 1, as if she weren't there; up to 3, more adventurous.", 12.0, 0, 90),
+     "favorite choices; 1, as if she weren't there; up to 3, more adventurous.", 12.0, 0, 90),
     ("keep writes what you're hearing into Magdalena's notebook: music of her own that later pieces draw on, "
      "alongside Bach's (how much: mix, in the memory tab). novelty lets her vary phrases with notes Bach "
      "never wrote. Snapshots let you roll her taste back to an earlier one; forget starts afresh.",
@@ -1472,7 +1472,7 @@ def corpora_window():
     y = 20 + LIST_H
     dialog_button(p, "Add Folder", "add folder", 20, 460, (10, y, 90, 24), "opendialog fold", "corpusadd",
                   [(out, 0)])
-    labelled(p, "Rescan", "rescan", "corpusrescan", 160, 460, (106, y, 60, 24), out)
+    labeled(p, "Rescan", "rescan", "corpusrescan", 160, 460, (106, y, 60, 24), out)
     p.comment("Add a folder of chorales (MIDI files), then switch folders on or off.", 300, 460, w=420, h=20,
               pres=(176, y + 2, W - 166, 20), fontsize=LABEL_SIZE)
     window_title(p, "Cento: corpora", 500)
@@ -1489,7 +1489,7 @@ HOST_LIVE_W = 130
 
 def top(adapter, host_name, title, host_w, h=169, abstraction="emi.engine"):
     """[host adapter panel | shared panel | Magdalena | piano roll], all wired to one engine, under a
-    row naming each section (centred above it)."""
+    row naming each section (centered above it)."""
     panel_x = host_w + 8
     emily_x = panel_x + PANEL_W + 8
     view_x = emily_x + EMILY_W + 8
@@ -1497,7 +1497,7 @@ def top(adapter, host_name, title, host_w, h=169, abstraction="emi.engine"):
     # The row of section names along the top.
     solid(p, HEADER_BG, (0, 0, view_x + VIEW_W, HEADER_H))
     # The piano roll's name leaves room at the right for the window button,
-    # keeping its centre.
+    # keeping its center.
     room = WINDOW_SIZE + 4
     for name, x, w in [(host_name, 0, host_w), ("COMPOSE", panel_x, PANEL_W), ("MAGDALENA", emily_x, EMILY_W),
                        ("PIANO ROLL", view_x + room, VIEW_W - 2 * room)]:

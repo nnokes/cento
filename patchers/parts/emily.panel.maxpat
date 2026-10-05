@@ -599,8 +599,8 @@
 						46.0
 					],
 					"id": "obj-14",
-					"hint": "How much chance still plays when composing. 0: only Magdalena's favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
-					"annotation": "How much chance still plays when composing. 0: only Magdalena's favourite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
+					"hint": "How much chance still plays when composing. 0: only Magdalena's favorite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
+					"annotation": "How much chance still plays when composing. 0: only Magdalena's favorite choices; 1: as if she weren't there (the default); up to 3: more adventurous.",
 					"annotation_name": "temperature"
 				}
 			},
@@ -625,7 +625,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "temperature: 0 Magdalena's favourite choices only, 1 as before Magdalena, 3 adventurous. keep: accept (M10). Her full taste report: the pop-up window.",
+					"text": "temperature: 0 Magdalena's favorite choices only, 1 as before Magdalena, 3 adventurous. keep: accept (M10). Her full taste report: the pop-up window.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 3,

@@ -119,7 +119,7 @@ function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
   return slots;
 }
 
-// May grouping g fill this slot, leaving aside how it joins its neighbours?
+// May grouping g fill this slot, leaving aside how it joins its neighbors?
 // labels: false for a signature block's grouping, which keeps its own label.
 function fits(g, slot, labels = true) {
   if (g.beatInBar !== slot.beatInBar || g.cadence !== slot.cadence) return false;
@@ -373,7 +373,7 @@ function shiftTo(target, h) {
 }
 
 // Whether grouping g, its voices moved by `shift`, stays in every voice's
-// range and crosses no neighbouring voices that didn't cross before.
+// range and crosses no neighboring voices that didn't cross before.
 function voicesFit(db, g, shift) {
   for (const [, pitch, , voice] of g.pieces) {
     const [low, high] = db.ranges[voice - 1];

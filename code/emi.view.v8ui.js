@@ -8,12 +8,12 @@
 // bottom shows each beat's SPEAC label (M6): S statement, P preparation,
 // E extension, A antecedent, C consequent. Gold bands mark signature blocks
 // (M7), named by their signature. Small carets above the lane mark parallel
-// fifths and octaves (M8): grey for Bach's own, red for new ones. With the
+// fifths and octaves (M8): gray for Bach's own, red for new ones. With the
 // mouse over a beat, a box at the top shows where it came from (M8: the
 // provenance view); over the SPEAC lane, a box explains that beat's letter. Dragging across the roll selects whole beats for
 // Emily to rate (M9): a blue band, sent to the engine as "select <from>
 // <to>" (ticks) while dragging; a click clears it ("select"). Bars are
-// numbered along the top and each C is labelled on the left, where there is
+// numbered along the top and each C is labeled on the left, where there is
 // room. Along the top, each in a row of its own so none covers another: the
 // bar numbers, then the cadence triangles, then Magdalena's purple dots; the
 // notes start below them. The same script draws the small roll in the panels and the large
@@ -49,7 +49,7 @@ mgraphics.autofill = 0;
 // SPEAC lane colors: tension rising (P, A) warm, resolving (C) cool.
 const SPEAC_COLORS = { S: [0.55, 0.6, 0.7], P: [0.5, 0.8, 0.45], E: [0.35, 0.35, 0.38], A: [0.95, 0.5, 0.3], C: [0.4, 0.65, 0.95] };
 // What each letter means, shown with the mouse over the lane (emi-speac
-// labels each beat by its tension against its neighbours and its phrase).
+// labels each beat by its tension against its neighbors and its phrase).
 const SPEAC_HELP = {
   S: "S, statement: the beat states where the music is. Its tension sits near the phrase's average.",
   P: "P, preparation: the beat leads into the next one. Its tension is close to the next beat's, so it prepares that arrival.",
@@ -455,7 +455,7 @@ function paint() {
 
 // The rows along the top of the roll, so that no mark covers another: the
 // bar numbers' baseline, the cadence triangles' top, the purple dots'
-// centre, and where the notes begin (head).
+// center, and where the notes begin (head).
 function markRows(big) {
   return big ? { number: 13, cadence: 17, dot: 30, head: 36 } : { number: 8, cadence: 10, dot: 20, head: 24 };
 }

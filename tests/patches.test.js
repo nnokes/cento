@@ -446,7 +446,7 @@ test("top patches: host panel, shared panel, Emily's panel and piano roll, all w
       assert.deepEqual(p.from(pcontrol.id).map(([b, inlet]) => [b.id, inlet]), [[window.id, 0]], `${file}: ${abstraction}`);
     }
   }
-  // A row along the top names each section, centred above it; the sections
+  // A row along the top names each section, centered above it; the sections
   // sit below it.
   for (const [file, host] of [["cento.maxpat", "PLAY"], ["emi.brain.maxpat", "CLIPS AND VOICES"]]) {
     const p = patchFile(file);
@@ -456,7 +456,7 @@ test("top patches: host panel, shared panel, Emily's panel and piano roll, all w
     names.forEach((name, k) => {
       const [x, y, w, h] = name.presentation_rect;
       const [sx, sy, sw] = sections[k].presentation_rect;
-      assert.deepEqual([x + w / 2, name.textjustification], [sx + sw / 2, 1], `${file}: ${name.text} is centred above its section`);
+      assert.deepEqual([x + w / 2, name.textjustification], [sx + sw / 2, 1], `${file}: ${name.text} is centered above its section`);
       assert.ok(y + h <= sy, `${file}: ${name.text} is above its section`);
     });
     const [band] = shown.filter((b) => b.maxclass === "panel");
@@ -488,6 +488,7 @@ test("every visible control has hover text, and docs/controls.md gives the same"
         assert.equal(box.annotation, box.hint, `${name}: the same text for the Clue window and Live's Info View`);
         assert.ok(box.annotation_name, `${name}: a name for the Info View`);
         assert.ok(rows.has(`| **${box.annotation_name}** | ${box.hint} |`), `${name}: in docs/controls.md`);
+        assert.ok(!/colour|favourite|neighbour|licence|centre|grey/i.test(box.hint), `${name}: American spelling (color, favorite...)`);
         controls++;
       }
     }
@@ -980,7 +981,7 @@ test("layout: the composing panel starts with compose, the main action; the name
   assert.equal(compose.presentation_rect[0], 6, "at its left");
   assert.ok(compose.fontsize > 10, "in larger letters");
   assert.deepEqual(compose.textcolor, [1, 1, 1, 1]);
-  // Every button shown has a fill colour, and every on/off switch turns
+  // Every button shown has a fill color, and every on/off switch turns
   // amber when on.
   for (const file of ["emi.panel.maxpat", "emily.panel.maxpat", "emi.host.max.maxpat", "emi.host.live.maxpat", "emi.window.maxpat", "emi.corpora.maxpat", "emi.instruments.maxpat", "emi.extras.maxpat"]) {
     for (const b of patchFile(file).boxes.values()) {
@@ -1111,7 +1112,7 @@ test("Magdalena: her panel says what she is (the user's taste); the pop-up windo
   const panel = patchFile("emily.panel.maxpat");
   const [subtitle] = panel.find("user's taste");
   const [x, y, width] = subtitle.presentation_rect;
-  assert.deepEqual([x, y, width, subtitle.textjustification], [0, 2, 170, 1], "under her name in the top row, centred");
+  assert.deepEqual([x, y, width, subtitle.textjustification], [0, 2, 170, 1], "under her name in the top row, centered");
   const temperature = named(panel, "Temperature");
   assert.ok(temperature.presentation_rect[3] >= 44, "the slider is tall enough for its name and value");
   assert.deepEqual(panel.find("taste report"), [], "the report itself stays: the text box");
@@ -1184,23 +1185,23 @@ test("button labels fit their buttons (a rough measure)", () => {
   }
 });
 
-test("sections: each part of the strip sits on a solid colour of its own, with light text on it", () => {
-  const colours = new Map();
+test("sections: each part of the strip sits on a solid color of its own, with light text on it", () => {
+  const colors = new Map();
   for (const [file, width] of [["emi.host.max.maxpat", 192], ["emi.host.live.maxpat", 130], ["emi.panel.maxpat", 300], ["emily.panel.maxpat", 170]]) {
     const p = readPatcher(locate(file));
     const back = p.boxes[0].box;
     assert.equal(back.maxclass, "panel", `${file}: the first box (the back) is a [panel]`);
     assert.deepEqual(back.presentation_rect, [0, 0, width, 149], file);
     assert.equal(back.ignoreclick, 1, `${file}: clicks pass through it`);
-    colours.set(file, back.bgfillcolor_color.join(","));
+    colors.set(file, back.bgfillcolor_color.join(","));
     for (const { box } of p.boxes) {
       if (box.maxclass !== "comment" || !box.presentation_rect) continue;
       const [r, g, b] = box.textcolor;
-      assert.ok(Math.min(r, g, b) >= 0.8, `${file}: "${box.text}" is light enough to read on the dark colour`);
+      assert.ok(Math.min(r, g, b) >= 0.8, `${file}: "${box.text}" is light enough to read on the dark color`);
     }
   }
-  assert.equal(colours.get("emi.host.max.maxpat"), colours.get("emi.host.live.maxpat"), "the left panel: the same colour in both versions");
-  assert.equal(new Set([colours.get("emi.host.max.maxpat"), colours.get("emi.panel.maxpat"), colours.get("emily.panel.maxpat")]).size, 3, "three colours for three jobs");
+  assert.equal(colors.get("emi.host.max.maxpat"), colors.get("emi.host.live.maxpat"), "the left panel: the same color in both versions");
+  assert.equal(new Set([colors.get("emi.host.max.maxpat"), colors.get("emi.panel.maxpat"), colors.get("emily.panel.maxpat")]).size, 3, "three colors for three jobs");
 });
 
 test("patchers/: only what you open on top; the parts and the scripts in their own folders", () => {

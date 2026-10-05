@@ -13,14 +13,14 @@
 //
 // Quality (M8): each composed piece's quotation measures and parallel fifths
 // and octaves (emi-quality) go to the Max window; parallels are marked in the
-// piano roll (grey: Bach's own, red: new).
+// piano roll (gray: Bach's own, red: new).
 //
 // Emily (M9, emily-assoc): "like" and "dislike" rate what you hear: the
 // beats selected in the piano roll (drag across it; a click clears), or
 // else the stream phrase playing (the one before, in its first 1.5 s), or
 // else the whole piece. Emily learns which musical features you like and
 // composing prefers them among the choices the rules allow; "temperature"
-// sets how much chance still plays (0: Emily's favourite choices; 1: as
+// sets how much chance still plays (0: Emily's favorite choices; 1: as
 // before M9; up to 3: more adventurous). Her taste is kept in
 // cento.taste.json next to the settings file, and fades a little at each
 // startup after a session with ratings. Each piece composed with a taste
@@ -491,7 +491,7 @@ function select(from, to) {
 function temperature(t) {
   temperatureValue = Math.max(0, Math.min(3, Math.round(Number(t) * 100) / 100 || 0));
   save();
-  const words = temperatureValue === 0 ? "only Magdalena's favourite choices" : temperatureValue < 1 ? "less chance, more taste" : temperatureValue === 1 ? "as if Magdalena weren't there" : "more adventurous";
+  const words = temperatureValue === 0 ? "only Magdalena's favorite choices" : temperatureValue < 1 ? "less chance, more taste" : temperatureValue === 1 ? "as if Magdalena weren't there" : "more adventurous";
   outlet(0, "status", "temperature", temperatureValue.toFixed(2) + ":", ...words.split(" "), "(from", "the", "next", "piece", "or", "phrase)");
   showTaste();
 }
@@ -1627,7 +1627,7 @@ sourcesFor.local = 1;
 
 // The SPEAC lane: one beat label per beat, as [tick, label]. A composed
 // piece shows the labels its beats bring from their chorales; a chorale (or
-// the test phrase) is analysed itself.
+// the test phrase) is analyzed itself.
 function labelsFor(score) {
   try {
     if (score.provenance && db) {

@@ -1,7 +1,7 @@
 "use strict";
 // M6: SPEAC labels (David Cope, Computer Models of Musical Creativity, ch. 7).
-// Every beat is labelled by its tension (emi-tension) compared with its
-// neighbours and its phrase:
+// Every beat is labeled by its tension (emi-tension) compared with its
+// neighbors and its phrase:
 //   S statement    P preparation    E extension    A antecedent    C consequent
 //
 // Cope's rules, checked in this order for each tension w ("≈": within 0.2):

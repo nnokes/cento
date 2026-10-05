@@ -932,8 +932,8 @@ exports.tensionsOf = tensionsOf;
   factories["emi-speac"] = function (exports, module, require) {
 "use strict";
 // M6: SPEAC labels (David Cope, Computer Models of Musical Creativity, ch. 7).
-// Every beat is labelled by its tension (emi-tension) compared with its
-// neighbours and its phrase:
+// Every beat is labeled by its tension (emi-tension) compared with its
+// neighbors and its phrase:
 //   S statement    P preparation    E extension    A antecedent    C consequent
 //
 // Cope's rules, checked in this order for each tension w ("≈": within 0.2):
@@ -2016,7 +2016,7 @@ function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
   return slots;
 }
 
-// May grouping g fill this slot, leaving aside how it joins its neighbours?
+// May grouping g fill this slot, leaving aside how it joins its neighbors?
 // labels: false for a signature block's grouping, which keeps its own label.
 function fits(g, slot, labels = true) {
   if (g.beatInBar !== slot.beatInBar || g.cadence !== slot.cadence) return false;
@@ -2270,7 +2270,7 @@ function shiftTo(target, h) {
 }
 
 // Whether grouping g, its voices moved by `shift`, stays in every voice's
-// range and crosses no neighbouring voices that didn't cross before.
+// range and crosses no neighboring voices that didn't cross before.
 function voicesFit(db, g, shift) {
   for (const [, pitch, , voice] of g.pieces) {
     const [low, high] = db.ranges[voice - 1];
@@ -5537,14 +5537,14 @@ __emi_require.local = 1;
 //
 // Quality (M8): each composed piece's quotation measures and parallel fifths
 // and octaves (emi-quality) go to the Max window; parallels are marked in the
-// piano roll (grey: Bach's own, red: new).
+// piano roll (gray: Bach's own, red: new).
 //
 // Emily (M9, emily-assoc): "like" and "dislike" rate what you hear: the
 // beats selected in the piano roll (drag across it; a click clears), or
 // else the stream phrase playing (the one before, in its first 1.5 s), or
 // else the whole piece. Emily learns which musical features you like and
 // composing prefers them among the choices the rules allow; "temperature"
-// sets how much chance still plays (0: Emily's favourite choices; 1: as
+// sets how much chance still plays (0: Emily's favorite choices; 1: as
 // before M9; up to 3: more adventurous). Her taste is kept in
 // cento.taste.json next to the settings file, and fades a little at each
 // startup after a session with ratings. Each piece composed with a taste
@@ -6015,7 +6015,7 @@ function select(from, to) {
 function temperature(t) {
   temperatureValue = Math.max(0, Math.min(3, Math.round(Number(t) * 100) / 100 || 0));
   save();
-  const words = temperatureValue === 0 ? "only Magdalena's favourite choices" : temperatureValue < 1 ? "less chance, more taste" : temperatureValue === 1 ? "as if Magdalena weren't there" : "more adventurous";
+  const words = temperatureValue === 0 ? "only Magdalena's favorite choices" : temperatureValue < 1 ? "less chance, more taste" : temperatureValue === 1 ? "as if Magdalena weren't there" : "more adventurous";
   outlet(0, "status", "temperature", temperatureValue.toFixed(2) + ":", ...words.split(" "), "(from", "the", "next", "piece", "or", "phrase)");
   showTaste();
 }
@@ -7151,7 +7151,7 @@ sourcesFor.local = 1;
 
 // The SPEAC lane: one beat label per beat, as [tick, label]. A composed
 // piece shows the labels its beats bring from their chorales; a chorale (or
-// the test phrase) is analysed itself.
+// the test phrase) is analyzed itself.
 function labelsFor(score) {
   try {
     if (score.provenance && db) {

@@ -57,7 +57,7 @@ const LIMIT = 3; // weights stay within -3..+3 (emily-assoc)
 const ROW = 20;
 const AMBER = [1, 0.75, 0.25];
 // Text on the dark pane: the main text near white, secondary text a light
-// grey that still reads easily (0.4-0.6 was too faint), never dimmer than 0.7.
+// gray that still reads easily (0.4-0.6 was too faint), never dimmer than 0.7.
 const SOFT = 0.82;
 const FAINT = 0.7;
 const STEP = 0.1; // a pinned weight's resolution
@@ -75,7 +75,7 @@ const SLIDERS = {
   },
   novelty: {
     min: 0, max: 1, step: 0.05, reset: 0,
-    help: "novelty: the chance that each phrase gets a variant of her own: a passing tone, a neighbour note, a suspension, a re-voiced chord... 0: never; 1: every phrase. Double-click for 0.",
+    help: "novelty: the chance that each phrase gets a variant of her own: a passing tone, a neighbor note, a suspension, a re-voiced chord... 0: never; 1: every phrase. Double-click for 0.",
   },
 };
 // What each musical feature means (emily-assoc's f: kinds), for hover help.

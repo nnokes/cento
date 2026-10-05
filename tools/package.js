@@ -18,6 +18,8 @@
 //
 // The version is package.json's. Nothing personal goes in: the Cento folder
 // is made from the repository (corpus/ and release/), never from your own.
+// The read-me's pictures (release/images/) go inside it, so the read-me is
+// one file that shows them wherever it's moved.
 // (A standalone app was planned instead of the patch; it waits for later.)
 //
 //   npm run package                 both zips (each needs everything it holds)
@@ -96,9 +98,29 @@ function patchFiles(root) {
   return found;
 }
 
+// The read-me's pictures: src="images/..." in release/'s read-me, put inside
+// it as data: URLs when it's packed.
+const IMAGE_TYPES = { ".png": "image/png", ".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".svg": "image/svg+xml" };
+const PICTURE = /src="(images\/[^"]+)"/g;
+
+function pictures(html) {
+  return [...html.matchAll(PICTURE)].map((m) => m[1]);
+}
+
+function inlinePictures(html, dir) {
+  return html.replace(PICTURE, (all, rel) => {
+    const type = IMAGE_TYPES[path.extname(rel).toLowerCase()] || "application/octet-stream";
+    return `src="data:${type};base64,${fs.readFileSync(path.join(dir, rel)).toString("base64")}"`;
+  });
+}
+
 // Problems with what's there, beyond being missing.
 function problemsWith(root, from) {
   const full = path.join(root, from);
+  if (from.endsWith(".html")) {
+    const missing = pictures(fs.readFileSync(full, "utf8")).filter((rel) => !fs.existsSync(path.join(path.dirname(full), rel)));
+    if (missing.length) return `${from} shows pictures that aren't there: ${missing.map((rel) => path.join(path.dirname(from), rel)).join(", ")}`;
+  }
   if (from.startsWith("frozen/")) {
     // A frozen device carries its patches and scripts: many times the size
     // of the unfrozen one in patchers/, which only names them.
@@ -150,7 +172,13 @@ function build(root, product, out) {
   const stage = path.join(out, "stage");
   const dest = path.join(stage, product.folder);
   fs.rmSync(dest, { recursive: true, force: true });
-  for (const [to, from] of product.entries) copy(path.join(root, from), path.join(dest, to));
+  for (const [to, from] of product.entries) {
+    copy(path.join(root, from), path.join(dest, to));
+    if (to.endsWith(".html")) {
+      const page = path.join(dest, to);
+      fs.writeFileSync(page, inlinePictures(fs.readFileSync(page, "utf8"), path.dirname(path.join(root, from))));
+    }
+  }
   // Finder's .DS_Store files don't belong in a download.
   const strip = (dir) => {
     for (const name of fs.readdirSync(dir)) {
@@ -201,4 +229,4 @@ function main(argv) {
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));
 
-module.exports = { plan, build, contents, patchFiles };
+module.exports = { plan, build, contents, patchFiles, pictures };

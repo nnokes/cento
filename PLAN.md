@@ -1542,7 +1542,12 @@ own settings and Emily files.
    remove it, known issues, and that it's independent of David Cope.
    *Written*: `release/Read me first.html` (a web page: it opens in any
    browser, light or dark). For the Max version: install Max 9 (no licence
-   needed), open `Cento Patch/cento.maxpat`.
+   needed), open `Cento Patch/cento.maxpat`. *Reworked before shipping:* a
+   short tutorial with screenshots (`release/images/`: the device, the
+   pop-up window, the corpora window), numbered markers on them, and
+   "Reading the piano roll". `npm run package` puts the pictures inside the
+   page (data: URLs), so the read-me in a zip is one file. The read-me and
+   the hover text use American spelling (color, favorite...).
 7. **A clean-machine test**: a fresh user account on your Mac (or a friend's
    Mac), following only the read-me.
 8. **The release**: tag `main` (`v0.1.0`, marked as a pre-release: a beta
