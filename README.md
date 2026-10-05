@@ -1,6 +1,6 @@
 # Cento
 
-**Download:** [the latest release](https://github.com/nnokes/cento/releases/latest):
+**Download:** [Cento's releases](https://github.com/nnokes/cento/releases) (the newest is at the top):
 Cento for Live (devices and a demo set) or Cento for Max (a patch for Max 9).
 Unzip it and open *Read me first*.
 

@@ -1,6 +1,6 @@
 # M12 checklist: shipping Cento to others (free)
 
-## Result: M12 passed on your Mac (sections 0 to 6): both downloads work, and a newcomer hears a piece from the read-me alone. Next: publish v0.1.0 ([releasing.md](releasing.md), section 3)
+## Result: M12 passed on your Mac (sections 0 to 6): both downloads work, and a newcomer hears a piece from the read-me alone. Published: [v0.1.0](https://github.com/nnokes/cento/releases/tag/v0.1.0), a pre-release, with both zips
 
 | Check | Max version | Live version |
 |---|---|---|
