@@ -94,7 +94,7 @@ affiliated with David Cope.)
 
 Download one:
 - Cento-for-Live: for Ableton Live 12 Suite (or Standard + Max for Live).
-- Cento-for-Max: a patch for Max 9 (a free download; no licence needed).
+- Cento-for-Max: a patch for Max 9 (a free download; no license needed).
 Then follow "Read me first" in the zip.
 
 What's new:
