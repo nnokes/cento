@@ -1,6 +1,6 @@
 # M12 checklist: shipping Cento to others (free)
 
-## Result: under way; sections 0 to 2 passed on your Mac (the freeze test too); next, sections 3 to 6
+## Result: under way; sections 0 to 3 passed on your Mac (the freeze test and the demo set too); next, sections 4 to 6
 
 | Check | Max version | Live version |
 |---|---|---|
@@ -10,7 +10,7 @@
 | Finding the folder: from a patch in a home folder, from Max's own path, through `/Users` (the app), by a file in it; none: the status line says where it goes | ✅ (`npm test`) | ✅ (the same engine) |
 | Cento's own chorales are found in the Cento folder (as in a download) or the repository | ✅ (`npm test`) | ✅ (the same engine) |
 | Frozen devices work on their own (the freeze test deferred from M0) | — | ✅ (2.1–2.4) |
-| The demo set | — | |
+| The demo set | — | ✅ (section 3) |
 | The app, from Applications | | — |
 | The zips (`npm run package`): what's in them, and what's missing if not | ✅ (`npm test`, with stand-ins) | ✅ |
 | A newcomer, following only the read-me, hears a piece within five minutes | | |
@@ -206,17 +206,17 @@ Then, to be safe, copy `About this folder.txt` from the repository's
 
 ## 3. The demo set (made once)
 
-1. [ ] **Save it.** With the set from section 2: **Play Through Voices** on,
+1. [x] **Save it.** With the set from section 2: **Play Through Voices** on,
        **Seed** 1, tempo 80. *File → Save Live Set As...*, into the
        repository's `build/` folder (make it in Finder if needed), named
        `Cento Demo`. Live makes `build/Cento Demo Project/Cento Demo.als`.
-2. [ ] **Collect.** *File → Collect All and Save*: the frozen devices are
+2. [x] **Collect.** *File → Collect All and Save*: the frozen devices are
        copied into the project, so it doesn't need `frozen/`.
-3. [ ] **Check.** Close Live. In Finder, double-click
+3. [x] **Check.** Close Live. In Finder, double-click
        `build/Cento Demo Project/Cento Demo.als`. Press Play: it plays.
-4. [ ] Put the `patchers` entry back: in a device editor, *Options → File
-       Preferences*, **+**, *Choose*, the repository's `patchers` folder.
-       Restart Live.
+4. [x] Put the `patchers` entry back: in a device editor, *Options → File
+       Preferences*, **+**, *Choose*, the repository's `patchers` folder,
+       and tick **Subfolders** in its row. Restart Live.
 
 ## 4. The app
 
@@ -230,9 +230,10 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        click **Allow**.
 3. [ ] **It works.** It composes at once with your settings (the same seed
        and corpora as in Max). Click **play**: it plays through the output
-       shown (choose *AU DLS Synth 1* if it's silent). **corpora** and
-       **window** open their windows; hover help shows; **export midi**
-       saves a file.
+       shown (choose *AU DLS Synth 1* if it's silent). **corpora**, **↗**
+       (top right), **set up…** and **more features…** open their windows,
+       and **explain Magdalena** (in the pop-up window) opens its own; hover
+       help shows; **export midi** saves a file.
 4. [ ] **Where it found your folder.** If the app has a Max Console (the
        Window menu), copy its `cento: your Cento folder is ...` line: from
        Applications it should say "from the folders in /Users".
