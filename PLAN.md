@@ -1403,12 +1403,13 @@ milestones raise the quality without changing the plumbing.
 **From M4 onward, every milestone must pass in both products** (the parity rule
 in §2). Work day to day in the Max version, then confirm the result in Live.
 
-**Current status: M12 under way, shipping Cento to others for free (below;
-[checklist](docs/M12-checklist.md)): the new layout and the user folder
-passed their Mac checks in Max and Live (sections 0 and 1), and so did the
-frozen devices (section 2: the freeze test from M0) and the demo set
-(section 3). The Max version ships as a patch, not an app (for now); next,
-the patch from its zip (section 4), the zips and the newcomer test. M11 code done; waiting on its Max and Live checks
+**Current status: M12 passed ([checklist](docs/M12-checklist.md)): Cento
+ships to others for free, as two zips on GitHub's Releases page: Cento for
+Live (frozen devices and a demo set) and Cento for Max (the patch, for Max
+9; the app waits for later). Every check passed on the Mac, from the new
+layout and the Cento folder to the freeze test from M0 and a newcomer
+following only the read-me; v0.1.0 (a pre-release) is published from
+`main` ([releasing.md](docs/releasing.md)). M11 code done; waiting on its Max and Live checks
 ([checklist](docs/M11-checklist.md)). The second style (Palestrina, now
 M13) is on hold. M9 and
 M10 passed in both products; M8 passed in the Max version and waits on its Live checks (its third

@@ -1,6 +1,6 @@
 # M12 checklist: shipping Cento to others (free)
 
-## Result: under way; sections 0 to 3 passed on your Mac (the freeze test and the demo set too); next, sections 4 to 6
+## Result: M12 passed on your Mac (sections 0 to 6): both downloads work, and a newcomer hears a piece from the read-me alone. Next: publish v0.1.0 ([releasing.md](releasing.md), section 3)
 
 | Check | Max version | Live version |
 |---|---|---|
@@ -11,9 +11,9 @@
 | Cento's own chorales are found in the Cento folder (as in a download) or the repository | ✅ (`npm test`) | ✅ (the same engine) |
 | Frozen devices work on their own (the freeze test deferred from M0) | — | ✅ (2.1–2.4) |
 | The demo set | — | ✅ (section 3) |
-| Cento for Max: the patch from its download, with nothing on the search path | | — |
-| The zips (`npm run package`): what's in them, and what's missing if not | ✅ (`npm test`, with stand-ins) | ✅ |
-| A newcomer, following only the read-me, hears a piece within five minutes | | |
+| Cento for Max: the patch from its download, with nothing on the search path | ✅ (section 4) | — |
+| The zips (`npm run package`): what's in them, and what's missing if not | ✅ (`npm test`, with stand-ins; section 5 on the Mac) | ✅ |
+| A newcomer, following only the read-me, hears a piece within five minutes | ✅ (section 6) | ✅ (section 6) |
 | Engine tests | ✅ (`npm test`) | ✅ |
 
 M12 makes Cento something other people can download from GitHub and use
@@ -202,7 +202,7 @@ Then, to be safe, copy `About this folder.txt` from the repository's
        *Passed:* `cento: your Cento folder is Macintosh HD:/Users/<you>/Documents/Cento (found from the patch's folder)`,
        from a frozen device in a folder of its own, with `patchers` off the
        search path.
-5. [ ] Leave the set open for section 3.
+5. [x] Leave the set open for section 3.
 
 ## 3. The demo set (made once)
 
@@ -225,41 +225,41 @@ needs no building: the packaging script copies `cento.maxpat` and every
 patch and script it uses into one folder, `Cento Patch`, where Max finds
 them with nothing on its search path.
 
-1. [ ] **Make the zip.** In Terminal, in the repository folder:
+1. [x] **Make the zip.** In Terminal, in the repository folder:
        ```sh
        npm run package -- --only max
        ```
        It ends with `wrote dist/Cento-for-Max-v0.1.0.zip (0.3 MB)`.
        Double-click the zip in `dist/` (in Finder): a folder
        `Cento for Max v0.1.0` opens beside it.
-2. [ ] **Hide the originals.** So the patch can't quietly use the
+2. [x] **Hide the originals.** So the patch can't quietly use the
        repository's files: in Max, *Options → File Preferences*, select the
        `patchers` entry and click **−**. Quit Max.
-3. [ ] **Open it.** In the unzipped folder, open `Cento Patch` and
+3. [x] **Open it.** In the unzipped folder, open `Cento Patch` and
        double-click `cento.maxpat`. It opens in Max and composes at once,
        with your settings (the same seed and corpora as before: they're in
        your Cento folder). The Max Console (*Window → Max Console*) says
        `cento: your Cento folder is ... (found from the patch's folder)`:
        copy that line, and any red text.
-4. [ ] **It works.** Click **play**: it plays through the Output shown
+4. [x] **It works.** Click **play**: it plays through the Output shown
        (choose *AU DLS Synth 1* if it's silent). **corpora**, **↗** (top
        right), **set up…** and **more features…** open their windows, and
        **explain Magdalena** (in the pop-up window) opens its own; hover help
        shows; **export midi** saves a file.
-5. [ ] **Put the `patchers` entry back**: *Options → File Preferences*,
+5. [x] **Put the `patchers` entry back**: *Options → File Preferences*,
        **+**, *Choose*, the repository's `patchers` folder, and tick
        **Subfolders**. (`dist/` is git-ignored: delete it whenever you like.)
 
 ## 5. The zips
 
-1. [ ] In Terminal, in the repository folder:
+1. [x] In Terminal, in the repository folder:
        ```sh
        npm run package
        ```
        It ends with two lines like `wrote dist/Cento-for-Live-v0.1.0.zip (12.3 MB)`
        and `wrote dist/Cento-for-Max-v0.1.0.zip (0.3 MB)`.
        (If something is missing it says what, and how to make it.)
-2. [ ] Double-click each zip in `dist/`. Each opens to a folder with
+2. [x] Double-click each zip in `dist/`. Each opens to a folder with
        `Read me first.html`, `LICENSE.txt`, the `Cento` folder (with
        `corpus` and `About this folder.txt`), and `Cento Demo Project` and
        `Devices` (Live) or `Cento Patch` (Max). Note the zips' sizes for your
@@ -267,16 +267,16 @@ them with nothing on its search path.
 
 ## 6. A newcomer (the "done when")
 
-1. [ ] Make a new user account (*System Settings → Users & Groups → Add
+1. [x] Make a new user account (*System Settings → Users & Groups → Add
        User*), or ask a friend with a Mac. Copy the two zips to it (AirDrop,
        or a USB stick).
-2. [ ] As that user, follow **only** `Read me first.html`, first for Cento
+2. [x] As that user, follow **only** `Read me first.html`, first for Cento
        for Max, then (if Live is there) for Cento for Live. Time it: a piece
        should play within five minutes. (On your own Mac, Max 9 is already
        installed for every account: skip that step, but note what Max asks
        the new user the first time, such as signing in or a trial, and
        that Cento runs without a licence.)
-3. [ ] Note every place the read-me was unclear or wrong, and anything
+3. [x] Note every place the read-me was unclear or wrong, and anything
        macOS asked. Delete the account afterwards if you like.
 
 ---
