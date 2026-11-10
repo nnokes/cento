@@ -21,6 +21,7 @@ This page is written from the same table as the hover text (the patch generator)
 | **plug-in instruments** | On: the voices play through four plug-in instruments inside Max (choose them with set up) instead of the MIDI port. Turn audio on (the speaker) to hear them. Remembered for next time. |
 | **set up** | Open the plug-in instruments window: choose the AU or VST3 instrument that plays each voice, and show its editor. |
 | **more features** | Open the more features window: the blind listening test, loading a single chorale, and the test phrase. |
+| **performance** | On: the music is played as singers would: the chord under each fermata held longer, a breath before the next phrase, phrases that swell and settle. Off: as written, every note alike. Exported MIDI files are always as written. Remembered for next time. |
 
 ## Live version: clips and voices (left panel of the cento.brain device)
 
@@ -31,6 +32,7 @@ This page is written from the same table as the hover text (the patch generator)
 | **clips on compose** | On: every piece composed is also written as clips (as write clips does), so nothing you like is lost. |
 | **play through voices** | On: while Live plays, the piece plays through the cento.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice). |
 | **all voices here** | On: all four voices also come out of this track, to hear the whole piece on this track's instrument. |
+| **performance** | On: the music is played as singers would: the chord under each fermata held longer, a breath before the next phrase, phrases that swell and settle. Off: as written, every note alike. Clips and exported MIDI files are always as written, on the grid. |
 
 ## Composing (both versions)
 

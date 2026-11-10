@@ -191,6 +191,10 @@ HELP = {
                    "plays each voice, and show its editor."),
         "More Features": ("more features", "Open the more features window: the blind listening test, "
                           "loading a single chorale, and the test phrase."),
+        "Performance": ("performance", "On: the music is played as singers would: the chord under each "
+                        "fermata held longer, a breath before the next phrase, phrases that swell and settle. "
+                        "Off: as written, every note alike. Exported MIDI files are always as written. "
+                        "Remembered for next time."),
     },
     "emi.extras": {
         "Listening Test": ("listening test", "Write a blind listening test: a web page of 10 pairs, each a "
@@ -225,6 +229,10 @@ HELP = {
                                 "wrote (otherwise each note sounds twice)."),
         "All Voices Here": ("all voices here", "On: all four voices also come out of this track, to hear "
                             "the whole piece on this track's instrument."),
+        "Performance": ("performance", "On: the music is played as singers would: the chord under each "
+                        "fermata held longer, a breath before the next phrase, phrases that swell and settle. "
+                        "Off: as written, every note alike. Clips and exported MIDI files are always as "
+                        "written, on the grid."),
     },
     "emi.panel": {
         "Compose": ("update composition", "Compose a piece with the seed shown, with the settings and "
@@ -1117,6 +1125,15 @@ def host_max():
     p.connect(extras, 0, out, 0)
     p.comment("more features: listening test, load a chorale (original key), test phrase, clear", 1070, 655,
               w=220, h=34, linecount=2)
+    # The performance layer (emi-perform): on by default. The engine restores
+    # it from the settings file, so the switch sends nothing at load.
+    performance = live_toggle(p, "Performance", "performance", 1300, 560, (6, 118, 120, 20), initial=1,
+                              initial_enable=0)
+    performance_pre = p.obj("prepend perform", 1300, 595, 2, 1, w=110)
+    p.connect(performance, 0, performance_pre, 0)
+    p.connect(performance_pre, 0, out, 0)
+    p.comment("performance: fermatas held, a breath between phrases, dynamics (emi-perform)", 1420, 595,
+              w=220, h=34, linecount=2)
 
     route = p.obj("route voice setting meter ended", 20, 400, 2, 5, w=210)
     p.connect(inl, 0, route, 0)
@@ -1165,7 +1182,7 @@ def host_max():
               "last corpus and compose", 890, 100, w=330, h=34, linecount=2)
     defer_set = p.obj("deferlow", 20, 470, 1, 1, w=65)
     p.connect(route, 1, defer_set, 0)
-    restore = p.obj("route bpm output vst key", 20, 510, 2, 5, w=160)
+    restore = p.obj("route bpm output vst key perform", 20, 510, 2, 6, w=200)
     p.connect(defer_set, 0, restore, 0)
     p.connect(restore, 0, tempo, 0)
     p.connect(restore, 1, menu, 0)
@@ -1173,9 +1190,12 @@ def host_max():
     key = p.obj("prepend key", 200, 545, 2, 1, w=80)
     p.connect(restore, 3, key, 0)
     p.connect(key, 0, extras, 0)
+    set_performance = p.obj("prepend set", 20, 580, 2, 1, w=80)
+    p.connect(restore, 4, set_performance, 0)
+    p.connect(set_performance, 0, performance, 0)
     p.comment("setting <name> <value> from startup: applied (deferred, so the remember it sends back "
-              "never re-enters the engine); key: to the more features window's original key", 290, 545,
-              w=360, h=48, linecount=3)
+              "never re-enters the engine); key: to the more features window's original key; perform: "
+              "shown on its switch, not sent back", 290, 545, w=360, h=62, linecount=4)
     section(p, PLAY_BG, HOST_MAX_W)
     return p
 
@@ -1340,8 +1360,14 @@ def host_live():
     p.connect(fmt, 0, midiout, 0)
     p.connect(midiin, 0, midiout, 0)
     p.comment("track MIDI passes through", 780, 480, w=170)
-    p.comment("Voice tracks: Soprano, Alto, Tenor, Bass.", 20, 600, linecount=3,
-              pres=(6, 110, 118, 38), fontsize=LABEL_SIZE, textcolor=SOFT_TEXT)
+    # The performance layer (emi-perform), on by default; Live saves it with
+    # the set and sends it at load, like the other switches.
+    performance = live_toggle(p, "Performance", "performance", 850, 720, (6, 110, 118, 20), initial=1)
+    performance_pre = p.obj("prepend perform", 850, 755, 2, 1, w=110)
+    p.connect(performance, 0, performance_pre, 0)
+    p.connect(performance_pre, 0, out, 0)
+    p.comment("performance: fermatas held, a breath between phrases, dynamics (emi-perform)", 970, 755,
+              w=220, h=34, linecount=2)
     section(p, PLAY_BG, HOST_LIVE_W)
     return p
 

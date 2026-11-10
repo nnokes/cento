@@ -44,6 +44,16 @@ Smaller:
 
 ### A. A performance layer (the biggest audible gain, no risk to the composer)
 
+*Built* (`code/lib/emi-perform.js`, the **performance** switch in each
+host panel, on by default): fermata chords held as long again (up to a beat
+more; the last chord of all doubled), an eighth's breath before the next
+phrase, velocities from a phrase arch and the beat's harmonic tension (the
+chord's dissonance and the root's motion; not Cope's metric term, which
+rises on weak beats), the soprano louder and the inner voices softer, beat
+1 accented, and a lift before a repeated pitch. Playback only: export and
+clips stay as written. The piano roll reads the playhead back through the
+holds. No ritardando (the player's clock is the transport's).
+
 Every note in the corpus has velocity 90 (`corpus/bach-figured-bass`, checked
 over 40 files), and the player holds a fermata chord for exactly its written
 length. The A/B page says so itself: "pieces are played without the pauses
@@ -87,7 +97,7 @@ One switch, **performance**, on by default.
 
 ## A suggested order
 
-1. The performance layer (A). About a day; the biggest change anyone hears.
+1. ~~The performance layer (A).~~ Built.
 2. GUI G1–G4. Half a day, mostly in `tools/maxgen.py`.
 3. Soprano contour (M1) and cadence degree (M2), then a fresh A/B test.
 4. The template's key (M5), then the pop-up tidy (G5, G6).

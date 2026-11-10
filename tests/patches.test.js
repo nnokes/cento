@@ -198,9 +198,9 @@ test("live.* parameters: named, and unique within each product", () => {
     assert.deepEqual([...new Set(longnames)], longnames, `${product}: duplicate parameter names`);
   }
   assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Beats", "Compose", "Corpora", "Export MIDI", "Form", "Next", "Phrases", "Seed", "Signatures", "Stream", "Transpose"]);
-  assert.deepEqual(liveParameters("emi.host.live.maxpat").map((p) => p.longname).sort(), ["All Voices Here", "Clips On Compose", "Play Through Voices", "Test Clips", "Write Clips"]);
+  assert.deepEqual(liveParameters("emi.host.live.maxpat").map((p) => p.longname).sort(), ["All Voices Here", "Clips On Compose", "Performance", "Play Through Voices", "Test Clips", "Write Clips"]);
   assert.deepEqual(liveParameters("emily.panel.maxpat").map((p) => p.longname).sort(), ["Accept", "Dislike", "Like", "Temperature"]);
-  assert.deepEqual(liveParameters("emi.host.max.maxpat").map((p) => p.longname).sort(), ["More Features", "Play", "Plug-in Instruments", "Set Up"]);
+  assert.deepEqual(liveParameters("emi.host.max.maxpat").map((p) => p.longname).sort(), ["More Features", "Performance", "Play", "Plug-in Instruments", "Set Up"]);
   assert.deepEqual(liveParameters("emi.extras.maxpat").map((p) => p.longname).sort(), ["Clear Queue", "Listening Test", "Load A Chorale", "Original Key", "Test Phrase"]);
 });
 
@@ -1012,7 +1012,7 @@ test("more features (Max version): the listening test and the less-used tools, i
   assert.equal(win.text, "emi.extras");
   assert.deepEqual(host.from(win.id).map(([b]) => b.id), [hostOutlet.id]);
   // A restored original key reaches its switch.
-  const [restore] = host.find("route bpm output vst key");
+  const [restore] = host.find("route bpm output vst key perform");
   const [[key]] = host.from(restore.id, 3);
   assert.equal(key.text, "prepend key");
   assert.deepEqual(host.from(key.id).map(([b, inlet]) => [b.id, inlet]), [[win.id, 0]]);
@@ -1183,6 +1183,25 @@ test("button labels fit their buttons (a rough measure)", () => {
       }
     }
   }
+});
+
+test("performance: a switch in each host panel sends perform to the engine; the Max version shows a restored value without sending it back", () => {
+  for (const [file, initialEnable] of [["emi.host.max.maxpat", 0], ["emi.host.live.maxpat", 1]]) {
+    const p = patchFile(file);
+    const [outlet] = p.find("outlet");
+    const s = named(p, "Performance");
+    assert.deepEqual([s.maxclass, s.mode, s.text], ["live.text", 1, "performance"], file);
+    const valueof = s.saved_attribute_attributes.valueof;
+    assert.deepEqual([valueof.parameter_initial, valueof.parameter_initial_enable], [[1], initialEnable], `${file}: on by default`);
+    const [[pre]] = p.from(s.id, 0);
+    assert.equal(pre.text, "prepend perform", file);
+    assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id], file);
+  }
+  const host = patchFile("emi.host.max.maxpat");
+  const [restore] = host.find("route bpm output vst key perform");
+  const [[set]] = host.from(restore.id, 4);
+  assert.equal(set.text, "prepend set");
+  assert.deepEqual(host.from(set.id).map(([b]) => b.id), [named(host, "Performance").id]);
 });
 
 test("sections: each part of the strip sits on a solid color of its own, with light text on it", () => {

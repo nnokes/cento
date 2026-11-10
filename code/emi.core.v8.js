@@ -38,7 +38,7 @@
 //   streamat <step>            -> the player: send "need" when this step is reached
 //   endat <step>               -> the player: send "ended" when this step (the last note-offs) is
 //                                 reached, each time (999999: never). The Max version then stops.
-//   view clear|note|seam|cadence|speac|signature|parallel|source|done -> the piano roll
+//   view clear|note|seam|cadence|speac|signature|parallel|source|timemap|done -> the piano roll
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
 //   meter <numerator> <denominator>                             -> the Max version's transport (M8)
@@ -73,6 +73,10 @@
 //   stream 1 | stream 0    compose phrase by phrase while playing (M5), or whole pieces
 //   phrases <n>            a stream ends after n phrases (0: endless)
 //   transpose <n>          semitones (-12..12): at once for a whole piece, from the next phrase in a stream
+//   perform 1 | perform 0  play as singers would (emi-perform: fermata chords held, a breath between
+//                          phrases, phrases that swell and settle; the default) or as written. Export
+//                          and clips are always as written. At once for a piece, from the next phrase
+//                          in a stream
 //   need                   (from the player) queue the stream's next phrase
 //   exportmidi <path>      write the current score as a MIDI file (and, for a composed
 //                          piece or stream, its provenance as a .json next to it)
@@ -138,6 +142,7 @@ const signatureNames = require("emi-signatures");
 const quality = require("emi-quality");
 const provenanceOf = require("emi-provenance");
 const abtests = require("emi-abtest");
+const performance = require("emi-perform");
 const abtestPage = require("emi-abtest-page");
 const emily = require("emily-assoc");
 const variation = require("emily-vary");
@@ -161,6 +166,8 @@ let autoClips = false;
 let streaming = false;
 let phrasesWanted = 8;
 let transposeBy = 0;
+let performing = true; // the performance layer for playback (emi-perform): fermatas held, dynamics
+let holds = []; // the current score's held chords (emi-perform), for the piano rolls' playhead
 let current = null; // { base (untransposed, or null for a stream), score, name, chorale }
 let flow = null; // the stream being queued: { state, steps, events, provenance, fermatas, name }
 let groupingsById = null; // { db, map }: the corpus's groupings by id, for the SPEAC lane
@@ -336,6 +343,16 @@ function transpose(n) {
   save();
   if (flow) outlet(0, "status", "transpose", signed(transposeBy), "from", "the", "next", "phrase");
   else if (current && current.base) show(current.base, current.name, current.chorale);
+}
+
+// The performance layer, on or off: a piece is queued again (from the next
+// bar), a stream from its next phrase.
+function perform(on) {
+  performing = Boolean(Number(on));
+  save();
+  if (flow) outlet(0, "status", "performance", performing ? "on" : "off", "from", "the", "next", "phrase");
+  else if (current && current.base) show(current.base, current.name, current.chorale);
+  else outlet(0, "status", "performance", performing ? "on" : "off");
 }
 
 function need() {
@@ -1301,6 +1318,8 @@ function startStream() {
     events: [],
     provenance: [],
     fermatas: [],
+    holds: [], // its held chords (emi-perform), in its written ticks
+    extra: 0, // the ticks those holds add before the next phrase
     name: "emi-" + currentSeed,
     playing: 1, // the phrase playing (M9: what "like" rates)
     since: Date.now(),
@@ -1334,8 +1353,16 @@ function appendPhrase() {
   const phrase = result.phrase;
   phrase.piece = varied(phrase.piece, (Math.imul(currentSeed, 1000) + number) >>> 0);
   const shown = transposed(ingest.quantize(phrase.piece).work, transposeBy);
+  // Queued as performed (emi-perform), after what the earlier phrases' holds
+  // added; drawn as written, with every hold so far.
+  const played = performing ? performance.perform(shown, { stepsPerBeat: STEPS_PER_BEAT, final: state.finished }) : { score: shown, holds: [] };
+  const before = flow.extra;
+  const queued = { ...played.score, events: played.score.events.map(([on, ...rest]) => [on + before, ...rest]) };
+  flow.holds.push(...played.holds);
+  flow.extra += played.holds.reduce((sum, [, extra]) => sum + extra, 0);
+  holds = flow.holds;
   const changed = [];
-  for (const { step, events } of queue.toSteps(shown, STEPS_PER_BEAT)) {
+  for (const { step, events } of queue.toSteps(queued, STEPS_PER_BEAT)) {
     flow.steps.set(step, mergeStep(flow.steps.get(step) || [], events));
     changed.push(step);
   }
@@ -1345,7 +1372,7 @@ function appendPhrase() {
   flow.fermatas.push(...shown.fermatas);
   current = { base: null, score: streamScore(shown, phrase.endTick), name: flow.name, chorale: false };
   const ticksPerStep = db.beatTicks / STEPS_PER_BEAT;
-  outlet(0, "streamat", state.finished ? NO_STEP : phrase.startTick / ticksPerStep);
+  outlet(0, "streamat", state.finished ? NO_STEP : (phrase.startTick + before) / ticksPerStep);
   if (state.finished) outlet(0, "endat", Math.max(...flow.steps.keys()));
   const from = state.phrases[Math.max(0, state.phrases.length - WINDOW)].startTick;
   draw(current.score, from, phrase.endTick);
@@ -1431,6 +1458,7 @@ function restore() {
   if (remembered.phrases !== undefined) phrasesWanted = Math.max(0, Math.min(64, Math.round(remembered.phrases)));
   if (remembered.transpose !== undefined) transposeBy = Math.max(-12, Math.min(12, Math.round(remembered.transpose)));
   if (remembered.temperature !== undefined) temperatureValue = Math.max(0, Math.min(3, Number(remembered.temperature) || 0));
+  if (remembered.perform !== undefined) performing = Boolean(remembered.perform);
   outlet(0, "setting", "seed", currentSeed);
   outlet(0, "setting", "beats", minBeats);
   outlet(0, "setting", "form", useForm ? 1 : 0);
@@ -1440,6 +1468,7 @@ function restore() {
   outlet(0, "setting", "phrases", phrasesWanted);
   outlet(0, "setting", "transpose", transposeBy);
   outlet(0, "setting", "temperature", temperatureValue);
+  outlet(0, "setting", "perform", performing ? 1 : 0);
   for (const [name, values] of Object.entries(remembered.host || {})) {
     if (Array.isArray(values)) outlet(0, "setting", name, ...values);
   }
@@ -1459,6 +1488,7 @@ function save() {
   remembered.phrases = phrasesWanted;
   remembered.transpose = transposeBy;
   remembered.temperature = temperatureValue;
+  remembered.perform = performing ? 1 : 0;
   try {
     settingsFile.write(settingsPath, remembered);
   } catch (e) {
@@ -1497,7 +1527,10 @@ function show(score, name, chorale) {
   outlet(0, "streamat", NO_STEP);
   followMeter(shown.meter);
   outlet(0, "coll", "clear");
-  const steps = queue.toSteps(shown, STEPS_PER_BEAT);
+  // Queued as performed (emi-perform); drawn as written, with the holds.
+  const played = performing ? performance.perform(shown, { stepsPerBeat: STEPS_PER_BEAT }) : { score: shown, holds: [] };
+  holds = played.holds;
+  const steps = queue.toSteps(played.score, STEPS_PER_BEAT);
   for (const { step, events } of steps) outlet(0, "coll", "store", step, ...events);
   outlet(0, "endat", steps.length ? Math.max(...steps.map(({ step }) => step)) : NO_STEP);
   draw(shown);
@@ -1655,6 +1688,7 @@ function draw(score, from = 0, to = score.lengthTicks) {
   const pitches = (events.length ? events : score.events).map((e) => e[1]);
   const barTicks = (score.meter[0] * score.ppq * 4) / score.meter[1];
   outlet(0, "view", "clear", to, Math.min(...pitches), Math.max(...pitches), barTicks, from, score.ppq);
+  if (holds.length) outlet(0, "view", "timemap", ...holds.flatMap(([end, extra]) => [end, extra]));
   const prov = score.provenance || null;
   const sources = prov ? [...new Set(prov.map((p) => p.work))] : [];
   const colorAt = (tick, voice) => {

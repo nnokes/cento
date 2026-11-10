@@ -33,13 +33,18 @@
 //   done                                 (draw it)
 // and, at any time:
 //   highlight <from> <to> | highlight    (the selection, made in the other roll; or none)
-//   playhead <step>                      (where the player is, in 16ths from tick 0; -1: hidden)
+//   timemap <end> <extra>...             (the performance's held chords, emi-perform: where each
+//                                        ends, in the score's ticks, and by how much it moves what
+//                                        follows; the playhead is read back through them)
+//   playhead <step>                      (where the player is, in 16ths of the performed time
+//                                        from tick 0; -1: hidden)
 
 autowatch = 1;
 inlets = 1;
 outlets = 1;
 
 const hover = require("emi-hover");
+const { tickOf } = require("emi-perform");
 
 mgraphics.init();
 mgraphics.relative_coords = 0;
@@ -76,7 +81,7 @@ let playTick = null; // where the player is (a tick), or null when it isn't play
 let dragFrom = null; // the tick of the beat where a drag started
 
 function clear(endTick, low, high, barTicks, startTick, beatTicks) {
-  incoming = { selected: null, variants: [], start: startTick || 0, end: endTick, low, high, barTicks, beatTicks: beatTicks || barTicks / 4, notes: [], seams: [], cadences: [], labels: [], signatures: [], parallels: [], sources: [] };
+  incoming = { selected: null, variants: [], holds: [], start: startTick || 0, end: endTick, low, high, barTicks, beatTicks: beatTicks || barTicks / 4, notes: [], seams: [], cadences: [], labels: [], signatures: [], parallels: [], sources: [] };
 }
 
 function note(on, dur, pitch, color) {
@@ -115,10 +120,19 @@ function variant(tick, ...names) {
   if (incoming) incoming.variants.push([tick, names.join(" ")]);
 }
 
-// The playhead: a line where the player is. Redrawn only when it moves by a
-// pixel or more, so the roll isn't repainted needlessly.
+// The performance's held chords (emi-perform): where each ends, in the
+// score's ticks, and by how much it moves what follows.
+function timemap(...pairs) {
+  if (!incoming) return;
+  incoming.holds = [];
+  for (let i = 0; i + 1 < pairs.length; i += 2) incoming.holds.push([pairs[i], pairs[i + 1]]);
+}
+
+// The playhead: a line where the player is, read back from the performed
+// time through the holds. Redrawn only when it moves by a pixel or more, so
+// the roll isn't repainted needlessly.
 function playhead(step) {
-  const tick = step >= 0 && shown ? (step * beatOf(shown)) / 4 : null;
+  const tick = step >= 0 && shown ? tickOf(shown.holds || [], (step * beatOf(shown)) / 4) : null;
   if (tick === playTick) return;
   const [width] = size();
   const px = (t) => (t === null || !shown ? null : Math.round(((t - shown.start) / (shown.end - shown.start)) * width));

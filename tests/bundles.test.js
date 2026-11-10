@@ -11,6 +11,7 @@ const { loadBundle } = require("./max-sim");
 const build = require("../tools/build");
 const { hello } = require("emi-hello");
 const queue = require("emi-queue");
+const performance = require("emi-perform");
 const patterns = require("emi-pattern");
 const smf = require("emi-smf");
 
@@ -106,11 +107,11 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
     "abtest", "accept", "autoclips", "beats", "clear", "compose", "corpus", "corpusadd", "corpusbuild", "corpuson", "corpusonly", "corpusremove", "corpusrescan", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
-    "mix", "need", "next", "novelty", "pattern", "phrases", "pin", "recalltaste", "remember", "rollback", "seed", "select", "sigs", "snapshot", "startup", "storetaste", "stream",
+    "mix", "need", "next", "novelty", "pattern", "perform", "phrases", "pin", "recalltaste", "remember", "rollback", "seed", "select", "sigs", "snapshot", "startup", "storetaste", "stream",
     "strength", "taste", "tastestep", "temperature", "testclip", "transpose", "unaccept", "unpin", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), [
-    "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "playhead", "seam", "selection", "signature", "source", "speac", "variant",
+    "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "playhead", "seam", "selection", "signature", "source", "speac", "timemap", "variant",
   ]);
   assert.deepEqual(loadBundle("emi.voice").handlers(), ["trackname"]);
   assert.deepEqual(loadBundle("emi.corpora").handlers(), ["clear", "done", "folder", "footer", "onclick", "onidle", "onidleout", "onresize", "paint"]);
@@ -169,8 +170,10 @@ test("hello: the bundle prints the same values as the Node module", () => {
 
 // ---------------------------------------------------------------- core: queue and view
 
-test("core: 'pattern' queues every step, draws it, and reports", () => {
-  const out = loadBundle("emi.core").send("pattern");
+test("core: 'pattern' queues every step, draws it, and reports (as written, with the performance off)", () => {
+  const core = loadBundle("emi.core");
+  core.send("perform", 0);
+  const out = core.send("pattern");
   // The player first stops what's sounding and waits for the next bar.
   assert.deepEqual(out.slice(0, 2), [[0, "restart"], [0, "streamat", 999999]]);
   const coll = select(out, "coll");
@@ -186,6 +189,7 @@ test("core: 'pattern' queues every step, draws it, and reports", () => {
 
 test("core: 'loadmidi' queues a chorale in C; 'key original' requeues it as written", () => {
   const core = loadBundle("emi.core");
+  core.send("perform", 0); // as written: every velocity 90
   const out = core.send("loadmidi", writeAMajorChorale());
   const stores = select(out, "coll").filter(([kind]) => kind === "store");
   assert.deepEqual(stores[0], ["store", 12, 1, 79, 90, 2, 76, 90, 3, 72, 90, 4, 60, 90]); // +3: A -> C
@@ -589,13 +593,13 @@ test("settings: the Max version restores every setting, reloads the corpus and c
   first.send("remember", "output", 2);
   assert.deepEqual(settingsIn(folder), {
     corpora: [{ path: corpusDir, on: true, works: 3, meter: "4/4", modes: "major" }],
-    corpus: corpusDir, seed: 5, beats: 8, form: 0, signatures: 1, key: 1, stream: 0, phrases: 8, transpose: 0, temperature: 1, host: { bpm: [120], output: [2] },
+    corpus: corpusDir, seed: 5, beats: 8, form: 0, signatures: 1, key: 1, stream: 0, phrases: 8, transpose: 0, temperature: 1, perform: 1, host: { bpm: [120], output: [2] },
   });
 
   const second = engineIn(folder);
   const out = second.send("startup", "all");
   assert.deepEqual(select(out, "setting"), [
-    ["seed", 5], ["beats", 8], ["form", 0], ["sigs", 1], ["key", 1], ["stream", 0], ["phrases", 8], ["transpose", 0], ["temperature", 1], ["bpm", 120], ["output", 2],
+    ["seed", 5], ["beats", 8], ["form", 0], ["sigs", 1], ["key", 1], ["stream", 0], ["phrases", 8], ["transpose", 0], ["temperature", 1], ["perform", 1], ["bpm", 120], ["output", 2],
   ]);
   const status = lastStatus(out);
   assert.deepEqual([status[1], status[3]], ["emi-5:", "beats"], "composed seed 5 freely (form off)");
@@ -849,6 +853,51 @@ test("endat: the player is told where each piece ends (its last note-offs); a st
   assert.match(lastStatus(out).join(" "), /^error the stream ran out after phrase 1;/);
   assert.deepEqual(select(out, "endat"), [[999999], [lastStep(out)]]);
   assert.deepEqual(select(core.send("clear"), "endat"), [[999999]]);
+});
+
+test("performance (after v0.1.0): queued as singers would play it, drawn as written; perform 0 queues it as written", () => {
+  const folder = tempDir();
+  const core = engineIn(folder);
+  core.send("startup", "all");
+  core.send("corpus", writeCorpus());
+  core.send("beats", 8);
+  const stores = (o) => select(o, "coll").filter(([kind]) => kind === "store");
+  const lastStep = (o) => Math.max(...stores(o).map(([, step]) => step));
+  const timemaps = (o) => select(o, "view").filter(([kind]) => kind === "timemap");
+  const velocitiesOf = (o) => [...new Set(stores(o).flatMap(([, , ...t]) => t.filter((v, i) => i % 3 === 2 && v > 0)))];
+  const tps = Q / 4;
+  const played = core.send("compose", 1);
+  const [map] = timemaps(played);
+  assert.ok(map && map.length >= 3 && (map.length - 1) % 2 === 0, "the roll gets the held chords: pairs of end and extra");
+  const extra = map.slice(1).filter((v, i) => i % 2 === 1).reduce((a, b) => a + b, 0);
+  assert.ok(extra > 0 && extra % tps === 0);
+  assert.deepEqual(select(played, "endat"), [[lastStep(played)]], "the end is the performed end");
+  assert.ok(velocitiesOf(played).length > 1, "dynamics");
+  // As written: no holds, every velocity the corpus's, the queue shorter by the holds.
+  const written = core.send("perform", 0);
+  assert.deepEqual(timemaps(written), []);
+  assert.equal(lastStep(written), lastStep(played) - extra / tps);
+  assert.deepEqual(velocitiesOf(written), [90]);
+  assert.equal(settingsIn(folder).perform, 0, "remembered");
+  // The test phrase: exactly emi-perform's shaping.
+  core.send("perform", 1);
+  const pattern = core.send("pattern");
+  const expected = queue.toSteps(performance.perform(patterns.testChorale()).score);
+  assert.deepEqual(stores(pattern).map(([, step, ...events]) => ({ step, events })), expected);
+  // A stream of two phrases (this corpus can't go on past a second): the
+  // second is queued after the first phrase's hold and breath, and its own
+  // last chord, the stream's end, is held with no breath.
+  core.send("stream", 1);
+  core.send("phrases", 2);
+  const stream = core.send("compose", 1);
+  const [first, both] = timemaps(stream);
+  assert.equal(first.length, 3, "the first phrase: one held chord");
+  assert.equal(both.length, 5, "then both");
+  const [, end1, extra1, end2, extra2] = both;
+  assert.deepEqual(both.slice(1, 3), first.slice(1), "the first hold stays as it was");
+  assert.ok(end2 > end1 && extra1 % tps === 0 && extra2 % tps === 0 && extra2 > 0);
+  assert.equal(lastStep(stream), (end2 + extra1 + extra2) / tps, "the stream's last note-offs: the last chord, after every hold");
+  assert.deepEqual(select(stream, "endat").at(-1), [lastStep(stream)]);
 });
 
 test("rename: files saved as ml_midi.* carry over to cento.*, and a renamed Documents folder is followed", () => {
@@ -1963,6 +2012,30 @@ test("taste view: tabs choose the view; a taste comparison shows the overview an
 });
 
 // ---------------------------------------------------------------- the playhead
+
+test("view: through the performance's holds, the playhead stays on the held chord and comes back on the beat", () => {
+  const view = loadBundle("emi.view");
+  const g = view.context.mgraphics;
+  view.send("clear", 8 * Q, 60, 72, 4 * Q, 0, Q); // 8 beats, 45 px each
+  view.send("timemap", 4 * Q, 1.5 * Q); // the chord ending at beat 4 is held a beat, then an eighth's breath
+  view.send("done");
+  const line = () => {
+    g.calls.length = 0;
+    view.send("paint");
+    const k = g.calls.findIndex(([name, r, gr, b]) => name === "set_source_rgba" && r === 1 && gr === 0.92 && b === 0.55);
+    return k < 0 ? null : g.calls.slice(k).find(([name]) => name === "move_to")[1];
+  };
+  view.send("playhead", 12); // performed beat 3: before the hold
+  assert.equal(line(), 135.5);
+  view.send("playhead", 16); // the hold begins: the chord's end
+  assert.equal(line(), 180.5);
+  view.send("playhead", 21); // in the breath: still there
+  assert.equal(line(), 180.5);
+  view.send("playhead", 22); // performed 5.5 beats: written beat 4
+  assert.equal(line(), 180.5);
+  view.send("playhead", 26); // performed 6.5: written 5
+  assert.equal(line(), 225.5);
+});
 
 test("view: the playhead is a line where the player is; it moves with the steps and hides at -1", () => {
   const view = loadBundle("emi.view");

@@ -3708,6 +3708,189 @@ exports.unseal = unseal;
 exports.chance = chance;
   };
 
+  // ---- emi-perform.js
+  factories["emi-perform"] = function (exports, module, require) {
+"use strict";
+// A performance layer for playback (after v0.1.0: docs/review.md, A). As
+// written, a score plays every note at one velocity and holds a fermata
+// chord for exactly its written length. This shapes a score for the player
+// the way singers would, without changing the score itself (export and
+// clips stay as written):
+//
+//   fermatas      the chord under each fermata is held longer (as long again,
+//                 up to a beat more; the last chord of all as long again
+//                 outright), then a breath, an eighth rest, before the next
+//                 phrase. Everything after it moves later by as much.
+//   dynamics      each phrase swells and settles: a velocity from the beat's
+//                 place in its phrase (an arch) and from its harmonic tension
+//                 against the phrase's (the chord's dissonance and the root's
+//                 motion, from emi-tension; not its metric part, which rises
+//                 on weak beats), the soprano a little louder, the inner
+//                 voices softer, beat 1 accented.
+//   articulation  a note followed by the same pitch in its voice is lifted (a
+//                 16th shorter), so the repeat is heard as a new note.
+//
+//   perform(score, { stepsPerBeat, final, fermatas, dynamics, articulation })
+//     -> { score, holds }
+// score: the performed score (events moved and reshaped; fermatas and
+// lengthTicks moved with them). holds, in the score's own ticks, one per
+// held chord: [endTick, extraTicks, holdTicks]: where the chord ends as
+// written, by how much everything after it moves (the hold and the breath),
+// and by how much its own notes are held. final: the score's last fermata
+// is the end of the music (a whole piece), not a phrase of a stream.
+//
+//   stretch(holds, tick)        a written tick as performed (an onset)
+//   tickOf(holds, performed)    a performed tick as written: inside a hold,
+//                               the held chord's end (the piano roll's playhead)
+// The player's queue is a grid of 16ths (emi-queue), so every hold and
+// breath is a whole number of steps.
+
+const { segment } = require("emi-segment");
+const tension = require("emi-tension");
+
+const HOLD = 1; // a fermata chord is held longer by this share of its length...
+const MAX_HOLD_BEATS = 1; // ...but by at most this, except the last chord of all
+const BREATH_STEPS = 2; // an eighth note before the next phrase
+const BASE = 80; // velocity: the middle of a phrase's range
+const ARCH = 10; // added at the middle of a phrase, nothing at its ends
+const TENSION = 8; // added for the phrase's tensest beat, taken off for its calmest
+const ACCENT = 3; // added on beat 1
+const VOICE = [6, -3, -3, 2]; // soprano, alto, tenor, bass
+
+function perform(score, { stepsPerBeat = 4, final = true, fermatas = true, dynamics = true, articulation = true } = {}) {
+  const beat = score.ppq;
+  const tps = beat / stepsPerBeat;
+  const holds = fermatas ? holdsOf(score, tps, final) : [];
+  const vel = dynamics ? velocities(score) : null;
+  const events = score.events.map(([on, pitch, dur, voice, v]) => {
+    const velocity = vel ? clamp(Math.round((vel.get(Math.floor(on / beat)) || BASE) + (VOICE[voice - 1] || 0))) : v;
+    return [stretch(holds, on), pitch, stretchOff(holds, on + dur) - stretch(holds, on), voice, velocity];
+  });
+  if (articulation) lift(events, beat, tps);
+  events.sort((a, b) => a[0] - b[0] || a[3] - b[3] || a[1] - b[1]);
+  return {
+    score: {
+      ...score,
+      events,
+      fermatas: (score.fermatas || []).map((f) => stretch(holds, f)),
+      lengthTicks: stretchOff(holds, score.lengthTicks),
+    },
+    holds,
+  };
+}
+
+const clamp = (v) => Math.max(1, Math.min(127, v));
+
+// The held chords: for each fermata, the notes sounding in its beat make the
+// chord; it ends where the first of the next notes starts (or where its own
+// notes end, if that's sooner: a rest may follow).
+function holdsOf(score, tps, final) {
+  const beat = score.ppq;
+  const onsets = [...new Set(score.events.map((e) => e[0]))].sort((a, b) => a - b);
+  const fermatas = [...new Set(score.fermatas || [])].sort((a, b) => a - b);
+  const holds = [];
+  fermatas.forEach((f, k) => {
+    const sounding = score.events.filter((e) => e[0] < f + beat && e[0] + e[2] > f);
+    if (!sounding.length) return;
+    const next = onsets.find((t) => t >= f + beat);
+    let end = Math.max(...sounding.map((e) => e[0] + e[2]));
+    if (next !== undefined) end = Math.min(end, next);
+    if (holds.some((h) => h[0] === end)) return;
+    const last = final && k === fermatas.length - 1 && next === undefined;
+    let hold = Math.round(((end - f) * HOLD) / tps) * tps;
+    if (!last) hold = Math.min(hold, MAX_HOLD_BEATS * beat);
+    hold = Math.max(hold, tps);
+    const breath = last ? 0 : BREATH_STEPS * tps;
+    holds.push([end, hold + breath, hold]);
+  });
+  return holds;
+}
+
+// An onset, as performed: moved by every hold before it.
+function stretch(holds, tick) {
+  let moved = 0;
+  for (const [end, extra] of holds) if (end <= tick) moved += extra;
+  return tick + moved;
+}
+
+// A note-off, as performed: a note ending where a chord is held is held with
+// it (not through the breath); one ending later moves by the whole extra.
+function stretchOff(holds, tick) {
+  let moved = 0;
+  for (const [end, extra, hold] of holds) {
+    if (end < tick) moved += extra;
+    else if (end === tick) moved += hold;
+  }
+  return tick + moved;
+}
+
+// A performed tick, as written. Inside a hold or breath: the held chord's end.
+function tickOf(holds, performed) {
+  let moved = 0;
+  for (const [end, extra] of holds) {
+    if (performed < end + moved) break;
+    if (performed < end + moved + extra) return end;
+    moved += extra;
+  }
+  return performed - moved;
+}
+
+// A velocity per beat (before the voice offsets), from the beat's place in
+// its phrase and its harmonic tension against the phrase's. Phrases end at
+// fermatas.
+function velocities(score) {
+  const beat = score.ppq;
+  const beatsPerBar = Math.round((score.meter[0] * 4) / score.meter[1]);
+  const groupings = segment({ ...score, id: score.id || "score", fermatas: score.fermatas || [] }, beat);
+  const parts = tension.tensionsOf(groupings, beatsPerBar);
+  const approaches = tension.approach(parts.map((t) => t.root));
+  const tensions = parts.map((t, k) => t.vertical + approaches[k]);
+  const cadences = new Set((score.fermatas || []).map((f) => Math.floor(f / beat)));
+  const phrases = [];
+  let phrase = [];
+  groupings.forEach((g, k) => {
+    phrase.push(k);
+    if (cadences.has(g.index)) {
+      phrases.push(phrase);
+      phrase = [];
+    }
+  });
+  if (phrase.length) phrases.push(phrase);
+  const out = new Map();
+  for (const members of phrases) {
+    const mean = members.reduce((sum, k) => sum + tensions[k], 0) / members.length;
+    const spread = Math.max(0.1, ...members.map((k) => Math.abs(tensions[k] - mean)));
+    members.forEach((k, n) => {
+      const pos = members.length > 1 ? n / (members.length - 1) : 0.5;
+      const z = Math.max(-1, Math.min(1, (tensions[k] - mean) / spread));
+      out.set(groupings[k].index, BASE + ARCH * Math.sin(Math.PI * pos) + TENSION * z + (groupings[k].beatInBar === 1 ? ACCENT : 0));
+    });
+  }
+  return out;
+}
+
+// A note a quarter or longer that runs straight into the same pitch in its
+// voice ends a 16th early.
+function lift(events, beat, tps) {
+  for (let v = 1; v <= 4; v++) {
+    const line = events.filter((e) => e[3] === v).sort((a, b) => a[0] - b[0]);
+    for (let k = 0; k + 1 < line.length; k++) {
+      const [a, b] = [line[k], line[k + 1]];
+      if (a[0] + a[2] === b[0] && a[1] === b[1] && a[2] >= beat) a[2] -= tps;
+    }
+  }
+}
+
+exports.perform = perform;
+exports.holdsOf = holdsOf;
+exports.stretch = stretch;
+exports.stretchOff = stretchOff;
+exports.tickOf = tickOf;
+exports.velocities = velocities;
+exports.BASE = BASE;
+exports.VOICE = VOICE;
+  };
+
   // ---- emi-abtest-page.js
   factories["emi-abtest-page"] = function (exports, module, require) {
 "use strict";
@@ -5562,7 +5745,7 @@ __emi_require.local = 1;
 //   streamat <step>            -> the player: send "need" when this step is reached
 //   endat <step>               -> the player: send "ended" when this step (the last note-offs) is
 //                                 reached, each time (999999: never). The Max version then stops.
-//   view clear|note|seam|cadence|speac|signature|parallel|source|done -> the piano roll
+//   view clear|note|seam|cadence|speac|signature|parallel|source|timemap|done -> the piano roll
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
 //   meter <numerator> <denominator>                             -> the Max version's transport (M8)
@@ -5597,6 +5780,10 @@ __emi_require.local = 1;
 //   stream 1 | stream 0    compose phrase by phrase while playing (M5), or whole pieces
 //   phrases <n>            a stream ends after n phrases (0: endless)
 //   transpose <n>          semitones (-12..12): at once for a whole piece, from the next phrase in a stream
+//   perform 1 | perform 0  play as singers would (emi-perform: fermata chords held, a breath between
+//                          phrases, phrases that swell and settle; the default) or as written. Export
+//                          and clips are always as written. At once for a piece, from the next phrase
+//                          in a stream
 //   need                   (from the player) queue the stream's next phrase
 //   exportmidi <path>      write the current score as a MIDI file (and, for a composed
 //                          piece or stream, its provenance as a .json next to it)
@@ -5662,6 +5849,7 @@ const signatureNames = __emi_require("emi-signatures");
 const quality = __emi_require("emi-quality");
 const provenanceOf = __emi_require("emi-provenance");
 const abtests = __emi_require("emi-abtest");
+const performance = __emi_require("emi-perform");
 const abtestPage = __emi_require("emi-abtest-page");
 const emily = __emi_require("emily-assoc");
 const variation = __emi_require("emily-vary");
@@ -5685,6 +5873,8 @@ let autoClips = false;
 let streaming = false;
 let phrasesWanted = 8;
 let transposeBy = 0;
+let performing = true; // the performance layer for playback (emi-perform): fermatas held, dynamics
+let holds = []; // the current score's held chords (emi-perform), for the piano rolls' playhead
 let current = null; // { base (untransposed, or null for a stream), score, name, chorale }
 let flow = null; // the stream being queued: { state, steps, events, provenance, fermatas, name }
 let groupingsById = null; // { db, map }: the corpus's groupings by id, for the SPEAC lane
@@ -5860,6 +6050,16 @@ function transpose(n) {
   save();
   if (flow) outlet(0, "status", "transpose", signed(transposeBy), "from", "the", "next", "phrase");
   else if (current && current.base) show(current.base, current.name, current.chorale);
+}
+
+// The performance layer, on or off: a piece is queued again (from the next
+// bar), a stream from its next phrase.
+function perform(on) {
+  performing = Boolean(Number(on));
+  save();
+  if (flow) outlet(0, "status", "performance", performing ? "on" : "off", "from", "the", "next", "phrase");
+  else if (current && current.base) show(current.base, current.name, current.chorale);
+  else outlet(0, "status", "performance", performing ? "on" : "off");
 }
 
 function need() {
@@ -6825,6 +7025,8 @@ function startStream() {
     events: [],
     provenance: [],
     fermatas: [],
+    holds: [], // its held chords (emi-perform), in its written ticks
+    extra: 0, // the ticks those holds add before the next phrase
     name: "emi-" + currentSeed,
     playing: 1, // the phrase playing (M9: what "like" rates)
     since: Date.now(),
@@ -6858,8 +7060,16 @@ function appendPhrase() {
   const phrase = result.phrase;
   phrase.piece = varied(phrase.piece, (Math.imul(currentSeed, 1000) + number) >>> 0);
   const shown = transposed(ingest.quantize(phrase.piece).work, transposeBy);
+  // Queued as performed (emi-perform), after what the earlier phrases' holds
+  // added; drawn as written, with every hold so far.
+  const played = performing ? performance.perform(shown, { stepsPerBeat: STEPS_PER_BEAT, final: state.finished }) : { score: shown, holds: [] };
+  const before = flow.extra;
+  const queued = { ...played.score, events: played.score.events.map(([on, ...rest]) => [on + before, ...rest]) };
+  flow.holds.push(...played.holds);
+  flow.extra += played.holds.reduce((sum, [, extra]) => sum + extra, 0);
+  holds = flow.holds;
   const changed = [];
-  for (const { step, events } of queue.toSteps(shown, STEPS_PER_BEAT)) {
+  for (const { step, events } of queue.toSteps(queued, STEPS_PER_BEAT)) {
     flow.steps.set(step, mergeStep(flow.steps.get(step) || [], events));
     changed.push(step);
   }
@@ -6869,7 +7079,7 @@ function appendPhrase() {
   flow.fermatas.push(...shown.fermatas);
   current = { base: null, score: streamScore(shown, phrase.endTick), name: flow.name, chorale: false };
   const ticksPerStep = db.beatTicks / STEPS_PER_BEAT;
-  outlet(0, "streamat", state.finished ? NO_STEP : phrase.startTick / ticksPerStep);
+  outlet(0, "streamat", state.finished ? NO_STEP : (phrase.startTick + before) / ticksPerStep);
   if (state.finished) outlet(0, "endat", Math.max(...flow.steps.keys()));
   const from = state.phrases[Math.max(0, state.phrases.length - WINDOW)].startTick;
   draw(current.score, from, phrase.endTick);
@@ -6955,6 +7165,7 @@ function restore() {
   if (remembered.phrases !== undefined) phrasesWanted = Math.max(0, Math.min(64, Math.round(remembered.phrases)));
   if (remembered.transpose !== undefined) transposeBy = Math.max(-12, Math.min(12, Math.round(remembered.transpose)));
   if (remembered.temperature !== undefined) temperatureValue = Math.max(0, Math.min(3, Number(remembered.temperature) || 0));
+  if (remembered.perform !== undefined) performing = Boolean(remembered.perform);
   outlet(0, "setting", "seed", currentSeed);
   outlet(0, "setting", "beats", minBeats);
   outlet(0, "setting", "form", useForm ? 1 : 0);
@@ -6964,6 +7175,7 @@ function restore() {
   outlet(0, "setting", "phrases", phrasesWanted);
   outlet(0, "setting", "transpose", transposeBy);
   outlet(0, "setting", "temperature", temperatureValue);
+  outlet(0, "setting", "perform", performing ? 1 : 0);
   for (const [name, values] of Object.entries(remembered.host || {})) {
     if (Array.isArray(values)) outlet(0, "setting", name, ...values);
   }
@@ -6983,6 +7195,7 @@ function save() {
   remembered.phrases = phrasesWanted;
   remembered.transpose = transposeBy;
   remembered.temperature = temperatureValue;
+  remembered.perform = performing ? 1 : 0;
   try {
     settingsFile.write(settingsPath, remembered);
   } catch (e) {
@@ -7021,7 +7234,10 @@ function show(score, name, chorale) {
   outlet(0, "streamat", NO_STEP);
   followMeter(shown.meter);
   outlet(0, "coll", "clear");
-  const steps = queue.toSteps(shown, STEPS_PER_BEAT);
+  // Queued as performed (emi-perform); drawn as written, with the holds.
+  const played = performing ? performance.perform(shown, { stepsPerBeat: STEPS_PER_BEAT }) : { score: shown, holds: [] };
+  holds = played.holds;
+  const steps = queue.toSteps(played.score, STEPS_PER_BEAT);
   for (const { step, events } of steps) outlet(0, "coll", "store", step, ...events);
   outlet(0, "endat", steps.length ? Math.max(...steps.map(({ step }) => step)) : NO_STEP);
   draw(shown);
@@ -7179,6 +7395,7 @@ function draw(score, from = 0, to = score.lengthTicks) {
   const pitches = (events.length ? events : score.events).map((e) => e[1]);
   const barTicks = (score.meter[0] * score.ppq * 4) / score.meter[1];
   outlet(0, "view", "clear", to, Math.min(...pitches), Math.max(...pitches), barTicks, from, score.ppq);
+  if (holds.length) outlet(0, "view", "timemap", ...holds.flatMap(([end, extra]) => [end, extra]));
   const prov = score.provenance || null;
   const sources = prov ? [...new Set(prov.map((p) => p.work))] : [];
   const colorAt = (tick, voice) => {

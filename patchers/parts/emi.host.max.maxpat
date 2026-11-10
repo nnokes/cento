@@ -65,7 +65,7 @@
 						192.0,
 						149.0
 					],
-					"id": "obj-63"
+					"id": "obj-67"
 				}
 			},
 			{
@@ -1168,6 +1168,138 @@
 			},
 			{
 				"box": {
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"parameter_enable": 1,
+					"varname": "Performance",
+					"mode": 1,
+					"text": "performance",
+					"texton": "performance",
+					"fontsize": 10.0,
+					"bgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"activebgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"bgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"activebgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Performance",
+							"parameter_shortname": "Performance",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								1
+							],
+							"parameter_initial_enable": 0
+						}
+					},
+					"patching_rect": [
+						1300.0,
+						560.0,
+						100.0,
+						20.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						6.0,
+						118.0,
+						120.0,
+						20.0
+					],
+					"id": "obj-41",
+					"hint": "On: the music is played as singers would: the chord under each fermata held longer, a breath before the next phrase, phrases that swell and settle. Off: as written, every note alike. Exported MIDI files are always as written. Remembered for next time.",
+					"annotation": "On: the music is played as singers would: the chord under each fermata held longer, a breath before the next phrase, phrases that swell and settle. Off: as written, every note alike. Exported MIDI files are always as written. Remembered for next time.",
+					"annotation_name": "performance"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend perform",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						1300.0,
+						595.0,
+						110.0,
+						22.0
+					],
+					"id": "obj-42"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "comment",
+					"text": "performance: fermatas held, a breath between phrases, dynamics (emi-perform)",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"linecount": 2,
+					"patching_rect": [
+						1420.0,
+						595.0,
+						220.0,
+						34.0
+					],
+					"id": "obj-43"
+				}
+			},
+			{
+				"box": {
 					"maxclass": "newobj",
 					"text": "route voice setting meter ended",
 					"numinlets": 2,
@@ -1185,7 +1317,7 @@
 						210.0,
 						22.0
 					],
-					"id": "obj-41"
+					"id": "obj-44"
 				}
 			},
 			{
@@ -1203,7 +1335,7 @@
 						30.0,
 						22.0
 					],
-					"id": "obj-42"
+					"id": "obj-45"
 				}
 			},
 			{
@@ -1218,7 +1350,7 @@
 						130.0,
 						20.0
 					],
-					"id": "obj-43"
+					"id": "obj-46"
 				}
 			},
 			{
@@ -1236,7 +1368,7 @@
 						100.0,
 						22.0
 					],
-					"id": "obj-44"
+					"id": "obj-47"
 				}
 			},
 			{
@@ -1251,7 +1383,7 @@
 						200.0,
 						20.0
 					],
-					"id": "obj-45"
+					"id": "obj-48"
 				}
 			},
 			{
@@ -1269,7 +1401,7 @@
 						60.0,
 						22.0
 					],
-					"id": "obj-46"
+					"id": "obj-49"
 				}
 			},
 			{
@@ -1284,7 +1416,7 @@
 						170.0,
 						20.0
 					],
-					"id": "obj-47"
+					"id": "obj-50"
 				}
 			},
 			{
@@ -1303,7 +1435,7 @@
 						60.0,
 						22.0
 					],
-					"id": "obj-48"
+					"id": "obj-51"
 				}
 			},
 			{
@@ -1630,7 +1762,7 @@
 						90.0,
 						22.0
 					],
-					"id": "obj-49"
+					"id": "obj-52"
 				}
 			},
 			{
@@ -2583,7 +2715,7 @@
 						100.0,
 						22.0
 					],
-					"id": "obj-50"
+					"id": "obj-53"
 				}
 			},
 			{
@@ -2601,7 +2733,7 @@
 						65.0,
 						22.0
 					],
-					"id": "obj-51"
+					"id": "obj-54"
 				}
 			},
 			{
@@ -2619,7 +2751,7 @@
 						140.0,
 						22.0
 					],
-					"id": "obj-52"
+					"id": "obj-55"
 				}
 			},
 			{
@@ -2637,7 +2769,7 @@
 						140.0,
 						22.0
 					],
-					"id": "obj-53"
+					"id": "obj-56"
 				}
 			},
 			{
@@ -2655,7 +2787,7 @@
 						140.0,
 						22.0
 					],
-					"id": "obj-54"
+					"id": "obj-57"
 				}
 			},
 			{
@@ -2673,7 +2805,7 @@
 						70.0,
 						22.0
 					],
-					"id": "obj-55"
+					"id": "obj-58"
 				}
 			},
 			{
@@ -2691,7 +2823,7 @@
 						65.0,
 						22.0
 					],
-					"id": "obj-56"
+					"id": "obj-59"
 				}
 			},
 			{
@@ -2709,7 +2841,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-57"
+					"id": "obj-60"
 				}
 			},
 			{
@@ -2725,7 +2857,7 @@
 						330.0,
 						34.0
 					],
-					"id": "obj-58"
+					"id": "obj-61"
 				}
 			},
 			{
@@ -2743,16 +2875,17 @@
 						65.0,
 						22.0
 					],
-					"id": "obj-59"
+					"id": "obj-62"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "route bpm output vst key",
+					"text": "route bpm output vst key perform",
 					"numinlets": 2,
-					"numoutlets": 5,
+					"numoutlets": 6,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -2762,10 +2895,10 @@
 					"patching_rect": [
 						20.0,
 						510.0,
-						160.0,
+						200.0,
 						22.0
 					],
-					"id": "obj-60"
+					"id": "obj-63"
 				}
 			},
 			{
@@ -2783,23 +2916,41 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-61"
+					"id": "obj-64"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend set",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						20.0,
+						580.0,
+						80.0,
+						22.0
+					],
+					"id": "obj-65"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "setting <name> <value> from startup: applied (deferred, so the remember it sends back never re-enters the engine); key: to the more features window's original key",
+					"text": "setting <name> <value> from startup: applied (deferred, so the remember it sends back never re-enters the engine); key: to the more features window's original key; perform: shown on its switch, not sent back",
 					"numinlets": 1,
 					"numoutlets": 0,
-					"linecount": 3,
+					"linecount": 4,
 					"patching_rect": [
 						290.0,
 						545.0,
 						360.0,
-						48.0
+						62.0
 					],
-					"id": "obj-62"
+					"id": "obj-66"
 				}
 			}
 		],
@@ -3179,11 +3330,35 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-41",
+						0
+					],
+					"destination": [
+						"obj-42",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-42",
+						0
+					],
+					"destination": [
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-2",
 						0
 					],
 					"destination": [
-						"obj-41",
+						"obj-44",
 						0
 					]
 				}
@@ -3191,11 +3366,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-41",
+						"obj-44",
 						3
 					],
 					"destination": [
-						"obj-42",
+						"obj-45",
 						0
 					]
 				}
@@ -3203,7 +3378,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-42",
+						"obj-45",
 						0
 					],
 					"destination": [
@@ -3215,11 +3390,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-41",
+						"obj-44",
 						2
 					],
 					"destination": [
-						"obj-44",
+						"obj-47",
 						0
 					]
 				}
@@ -3227,7 +3402,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-44",
+						"obj-47",
 						0
 					],
 					"destination": [
@@ -3243,7 +3418,7 @@
 						0
 					],
 					"destination": [
-						"obj-46",
+						"obj-49",
 						0
 					]
 				}
@@ -3255,7 +3430,7 @@
 						0
 					],
 					"destination": [
-						"obj-46",
+						"obj-49",
 						0
 					]
 				}
@@ -3263,11 +3438,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-41",
+						"obj-44",
 						0
 					],
 					"destination": [
-						"obj-46",
+						"obj-49",
 						1
 					]
 				}
@@ -3279,7 +3454,7 @@
 						0
 					],
 					"destination": [
-						"obj-48",
+						"obj-51",
 						0
 					]
 				}
@@ -3287,35 +3462,35 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-46",
-						0
-					],
-					"destination": [
-						"obj-48",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-48",
-						0
-					],
-					"destination": [
 						"obj-49",
 						0
+					],
+					"destination": [
+						"obj-51",
+						1
 					]
 				}
 			},
 			{
 				"patchline": {
 					"source": [
-						"obj-48",
+						"obj-51",
+						0
+					],
+					"destination": [
+						"obj-52",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-51",
 						1
 					],
 					"destination": [
-						"obj-50",
+						"obj-53",
 						0
 					]
 				}
@@ -3327,7 +3502,7 @@
 						1
 					],
 					"destination": [
-						"obj-51",
+						"obj-54",
 						0
 					]
 				}
@@ -3335,11 +3510,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-51",
+						"obj-54",
 						0
 					],
 					"destination": [
-						"obj-49",
+						"obj-52",
 						1
 					]
 				}
@@ -3351,7 +3526,7 @@
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-53",
 						1
 					]
 				}
@@ -3363,67 +3538,7 @@
 						0
 					],
 					"destination": [
-						"obj-52",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-52",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-26",
-						0
-					],
-					"destination": [
-						"obj-53",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-53",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-27",
-						0
-					],
-					"destination": [
-						"obj-54",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-54",
-						0
-					],
-					"destination": [
-						"obj-3",
+						"obj-55",
 						0
 					]
 				}
@@ -3435,6 +3550,18 @@
 						0
 					],
 					"destination": [
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-26",
+						0
+					],
+					"destination": [
 						"obj-56",
 						0
 					]
@@ -3444,6 +3571,18 @@
 				"patchline": {
 					"source": [
 						"obj-56",
+						0
+					],
+					"destination": [
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-27",
 						0
 					],
 					"destination": [
@@ -3467,11 +3606,47 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-41",
+						"obj-58",
+						0
+					],
+					"destination": [
+						"obj-59",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-59",
+						0
+					],
+					"destination": [
+						"obj-60",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-60",
+						0
+					],
+					"destination": [
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-44",
 						1
 					],
 					"destination": [
-						"obj-59",
+						"obj-62",
 						0
 					]
 				}
@@ -3479,11 +3654,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-59",
+						"obj-62",
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-63",
 						0
 					]
 				}
@@ -3491,7 +3666,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-60",
+						"obj-63",
 						0
 					],
 					"destination": [
@@ -3503,7 +3678,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-60",
+						"obj-63",
 						1
 					],
 					"destination": [
@@ -3515,7 +3690,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-60",
+						"obj-63",
 						2
 					],
 					"destination": [
@@ -3527,11 +3702,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-60",
+						"obj-63",
 						3
 					],
 					"destination": [
-						"obj-61",
+						"obj-64",
 						0
 					]
 				}
@@ -3539,11 +3714,35 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-61",
+						"obj-64",
 						0
 					],
 					"destination": [
 						"obj-39",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-63",
+						4
+					],
+					"destination": [
+						"obj-65",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-65",
+						0
+					],
+					"destination": [
+						"obj-41",
 						0
 					]
 				}

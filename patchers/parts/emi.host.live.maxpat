@@ -65,7 +65,7 @@
 						130.0,
 						149.0
 					],
-					"id": "obj-45"
+					"id": "obj-47"
 				}
 			},
 			{
@@ -1231,33 +1231,134 @@
 			},
 			{
 				"box": {
-					"maxclass": "comment",
-					"text": "Voice tracks: Soprano, Alto, Tenor, Bass.",
+					"maxclass": "live.text",
 					"numinlets": 1,
-					"numoutlets": 0,
-					"linecount": 3,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"parameter_enable": 1,
+					"varname": "Performance",
+					"mode": 1,
+					"text": "performance",
+					"texton": "performance",
 					"fontsize": 10.0,
-					"textcolor": [
-						0.84,
+					"bgcolor": [
 						0.84,
 						0.82,
+						0.78,
 						1.0
 					],
-					"presentation_linecount": 3,
+					"activebgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"bgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"activebgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Performance",
+							"parameter_shortname": "Performance",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								1
+							],
+							"parameter_initial_enable": 1
+						}
+					},
 					"patching_rect": [
-						20.0,
-						600.0,
-						118.0,
-						38.0
+						850.0,
+						720.0,
+						100.0,
+						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
 						110.0,
 						118.0,
-						38.0
+						20.0
 					],
-					"id": "obj-44"
+					"id": "obj-44",
+					"hint": "On: the music is played as singers would: the chord under each fermata held longer, a breath before the next phrase, phrases that swell and settle. Off: as written, every note alike. Clips and exported MIDI files are always as written, on the grid.",
+					"annotation": "On: the music is played as singers would: the chord under each fermata held longer, a breath before the next phrase, phrases that swell and settle. Off: as written, every note alike. Clips and exported MIDI files are always as written, on the grid.",
+					"annotation_name": "performance"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend perform",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						850.0,
+						755.0,
+						110.0,
+						22.0
+					],
+					"id": "obj-45"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "comment",
+					"text": "performance: fermatas held, a breath between phrases, dynamics (emi-perform)",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"linecount": 2,
+					"patching_rect": [
+						970.0,
+						755.0,
+						220.0,
+						34.0
+					],
+					"id": "obj-46"
 				}
 			}
 		],
@@ -1702,6 +1803,30 @@
 					],
 					"destination": [
 						"obj-42",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-44",
+						0
+					],
+					"destination": [
+						"obj-45",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-45",
+						0
+					],
+					"destination": [
+						"obj-3",
 						0
 					]
 				}
