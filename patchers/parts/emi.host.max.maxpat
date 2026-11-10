@@ -65,7 +65,7 @@
 						192.0,
 						149.0
 					],
-					"id": "obj-67"
+					"id": "obj-69"
 				}
 			},
 			{
@@ -1073,8 +1073,8 @@
 						20.0
 					],
 					"id": "obj-35",
-					"hint": "Open the more features window: the blind listening test, loading a single chorale, and the test phrase.",
-					"annotation": "Open the more features window: the blind listening test, loading a single chorale, and the test phrase.",
+					"hint": "Open the more features window: the blind listening test, loading a single chorale, the test phrase, and the composer's own switches (chorale form, signatures).",
+					"annotation": "Open the more features window: the blind listening test, loading a single chorale, the test phrase, and the composer's own switches (chorale form, signatures).",
 					"annotation_name": "more features"
 				}
 			},
@@ -2881,10 +2881,12 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "route bpm output vst key perform",
+					"text": "route bpm output vst key perform form sigs",
 					"numinlets": 2,
-					"numoutlets": 6,
+					"numoutlets": 8,
 					"outlettype": [
+						"",
+						"",
 						"",
 						"",
 						"",
@@ -2895,7 +2897,7 @@
 					"patching_rect": [
 						20.0,
 						510.0,
-						200.0,
+						250.0,
 						22.0
 					],
 					"id": "obj-63"
@@ -2913,10 +2915,46 @@
 					"patching_rect": [
 						200.0,
 						545.0,
-						80.0,
+						85.0,
 						22.0
 					],
 					"id": "obj-64"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend form",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						295.0,
+						545.0,
+						85.0,
+						22.0
+					],
+					"id": "obj-65"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend sigs",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						390.0,
+						545.0,
+						85.0,
+						22.0
+					],
+					"id": "obj-66"
 				}
 			},
 			{
@@ -2934,23 +2972,23 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-65"
+					"id": "obj-67"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "setting <name> <value> from startup: applied (deferred, so the remember it sends back never re-enters the engine); key: to the more features window's original key; perform: shown on its switch, not sent back",
+					"text": "setting <name> <value> from startup: applied (deferred, so the remember it sends back never re-enters the engine); key, form, sigs: to the more features window's switches; perform: shown on its switch, not sent back",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 4,
 					"patching_rect": [
 						290.0,
-						545.0,
+						580.0,
 						360.0,
 						62.0
 					],
-					"id": "obj-66"
+					"id": "obj-68"
 				}
 			}
 		],
@@ -3727,7 +3765,7 @@
 				"patchline": {
 					"source": [
 						"obj-63",
-						4
+						5
 					],
 					"destination": [
 						"obj-65",
@@ -3739,6 +3777,54 @@
 				"patchline": {
 					"source": [
 						"obj-65",
+						0
+					],
+					"destination": [
+						"obj-39",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-63",
+						6
+					],
+					"destination": [
+						"obj-66",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-66",
+						0
+					],
+					"destination": [
+						"obj-39",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-63",
+						4
+					],
+					"destination": [
+						"obj-67",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-67",
 						0
 					],
 					"destination": [

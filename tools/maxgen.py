@@ -190,7 +190,8 @@ HELP = {
         "Set Up": ("set up", "Open the plug-in instruments window: choose the AU or VST3 instrument that "
                    "plays each voice, and show its editor."),
         "More Features": ("more features", "Open the more features window: the blind listening test, "
-                          "loading a single chorale, and the test phrase."),
+                          "loading a single chorale, the test phrase, and the composer's own switches "
+                          "(chorale form, signatures)."),
         "Performance": ("performance", "On: the music is played as singers would: the chord under each "
                         "fermata held longer, a breath before the next phrase, phrases that swell and settle. "
                         "Off: as written, every note alike. Exported MIDI files are always as written. "
@@ -209,6 +210,12 @@ HELP = {
                         "the voices sound."),
         "Clear Queue": ("stop and clear the queue", "What is playing stops at once, and nothing is left "
                         "queued to play."),
+        "Form": ("chorale form", "On (the default): each piece takes the form of a real chorale: its phrases "
+                 "and cadences fall in the same places. Off: beats are joined freely, with no phrase plan "
+                 "(the early milestones' composer). Remembered for next time."),
+        "Signatures": ("signatures", "On (the default): Bach's signatures (cadence formulas found in several "
+                       "chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: "
+                       "cadences are recombined like any other beats. Remembered for next time."),
     },
     "emi.instruments": {
         **{f"Choose {k + 1}": (f"choose ({VOICES[k]})", f"Choose the AU or VST3 instrument that plays the "
@@ -235,29 +242,25 @@ HELP = {
                         "written, on the grid."),
     },
     "emi.panel": {
-        "Compose": ("update composition", "Compose a piece with the seed shown, with the settings and "
-                    "Magdalena's taste as they are now (with stream on: start a stream). While playing, the new "
-                    "music starts at the next bar. The pop-up window has the same button." + MAP),
-        "Seed": ("seed", "The random seed: the same seed, chorales, settings and taste always give the same "
-                 "piece. Changing it composes at once (once chorales are loaded)."),
-        "Next": ("next", "Add 1 to the seed and compose: the quickest way to hear another piece." + MAP),
+        "Next": ("new piece", "The next piece: adds 1 to the piece number and composes it. The quickest "
+                 "way to hear another piece." + MAP),
+        "Seed": ("piece #", "The piece's number: the same number, chorales, settings and taste always give "
+                 "the same piece. Changing it composes at once (once chorales are loaded)."),
+        "Compose": ("again", "Compose this piece number again, with the settings and Magdalena's taste as "
+                    "they are now (with stream on: start a stream). While playing, the new music starts at "
+                    "the next bar. The pop-up window has the same button." + MAP),
         "Export MIDI": ("export midi", "Save the current piece as a MIDI file. For a composed piece or "
                         "stream, a .json of where every beat came from is saved next to it."),
         "Corpora": ("corpora", "Open the corpus window: the folders of chorales (MIDI files) to "
                     "compose from, each switched on or off. Composing uses every folder that is on, as "
                     "one corpus; they are loaded by themselves next time."),
-        "Beats": ("beats", "The shortest piece to compose, in beats (4 to 256). With chorale form on, only "
-                  "chorales at least this long lend their form."),
-        "Form": ("chorale form", "On: each piece takes the form of a real chorale: its phrases and cadences "
-                 "fall in the same places. Off: beats are joined freely, with no phrase plan."),
-        "Stream": ("stream", "On: update composition starts a stream, composed a phrase at a time while it plays, "
-                   "for as many phrases as phrases says. Off: compose makes a whole piece."),
+        "Bars": ("bars", "The shortest piece to compose, in bars (1 to 64). With chorale form on (more "
+                 "features), only chorales at least this long lend their form."),
+        "Stream": ("stream", "On: new piece and again start a stream, composed a phrase at a time while it "
+                   "plays, for as many phrases as phrases says. Off: whole pieces."),
         "Phrases": ("phrases", "How many phrases a stream plays before it ends (0: endless)."),
         "Transpose": ("transpose", "Transpose the music by semitones (-12 to 12): a piece at once, a "
                       "stream from its next phrase."),
-        "Signatures": ("signatures", "On: Bach's signatures (cadence formulas found in several chorales) "
-                       "are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences "
-                       "are recombined like any other beats."),
         "Status": ("Status", "What the engine just did, or what went wrong."),
     },
     "top": {
@@ -283,10 +286,9 @@ HELP = {
         "Window Dislike": ("dislike", DISLIKE),
         "Window Keep": ("keep", ACCEPT),
         "Taste Report": ("taste report", TASTE),
-        "Update Composition": ("update composition", "The same as the panel's update composition: compose "
-                               "the seed shown again, with Magdalena's taste, mix and novelty as they are now, "
-                               "to hear and see what your changes did. With stream on, the stream starts "
-                               "again."),
+        "Again": ("again", "The same as the panel's again: compose this piece number again, with "
+                  "Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. "
+                  "With stream on, the stream starts again."),
         "Release All Pins": ("release all pins", "Release every pinned weight: each goes back to what "
                              "Magdalena learned from your ratings."),
         "Store Taste": ("store taste", "Save Magdalena's whole taste (weights, pins, strength, ratings) to a "
@@ -875,36 +877,37 @@ def panel():
     W = PANEL_W
     p = Patch(rect=(60, 60, 1240, 760), presentation=True)
     p.comment("emi.panel: the composing controls, shared by both products (Max version and Live device), in "
-              "the order you use them (GUI redesign, M12): compose first, then which chorales and how long, "
-              "then streams. The less-used tools are in the Max version's more features window "
-              "(emi.extras). Seed, beats, form, stream, phrases, transpose and signatures are live.* "
-              f"parameters: Live saves them with the set; the Max version restores them from the settings "
-              f"file. Panel {W} x {PANEL_H} px, below the strip's row of section names.",
-              20, 5, w=1000, h=48, linecount=3)
+              "the order you use them (GUI redesign, M12; leaner after v0.1.0): new piece first, then which "
+              "chorales and how long, then streams. The less-used tools and the composer's own switches "
+              "(chorale form, signatures) are in the Max version's more features window (emi.extras). "
+              "Seed, bars, stream, phrases and transpose are live.* parameters: Live saves them with the "
+              f"set; the Max version restores them from the settings file. Panel {W} x {PANEL_H} px, below "
+              "the strip's row of section names.", 20, 5, w=1000, h=48, linecount=3)
     inl = p.inlet(20, 60, "from emi.engine: status, error, setting", 1)
     out = p.outlet(20, 720, "to emi.engine", 1)
     targets = [(out, 0)]
     send = lambda obj: p.connect(obj, 0, out, 0)
 
-    # Row 1: compose (the main action), seed, next, export midi
-    # (Compose is shown as "update composition": it composes again with the
-    # settings and taste as they are now; Live's parameter keeps its name.)
-    labeled(p, "Compose", "update composition", "compose", 660, 300, (6, 6, 114, 24), out, look=MAIN,
-             mappable=True, fontsize=11.0)
-    label(p, "seed", 740, 270, (124, 9, 24, 18), w=40)
-    seed = live_numbox(p, "Seed", 740, 300, (148, 9, 42, 18), 1, 99999, 1)
+    # Row 1: new piece (the main action: the engine's next), the piece's
+    # number (the seed), again (compose: the same number with the settings
+    # and taste as they are now), export midi. Live's parameters keep their
+    # names (Next, Seed, Compose), so mappings and automation survive.
+    labeled(p, "Next", "new piece", "next", 660, 300, (6, 6, 74, 24), out, look=MAIN, mappable=True,
+            fontsize=11.0)
+    label(p, "piece #", 740, 270, (86, 9, 40, 18), w=50)
+    seed = live_numbox(p, "Seed", 740, 300, (126, 9, 44, 18), 1, 99999, 1)
     seed_pre = p.obj("prepend seed", 740, 335, 2, 1, w=90)
     p.connect(seed, 0, seed_pre, 0)
     send(seed_pre)
-    labeled(p, "Next", "next", "next", 860, 300, (194, 8, 34, 20), out, mappable=True)
-    p.comment("seed: composes when changed (once a corpus is loaded); update composition: the shown seed "
-              "again; next: seed + 1", 660, 400, w=330, h=34, linecount=2)
-    dialog_button(p, "Export MIDI", "export midi", 1000, 300, (232, 8, 62, 20), "savedialog", "exportmidi",
+    labeled(p, "Compose", "again", "compose", 860, 300, (176, 8, 46, 20), out, mappable=True)
+    p.comment("piece #: composes when changed (once a corpus is loaded); again: the shown number again; "
+              "new piece: number + 1", 660, 400, w=330, h=34, linecount=2)
+    dialog_button(p, "Export MIDI", "export midi", 1000, 300, (228, 8, 66, 20), "savedialog", "exportmidi",
                   targets)
 
     # Row 2: corpora (the corpus window, emi.corpora in the top patch:
-    # folders of chorales, each on or off), beats, chorale form. [send]
-    # with "---": unique to each device in Live.
+    # folders of chorales, each on or off), bars, transpose. [send] with
+    # "---": unique to each device in Live.
     corpora_button = button(p, "Corpora", "corpora", 20, 100, (6, 36, 76, 20))
     corpora_t = p.obj("t b", 20, 130, 1, 1, ["bang"], w=35)
     to_corpora = p.obj("s ---emi.corpora", 20, 160, 1, 0, [], w=110)
@@ -912,38 +915,31 @@ def panel():
     p.connect(corpora_t, 0, to_corpora, 0)
     p.comment("corpora: open the corpus window (folders of chorales, each on or off)", 150, 160, w=230,
               h=34, linecount=2)
-    label(p, "beats", 540, 70, (86, 37, 34, 18), w=40)
-    beats = live_numbox(p, "Beats", 540, 100, (120, 37, 46, 18), 4, 256, 32)
-    beats_pre = p.obj("prepend beats", 540, 135, 2, 1, w=95)
-    p.connect(beats, 0, beats_pre, 0)
-    send(beats_pre)
-    form = live_toggle(p, "Form", "chorale form", 420, 100, (172, 36, 122, 20), initial=1)
-    form_pre = p.obj("prepend form", 420, 135, 2, 1, w=90)
-    p.connect(form, 0, form_pre, 0)
-    send(form_pre)
+    label(p, "bars", 540, 70, (90, 37, 30, 18), w=40)
+    bars = live_numbox(p, "Bars", 540, 100, (120, 37, 40, 18), 1, 64, 8)
+    bars_pre = p.obj("prepend bars", 540, 135, 2, 1, w=95)
+    p.connect(bars, 0, bars_pre, 0)
+    send(bars_pre)
+    label(p, "transpose", 270, 440, (172, 37, 54, 18), w=60)
+    transpose = live_numbox(p, "Transpose", 270, 470, (226, 37, 32, 18), -12, 12, 0)
+    transpose_pre = p.obj("prepend transpose", 270, 505, 2, 1, w=115)
+    p.connect(transpose, 0, transpose_pre, 0)
+    send(transpose_pre)
+    p.comment("bars: the shortest piece; transpose: at once for a piece, from the next phrase in a stream",
+              400, 470, w=330, h=34, linecount=2)
 
-    # Row 3: stream, phrases, transpose (M5), signatures (M7)
+    # Row 3: stream and its phrases (M5)
     stream = live_toggle(p, "Stream", "stream", 20, 470, (6, 62, 52, 20))
     stream_pre = p.obj("prepend stream", 20, 505, 2, 1, w=100)
     p.connect(stream, 0, stream_pre, 0)
     send(stream_pre)
-    label(p, "phrases", 140, 440, (62, 63, 42, 18), w=50)
-    phrases = live_numbox(p, "Phrases", 140, 470, (104, 63, 30, 18), 0, 64, 8)
+    label(p, "phrases", 140, 440, (64, 63, 44, 18), w=50)
+    phrases = live_numbox(p, "Phrases", 140, 470, (108, 63, 30, 18), 0, 64, 8)
     phrases_pre = p.obj("prepend phrases", 140, 505, 2, 1, w=105)
     p.connect(phrases, 0, phrases_pre, 0)
     send(phrases_pre)
-    label(p, "transpose", 270, 440, (138, 63, 54, 18), w=60)
-    transpose = live_numbox(p, "Transpose", 270, 470, (192, 63, 32, 18), -12, 12, 0)
-    transpose_pre = p.obj("prepend transpose", 270, 505, 2, 1, w=115)
-    p.connect(transpose, 0, transpose_pre, 0)
-    send(transpose_pre)
-    p.comment("stream: compose plays phrase by phrase (phrases 0 = endless); transpose: at once for a piece, "
-              "from the next phrase in a stream", 400, 470, w=330, h=34, linecount=2)
-    sigs = live_toggle(p, "Signatures", "signatures", 760, 470, (228, 62, 66, 20), initial=1)
-    sigs_pre = p.obj("prepend sigs", 760, 505, 2, 1, w=90)
-    p.connect(sigs, 0, sigs_pre, 0)
-    send(sigs_pre)
-    p.comment("signatures: keep Bach's cadence formulas whole at cadences", 870, 470, w=250, h=34, linecount=2)
+    p.comment("stream: new piece plays phrase by phrase (phrases 0 = endless)", 400, 520, w=330, h=34,
+              linecount=2)
 
     # From the engine: the status line, and restored or changed settings
     route = p.obj("route status error setting", 20, 560, 2, 4, w=170)
@@ -955,10 +951,10 @@ def panel():
     status = text_box(p, 20, 640, W - 12, 52, (6, 88, W - 12, 55), "Status")
     p.connect(set_status, 0, status, 0)
     p.connect(set_error, 0, status, 0)
-    controls = p.obj("route seed beats form stream phrases transpose sigs", 420, 560, 2, 8, w=330)
+    controls = p.obj("route seed bars stream phrases transpose", 420, 560, 2, 6, w=260)
     p.connect(route, 2, controls, 0)
     p.comment("setting <name> <value>: show it without sending it back", 800, 560, w=330)
-    for k, control in enumerate([seed, beats, form, stream, phrases, transpose, sigs]):
+    for k, control in enumerate([seed, bars, stream, phrases, transpose]):
         pre = p.obj("prepend set", 420 + k * 95, 640, 2, 1, w=80)
         p.connect(controls, k, pre, 0)
         p.connect(pre, 0, control, 0)
@@ -1182,20 +1178,21 @@ def host_max():
               "last corpus and compose", 890, 100, w=330, h=34, linecount=2)
     defer_set = p.obj("deferlow", 20, 470, 1, 1, w=65)
     p.connect(route, 1, defer_set, 0)
-    restore = p.obj("route bpm output vst key perform", 20, 510, 2, 6, w=200)
+    restore = p.obj("route bpm output vst key perform form sigs", 20, 510, 2, 8, w=250)
     p.connect(defer_set, 0, restore, 0)
     p.connect(restore, 0, tempo, 0)
     p.connect(restore, 1, menu, 0)
     p.connect(restore, 2, use_vst, 0)
-    key = p.obj("prepend key", 200, 545, 2, 1, w=80)
-    p.connect(restore, 3, key, 0)
-    p.connect(key, 0, extras, 0)
+    for k, name in enumerate(["key", "form", "sigs"]):
+        to_extras = p.obj("prepend " + name, 200 + k * 95, 545, 2, 1, w=85)
+        p.connect(restore, 3 if k == 0 else 4 + k, to_extras, 0)
+        p.connect(to_extras, 0, extras, 0)
     set_performance = p.obj("prepend set", 20, 580, 2, 1, w=80)
     p.connect(restore, 4, set_performance, 0)
     p.connect(set_performance, 0, performance, 0)
     p.comment("setting <name> <value> from startup: applied (deferred, so the remember it sends back "
-              "never re-enters the engine); key: to the more features window's original key; perform: "
-              "shown on its switch, not sent back", 290, 545, w=360, h=62, linecount=4)
+              "never re-enters the engine); key, form, sigs: to the more features window's switches; "
+              "perform: shown on its switch, not sent back", 290, 580, w=360, h=62, linecount=4)
     section(p, PLAY_BG, HOST_MAX_W)
     return p
 
@@ -1228,12 +1225,12 @@ def extras_window():
     (and its key), the test phrase, and clearing the queue. Opened by the Max
     panel's more features button; what it sends goes to the engine."""
     W = 360
-    p = Patch(rect=(160, 160, 160 + W, 160 + 190), presentation=True)
+    p = Patch(rect=(160, 160, 160 + W, 160 + 244), presentation=True)
     p.comment("emi.extras: the more features window (Max version). Opened by the panel's more features "
-              "button, through [pcontrol] in emi.host.max. Its inlet also takes key <0|1> (a restored "
-              "original key).", 20, 640, w=600, h=34, linecount=2)
-    inl = p.inlet(20, 20, "pcontrol: open; key <0|1>: show a restored original key", 1)
-    out = p.outlet(20, 600, "to emi.engine: abtest, loadmidi, key, pattern, clear", 1)
+              "button, through [pcontrol] in emi.host.max. Its inlet also takes key, form and sigs <0|1> "
+              "(restored settings, shown on their switches).", 20, 700, w=600, h=34, linecount=2)
+    inl = p.inlet(20, 20, "pcontrol: open; key|form|sigs <0|1>: show a restored setting", 1)
+    out = p.outlet(20, 660, "to emi.engine: abtest, loadmidi, key, pattern, clear, form, sigs", 1)
     targets = [(out, 0)]
     dialog_button(p, "Listening Test", "listening test…", 20, 80, (10, 10, 150, 22), "savedialog", "abtest",
                   targets)
@@ -1251,11 +1248,26 @@ def extras_window():
     labeled(p, "Clear Queue", "stop and clear the queue", "clear", 200, 380, (166, 124, 160, 22), out)
     p.comment("The test phrase needs no chorales: it checks the voices.", 20, 480, w=300,
               pres=(10, 150, W - 20, 20), fontsize=LABEL_SIZE)
-    restore = p.obj("route key", 380, 20, 2, 2, w=70)
+    # The composer's own switches (both on by default; off, the music is
+    # worse: they're here to show what each does). The engine restores them
+    # from the settings file, so they send nothing at load.
+    form = live_toggle(p, "Form", "chorale form", 20, 540, (10, 178, 150, 22), initial=1, initial_enable=0)
+    form_pre = p.obj("prepend form", 20, 575, 2, 1, w=90)
+    p.connect(form, 0, form_pre, 0)
+    p.connect(form_pre, 0, out, 0)
+    sigs = live_toggle(p, "Signatures", "signatures", 200, 540, (166, 178, 160, 22), initial=1, initial_enable=0)
+    sigs_pre = p.obj("prepend sigs", 200, 575, 2, 1, w=90)
+    p.connect(sigs, 0, sigs_pre, 0)
+    p.connect(sigs_pre, 0, out, 0)
+    p.comment("The composer's own switches: a real chorale's form, and Bach's cadence formulas kept whole. "
+              "Both on is how Cento is meant to run.", 20, 610, linecount=2, pres=(10, 204, W - 20, 34),
+              fontsize=LABEL_SIZE)
+    restore = p.obj("route key form sigs", 380, 20, 2, 4, w=120)
     p.connect(inl, 0, restore, 0)
-    show = p.obj("prepend set", 380, 55, 2, 1, w=80)
-    p.connect(restore, 0, show, 0)
-    p.connect(show, 0, key, 0)
+    for k, switch in enumerate([key, form, sigs]):
+        show = p.obj("prepend set", 380 + k * 90, 55, 2, 1, w=80)
+        p.connect(restore, k, show, 0)
+        p.connect(show, 0, switch, 0)
     window_title(p, "Cento: more features", 500)
     return p
 
@@ -1419,22 +1431,20 @@ def window():
     labeled(p, "Window Dislike", "dislike", "dislike", 80, 760, (70, y, 56, 24), out, look=WARM)
     labeled(p, "Window Keep", "keep", "accept", 140, 760, (130, y, 46, 24), out, look=WARM)
     labeled(p, "Taste Report", "taste report", "taste", 200, 760, (180, y, 72, 24), out)
-    # Update composition, as on the panel: compose the seed shown again,
-    # after changing her mix, novelty or weights, to hear and see what they
-    # do. (It was "reload seed".)
-    labeled(p, "Update Composition", "update composition", "compose", 260, 760, (256, y, 120, 24), out,
-             look=MAIN, fontsize=11.0)
+    # Again, as on the panel: compose the piece shown again, after changing
+    # her mix, novelty or weights, to hear and see what they do.
+    labeled(p, "Again", "again", "compose", 260, 760, (256, y, 60, 24), out)
     # Releasing every pin, and storing or recalling a whole taste as a file.
     # (The taste pane's views are its own tabs.)
-    labeled(p, "Release All Pins", "release all pins", "unpin", 410, 760, (386, y, 120, 24), out)
-    dialog_button(p, "Store Taste", "store taste", 580, 760, (516, y, 95, 24), "savedialog", "storetaste", [(out, 0)])
-    dialog_button(p, "Recall Taste", "recall taste", 720, 760, (617, y, 95, 24), "opendialog", "recalltaste",
+    labeled(p, "Release All Pins", "release all pins", "unpin", 410, 760, (326, y, 120, 24), out)
+    dialog_button(p, "Store Taste", "store taste", 580, 760, (456, y, 95, 24), "savedialog", "storetaste", [(out, 0)])
+    dialog_button(p, "Recall Taste", "recall taste", 720, 760, (557, y, 95, 24), "opendialog", "recalltaste",
                   [(out, 0)])
-    labeled(p, "Forget", "forget", "forget", 860, 760, (718, y, 60, 24), out)
+    labeled(p, "Forget", "forget", "forget", 860, 760, (658, y, 60, 24), out)
     # Who Magdalena is (emi.magdalena, a small window of its own).
-    opener(p, "Explain Magdalena", "explain Magdalena", 1000, 760, (788, y, 130, 24), "emi.magdalena")
+    opener(p, "Explain Magdalena", "explain Magdalena", 1000, 760, (728, y, 130, 24), "emi.magdalena")
     p.comment("Drag across the roll to select beats for like, dislike and keep.", 940, 900, linecount=2,
-              pres=(926, y - 2, 244, 30),
+              pres=(866, y - 2, 304, 30),
               fontsize=LABEL_SIZE)
     window_title(p, "Cento: piano roll and Magdalena", 700)
     return p

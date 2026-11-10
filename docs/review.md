@@ -20,6 +20,13 @@ do, and from the listening tests in [M8](M8-checklist.md).
 
 ## GUI: streamlining
 
+*G1 to G4 built* (after the performance layer): chorale form and signatures
+are in the more features window (Max) and gone from the Live device (both
+stay on); the top row is **new piece**, **piece #**, **again**, **export
+midi**; the status line reads `Piece 3 · A minor · 14 bars · in the form of
+BWV 14.5 · from 24 chorales` (the details go to the Max console); length is
+in **bars**. The read-me's screenshots need retaking.
+
 The redesign got the layout right (workflow order, a row of section names,
 one look for every control). What's left is too many knobs for a first-time
 user, and some engineer's vocabulary leaking through.
@@ -98,7 +105,7 @@ One switch, **performance**, on by default.
 ## A suggested order
 
 1. ~~The performance layer (A).~~ Built.
-2. GUI G1–G4. Half a day, mostly in `tools/maxgen.py`.
+2. ~~GUI G1–G4.~~ Built.
 3. Soprano contour (M1) and cadence degree (M2), then a fresh A/B test.
 4. The template's key (M5), then the pop-up tidy (G5, G6).
 

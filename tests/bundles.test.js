@@ -106,7 +106,7 @@ test("bundles in patchers/ are up to date with code/", () => {
 test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.hello").handlers(), ["bang", "msg_int"]);
   assert.deepEqual(loadBundle("emi.core").handlers(), [
-    "abtest", "accept", "autoclips", "beats", "clear", "compose", "corpus", "corpusadd", "corpusbuild", "corpuson", "corpusonly", "corpusremove", "corpusrescan", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
+    "abtest", "accept", "autoclips", "bars", "clear", "compose", "corpus", "corpusadd", "corpusbuild", "corpuson", "corpusonly", "corpusremove", "corpusrescan", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
     "mix", "need", "next", "novelty", "pattern", "perform", "phrases", "pin", "recalltaste", "remember", "rollback", "seed", "select", "sigs", "snapshot", "startup", "storetaste", "stream",
     "strength", "taste", "tastestep", "temperature", "testclip", "transpose", "unaccept", "unpin", "writeclips",
   ]);
@@ -226,12 +226,12 @@ test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece i
   const loaded = core.send("corpus", writeCorpus());
   assert.deepEqual(lastStatus(loaded).slice(0, 7), ["status", "corpus", 3, "chorales", "(major),", 33, "beats,"]);
 
-  core.send("beats", 8);
+  core.send("bars", 2);
   const out = core.send("compose", 3);
   const status = lastStatus(out);
-  // e.g. "emi-3: form of b, 1 phrase, 11 beats, 3 chorales"
-  assert.deepEqual(status.slice(0, 3), ["status", "emi-3:", "form"]);
-  assert.match(status.join(" "), /^status emi-3: form of [abc], 1 phrase, 11 beats, [23] chorales, SPEAC \d+%, [01] signatures?$/);
+  // e.g. "Piece 3 · C major · 3 bars · in the form of b · from 3 chorales" (11 beats: 3 bars)
+  assert.deepEqual(status.slice(0, 3), ["status", "Piece", "3"]);
+  assert.match(status.join(" "), /^status Piece 3 · C major · \d bars · in the form of [abc] · from [23] chorales$/);
   assert.ok(select(out, "coll").length > 1);
   const view = select(out, "view");
   assert.ok(view.some(([kind]) => kind === "seam"), "seams between sources");
@@ -241,10 +241,10 @@ test("core: 'corpus' reads a folder; 'compose' makes, queues and draws a piece i
 
   // Same seed, same piece; "compose" alone: the current seed; "next": one more.
   assert.deepEqual(core.send("compose", 3), out);
-  assert.deepEqual(lastStatus(core.send("compose")).slice(0, 2), ["status", "emi-3:"]);
+  assert.deepEqual(lastStatus(core.send("compose")).slice(0, 3), ["status", "Piece", "3"]);
   const next = core.send("next");
   assert.deepEqual(select(next, "setting"), [["seed", 4]], "the seed box shows the new seed");
-  assert.deepEqual(lastStatus(next).slice(0, 2), ["status", "emi-4:"]);
+  assert.deepEqual(lastStatus(next).slice(0, 3), ["status", "Piece", "4"]);
 });
 
 test("core: a corpus of major and minor chorales: counted by mode, each piece in one key", () => {
@@ -254,12 +254,12 @@ test("core: a corpus of major and minor chorales: counted by mode, each piece in
   for (const id of ["m", "n", "o"]) writeChorale(dir, id, cycle, { keySignature: { sf: 0, minor: true }, key: { tonic: "A", mode: "minor" } });
   const core = loadBundle("emi.core");
   assert.deepEqual(lastStatus(core.send("corpus", dir)).slice(0, 7), ["status", "corpus", 6, "chorales", "(3", "major,", "3"]);
-  core.send("beats", 8);
+  core.send("bars", 2);
   const keys = new Set();
   for (let seed = 1; seed <= 6; seed++) {
     const status = lastStatus(core.send("compose", seed)).join(" ");
-    const [, key] = status.match(/form of [a-z] \((C major|A minor)\)/);
-    assert.equal(key === "A minor", /form of [mno]/.test(status), status);
+    const [, key] = status.match(/· (C major|A minor) · \d+ bars · in the form of [a-z] ·/);
+    assert.equal(key === "A minor", /form of [mno] ·/.test(status), status);
     keys.add(key);
   }
   assert.equal(keys.size, 2);
@@ -277,9 +277,9 @@ function write34Corpus() {
 test("core: 3/4: pieces in 3/4 bars, and the transport follows the meter", () => {
   const core = loadBundle("emi.core");
   core.send("corpus", write34Corpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   const out = core.send("compose", 1);
-  assert.match(lastStatus(out).join(" "), /^status emi-1: form of [abc], 1 phrase, 12 beats/);
+  assert.match(lastStatus(out).join(" "), /^status Piece 1 · C major · \d bars · in the form of [abc] ·/); // 12 beats of 3/4, and a pickup
   assert.deepEqual(select(out, "meter"), [[3, 4]]);
   const [clear] = select(out, "view").filter(([kind]) => kind === "clear");
   assert.deepEqual(clear.slice(4), [3 * Q, 0, Q], "bars of 3 beats");
@@ -295,7 +295,7 @@ test("core: 3/4 in Live: the set's time signature follows the corpus, only when 
   const core = engineIn(folder, live);
   core.send("startup", "corpus"); // the Live version
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   core.send("compose", 1);
   assert.deepEqual(live.calls.filter(([p]) => p === "live_set"), [], "already 4/4");
   core.send("corpus", write34Corpus());
@@ -312,9 +312,9 @@ test("core: 'seed' sets the seed, and composes once a corpus is loaded", () => {
   const core = loadBundle("emi.core");
   assert.deepEqual(core.send("seed", 7), [], "no corpus yet: just remembered");
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
-  assert.deepEqual(lastStatus(core.send("compose")).slice(0, 2), ["status", "emi-7:"]);
-  assert.deepEqual(lastStatus(core.send("seed", 9)).slice(0, 2), ["status", "emi-9:"]);
+  core.send("bars", 2);
+  assert.deepEqual(lastStatus(core.send("compose")).slice(0, 3), ["status", "Piece", "7"]);
+  assert.deepEqual(lastStatus(core.send("seed", 9)).slice(0, 3), ["status", "Piece", "9"]);
   assert.deepEqual(core.send("key", 1), [], "0/1 from a toggle work too (quiet: no chorale is current)");
   assert.equal(lastStatus(core.send("key", "sideways"))[0], "error");
 });
@@ -329,10 +329,9 @@ test("core: signatures: listed when a corpus loads, kept at cadences, drawn as b
   assert.match(list, new RegExp(`^cento: ${count} signatures in 3 chorales`));
   assert.match(list, /sig1: (soprano|alto|tenor|bass) [-#b0-9]+ \(3\)/);
 
-  core.send("beats", 8);
+  core.send("bars", 2);
   core.posted.length = 0;
   const out = core.send("compose", 3);
-  assert.match(lastStatus(out).join(" "), /, 1 signature$/);
   const bands = select(out, "view").filter(([kind]) => kind === "signature");
   assert.equal(bands.length, 1);
   const [, start, end, ...name] = bands[0];
@@ -340,13 +339,14 @@ test("core: signatures: listed when a corpus loads, kept at cadences, drawn as b
   assert.match(name.join(" "), /^(soprano|bass) [-#b0-9]+$/);
   const cadence = select(out, "view").find(([kind]) => kind === "cadence")[1];
   assert.equal(end - 960, cadence, "the band ends with the cadence's beat");
-  const [blockLine, qualityLine] = core.posted.join("").split("\n");
+  const [detail, blockLine, qualityLine] = core.posted.join("").split("\n");
+  assert.match(detail, /^emi-3: form of [abc], 1 phrase, 11 beats, [23] chorales, SPEAC \d+%, 1 signature$/, "the details, in the Max console");
   assert.match(blockLine, /^emi-3: (soprano|bass) [-#b0-9]+( \+ (soprano|bass) [-#b0-9]+)? at the cadence in bar \d+ \(beat \d\), from [abc]$/);
   assert.match(qualityLine, /^emi-3: longest quote \d+ notes \((soprano|alto|tenor|bass), as in [abc]\), \d+ beats in a row from [abc]; (no parallel 5ths or 8ves|parallel 5ths\/8ves: \d+, all Bach's own)$/);
 
   assert.deepEqual(lastStatus(core.send("sigs", 0)), ["status", "no", "signatures", "(as", "in", "M6)"]);
   const plain = core.send("compose", 3);
-  assert.match(lastStatus(plain).join(" "), /, 0 signatures$/);
+  assert.ok(core.posted.some((line) => /, 0 signatures$/.test(line.trim())), "no signatures, in the Max console");
   assert.equal(select(plain, "view").filter(([kind]) => kind === "signature").length, 0);
   assert.deepEqual(lastStatus(core.send("sigs", 1)), ["status", "signatures", "kept", "at", "cadences"]);
 });
@@ -359,7 +359,7 @@ test("core: the SPEAC lane: a chorale's own labels, and a piece's labels from it
   for (const [, , label] of labels) assert.match(label, /^[SPEAC]$/);
 
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   const out = core.send("compose", 3);
   const lane = select(out, "view").filter(([kind]) => kind === "speac");
   assert.equal(lane.length, 11, "one per beat of the piece");
@@ -368,20 +368,21 @@ test("core: the SPEAC lane: a chorale's own labels, and a piece's labels from it
 test("core: 'form 0' composes freely, as in M2; 'form 1' goes back to forms", () => {
   const core = loadBundle("emi.core");
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
-  assert.deepEqual(lastStatus(core.send("form", 0)), ["status", "free", "pieces", "(M2),", "8+", "beats"]);
+  core.send("bars", 2);
+  assert.deepEqual(lastStatus(core.send("form", 0)), ["status", "free", "pieces", "(M2),", "2+", "bars"]);
   const status = lastStatus(core.send("compose", 3));
-  assert.deepEqual([status[1], status[3], status[4]], ["emi-3:", "beats", "from"]);
-  assert.ok(status[2] >= 8, "at least 8 beats");
+  assert.deepEqual(status.slice(1, 3), ["Piece", "3"]);
+  assert.ok(status.join(" ").includes("· free recombination · from"), status.join(" "));
+  assert.ok(Number(status.join(" ").match(/· (\d+) bars? ·/)[1]) >= 2, "at least 2 bars");
   assert.equal(lastStatus(core.send("form", 1))[1], "pieces");
-  assert.equal(lastStatus(core.send("compose", 3))[2], "form");
+  assert.ok(lastStatus(core.send("compose", 3)).join(" ").includes("· in the form of "));
 });
 
 test("core: 'exportmidi' writes the current score as a MIDI file, and a piece's provenance next to it", () => {
   const core = loadBundle("emi.core");
   assert.equal(lastStatus(core.send("exportmidi", path.join(tempDir(), "x.mid")))[0], "error");
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   core.send("compose", 3);
   const target = path.join(tempDir(), "piece"); // ".mid" is added
   assert.deepEqual(lastStatus(core.send("exportmidi", target)), ["status", "exported", "piece.mid", "and", "piece.json"]);
@@ -410,7 +411,7 @@ test("core: 'exportmidi' writes the current score as a MIDI file, and a piece's 
 test("core: the provenance view: each beat's source, or a chorale's bar and beat", () => {
   const core = loadBundle("emi.core");
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   const sources = select(core.send("compose", 3), "view").filter(([kind]) => kind === "source");
   assert.equal(sources.length, 11);
   for (const [, , ...text] of sources) assert.match(text.join(" "), /^[abc], bar \d+ beat [1-4] · [SPEAC]/);
@@ -483,7 +484,7 @@ test("stream: compose queues two phrases; 'need' adds the next, until the last",
   core.send("phrases", 3);
   const start = core.send("compose", 4);
   assert.deepEqual(start.filter(([, kind]) => kind !== "setting")[0], [0, "restart"], "the player starts the stream on the next bar");
-  assert.match(lastStatus(start).join(" "), /^status emi-4 stream: phrase 2 of 3 queued \([a-e] phrase 2(, signature [a-z]+ [-#b0-9]+)?\)$/);
+  assert.match(lastStatus(start).join(" "), /^status Stream 4 · phrase 2 of 3 · C major · from [a-e], phrase 2( · signature [a-z]+ [-#b0-9]+)?$/);
   const [first, second] = thresholds(start);
   assert.ok(second > first, "'need' comes when the second phrase starts");
 
@@ -491,9 +492,9 @@ test("stream: compose queues two phrases; 'need' adds the next, until the last",
   // ordinary one is queued and the ending is tried again next time.
   const more = [];
   do more.push(core.send("need"));
-  while (!lastStatus(more.at(-1)).includes("last)") && more.length < 6);
+  while (!/· the last$/.test(lastStatus(more.at(-1)).join(" ")) && more.length < 6);
   const status = lastStatus(more.at(-1)).join(" ");
-  assert.match(status, /^status emi-4 stream: phrase \d+ of 3 queued \(.*, the last\)$/);
+  assert.match(status, /^status Stream 4 · phrase \d+ of 3 · .* · the last$/);
   assert.ok(Number(status.match(/phrase (\d+) of/)[1]) >= 3);
   assert.deepEqual(thresholds(more.at(-1)), [999999], "nothing more to ask for");
   assert.deepEqual(core.send("need"), [[0, "streamat", 999999]]);
@@ -508,7 +509,7 @@ test("stream: phrase joins keep note-offs before note-ons, endlessly", () => {
   core.send("phrases", 0);
   const outputs = [core.send("compose", 2)];
   for (let k = 0; k < 4; k++) outputs.push(core.send("need"));
-  assert.match(lastStatus(outputs.at(-1)).join(" "), /^status emi-2 stream: phrase 6 queued/);
+  assert.match(lastStatus(outputs.at(-1)).join(" "), /^status Stream 2 · phrase 6 ·/);
   assertPlaysCleanly(queueOf(...outputs));
 });
 
@@ -529,7 +530,7 @@ test("stream: transpose is heard from the next phrase; whole pieces are requeued
 
   const whole = loadBundle("emi.core");
   whole.send("corpus", writeCorpus());
-  whole.send("beats", 8);
+  whole.send("bars", 2);
   const before = pitches(whole.send("compose", 3));
   const after = whole.send("transpose", -1);
   assert.deepEqual(after[0], [0, "restart"]);
@@ -573,7 +574,7 @@ test("settings: nothing is saved before startup, or when the patch has no folder
   const folder = tempDir();
   const core = engineIn(folder);
   core.send("seed", 5);
-  core.send("beats", 16);
+  core.send("bars", 4);
   assert.equal(fs.existsSync(path.join(folder, "cento.settings.json")), false);
   const unsaved = loadBundle("emi.core");
   assert.equal(lastStatus(unsaved.send("startup", "all"))[0], "error");
@@ -586,23 +587,24 @@ test("settings: the Max version restores every setting, reloads the corpus and c
   first.send("startup", "all"); // no settings yet
   first.send("corpus", corpusDir);
   first.send("seed", 5);
-  first.send("beats", 8);
+  first.send("bars", 2);
   first.send("form", 0);
   first.send("key", "original");
   first.send("remember", "bpm", 120);
   first.send("remember", "output", 2);
   assert.deepEqual(settingsIn(folder), {
     corpora: [{ path: corpusDir, on: true, works: 3, meter: "4/4", modes: "major" }],
-    corpus: corpusDir, seed: 5, beats: 8, form: 0, signatures: 1, key: 1, stream: 0, phrases: 8, transpose: 0, temperature: 1, perform: 1, host: { bpm: [120], output: [2] },
+    corpus: corpusDir, seed: 5, bars: 2, form: 0, signatures: 1, key: 1, stream: 0, phrases: 8, transpose: 0, temperature: 1, perform: 1, host: { bpm: [120], output: [2] },
   });
 
   const second = engineIn(folder);
   const out = second.send("startup", "all");
   assert.deepEqual(select(out, "setting"), [
-    ["seed", 5], ["beats", 8], ["form", 0], ["sigs", 1], ["key", 1], ["stream", 0], ["phrases", 8], ["transpose", 0], ["temperature", 1], ["perform", 1], ["bpm", 120], ["output", 2],
+    ["seed", 5], ["bars", 2], ["form", 0], ["sigs", 1], ["key", 1], ["stream", 0], ["phrases", 8], ["transpose", 0], ["temperature", 1], ["perform", 1], ["bpm", 120], ["output", 2],
   ]);
   const status = lastStatus(out);
-  assert.deepEqual([status[1], status[3]], ["emi-5:", "beats"], "composed seed 5 freely (form off)");
+  assert.deepEqual(status.slice(1, 3), ["Piece", "5"], "composed piece 5");
+  assert.ok(status.join(" ").includes("· free recombination ·"), "freely (form off)");
   assert.ok(select(out, "coll").length > 1, "and queued it");
 });
 
@@ -616,12 +618,12 @@ test("settings: the Live version keeps the set's values and only reloads the cor
 
   const live = engineIn(folder, fakeLive({ trackNames: ["EMI", "Soprano", "Alto", "Tenor", "Bass"] }));
   live.send("seed", 3); // the set's saved values arrive while the device loads...
-  live.send("beats", 8);
+  live.send("bars", 2);
   live.send("autoclips", 1);
   assert.equal(fs.readFileSync(path.join(folder, "cento.settings.json"), "utf8"), saved, "...and don't overwrite the file");
   const out = live.send("startup", "corpus");
   assert.deepEqual(select(out, "setting"), [], "controls keep the set's values");
-  assert.deepEqual(lastStatus(out).slice(0, 3), ["status", "emi-3:", "form"]);
+  assert.deepEqual(lastStatus(out).slice(0, 3), ["status", "Piece", "3"]);
   assert.ok(!lastStatus(out).join(" ").includes("wrote"), "no clips written at startup");
 });
 
@@ -645,7 +647,7 @@ test("corpora: folders join the corpus window, on or off; each change builds on 
   const core = engineIn(folder);
   let out = core.send("startup", "all");
   assert.equal(corpusSummary(out), "No folders yet: click add folder and choose a folder of chorales (MIDI files).");
-  core.send("beats", 8);
+  core.send("bars", 2);
   const abc = writeCorpus();
   const de = writeCorpus({ ids: ["d", "e"] });
 
@@ -657,15 +659,15 @@ test("corpora: folders join the corpus window, on or off; each change builds on 
   assert.deepEqual(out.filter((o) => o[1] === "later"), [[0, "later", "corpusbuild", 1]]);
   out = settle(core, out);
   assert.ok(select(out, "status").some((words) => words.join(" ").startsWith("corpus 3 chorales (major), ")), "built");
-  assert.match(lastStatus(out).join(" "), /^status emi-1: /, "then composed");
+  assert.match(lastStatus(out).join(" "), /^status Piece 1 ·/, "then composed");
   assert.deepEqual(folderRows(out).at(-1), [1, 1, 1, 3, "4/4", "major", path.basename(abc), ""]);
-  assert.match(corpusSummary(out), /^In use: 3 chorales \(major\) from 1 folder, in 4\/4: \d+ beats, \d+ signatures\.$/);
+  assert.match(corpusSummary(out), /^In use: 3 chorales \(major\) from 1 folder, in 4\/4\.$/);
 
   // A second folder: both in use.
   out = settle(core, core.send("corpusadd", de));
   assert.ok(select(out, "status").some((words) => /^corpus 5 chorales \(major\), .* from 2 folders$/.test(words.join(" "))), "from 2 folders");
   assert.deepEqual(folderRows(out).slice(-2).map(([n, on, used, works]) => [n, on, used, works]), [[1, 1, 1, 3], [2, 1, 1, 2]]);
-  assert.match(corpusSummary(out), /^In use: 5 chorales \(major\) from 2 folders, in 4\/4: /);
+  assert.match(corpusSummary(out), /^In use: 5 chorales \(major\) from 2 folders, in 4\/4\.$/);
 
   // Off, only, remove.
   out = settle(core, core.send("corpuson", 1, 0));
@@ -715,14 +717,14 @@ test("corpora: quick changes build once; a chorale in two folders counts once; o
   // A 3/4 corpus: that folder only.
   const only = settle(core, core.send("corpusonly", 3));
   assert.ok(select(only, "status").some((words) => words.join(" ").startsWith("corpus 2 chorales")));
-  assert.match(corpusSummary(only), / in 3\/4: /);
+  assert.match(corpusSummary(only), / in 3\/4\.$/);
 });
 
 test("corpora: two folders compose exactly as one folder holding the same chorales (M11's done when)", () => {
   const pieceFrom = (dirs) => {
     const core = engineIn(tempDir());
     core.send("startup", "all");
-    core.send("beats", 8);
+    core.send("bars", 2);
     let out = [];
     for (const dir of dirs) out = settle(core, core.send("corpusadd", dir));
     const composed = core.send("compose", 4);
@@ -742,12 +744,12 @@ test("corpora: a stream playing when the corpus changes starts again from the ne
   const core = engineIn(folder);
   core.send("startup", "all");
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   core.send("stream", 1);
   core.send("compose", 2);
   const out = settle(core, core.send("corpusadd", writeCorpus({ ids: ["d", "e"] })));
   assert.ok(select(out, "restart").length >= 1, "the player starts again at the next bar");
-  assert.ok(select(out, "status").some((words) => /^emi-2 stream: phrase 1/.test(words.join(" "))), select(out, "status").map((w) => w.join(" ")).join("\n"));
+  assert.ok(select(out, "status").some((words) => /^Stream 2 · phrase 1( of \d+)? ·/.test(words.join(" "))), select(out, "status").map((w) => w.join(" ")).join("\n"));
 });
 
 test("corpora: startup reloads every folder that is on; 'corpus' still loads one folder alone", () => {
@@ -760,7 +762,7 @@ test("corpora: startup reloads every folder that is on; 'corpus' still loads one
   const core = engineIn(folder);
   let out = core.send("startup", "all");
   assert.ok(select(out, "status").some((words) => /^corpus 5 chorales .* from 2 folders$/.test(words.join(" "))));
-  assert.match(lastStatus(out).join(" "), /^status emi-3: /);
+  assert.match(lastStatus(out).join(" "), /^status Piece 3 ·/);
   assert.deepEqual(folderRows(out).map(([n, on, used, works]) => [n, on, used, works]), [[1, 1, 1, 3], [2, 1, 1, 2], [3, 0, 0, -1]], "a folder that is off isn't read");
 
   // "corpus <folder>" (as before M11): that folder alone, added to the list.
@@ -773,7 +775,7 @@ test("corpora: startup reloads every folder that is on; 'corpus' still loads one
   // A folder with no chorales changes nothing.
   assert.match(lastStatus(core.send("corpus", tempDir())).join(" "), /^error no \.mid files in /);
   assert.equal(settingsIn(folder).corpora.length, 4);
-  assert.match(lastStatus(core.send("compose", 1)).join(" "), /^status emi-1: /, "the corpus in use stays");
+  assert.match(lastStatus(core.send("compose", 1)).join(" "), /^status Piece 1 ·/, "the corpus in use stays");
 });
 
 test("corpus window: a row per folder, with what it holds; its box, only and remove talk to the engine", () => {
@@ -832,7 +834,7 @@ test("endat: the player is told where each piece ends (its last note-offs); a st
   const core = engineIn(tempDir());
   core.send("startup", "all");
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   const lastStep = (out) => Math.max(...select(out, "coll").filter(([kind]) => kind === "store").map(([, step]) => step));
   let out = core.send("compose", 1);
   assert.deepEqual(select(out, "endat"), [[lastStep(out)]]);
@@ -860,7 +862,7 @@ test("performance (after v0.1.0): queued as singers would play it, drawn as writ
   const core = engineIn(folder);
   core.send("startup", "all");
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   const stores = (o) => select(o, "coll").filter(([kind]) => kind === "store");
   const lastStep = (o) => Math.max(...stores(o).map(([, step]) => step));
   const timemaps = (o) => select(o, "view").filter(([kind]) => kind === "timemap");
@@ -915,7 +917,7 @@ test("rename: files saved as ml_midi.* carry over to cento.*, and a renamed Docu
   assert.ok(core.posted.some((line) => line === "cento: carried over from ml_midi.*: cento.settings.json, cento.taste.json, cento.emily.json\n"), core.posted.join(""));
   assert.ok(core.posted.some((line) => line === "cento: 1 corpus folder found under the new name (Documents/cento)\n"));
   assert.deepEqual(select(out, "setting")[0], ["seed", 3], "the settings came with them");
-  assert.match(lastStatus(out).join(" "), /^status emi-3: /, "the corpus loaded from its new folder, and composed");
+  assert.match(lastStatus(out).join(" "), /^status Piece 3 ·/, "the corpus loaded from its new folder, and composed");
   assert.equal(tasteIn(folder).ratings, 4, "and the taste");
   assert.equal(settingsIn(folder).corpora[0].path, path.join(root, "cento", "corpus"), "remembered under the new name");
   assert.ok(fs.existsSync(path.join(folder, "ml_midi.settings.json")), "the old files stay");
@@ -934,7 +936,7 @@ test("bundled corpus: the first startup lists Cento's own chorales, and composes
   fs.renameSync(writeCorpus(), path.join(root, "corpus", "bach-figured-bass"));
   fs.renameSync(writeCorpus({ ids: ["t", "u"], meter: [3, 4] }), path.join(root, "corpus", "bach-figured-bass-3-4"));
   const core = engineIn(patchers);
-  core.send("beats", 8);
+  core.send("bars", 2);
   const out = core.send("startup", "all");
   assert.ok(core.posted.includes("cento: Cento's own chorales are in the corpus window (Bach Chorales Figured Bass, switched on)\n"), core.posted.join(""));
   assert.deepEqual(folderRows(out).map(([n, on, used, works, meter, , name]) => [n, on, used, works, meter, name]), [
@@ -971,7 +973,7 @@ test("subfolders: the engine runs from patchers/parts/, and still finds patchers
   fs.mkdirSync(path.join(root, "corpus"));
   fs.renameSync(writeCorpus(), path.join(root, "corpus", "bach-figured-bass"));
   const core = engineIn(parts);
-  core.send("beats", 8);
+  core.send("bars", 2);
   const out = core.send("startup", "all");
   assert.deepEqual(select(out, "error"), [], "a clone: no complaint about the Cento folder");
   assert.deepEqual(folderRows(out).map(([n, on, , works, , , name]) => [n, on, works, name]), [[1, 1, 3, "bach-figured-bass"]]);
@@ -991,7 +993,7 @@ test("Cento for Max (M12): the engine runs from the download's Cento Patch folde
   fs.mkdirSync(path.join(cento, "corpus"), { recursive: true });
   fs.renameSync(writeCorpus(), path.join(cento, "corpus", "bach-figured-bass"));
   const core = engineIn(patch);
-  core.send("beats", 8);
+  core.send("bars", 2);
   const out = core.send("startup", "all");
   assert.ok(core.posted.includes(`cento: your Cento folder is ${cento} (found from the patch's folder)\n`), core.posted.join(""));
   assert.deepEqual(select(out, "error"), []);
@@ -1043,7 +1045,7 @@ test("Cento folder (M12): a download's own chorales are found in it; with none, 
   fs.mkdirSync(path.join(cento, "corpus"), { recursive: true });
   fs.renameSync(writeCorpus(), path.join(cento, "corpus", "bach-figured-bass"));
   const core = engineIn(device);
-  core.send("beats", 8);
+  core.send("bars", 2);
   const out = core.send("startup", "corpus");
   assert.deepEqual(folderRows(out).map(([n, on, , works, , , name]) => [n, on, works, name]), [[1, 1, 3, "bach-figured-bass"]]);
   assert.ok(select(out, "status").some((words) => words.join(" ").startsWith("corpus 3 chorales")));
@@ -1106,9 +1108,9 @@ test("core: with 'autoclips 1', every compose also writes clips", () => {
   const live = fakeLive({ trackNames: ["EMI", "Soprano", "Alto", "Tenor", "Bass"] });
   const core = loadBundle("emi.core", live);
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   core.send("autoclips", 1);
-  assert.match(lastStatus(core.send("compose", 3)).join(" "), /^status emi-3: .*; wrote emi-3 to 4 voice tracks$/);
+  assert.match(lastStatus(core.send("compose", 3)).join(" "), /^status Piece 3 · .* · wrote emi-3 to 4 voice tracks$/);
   assert.equal(live.calls.filter(([, name]) => name === "create_clip").length, 4);
   core.send("autoclips", 0);
   core.send("next");
@@ -1119,7 +1121,7 @@ test("core: 'writeclips' writes a composed piece; 'testclip' writes the test phr
   const live = fakeLive({ trackNames: ["Drums", "EMI"], ownTrack: 1, slotsPerTrack: 2 });
   const core = loadBundle("emi.core", live);
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   core.send("compose", 3);
   assert.deepEqual(lastStatus(core.send("writeclips")), ["status", "wrote", "emi-3", "to", "this", "track"]);
   assert.deepEqual(lastStatus(core.send("testclip")), ["status", "wrote", "EMI", "test-cadence", "to", "this", "track"]);
@@ -1349,7 +1351,7 @@ test("emily: like and dislike learn from the piece or the beats selected, and th
   assert.deepEqual(select(started, "emily"), [["no", "ratings", "yet"]], "the Emily panel shows her taste");
   assert.deepEqual(lastStatus(core.send("like")), ["error", "no", "corpus", "yet:", "click", "corpora", "and", "switch", "a", "folder", "on"]);
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   const composed = core.send("compose", 1);
   const ticks = select(composed, "view").filter(([kind]) => kind === "source").map(([, tick]) => tick);
 
@@ -1382,7 +1384,7 @@ test("emily: a chorale isn't rated; composing with a taste is compared with the 
   core.send("startup", "all");
   core.send("loadmidi", writeAMajorChorale());
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   core.send("loadmidi", writeAMajorChorale());
   assert.match(lastStatus(core.send("like")).join(" "), /^error Magdalena learns from composed music: compose a piece first$/);
   core.send("compose", 1);
@@ -1449,7 +1451,7 @@ test("emily: 'taste' lists her opinions and compares ten pieces with and without
   core.send("startup", "all");
   assert.deepEqual(lastStatus(core.send("taste")), ["status", "Magdalena:", "no", "ratings", "yet"]);
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   for (const seed of [1, 2, 3]) {
     core.send("compose", seed);
     core.send(seed === 2 ? "dislike" : "like");
@@ -1519,7 +1521,7 @@ test("emily: both products open at once share one taste: each reads the other's 
   for (const core of [max, live]) {
     core.send("startup", "all");
     core.send("corpus", corpusDir);
-    core.send("beats", 8);
+    core.send("bars", 2);
     core.send("compose", 1);
   }
   max.send("like");
@@ -1578,7 +1580,7 @@ test("emily: the window gets her taste in full whenever it changes, and selectio
   assert.equal(weights.length, 25, "every musical feature (mode only in a corpus of both modes)");
   assert.deepEqual(weights[0], ["weight", "Motion", "f:motion:still", 0, 0, 0, "block", "chords"]);
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   const composed = core.send("compose", 1);
   const ticks = select(composed, "view").filter(([kind]) => kind === "source").map(([, tick]) => tick);
 
@@ -1640,7 +1642,7 @@ test("emily: pins, strength, release, and a stored taste recalled (with the one 
   const core = engineIn(folder);
   core.send("startup", "all");
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   core.send("compose", 1);
   core.send("like");
   let out = core.send("pin", "f:16ths", 1.5);
@@ -1803,14 +1805,14 @@ test("emily: novelty varies pieces and stream phrases; variants are marked and n
   const core = engineIn(folder);
   core.send("startup", "all");
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   const plain = lastStatus(core.send("compose", 1)).join(" ");
   assert.doesNotMatch(plain, /variant/);
   assert.match(lastStatus(core.send("novelty", 1)).join(" "), /^status novelty 1\.00: a variant in every phrase/);
   assert.equal(tasteIn(folder).novelty, 1);
   core.posted.length = 0;
   const out = core.send("compose", 1);
-  assert.match(lastStatus(out).join(" "), /, 1 variant$|, \d variants$/);
+  assert.ok(core.posted.some((line) => /, (1 variant|\d variants)$/.test(line.trim())), "the variants are counted in the Max console");
   assert.ok(core.posted.some((line) => /^emi-1: varied: [a-z -]+ \(bar \d+, (soprano|alto|tenor|bass)\)/.test(line)), core.posted.join(""));
   const view = select(out, "view");
   const marks = view.filter(([kind]) => kind === "variant");
@@ -1821,7 +1823,7 @@ test("emily: novelty varies pieces and stream phrases; variants are marked and n
   core.send("stream", 1);
   core.send("phrases", 0);
   const stream = core.send("compose", 2);
-  assert.ok(select(stream, "status").some((words) => words.join(" ").includes(", varied: ")));
+  assert.ok(select(stream, "status").some((words) => words.join(" ").includes("· varied: ")));
   core.send("novelty", 0);
   assert.doesNotMatch(lastStatus(core.send("need")).join(" "), /varied/);
 });
@@ -1834,7 +1836,7 @@ test("emily: accept keeps a piece as her own; mix uses it; mix 0 is Bach alone, 
   core.send("startup", "all");
   assert.match(lastStatus(core.send("accept")).join(" "), /^error no corpus yet: click corpora and switch a folder on$/);
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   const before = lastStatus(core.send("compose", 2)).join(" ");
   core.send("novelty", 1);
   core.send("compose", 1);
@@ -1846,8 +1848,9 @@ test("emily: accept keeps a piece as her own; mix uses it; mix 0 is Bach alone, 
 
   core.send("novelty", 0);
   core.send("mix", 0.75);
-  const own = [2, 3, 4, 5].map((seed) => lastStatus(core.send("compose", seed)).join(" "));
-  assert.ok(own.some((s) => /beats? from Magdalena's notebook/.test(s)), own.join("\n"));
+  core.posted.length = 0;
+  for (const seed of [2, 3, 4, 5]) core.send("compose", seed);
+  assert.ok(core.posted.some((line) => /beats? from Magdalena's notebook/.test(line)), core.posted.join(""));
   assert.match(lastStatus(core.send("mix", 0)).join(" "), /^status mix 0\.00: Bach only/);
   assert.equal(lastStatus(core.send("compose", 2)).join(" "), before, "mix 0: exactly as before she had music of her own");
 
@@ -1874,7 +1877,7 @@ test("emily: a rollback restores an earlier taste exactly, her own music include
   const core = engineIn(folder);
   core.send("startup", "all");
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   core.send("novelty", 1);
   core.send("compose", 1);
   core.send("like");
@@ -1914,7 +1917,7 @@ test("emily: a snapshot is kept when a session starts, if her taste changed", ()
   const core = engineIn(folder);
   core.send("startup", "all");
   core.send("corpus", writeCorpus());
-  core.send("beats", 8);
+  core.send("bars", 2);
   core.send("compose", 1);
   core.send("like");
   const snapshots = () => JSON.parse(fs.readFileSync(path.join(folder, "cento.snapshots.json"), "utf8")).list.map((s) => s.label);

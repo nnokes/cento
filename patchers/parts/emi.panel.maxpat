@@ -65,13 +65,13 @@
 						300.0,
 						149.0
 					],
-					"id": "obj-52"
+					"id": "obj-46"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.panel: the composing controls, shared by both products (Max version and Live device), in the order you use them (GUI redesign, M12): compose first, then which chorales and how long, then streams. The less-used tools are in the Max version's more features window (emi.extras). Seed, beats, form, stream, phrases, transpose and signatures are live.* parameters: Live saves them with the set; the Max version restores them from the settings file. Panel 300 x 149 px, below the strip's row of section names.",
+					"text": "emi.panel: the composing controls, shared by both products (Max version and Live device), in the order you use them (GUI redesign, M12; leaner after v0.1.0): new piece first, then which chorales and how long, then streams. The less-used tools and the composer's own switches (chorale form, signatures) are in the Max version's more features window (emi.extras). Seed, bars, stream, phrases and transpose are live.* parameters: Live saves them with the set; the Max version restores them from the settings file. Panel 300 x 149 px, below the strip's row of section names.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 3,
@@ -129,10 +129,10 @@
 						""
 					],
 					"parameter_enable": 1,
-					"varname": "Compose",
+					"varname": "Next",
 					"mode": 0,
-					"text": "update composition",
-					"texton": "update composition",
+					"text": "new piece",
+					"texton": "new piece",
 					"fontsize": 11.0,
 					"bgcolor": [
 						0.24,
@@ -188,8 +188,8 @@
 								"off",
 								"on"
 							],
-							"parameter_longname": "Compose",
-							"parameter_shortname": "update composition",
+							"parameter_longname": "Next",
+							"parameter_shortname": "new piece",
 							"parameter_type": 2,
 							"parameter_mmax": 1,
 							"parameter_initial": [
@@ -201,20 +201,20 @@
 					"patching_rect": [
 						660.0,
 						300.0,
-						114.0,
+						74.0,
 						24.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						6.0,
 						6.0,
-						114.0,
+						74.0,
 						24.0
 					],
 					"id": "obj-4",
-					"hint": "Compose a piece with the seed shown, with the settings and Magdalena's taste as they are now (with stream on: start a stream). While playing, the new music starts at the next bar. The pop-up window has the same button. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
-					"annotation": "Compose a piece with the seed shown, with the settings and Magdalena's taste as they are now (with stream on: start a stream). While playing, the new music starts at the next bar. The pop-up window has the same button. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
-					"annotation_name": "update composition"
+					"hint": "The next piece: adds 1 to the piece number and composes it. The quickest way to hear another piece. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation": "The next piece: adds 1 to the piece number and composes it. The quickest way to hear another piece. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation_name": "new piece"
 				}
 			},
 			{
@@ -238,7 +238,7 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "compose",
+					"text": "next",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -247,7 +247,7 @@
 					"patching_rect": [
 						660.0,
 						360.0,
-						65.0,
+						44.0,
 						22.0
 					],
 					"id": "obj-6"
@@ -256,21 +256,21 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "seed",
+					"text": "piece #",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"fontsize": 10.0,
 					"patching_rect": [
 						740.0,
 						270.0,
-						24.0,
+						40.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						124.0,
+						86.0,
 						9.0,
-						24.0,
+						40.0,
 						18.0
 					],
 					"id": "obj-7",
@@ -315,15 +315,15 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						148.0,
+						126.0,
 						9.0,
-						42.0,
+						44.0,
 						18.0
 					],
 					"id": "obj-8",
-					"hint": "The random seed: the same seed, chorales, settings and taste always give the same piece. Changing it composes at once (once chorales are loaded).",
-					"annotation": "The random seed: the same seed, chorales, settings and taste always give the same piece. Changing it composes at once (once chorales are loaded).",
-					"annotation_name": "seed"
+					"hint": "The piece's number: the same number, chorales, settings and taste always give the same piece. Changing it composes at once (once chorales are loaded).",
+					"annotation": "The piece's number: the same number, chorales, settings and taste always give the same piece. Changing it composes at once (once chorales are loaded).",
+					"annotation_name": "piece #"
 				}
 			},
 			{
@@ -354,10 +354,10 @@
 						""
 					],
 					"parameter_enable": 1,
-					"varname": "Next",
+					"varname": "Compose",
 					"mode": 0,
-					"text": "next",
-					"texton": "next",
+					"text": "again",
+					"texton": "again",
 					"fontsize": 10.0,
 					"bgcolor": [
 						0.8,
@@ -413,8 +413,8 @@
 								"off",
 								"on"
 							],
-							"parameter_longname": "Next",
-							"parameter_shortname": "next",
+							"parameter_longname": "Compose",
+							"parameter_shortname": "again",
 							"parameter_type": 2,
 							"parameter_mmax": 1,
 							"parameter_initial": [
@@ -426,20 +426,20 @@
 					"patching_rect": [
 						860.0,
 						300.0,
-						34.0,
+						46.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						194.0,
+						176.0,
 						8.0,
-						34.0,
+						46.0,
 						20.0
 					],
 					"id": "obj-10",
-					"hint": "Add 1 to the seed and compose: the quickest way to hear another piece. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
-					"annotation": "Add 1 to the seed and compose: the quickest way to hear another piece. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
-					"annotation_name": "next"
+					"hint": "Compose this piece number again, with the settings and Magdalena's taste as they are now (with stream on: start a stream). While playing, the new music starts at the next bar. The pop-up window has the same button. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation": "Compose this piece number again, with the settings and Magdalena's taste as they are now (with stream on: start a stream). While playing, the new music starts at the next bar. The pop-up window has the same button. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live).",
+					"annotation_name": "again"
 				}
 			},
 			{
@@ -463,7 +463,7 @@
 			{
 				"box": {
 					"maxclass": "message",
-					"text": "next",
+					"text": "compose",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -472,7 +472,7 @@
 					"patching_rect": [
 						860.0,
 						360.0,
-						44.0,
+						65.0,
 						22.0
 					],
 					"id": "obj-12"
@@ -481,7 +481,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "seed: composes when changed (once a corpus is loaded); update composition: the shown seed again; next: seed + 1",
+					"text": "piece #: composes when changed (once a corpus is loaded); again: the shown number again; new piece: number + 1",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -577,14 +577,14 @@
 					"patching_rect": [
 						1000.0,
 						300.0,
-						62.0,
+						66.0,
 						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						232.0,
+						228.0,
 						8.0,
-						62.0,
+						66.0,
 						20.0
 					],
 					"id": "obj-14",
@@ -800,21 +800,21 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "beats",
+					"text": "bars",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"fontsize": 10.0,
 					"patching_rect": [
 						540.0,
 						70.0,
-						34.0,
+						30.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						86.0,
+						90.0,
 						37.0,
-						34.0,
+						30.0,
 						18.0
 					],
 					"id": "obj-22",
@@ -836,16 +836,16 @@
 						"float"
 					],
 					"parameter_enable": 1,
-					"varname": "Beats",
+					"varname": "Bars",
 					"saved_attribute_attributes": {
 						"valueof": {
-							"parameter_longname": "Beats",
-							"parameter_shortname": "Beats",
+							"parameter_longname": "Bars",
+							"parameter_shortname": "Bars",
 							"parameter_type": 1,
-							"parameter_mmin": 4,
-							"parameter_mmax": 256,
+							"parameter_mmin": 1,
+							"parameter_mmax": 64,
 							"parameter_initial": [
-								32
+								8
 							],
 							"parameter_initial_enable": 1,
 							"parameter_unitstyle": 0
@@ -861,19 +861,19 @@
 					"presentation_rect": [
 						120.0,
 						37.0,
-						46.0,
+						40.0,
 						18.0
 					],
 					"id": "obj-23",
-					"hint": "The shortest piece to compose, in beats (4 to 256). With chorale form on, only chorales at least this long lend their form.",
-					"annotation": "The shortest piece to compose, in beats (4 to 256). With chorale form on, only chorales at least this long lend their form.",
-					"annotation_name": "beats"
+					"hint": "The shortest piece to compose, in bars (1 to 64). With chorale form on (more features), only chorales at least this long lend their form.",
+					"annotation": "The shortest piece to compose, in bars (1 to 64). With chorale form on (more features), only chorales at least this long lend their form.",
+					"annotation_name": "bars"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "prepend beats",
+					"text": "prepend bars",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -890,118 +890,109 @@
 			},
 			{
 				"box": {
-					"maxclass": "live.text",
+					"maxclass": "comment",
+					"text": "transpose",
 					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"parameter_enable": 1,
-					"varname": "Form",
-					"mode": 1,
-					"text": "chorale form",
-					"texton": "chorale form",
+					"numoutlets": 0,
 					"fontsize": 10.0,
-					"bgcolor": [
-						0.84,
-						0.82,
-						0.78,
-						1.0
-					],
-					"activebgcolor": [
-						0.84,
-						0.82,
-						0.78,
-						1.0
-					],
-					"bgoncolor": [
-						0.96,
-						0.7,
-						0.33,
-						1.0
-					],
-					"activebgoncolor": [
-						0.96,
-						0.7,
-						0.33,
-						1.0
-					],
-					"textcolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"activetextcolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"textoncolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"activetextoncolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_enum": [
-								"off",
-								"on"
-							],
-							"parameter_longname": "Form",
-							"parameter_shortname": "Form",
-							"parameter_type": 2,
-							"parameter_mmax": 1,
-							"parameter_initial": [
-								1
-							],
-							"parameter_initial_enable": 1
-						}
-					},
 					"patching_rect": [
-						420.0,
-						100.0,
-						100.0,
-						20.0
+						270.0,
+						440.0,
+						54.0,
+						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						172.0,
-						36.0,
-						122.0,
-						20.0
+						37.0,
+						54.0,
+						18.0
 					],
 					"id": "obj-25",
-					"hint": "On: each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan.",
-					"annotation": "On: each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan.",
-					"annotation_name": "chorale form"
+					"textcolor": [
+						0.95,
+						0.95,
+						0.93,
+						1.0
+					]
+				}
+			},
+			{
+				"box": {
+					"maxclass": "live.numbox",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"parameter_enable": 1,
+					"varname": "Transpose",
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_longname": "Transpose",
+							"parameter_shortname": "Transpose",
+							"parameter_type": 1,
+							"parameter_mmin": -12,
+							"parameter_mmax": 12,
+							"parameter_initial": [
+								0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_unitstyle": 0
+						}
+					},
+					"patching_rect": [
+						270.0,
+						470.0,
+						56.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						226.0,
+						37.0,
+						32.0,
+						18.0
+					],
+					"id": "obj-26",
+					"hint": "Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase.",
+					"annotation": "Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase.",
+					"annotation_name": "transpose"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "prepend form",
+					"text": "prepend transpose",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
 						""
 					],
 					"patching_rect": [
-						420.0,
-						135.0,
-						90.0,
+						270.0,
+						505.0,
+						115.0,
 						22.0
 					],
-					"id": "obj-26"
+					"id": "obj-27"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "comment",
+					"text": "bars: the shortest piece; transpose: at once for a piece, from the next phrase in a stream",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"linecount": 2,
+					"patching_rect": [
+						400.0,
+						470.0,
+						330.0,
+						34.0
+					],
+					"id": "obj-28"
 				}
 			},
 			{
@@ -1096,9 +1087,9 @@
 						52.0,
 						20.0
 					],
-					"id": "obj-27",
-					"hint": "On: update composition starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece.",
-					"annotation": "On: update composition starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece.",
+					"id": "obj-29",
+					"hint": "On: new piece and again start a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: whole pieces.",
+					"annotation": "On: new piece and again start a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: whole pieces.",
 					"annotation_name": "stream"
 				}
 			},
@@ -1117,7 +1108,7 @@
 						100.0,
 						22.0
 					],
-					"id": "obj-28"
+					"id": "obj-30"
 				}
 			},
 			{
@@ -1130,17 +1121,17 @@
 					"patching_rect": [
 						140.0,
 						440.0,
-						42.0,
+						44.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						62.0,
+						64.0,
 						63.0,
-						42.0,
+						44.0,
 						18.0
 					],
-					"id": "obj-29",
+					"id": "obj-31",
 					"textcolor": [
 						0.95,
 						0.95,
@@ -1182,12 +1173,12 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						104.0,
+						108.0,
 						63.0,
 						30.0,
 						18.0
 					],
-					"id": "obj-30",
+					"id": "obj-32",
 					"hint": "How many phrases a stream plays before it ends (0: endless).",
 					"annotation": "How many phrases a stream plays before it ends (0: endless).",
 					"annotation_name": "phrases"
@@ -1208,246 +1199,23 @@
 						105.0,
 						22.0
 					],
-					"id": "obj-31"
+					"id": "obj-33"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "transpose",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"fontsize": 10.0,
-					"patching_rect": [
-						270.0,
-						440.0,
-						54.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						138.0,
-						63.0,
-						54.0,
-						18.0
-					],
-					"id": "obj-32",
-					"textcolor": [
-						0.95,
-						0.95,
-						0.93,
-						1.0
-					]
-				}
-			},
-			{
-				"box": {
-					"maxclass": "live.numbox",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"parameter_enable": 1,
-					"varname": "Transpose",
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_longname": "Transpose",
-							"parameter_shortname": "Transpose",
-							"parameter_type": 1,
-							"parameter_mmin": -12,
-							"parameter_mmax": 12,
-							"parameter_initial": [
-								0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_unitstyle": 0
-						}
-					},
-					"patching_rect": [
-						270.0,
-						470.0,
-						56.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						192.0,
-						63.0,
-						32.0,
-						18.0
-					],
-					"id": "obj-33",
-					"hint": "Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase.",
-					"annotation": "Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase.",
-					"annotation_name": "transpose"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend transpose",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						270.0,
-						505.0,
-						115.0,
-						22.0
-					],
-					"id": "obj-34"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "comment",
-					"text": "stream: compose plays phrase by phrase (phrases 0 = endless); transpose: at once for a piece, from the next phrase in a stream",
+					"text": "stream: new piece plays phrase by phrase (phrases 0 = endless)",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
 					"patching_rect": [
 						400.0,
-						470.0,
+						520.0,
 						330.0,
 						34.0
 					],
-					"id": "obj-35"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "live.text",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"parameter_enable": 1,
-					"varname": "Signatures",
-					"mode": 1,
-					"text": "signatures",
-					"texton": "signatures",
-					"fontsize": 10.0,
-					"bgcolor": [
-						0.84,
-						0.82,
-						0.78,
-						1.0
-					],
-					"activebgcolor": [
-						0.84,
-						0.82,
-						0.78,
-						1.0
-					],
-					"bgoncolor": [
-						0.96,
-						0.7,
-						0.33,
-						1.0
-					],
-					"activebgoncolor": [
-						0.96,
-						0.7,
-						0.33,
-						1.0
-					],
-					"textcolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"activetextcolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"textoncolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"activetextoncolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_enum": [
-								"off",
-								"on"
-							],
-							"parameter_longname": "Signatures",
-							"parameter_shortname": "Signatures",
-							"parameter_type": 2,
-							"parameter_mmax": 1,
-							"parameter_initial": [
-								1
-							],
-							"parameter_initial_enable": 1
-						}
-					},
-					"patching_rect": [
-						760.0,
-						470.0,
-						100.0,
-						20.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						228.0,
-						62.0,
-						66.0,
-						20.0
-					],
-					"id": "obj-36",
-					"hint": "On: Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats.",
-					"annotation": "On: Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats.",
-					"annotation_name": "signatures"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend sigs",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						760.0,
-						505.0,
-						90.0,
-						22.0
-					],
-					"id": "obj-37"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "comment",
-					"text": "signatures: keep Bach's cadence formulas whole at cadences",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"linecount": 2,
-					"patching_rect": [
-						870.0,
-						470.0,
-						250.0,
-						34.0
-					],
-					"id": "obj-38"
+					"id": "obj-34"
 				}
 			},
 			{
@@ -1468,7 +1236,7 @@
 						170.0,
 						22.0
 					],
-					"id": "obj-39"
+					"id": "obj-35"
 				}
 			},
 			{
@@ -1486,7 +1254,7 @@
 						98.0,
 						22.0
 					],
-					"id": "obj-40"
+					"id": "obj-36"
 				}
 			},
 			{
@@ -1504,7 +1272,7 @@
 						100.0,
 						22.0
 					],
-					"id": "obj-41"
+					"id": "obj-37"
 				}
 			},
 			{
@@ -1536,7 +1304,7 @@
 						288.0,
 						55.0
 					],
-					"id": "obj-42",
+					"id": "obj-38",
 					"hint": "What the engine just did, or what went wrong.",
 					"annotation": "What the engine just did, or what went wrong.",
 					"annotation_name": "Status"
@@ -1545,12 +1313,10 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "route seed beats form stream phrases transpose sigs",
+					"text": "route seed bars stream phrases transpose",
 					"numinlets": 2,
-					"numoutlets": 8,
+					"numoutlets": 6,
 					"outlettype": [
-						"",
-						"",
 						"",
 						"",
 						"",
@@ -1561,10 +1327,10 @@
 					"patching_rect": [
 						420.0,
 						560.0,
-						330.0,
+						260.0,
 						22.0
 					],
-					"id": "obj-43"
+					"id": "obj-39"
 				}
 			},
 			{
@@ -1579,7 +1345,7 @@
 						330.0,
 						20.0
 					],
-					"id": "obj-44"
+					"id": "obj-40"
 				}
 			},
 			{
@@ -1597,7 +1363,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-45"
+					"id": "obj-41"
 				}
 			},
 			{
@@ -1615,7 +1381,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-46"
+					"id": "obj-42"
 				}
 			},
 			{
@@ -1633,7 +1399,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-47"
+					"id": "obj-43"
 				}
 			},
 			{
@@ -1651,7 +1417,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-48"
+					"id": "obj-44"
 				}
 			},
 			{
@@ -1669,43 +1435,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-49"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend set",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						895.0,
-						640.0,
-						80.0,
-						22.0
-					],
-					"id": "obj-50"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend set",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						990.0,
-						640.0,
-						80.0,
-						22.0
-					],
-					"id": "obj-51"
+					"id": "obj-45"
 				}
 			}
 		],
@@ -1905,23 +1635,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-25",
-						0
-					],
-					"destination": [
-						"obj-26",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-26",
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-27",
 						0
 					]
 				}
@@ -1933,7 +1651,7 @@
 						0
 					],
 					"destination": [
-						"obj-28",
+						"obj-3",
 						0
 					]
 				}
@@ -1941,11 +1659,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-28",
+						"obj-29",
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-30",
 						0
 					]
 				}
@@ -1957,7 +1675,7 @@
 						0
 					],
 					"destination": [
-						"obj-31",
+						"obj-3",
 						0
 					]
 				}
@@ -1965,11 +1683,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-31",
+						"obj-32",
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-33",
 						0
 					]
 				}
@@ -1978,42 +1696,6 @@
 				"patchline": {
 					"source": [
 						"obj-33",
-						0
-					],
-					"destination": [
-						"obj-34",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-34",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-36",
-						0
-					],
-					"destination": [
-						"obj-37",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-37",
 						0
 					],
 					"destination": [
@@ -2029,7 +1711,7 @@
 						0
 					],
 					"destination": [
-						"obj-39",
+						"obj-35",
 						0
 					]
 				}
@@ -2037,11 +1719,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-39",
+						"obj-35",
 						0
 					],
 					"destination": [
-						"obj-40",
+						"obj-36",
 						0
 					]
 				}
@@ -2049,11 +1731,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-39",
+						"obj-35",
 						1
 					],
 					"destination": [
-						"obj-41",
+						"obj-37",
 						0
 					]
 				}
@@ -2061,11 +1743,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-40",
+						"obj-36",
 						0
 					],
 					"destination": [
-						"obj-42",
+						"obj-38",
 						0
 					]
 				}
@@ -2073,11 +1755,23 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-41",
+						"obj-37",
 						0
 					],
 					"destination": [
-						"obj-42",
+						"obj-38",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-35",
+						2
+					],
+					"destination": [
+						"obj-39",
 						0
 					]
 				}
@@ -2086,10 +1780,10 @@
 				"patchline": {
 					"source": [
 						"obj-39",
-						2
+						0
 					],
 					"destination": [
-						"obj-43",
+						"obj-41",
 						0
 					]
 				}
@@ -2097,19 +1791,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-43",
-						0
-					],
-					"destination": [
-						"obj-45",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-45",
+						"obj-41",
 						0
 					],
 					"destination": [
@@ -2121,11 +1803,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-43",
+						"obj-39",
 						1
 					],
 					"destination": [
-						"obj-46",
+						"obj-42",
 						0
 					]
 				}
@@ -2133,7 +1815,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-46",
+						"obj-42",
 						0
 					],
 					"destination": [
@@ -2145,23 +1827,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-43",
+						"obj-39",
 						2
 					],
 					"destination": [
-						"obj-47",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-47",
-						0
-					],
-					"destination": [
-						"obj-25",
+						"obj-43",
 						0
 					]
 				}
@@ -2170,10 +1840,22 @@
 				"patchline": {
 					"source": [
 						"obj-43",
+						0
+					],
+					"destination": [
+						"obj-29",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-39",
 						3
 					],
 					"destination": [
-						"obj-48",
+						"obj-44",
 						0
 					]
 				}
@@ -2181,11 +1863,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-48",
+						"obj-44",
 						0
 					],
 					"destination": [
-						"obj-27",
+						"obj-32",
 						0
 					]
 				}
@@ -2193,11 +1875,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-43",
+						"obj-39",
 						4
 					],
 					"destination": [
-						"obj-49",
+						"obj-45",
 						0
 					]
 				}
@@ -2205,59 +1887,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-49",
+						"obj-45",
 						0
 					],
 					"destination": [
-						"obj-30",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-43",
-						5
-					],
-					"destination": [
-						"obj-50",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-50",
-						0
-					],
-					"destination": [
-						"obj-33",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-43",
-						6
-					],
-					"destination": [
-						"obj-51",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-51",
-						0
-					],
-					"destination": [
-						"obj-36",
+						"obj-26",
 						0
 					]
 				}
