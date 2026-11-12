@@ -100,13 +100,23 @@ labels kept fall from 54% to 51% and signatures per cadence from 0.68 to
 0.65. Both are `compose` options (`contour`, `cadenceSoprano`), on, with no
 control in the panel. Not listened to yet.
 
+*M5 built* (`emi.core.v8.js`: `key`, `shiftFor`; the **key** menu in
+`panel()`): music plays in its chorale's key by default (a piece in the key
+of the chorale whose form it takes, a stream in its first chorale's, a loaded
+chorale as written), or in one of twelve key signatures (major pieces in its
+major, minor ones in its relative minor), always by the shorter way, so no
+voice moves more than a tritone. The menu replaces **transpose** on the
+composing panel and the **original key** switch in more features; the
+engine's `transpose` message is gone and a v0.1.0 settings file's `transpose`
+and `key` are ignored. The status line shows the key as played.
+
 | # | Change | Why | Where |
 |---|---|---|---|
 | M1 | **Plan the soprano, not just hook it**: a soft score for matching the template soprano's direction beat to beat (or its distance from the template's soprano at phrase midpoints), like the `accidentals` term | The melody is constrained locally (hooking), by range (template) and at cadences (signatures); between those each beat knows only the beat before, so the tune can wander. A hymn tune has a contour and a climax. The single change most likely to move the listening test | `emi-form.js`: `slotsOf` (template soprano per slot), `feasible` (`SCORE`), `sopranoOf` |
 | M2 | **Match the cadence's soprano degree**: the template's soprano scale degree at the fermata (ending on 1, 3 or 5) | Cadence slots already keep the bass pitch class (so half cadences stay half); the soprano's close is the other half of a cadence's character | `slotsOf`, `fits` |
 | M3 | **Chord function as a soft constraint**: a label (I, IV, V, vi, V/V…) per beat from its key area and root, preferred like a SPEAC label | SPEAC is tension-based; two beats can share a label with different harmonic roles. `emi-tension` has the root finder and each beat has an area (`emi-lexicon`'s `areas`) | `emi-lexicon.js` (label at build), `emi-form.js` (score) |
 | M4 | **Rhythmic density from the template**: score beats whose `newNotes` (or 16ths) match the template beat's | `slot.newNotes` is stored but only splits phrases. Bach's inner-voice eighths thicken toward cadences; carrying the template's density carries that shape | `feasible` |
-| M5 | **Compose in the template's key**, with a key menu beside | Pieces are always in C or A minor and transpose is "n semitones". Each work's key and `transposedBy` are stored; "in the form of BWV 14.5, in its key" is nearly free and more musical | `emi.core.v8.js`: `transposed()`, `composeNow()`; the panel's transpose control |
+| M5 | *Built.* **Compose in the template's key**, with a key menu beside | Pieces are always in C or A minor and transpose is "n semitones". Each work's key and `transposedBy` are stored; "in the form of BWV 14.5, in its key" is nearly free and more musical | `emi.core.v8.js`: `transposed()`, `composeNow()`; the panel's transpose control |
 | M6 | **Direct fifths and octaves to the outer voices**: a soft penalty at seams when soprano and bass move the same way into a fifth or octave with a soprano leap | The parallels check is good; hidden fifths and octaves are a voice-leading tell it lets through | `emi-quality.js`, `emi-form.js` (`voicesFit` or the score) |
 
 ### C. The taste layer
@@ -123,6 +133,6 @@ control in the panel. Not listened to yet.
 2. ~~GUI G1–G4.~~ Built.
 3. ~~Soprano contour (M1) and cadence degree (M2)~~ Built; then a fresh A/B
    test, with listeners who aren't the developer.
-4. The template's key (M5), then the pop-up tidy (G5, G6).
+4. ~~The template's key (M5)~~ Built; then the pop-up tidy (G5, G6).
 
 Each is small enough for a pull request of its own.

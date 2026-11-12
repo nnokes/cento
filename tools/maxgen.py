@@ -201,11 +201,8 @@ HELP = {
         "Listening Test": ("listening test", "Write a blind listening test: a web page of 10 pairs, each a "
                            "Bach chorale and a piece composed in its form, in random order. Can listeners "
                            "tell which is Bach?"),
-        "Load A Chorale": ("load a chorale", "Load one chorale (a MIDI file): it plays as written and is "
-                           "drawn in the piano roll, in C major or A minor, or in its own key with original "
-                           "key on."),
-        "Original Key": ("original key", "On: a chorale you load (load a chorale) keeps its own key. Off: it "
-                         "is moved to C major or A minor (the default). Only for loaded chorales."),
+        "Load A Chorale": ("load a chorale", "Load one chorale (a MIDI file): it plays and is drawn in the "
+                           "piano roll, as written or in the key the composing panel's key menu says."),
         "Test Phrase": ("play the test phrase", "Play a built-in phrase (no chorales needed), to check that "
                         "the voices sound."),
         "Clear Queue": ("stop and clear the queue", "What is playing stops at once, and nothing is left "
@@ -259,8 +256,10 @@ HELP = {
         "Stream": ("stream", "On: new piece and again start a stream, composed a phrase at a time while it "
                    "plays, for as many phrases as phrases says. Off: whole pieces."),
         "Phrases": ("phrases", "How many phrases a stream plays before it ends (0: endless)."),
-        "Transpose": ("transpose", "Transpose the music by semitones (-12 to 12): a piece at once, a "
-                      "stream from its next phrase."),
+        "Key": ("key", "Where the music plays. chorale's key (the default): a piece in the key of the "
+                "chorale whose form it takes, a stream in its first chorale's, a loaded chorale as "
+                "written. Or a key signature: pieces in major play in its major key, pieces in minor in "
+                "its relative minor. A piece moves at once, a stream from its next phrase."),
         "Status": ("Status", "What the engine just did, or what went wrong."),
     },
     "top": {
@@ -727,6 +726,11 @@ WINDOW_SIZE = 18  # the square window button, in the row of names
 PANEL_H = 169 - HEADER_H  # each section's height below the row (Live devices are 169 px high)
 LABEL_SIZE = 10.0  # labels, and the text on buttons and switches
 
+# The key menu (M5, after v0.1.0): the engine's "key <n>" counts the same way.
+KEY_CHOICES = ["chorale's key"] + [f"{major} / {minor} minor" for major, minor in [
+    ("C", "A"), ("Db", "Bb"), ("D", "B"), ("Eb", "C"), ("E", "C#"), ("F", "D"), ("F#", "D#"), ("G", "E"),
+    ("Ab", "F"), ("A", "F#"), ("Bb", "G"), ("B", "G#")]]
+
 
 def live_text_look(bg, on, text=DARK_TEXT, text_on=None):
     text_on = text_on or text
@@ -845,6 +849,24 @@ def live_numbox(p, name, x, y, pres, minimum, maximum, initial):
     )
 
 
+def live_menu(p, name, x, y, pres, items, initial=0):
+    """A live.menu: a parameter (an enum), saved with the set. Its left outlet
+    sends the chosen item's index."""
+    return p.ui(
+        "live.menu", x, y, 100, 15, 1, 3, ["", "", "float"], pres=pres,
+        parameter_enable=1, varname=name, fontsize=LABEL_SIZE,
+        saved_attribute_attributes={"valueof": {
+            "parameter_enum": items,
+            "parameter_longname": name,
+            "parameter_shortname": name,
+            "parameter_type": 2,
+            "parameter_mmax": len(items) - 1,
+            "parameter_initial": [initial],
+            "parameter_initial_enable": 1,
+        }},
+    )
+
+
 def live_toggle(p, name, text, x, y, pres, initial=0, initial_enable=1):
     """A live.text toggle showing its label: a parameter, saved with the set."""
     return p.ui(
@@ -906,8 +928,8 @@ def panel():
                   targets)
 
     # Row 2: corpora (the corpus window, emi.corpora in the top patch:
-    # folders of chorales, each on or off), bars, transpose. [send] with
-    # "---": unique to each device in Live.
+    # folders of chorales, each on or off), bars, key. [send] with "---":
+    # unique to each device in Live.
     corpora_button = button(p, "Corpora", "corpora", 20, 100, (6, 36, 76, 20))
     corpora_t = p.obj("t b", 20, 130, 1, 1, ["bang"], w=35)
     to_corpora = p.obj("s ---emi.corpora", 20, 160, 1, 0, [], w=110)
@@ -920,13 +942,15 @@ def panel():
     bars_pre = p.obj("prepend bars", 540, 135, 2, 1, w=95)
     p.connect(bars, 0, bars_pre, 0)
     send(bars_pre)
-    label(p, "transpose", 270, 440, (172, 37, 54, 18), w=60)
-    transpose = live_numbox(p, "Transpose", 270, 470, (226, 37, 32, 18), -12, 12, 0)
-    transpose_pre = p.obj("prepend transpose", 270, 505, 2, 1, w=115)
-    p.connect(transpose, 0, transpose_pre, 0)
-    send(transpose_pre)
-    p.comment("bars: the shortest piece; transpose: at once for a piece, from the next phrase in a stream",
-              400, 470, w=330, h=34, linecount=2)
+    # Where the music plays (M5, after v0.1.0): its chorale's key, or a key
+    # signature. The menu sends the item's index; the engine counts the same way.
+    label(p, "key", 270, 440, (166, 37, 26, 18), w=40)
+    key = live_menu(p, "Key", 270, 470, (194, 37, 100, 18), KEY_CHOICES)
+    key_pre = p.obj("prepend key", 270, 505, 2, 1, w=90)
+    p.connect(key, 0, key_pre, 0)
+    send(key_pre)
+    p.comment("bars: the shortest piece; key: where the music plays (its chorale's, or a key signature): "
+              "at once for a piece, from the next phrase in a stream", 400, 470, w=330, h=34, linecount=2)
 
     # Row 3: stream and its phrases (M5)
     stream = live_toggle(p, "Stream", "stream", 20, 470, (6, 62, 52, 20))
@@ -951,10 +975,10 @@ def panel():
     status = text_box(p, 20, 640, W - 12, 52, (6, 88, W - 12, 55), "Status")
     p.connect(set_status, 0, status, 0)
     p.connect(set_error, 0, status, 0)
-    controls = p.obj("route seed bars stream phrases transpose", 420, 560, 2, 6, w=260)
+    controls = p.obj("route seed bars stream phrases key", 420, 560, 2, 6, w=240)
     p.connect(route, 2, controls, 0)
     p.comment("setting <name> <value>: show it without sending it back", 800, 560, w=330)
-    for k, control in enumerate([seed, bars, stream, phrases, transpose]):
+    for k, control in enumerate([seed, bars, stream, phrases, key]):
         pre = p.obj("prepend set", 420 + k * 95, 640, 2, 1, w=80)
         p.connect(controls, k, pre, 0)
         p.connect(pre, 0, control, 0)
@@ -1116,11 +1140,11 @@ def host_max():
     p.comment("set up: the plug-in instruments window (plug <n>, open <n>)", 680, 655, w=250)
     # More features (Max version only): the listening test and the less-used
     # tools, in a window of their own (emi.extras); what they send goes to
-    # the engine, and a restored original key reaches its switch.
+    # the engine, and restored form and signatures reach their switches.
     extras = opener(p, "More Features", "more features…", 950, 560, (6, 92, 120, 20), "emi.extras")
     p.connect(extras, 0, out, 0)
-    p.comment("more features: listening test, load a chorale (original key), test phrase, clear", 1070, 655,
-              w=220, h=34, linecount=2)
+    p.comment("more features: listening test, load a chorale, test phrase, clear, the composer's switches",
+              1070, 655, w=220, h=34, linecount=2)
     # The performance layer (emi-perform): on by default. The engine restores
     # it from the settings file, so the switch sends nothing at load.
     performance = live_toggle(p, "Performance", "performance", 1300, 560, (6, 118, 120, 20), initial=1,
@@ -1178,21 +1202,21 @@ def host_max():
               "last corpus and compose", 890, 100, w=330, h=34, linecount=2)
     defer_set = p.obj("deferlow", 20, 470, 1, 1, w=65)
     p.connect(route, 1, defer_set, 0)
-    restore = p.obj("route bpm output vst key perform form sigs", 20, 510, 2, 8, w=250)
+    restore = p.obj("route bpm output vst perform form sigs", 20, 510, 2, 7, w=230)
     p.connect(defer_set, 0, restore, 0)
     p.connect(restore, 0, tempo, 0)
     p.connect(restore, 1, menu, 0)
     p.connect(restore, 2, use_vst, 0)
-    for k, name in enumerate(["key", "form", "sigs"]):
-        to_extras = p.obj("prepend " + name, 200 + k * 95, 545, 2, 1, w=85)
-        p.connect(restore, 3 if k == 0 else 4 + k, to_extras, 0)
-        p.connect(to_extras, 0, extras, 0)
     set_performance = p.obj("prepend set", 20, 580, 2, 1, w=80)
-    p.connect(restore, 4, set_performance, 0)
+    p.connect(restore, 3, set_performance, 0)
     p.connect(set_performance, 0, performance, 0)
+    for k, name in enumerate(["form", "sigs"]):
+        to_extras = p.obj("prepend " + name, 200 + k * 95, 545, 2, 1, w=85)
+        p.connect(restore, 4 + k, to_extras, 0)
+        p.connect(to_extras, 0, extras, 0)
     p.comment("setting <name> <value> from startup: applied (deferred, so the remember it sends back "
-              "never re-enters the engine); key, form, sigs: to the more features window's switches; "
-              "perform: shown on its switch, not sent back", 290, 580, w=360, h=62, linecount=4)
+              "never re-enters the engine); perform: shown on its switch, not sent back; form, sigs: to "
+              "the more features window's switches", 290, 580, w=360, h=62, linecount=4)
     section(p, PLAY_BG, HOST_MAX_W)
     return p
 
@@ -1222,15 +1246,15 @@ def instruments_window():
 def extras_window():
     """emi.extras: the Max version's more features window: the blind
     listening test (M8), and the less-used tools: a single chorale as written
-    (and its key), the test phrase, and clearing the queue. Opened by the Max
+    the test phrase, and clearing the queue. Opened by the Max
     panel's more features button; what it sends goes to the engine."""
     W = 360
     p = Patch(rect=(160, 160, 160 + W, 160 + 244), presentation=True)
     p.comment("emi.extras: the more features window (Max version). Opened by the panel's more features "
-              "button, through [pcontrol] in emi.host.max. Its inlet also takes key, form and sigs <0|1> "
+              "button, through [pcontrol] in emi.host.max. Its inlet also takes form and sigs <0|1> "
               "(restored settings, shown on their switches).", 20, 700, w=600, h=34, linecount=2)
-    inl = p.inlet(20, 20, "pcontrol: open; key|form|sigs <0|1>: show a restored setting", 1)
-    out = p.outlet(20, 660, "to emi.engine: abtest, loadmidi, key, pattern, clear, form, sigs", 1)
+    inl = p.inlet(20, 20, "pcontrol: open; form|sigs <0|1>: show a restored setting", 1)
+    out = p.outlet(20, 660, "to emi.engine: abtest, loadmidi, pattern, clear, form, sigs", 1)
     targets = [(out, 0)]
     dialog_button(p, "Listening Test", "listening test…", 20, 80, (10, 10, 150, 22), "savedialog", "abtest",
                   targets)
@@ -1238,11 +1262,7 @@ def extras_window():
               180, 80, w=180, h=34, linecount=2, pres=(166, 8, W - 176, 34), fontsize=LABEL_SIZE)
     dialog_button(p, "Load A Chorale", "load a chorale…", 200, 200, (10, 56, 150, 22), "opendialog",
                   "loadmidi", targets)
-    key = live_toggle(p, "Original Key", "original key", 380, 200, (166, 56, 100, 22))
-    key_pre = p.obj("prepend key", 380, 235, 2, 1, w=80)
-    p.connect(key, 0, key_pre, 0)
-    p.connect(key_pre, 0, out, 0)
-    p.comment("One chorale plays as written, in C major or A minor, or in its own key with original key on.",
+    p.comment("One chorale plays as written, or in the key the composing panel's key menu says.",
               200, 320, w=300, h=34, linecount=2, pres=(10, 82, W - 20, 34), fontsize=LABEL_SIZE)
     labeled(p, "Test Phrase", "play the test phrase", "pattern", 20, 380, (10, 124, 150, 22), out)
     labeled(p, "Clear Queue", "stop and clear the queue", "clear", 200, 380, (166, 124, 160, 22), out)
@@ -1262,9 +1282,9 @@ def extras_window():
     p.comment("The composer's own switches: a real chorale's form, and Bach's cadence formulas kept whole. "
               "Both on is how Cento is meant to run.", 20, 610, linecount=2, pres=(10, 204, W - 20, 34),
               fontsize=LABEL_SIZE)
-    restore = p.obj("route key form sigs", 380, 20, 2, 4, w=120)
+    restore = p.obj("route form sigs", 380, 20, 2, 3, w=100)
     p.connect(inl, 0, restore, 0)
-    for k, switch in enumerate([key, form, sigs]):
+    for k, switch in enumerate([form, sigs]):
         show = p.obj("prepend set", 380 + k * 90, 55, 2, 1, w=80)
         p.connect(restore, k, show, 0)
         p.connect(show, 0, switch, 0)

@@ -65,7 +65,7 @@
 						192.0,
 						149.0
 					],
-					"id": "obj-69"
+					"id": "obj-68"
 				}
 			},
 			{
@@ -1153,7 +1153,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "more features: listening test, load a chorale (original key), test phrase, clear",
+					"text": "more features: listening test, load a chorale, test phrase, clear, the composer's switches",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -2881,11 +2881,10 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "route bpm output vst key perform form sigs",
+					"text": "route bpm output vst perform form sigs",
 					"numinlets": 2,
-					"numoutlets": 8,
+					"numoutlets": 7,
 					"outlettype": [
-						"",
 						"",
 						"",
 						"",
@@ -2897,64 +2896,10 @@
 					"patching_rect": [
 						20.0,
 						510.0,
-						250.0,
+						230.0,
 						22.0
 					],
 					"id": "obj-63"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend key",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						200.0,
-						545.0,
-						85.0,
-						22.0
-					],
-					"id": "obj-64"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend form",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						295.0,
-						545.0,
-						85.0,
-						22.0
-					],
-					"id": "obj-65"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend sigs",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						390.0,
-						545.0,
-						85.0,
-						22.0
-					],
-					"id": "obj-66"
 				}
 			},
 			{
@@ -2972,13 +2917,49 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-67"
+					"id": "obj-64"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend form",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						200.0,
+						545.0,
+						85.0,
+						22.0
+					],
+					"id": "obj-65"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend sigs",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						295.0,
+						545.0,
+						85.0,
+						22.0
+					],
+					"id": "obj-66"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "setting <name> <value> from startup: applied (deferred, so the remember it sends back never re-enters the engine); key, form, sigs: to the more features window's switches; perform: shown on its switch, not sent back",
+					"text": "setting <name> <value> from startup: applied (deferred, so the remember it sends back never re-enters the engine); perform: shown on its switch, not sent back; form, sigs: to the more features window's switches",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 4,
@@ -2988,7 +2969,7 @@
 						360.0,
 						62.0
 					],
-					"id": "obj-68"
+					"id": "obj-67"
 				}
 			}
 		],
@@ -3756,6 +3737,30 @@
 						0
 					],
 					"destination": [
+						"obj-41",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-63",
+						4
+					],
+					"destination": [
+						"obj-65",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-65",
+						0
+					],
+					"destination": [
 						"obj-39",
 						0
 					]
@@ -3768,30 +3773,6 @@
 						5
 					],
 					"destination": [
-						"obj-65",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-65",
-						0
-					],
-					"destination": [
-						"obj-39",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-63",
-						6
-					],
-					"destination": [
 						"obj-66",
 						0
 					]
@@ -3805,30 +3786,6 @@
 					],
 					"destination": [
 						"obj-39",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-63",
-						4
-					],
-					"destination": [
-						"obj-67",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-67",
-						0
-					],
-					"destination": [
-						"obj-41",
 						0
 					]
 				}

@@ -891,21 +891,21 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "transpose",
+					"text": "key",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"fontsize": 10.0,
 					"patching_rect": [
 						270.0,
 						440.0,
-						54.0,
+						26.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						172.0,
+						166.0,
 						37.0,
-						54.0,
+						26.0,
 						18.0
 					],
 					"id": "obj-25",
@@ -919,52 +919,67 @@
 			},
 			{
 				"box": {
-					"maxclass": "live.numbox",
+					"maxclass": "live.menu",
 					"numinlets": 1,
-					"numoutlets": 2,
+					"numoutlets": 3,
 					"outlettype": [
+						"",
 						"",
 						"float"
 					],
 					"parameter_enable": 1,
-					"varname": "Transpose",
+					"varname": "Key",
+					"fontsize": 10.0,
 					"saved_attribute_attributes": {
 						"valueof": {
-							"parameter_longname": "Transpose",
-							"parameter_shortname": "Transpose",
-							"parameter_type": 1,
-							"parameter_mmin": -12,
+							"parameter_enum": [
+								"chorale's key",
+								"C / A minor",
+								"Db / Bb minor",
+								"D / B minor",
+								"Eb / C minor",
+								"E / C# minor",
+								"F / D minor",
+								"F# / D# minor",
+								"G / E minor",
+								"Ab / F minor",
+								"A / F# minor",
+								"Bb / G minor",
+								"B / G# minor"
+							],
+							"parameter_longname": "Key",
+							"parameter_shortname": "Key",
+							"parameter_type": 2,
 							"parameter_mmax": 12,
 							"parameter_initial": [
 								0
 							],
-							"parameter_initial_enable": 1,
-							"parameter_unitstyle": 0
+							"parameter_initial_enable": 1
 						}
 					},
 					"patching_rect": [
 						270.0,
 						470.0,
-						56.0,
+						100.0,
 						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						226.0,
+						194.0,
 						37.0,
-						32.0,
+						100.0,
 						18.0
 					],
 					"id": "obj-26",
-					"hint": "Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase.",
-					"annotation": "Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase.",
-					"annotation_name": "transpose"
+					"hint": "Where the music plays. chorale's key (the default): a piece in the key of the chorale whose form it takes, a stream in its first chorale's, a loaded chorale as written. Or a key signature: pieces in major play in its major key, pieces in minor in its relative minor. A piece moves at once, a stream from its next phrase.",
+					"annotation": "Where the music plays. chorale's key (the default): a piece in the key of the chorale whose form it takes, a stream in its first chorale's, a loaded chorale as written. Or a key signature: pieces in major play in its major key, pieces in minor in its relative minor. A piece moves at once, a stream from its next phrase.",
+					"annotation_name": "key"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "prepend transpose",
+					"text": "prepend key",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -973,7 +988,7 @@
 					"patching_rect": [
 						270.0,
 						505.0,
-						115.0,
+						90.0,
 						22.0
 					],
 					"id": "obj-27"
@@ -982,7 +997,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "bars: the shortest piece; transpose: at once for a piece, from the next phrase in a stream",
+					"text": "bars: the shortest piece; key: where the music plays (its chorale's, or a key signature): at once for a piece, from the next phrase in a stream",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -1313,7 +1328,7 @@
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "route seed bars stream phrases transpose",
+					"text": "route seed bars stream phrases key",
 					"numinlets": 2,
 					"numoutlets": 6,
 					"outlettype": [
@@ -1327,7 +1342,7 @@
 					"patching_rect": [
 						420.0,
 						560.0,
-						260.0,
+						240.0,
 						22.0
 					],
 					"id": "obj-39"
