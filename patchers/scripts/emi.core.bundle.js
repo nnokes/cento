@@ -652,6 +652,7 @@ exports.barTicks = barTicks;
 //                             where this beat's voices go next in the original
 //   newNotes                  how many notes start inside this beat (0: pure continuation)
 //   bass                      the lowest pitch sounding at the start of the beat (null if none)
+//   soprano                   the pitch the first voice sounds at the start of the beat (null if silent)
 //   opening, cadence, final   first sounding beat; a fermata starts here; last beat of the work
 //   restBefore                the beat before is silent (always true for the opening)
 //
@@ -671,6 +672,7 @@ function segment(work, beatTicks = work.ppq) {
     const pieces = [];
     const entry = new Array(work.voices).fill("r");
     let bass = null;
+    let soprano = null;
     for (const [on, pitch, dur, voice, vel] of work.events) {
       const off = on + dur;
       if (off <= start || on >= end) continue;
@@ -681,6 +683,7 @@ function segment(work, beatTicks = work.ppq) {
       if (on <= start) {
         entry[voice - 1] = (tiedIn ? "~" : "") + pitch;
         bass = bass === null ? pitch : Math.min(bass, pitch);
+        if (voice === 1) soprano = pitch;
       }
     }
     pieces.sort((a, b2) => a[0] - b2[0] || a[3] - b2[3]);
@@ -691,6 +694,7 @@ function segment(work, beatTicks = work.ppq) {
       entryKey: entry.join(","),
       newNotes: pieces.filter((p) => !p[5]).length,
       bass,
+      soprano,
     });
   }
 
@@ -708,6 +712,7 @@ function segment(work, beatTicks = work.ppq) {
       destKey: next && next.pieces.length ? next.entryKey : null,
       newNotes: beat.newNotes,
       bass: beat.bass,
+      soprano: beat.soprano,
       opening: i === 0,
       restBefore: i === 0 || beats[beat.index - 1].pieces.length === 0,
       cadence: fermataBeats.has(beat.index),
@@ -1961,26 +1966,33 @@ const { assemble } = require("emi-compose");
 const STRONG = 0.5;
 
 const RELAX = [
-  { level: 0, speac: true, cadenceBass: true },
-  { level: 0, speac: "prefer", cadenceBass: true },
-  { level: 1, speac: "prefer", cadenceBass: true },
-  { level: 1, speac: "prefer", cadenceBass: false },
+  { level: 0, speac: true, cadenceBass: true, cadenceSoprano: true },
+  { level: 0, speac: "prefer", cadenceBass: true, cadenceSoprano: true },
+  { level: 1, speac: "prefer", cadenceBass: true, cadenceSoprano: true },
+  { level: 1, speac: "prefer", cadenceBass: true, cadenceSoprano: "prefer" },
+  { level: 1, speac: "prefer", cadenceBass: false, cadenceSoprano: "prefer" },
 ];
 
 // A template's slots, one per beat from its first sounding beat to its last:
 //   { rest: true }                                    a silent beat
-//   { beatInBar, cadence, bass, speac, first, afterRest, last, newNotes, mode }
+//   { beatInBar, cadence, bass, soprano, speac, contour, first, afterRest, last, newNotes, mode }
 // bass is the pitch class a cadence slot's chord must stand on (null
-// elsewhere, and everywhere when cadenceBass is false); speac is the beat
-// label a grouping must have (null when speac is false); mode is the
-// template's mode in a mixed corpus (null otherwise). newNotes is the
-// template's own beat's (0: a held chord); emi-stream splits phrases with it.
-// A slot may also be marked needsExit (emi-stream): its grouping must have
-// somewhere to go next.
-function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
+// elsewhere, and everywhere when cadenceBass is false); soprano is the pitch
+// class a cadence slot's soprano must sing, the template's degree at the
+// fermata (null elsewhere and when cadenceSoprano is false; a preference,
+// sopranoHard false, when it is "prefer"); speac is the beat label a grouping
+// must have (null when speac is false); contour is how the template's soprano
+// moves from this beat to the next, in semitones (null at the end, before a
+// rest, and when contour is false: feasible scores the direction and size of
+// the move); mode is the template's mode in a mixed corpus (null otherwise).
+// newNotes is the template's own beat's (0: a held chord); emi-stream splits
+// phrases with it. A slot may also be marked needsExit (emi-stream): its
+// grouping must have somewhere to go next.
+function slotsOf(db, template, { cadenceBass = true, speac = true, cadenceSoprano = true, contour = true } = {}) {
   const slots = [];
   const work = db.works.find((w) => w.id === template.work);
   const mode = db.mode === "mixed" && work ? work.mode : null;
+  const motion = sopranoOf(db).motion;
   // The template melody's range (M8): pieces keep their soprano within it.
   const sopranoRange = [Infinity, -Infinity];
   for (let k = 0; k < template.count; k++) {
@@ -2001,8 +2013,11 @@ function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
       beatInBar: g.beatInBar,
       cadence: g.cadence,
       bass: cadenceBass && g.cadence && g.bass !== null ? g.bass % 12 : null,
+      soprano: cadenceSoprano && g.cadence && g.soprano !== null ? g.soprano % 12 : null,
+      sopranoHard: cadenceSoprano !== "prefer",
       speac: speac && g.speac ? g.speac.beat : null,
       speacHard: speac !== "prefer",
+      contour: contour && motion[template.start + k] !== NONE ? motion[template.start + k] : null,
       first: k === 0,
       afterRest: k > 0 && g.restBefore,
       last: k === template.count - 1,
@@ -2022,6 +2037,7 @@ function fits(g, slot, labels = true) {
   if (g.beatInBar !== slot.beatInBar || g.cadence !== slot.cadence) return false;
   if (slot.mode && g.mode !== slot.mode) return false;
   if (slot.bass !== null && (g.bass === null || g.bass % 12 !== slot.bass)) return false;
+  if (slot.soprano != null && slot.sopranoHard !== false && (g.soprano === null || g.soprano % 12 !== slot.soprano)) return false;
   if (labels && slot.speac && slot.speacHard !== false && (!g.speac || g.speac.beat !== slot.speac)) return false;
   if (slot.first && !g.opening) return false;
   if (slot.afterRest && !g.restBefore) return false;
@@ -2030,9 +2046,9 @@ function fits(g, slot, labels = true) {
 }
 
 // A repeated phrase's beat (M8) fits its slot as its original did: a literal
-// repeat, so labels, how phrases start and the cadence's bass don't count
-// (Bach sometimes harmonized a repeat afresh).
-const fitsRepeat = (g, slot) => fits(g, { ...slot, first: false, afterRest: false, bass: null }, false);
+// repeat, so labels, how phrases start and the cadence's bass and soprano
+// don't count (Bach sometimes harmonized a repeat afresh).
+const fitsRepeat = (g, slot) => fits(g, { ...slot, first: false, afterRest: false, bass: null, soprano: null }, false);
 
 const sourceOk = (from, to) => to.work !== from.work || to.newNotes === 0;
 
@@ -2133,29 +2149,40 @@ function pinsFor(db, slots, avoid = null) {
 // her music out of the corpus altogether.) Her forms move forward or back
 // in the same way when the form is chosen.
 const PIN = 1 << 20;
-const SCORE = { strong: 16, blockChance: 48, accidentals: 16, label: 4, tasteLabel: 8, range: 4, chance: 8 };
+const SCORE = { strong: 16, blockChance: 48, accidentals: 16, label: 4, tasteLabel: 8, range: 4, chance: 8, contour: 8, contourSize: 4, soprano: 16 };
 const TASTE_MAX = 64;
 const MIX_POINTS = 8;
 const mixPoints = (mix) => Math.max(-2 * MIX_POINTS, Math.min(2 * MIX_POINTS, Math.round((MIX_POINTS * (mix - 0.5)) / 0.25)));
 const clampTaste = (v) => Math.max(-TASTE_MAX, Math.min(TASTE_MAX, v));
 
-// Each grouping's lowest and highest soprano note (computed once per database).
+// Each grouping's lowest and highest soprano note, and how its soprano moves
+// on to the next beat (the destination's soprano less its own, in semitones;
+// NONE when either is silent or there is no next beat). Computed once per
+// database.
+const NONE = 999;
 const sopranoCache = new WeakMap();
 function sopranoOf(db) {
   if (!sopranoCache.has(db)) {
-    const low = new Int16Array(db.groupings.length).fill(999);
-    const high = new Int16Array(db.groupings.length).fill(-999);
+    const low = new Int16Array(db.groupings.length).fill(NONE);
+    const high = new Int16Array(db.groupings.length).fill(-NONE);
+    const motion = new Int16Array(db.groupings.length).fill(NONE);
     db.groupings.forEach((g, i) => {
       for (const p of g.pieces) {
         if (p[3] !== 1) continue;
         low[i] = Math.min(low[i], p[1]);
         high[i] = Math.max(high[i], p[1]);
       }
+      const from = lexicon.parseKey(g.entryKey)[0];
+      const to = g.destKey === null ? null : lexicon.parseKey(g.destKey)[0];
+      if (from && to) motion[i] = to.pitch - from.pitch;
     });
-    sopranoCache.set(db, { low, high });
+    sopranoCache.set(db, { low, high, motion });
   }
   return sopranoCache.get(db);
 }
+
+// A soprano move's shape: 0 the same note, 1 a step (up to a whole tone), 2 a leap.
+const shape = (semitones) => (semitones === 0 ? 0 : Math.abs(semitones) <= 2 ? 1 : 2);
 
 function feasible(db, slots, next, pins = null, noise = 0, { taste = null, temperature = 1, mix = null } = {}) {
   const n = db.groupings.length;
@@ -2196,6 +2223,17 @@ function feasible(db, slots, next, pins = null, noise = 0, { taste = null, tempe
     const label = slot.speac && slot.speacHard === false ? slot.speac : null;
     const labelPoints = beatTaste ? SCORE.tasteLabel : SCORE.label;
     const inRange = (i) => !range || (soprano.low[i] >= range[0] && soprano.high[i] <= range[1]);
+    // The template soprano's move from this beat (M1, after v0.1.0): points
+    // for a move the same way, more for one of the same shape (same note,
+    // step or leap). And its degree at a cadence (M2) when that is a
+    // preference rather than a rule (see fits).
+    const contour = slot.contour !== undefined ? slot.contour : null;
+    const contourPoints = (i) => {
+      const move = soprano.motion[i];
+      if (contour === null || move === NONE || Math.sign(move) !== Math.sign(contour)) return 0;
+      return SCORE.contour + (shape(move) === shape(contour) ? SCORE.contourSize : 0);
+    };
+    const degree = slot.soprano != null && slot.sopranoHard === false ? slot.soprano : null;
     // 0 to SCORE.chance - 1 at temperature 1.
     const chance = (i) => (noise ? Math.floor((((Math.imul(noise ^ Math.imul(s + 1, 0x9e3779b1), 0x85ebca6b) ^ Math.imul(i + 1, 0xc2b2ae35)) >>> 0) * SCORE.chance * temperature) / 4294967296) : 0);
     // Which block a cadence takes varies with the seed too.
@@ -2204,7 +2242,8 @@ function feasible(db, slots, next, pins = null, noise = 0, { taste = null, tempe
       const g = db.groupings[i];
       const liked = beatTaste ? TASTE_MAX + clampTaste(beatTaste[i]) : 0;
       const own = mix === null ? 0 : 2 * MIX_POINTS + (g.gen ? hers : 0);
-      return own + (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? labelPoints : 0) + (inRange(i) ? SCORE.range : 0) + chance(i) + liked;
+      const sings = degree !== null && g.soprano !== null && g.soprano % 12 === degree ? SCORE.soprano : 0;
+      return own + (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? labelPoints : 0) + (inRange(i) ? SCORE.range : 0) + contourPoints(i) + sings + chance(i) + liked;
     };
     const plus = (v, i) => (v < 0 ? -1 : v + reward(i));
     const free = new Int32Array(n).fill(-1);
@@ -2695,8 +2734,15 @@ function templateBeats(db, template) {
 // M9: taste (from emily-assoc's prepare, or null) and temperature (default
 // 1) are Emily's: they steer the search toward liked beats (see SCORE), and
 // the choice of form toward liked forms (byTaste).
-function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true, taste = null, temperature = 1, mix = null } = {}) {
+//
+// After v0.1.0 (docs/review.md, M1 and M2): contour scores each beat for
+// moving its soprano the way the template's does; cadenceSoprano keeps the
+// template's soprano degree at each fermata (a rule for the first three
+// relaxation steps, a preference for the last two; "prefer" makes it one
+// throughout; false drops it). Both default on.
+function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true, taste = null, temperature = 1, mix = null, contour = true, cadenceSoprano = true } = {}) {
   const random = rng.create(seed);
+  const rules = (step) => ({ ...RELAX[step], contour, cadenceSoprano: cadenceSoprano === true ? RELAX[step].cadenceSoprano : cadenceSoprano });
   const prefs = taste || temperature !== 1 || mix !== null ? { taste, temperature, mix } : null;
   let templates = db.templates.filter((t) => (only ? t.work === only : templateBeats(db, t) >= beats));
   for (let i = templates.length - 1; i > 0; i--) {
@@ -2711,7 +2757,7 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
   const stats = (relaxed) => ({ tried, relaxed, steps: counters.steps, backtracks: counters.backtracks, guarded });
   for (const template of templates.slice(0, maxTemplates)) {
     tried.push(template.work);
-    const slotsAt = memo((step) => (repeats ? markRepeats(db, template, slotsOf(db, template, RELAX[step])) : slotsOf(db, template, RELAX[step])));
+    const slotsAt = memo((step) => (repeats ? markRepeats(db, template, slotsOf(db, template, rules(step))) : slotsOf(db, template, rules(step))));
     const pinsAt = memo((slots) => (signatures ? pinsFor(db, slots, template.work) : null));
     for (let step = 0; step <= relax; step++) {
       if (step < relax && labelsGiveWay(db, step, slotsAt, pinsAt, seed, prefs)) continue;
@@ -2790,6 +2836,8 @@ exports.pinsFor = pinsFor;
 exports.labelsGiveWay = labelsGiveWay;
 exports.memo = memo;
 exports.markRepeats = markRepeats;
+exports.sopranoOf = sopranoOf;
+exports.SCORE = SCORE;
   };
 
   // ---- emi-load.js
@@ -3422,8 +3470,8 @@ function choices(db, stream, random, last, prefs = null) {
 
 // The template's slots as this phrase needs them: silent beats for any gap,
 // how the first beat starts, and how the last one ends.
-function prepare(db, stream, choice, { last, cadenceBass, speac }) {
-  const slots = choice.slots.map((slot) => (slot.rest ? slot : { ...slot, bass: cadenceBass ? slot.bass : null, speac: speac ? slot.speac : null, speacHard: speac !== "prefer" }));
+function prepare(db, stream, choice, { last, cadenceBass, speac, cadenceSoprano = true }) {
+  const slots = choice.slots.map((slot) => (slot.rest ? slot : { ...slot, bass: cadenceBass ? slot.bass : null, soprano: cadenceSoprano ? slot.soprano : null, sopranoHard: cadenceSoprano !== "prefer", speac: speac ? slot.speac : null, speacHard: speac !== "prefer" }));
   const gap = gapBefore(db, stream, slots[0].beatInBar);
   const canHook = stream.last !== null && !stream.endsInRest && db.groupings[stream.last.index].destKey !== null;
   slots[0] = {
@@ -7185,7 +7233,8 @@ function detailLine(piece) {
   if (own.beats) text += `, ${own.beats} ${own.beats === 1 ? "beat" : "beats"} from Magdalena's notebook` + (own.varied ? ` (${own.varied} with her variants)` : "");
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
-  if (piece.form.relaxed === 3) relaxed.push("any cadence bass");
+  if (piece.form.relaxed === forms.RELAX.length - 1) relaxed.push("any cadence bass");
+  else if (piece.form.relaxed === forms.RELAX.length - 2) relaxed.push("any cadence soprano");
   if (piece.form.overLimit) relaxed.push("quotes over the limit");
   if (relaxed.length) text += " (" + relaxed.join(", ") + ")";
   return text;

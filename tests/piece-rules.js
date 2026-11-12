@@ -60,7 +60,7 @@ function checkForm(db, piece) {
       // slot apart from labels and how phrases start.
       const original = piece.provenance[filled.indexOf(p.repeat)];
       assert.ok(original && original.grouping === p.grouping, `slot ${s}: not a repeat of slot ${p.repeat}`);
-      assert.ok(form.fits(g, { ...slots[s], first: false, afterRest: false, bass: null }, false), `slot ${s}: ${g.id} doesn't fit`);
+      assert.ok(form.fits(g, { ...slots[s], first: false, afterRest: false, bass: null, soprano: null }, false), `slot ${s}: ${g.id} doesn't fit`);
     } else assert.ok(form.fits(g, slots[s], !p.block), `slot ${s}: ${g.id} doesn't fit`);
     if (piece.form.relaxed === 0) assert.equal(p.level, 0, `slot ${s}: relaxed in a strict piece`);
     for (const [, pitch, , voice] of g.pieces) {

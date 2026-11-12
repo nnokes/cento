@@ -57,3 +57,43 @@ test("bundled corpus: pieces compose from the 4/4 chorales", () => {
   assert.ok(db.signatures.length > 50, `${db.signatures.length} signatures`);
   for (const seed of [1, 2, 3]) assert.ok(forms.compose(db, { seed, beats: 32, signatures: true }).ok, `seed ${seed}`);
 });
+
+// M1 and M2 (after v0.1.0): pieces follow their template's soprano more
+// closely with the contour score than without it, and keep its degree at
+// more of their cadences.
+test("bundled corpus: the soprano follows the template's contour and its cadence degrees", () => {
+  const { works } = load.loadFolder(path.join(ROOT, "bach-figured-bass"));
+  const db = lexicon.build(works);
+  const beat = db.beatTicks;
+  const soprano = (piece, s) => {
+    const e = piece.events.find((x) => x[3] === 1 && x[0] <= piece.padTicks + s * beat && piece.padTicks + s * beat < x[0] + x[2]);
+    return e ? e[1] : null;
+  };
+  const agreement = (options) => {
+    let moves = 0, same = 0, cadences = 0, degrees = 0;
+    for (const seed of [1, 2, 3, 4, 5]) {
+      const { ok, piece } = forms.compose(db, { seed, beats: 32, ...options });
+      assert.ok(ok, `seed ${seed}`);
+      const template = db.templates.find((t) => t.work === piece.form.template);
+      const slots = forms.slotsOf(db, template);
+      slots.forEach((slot, s) => {
+        if (slot.rest) return;
+        const here = soprano(piece, s);
+        if (slot.contour !== null && here !== null && !slots[s + 1].rest && soprano(piece, s + 1) !== null) {
+          moves++;
+          if (Math.sign(soprano(piece, s + 1) - here) === Math.sign(slot.contour)) same++;
+        }
+        if (slot.soprano !== null && here !== null) {
+          cadences++;
+          if (here % 12 === slot.soprano) degrees++;
+        }
+      });
+    }
+    return { contour: same / moves, degree: degrees / cadences };
+  };
+  const on = agreement({});
+  const off = agreement({ contour: false, cadenceSoprano: false });
+  assert.ok(on.contour > off.contour + 0.1, `contour ${on.contour.toFixed(2)} on, ${off.contour.toFixed(2)} off`);
+  assert.ok(on.degree > off.degree, `cadence degrees ${on.degree.toFixed(2)} on, ${off.degree.toFixed(2)} off`);
+  assert.ok(on.contour >= 0.6 && on.degree >= 0.7, `contour ${on.contour.toFixed(2)}, degrees ${on.degree.toFixed(2)}`);
+});

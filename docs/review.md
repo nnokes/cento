@@ -8,7 +8,7 @@ do, and from the listening tests in [M8](M8-checklist.md).
 ## Where it stands
 
 - One engine (`code/lib`) shared by the Max version and the Live devices;
-  247 tests; every control documented ([controls.md](controls.md)).
+  272 tests; every control documented ([controls.md](controls.md)).
 - The composer: voice-hooking at two levels, SPEAC, signatures kept as
   whole blocks, template forms with bar-form repeats, key areas and
   modulation planning, a quotation guard, and 98 pieces in 100 with exact
@@ -85,6 +85,21 @@ One switch, **performance**, on by default.
 
 ### B. The composer
 
+*M1 and M2 built* (`emi-form.js`): each slot carries the template soprano's
+move to the next beat (`contour`, in semitones) and, at a cadence, its pitch
+class (`soprano`). A beat scores 8 for moving its soprano the same way and 4
+more for the same shape (same note, step or leap), beside the 16 for
+accidentals and 4 for a SPEAC label; the cadence degree is a rule, like the
+cadence bass. The rules now relax in five steps: strict, SPEAC preferred,
+octave moves, any cadence soprano (the degree becomes a preference worth
+16), any cadence bass. On the bundled 4/4 chorales, 40 seeds: the soprano
+moves the template's way on 69% of beats (48% before), with the same shape
+on 59% (39%); cadences keep the template's degree 79% of the time (56%);
+5 pieces in 40 drop the cadence bass (9 before) and 8 the degree; SPEAC
+labels kept fall from 54% to 51% and signatures per cadence from 0.68 to
+0.65. Both are `compose` options (`contour`, `cadenceSoprano`), on, with no
+control in the panel. Not listened to yet.
+
 | # | Change | Why | Where |
 |---|---|---|---|
 | M1 | **Plan the soprano, not just hook it**: a soft score for matching the template soprano's direction beat to beat (or its distance from the template's soprano at phrase midpoints), like the `accidentals` term | The melody is constrained locally (hooking), by range (template) and at cadences (signatures); between those each beat knows only the beat before, so the tune can wander. A hymn tune has a contour and a climax. The single change most likely to move the listening test | `emi-form.js`: `slotsOf` (template soprano per slot), `feasible` (`SCORE`), `sopranoOf` |
@@ -106,7 +121,8 @@ One switch, **performance**, on by default.
 
 1. ~~The performance layer (A).~~ Built.
 2. ~~GUI G1–G4.~~ Built.
-3. Soprano contour (M1) and cadence degree (M2), then a fresh A/B test.
+3. ~~Soprano contour (M1) and cadence degree (M2)~~ Built; then a fresh A/B
+   test, with listeners who aren't the developer.
 4. The template's key (M5), then the pop-up tidy (G5, G6).
 
 Each is small enough for a pull request of its own.

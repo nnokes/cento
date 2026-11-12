@@ -1625,8 +1625,10 @@ next, in a suggested order: a performance layer (fermatas held, dynamics
 from the tension curve; *built*: `emi-perform`, the **performance** switch,
 playback only), a leaner GUI (*built*: the composer's switches in more
 features, new piece / piece # / again, a listener's status line, length in
-bars), and composer changes aimed at the listening test (soprano contour,
-cadence degree, chord function, the template's key).
+bars), and composer changes aimed at the listening test (*built*: the
+soprano's contour scored against the template's, and its degree kept at
+each cadence, with a fifth relaxation step before any cadence bass; still
+open: chord function, the template's key).
 
 **Later, if it's wanted**: a standalone app for the Max version (signed and
 notarized, so it opens with no warning); a Live Pack (one file that installs

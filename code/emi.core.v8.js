@@ -1478,7 +1478,8 @@ function detailLine(piece) {
   if (own.beats) text += `, ${own.beats} ${own.beats === 1 ? "beat" : "beats"} from Magdalena's notebook` + (own.varied ? ` (${own.varied} with her variants)` : "");
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
-  if (piece.form.relaxed === 3) relaxed.push("any cadence bass");
+  if (piece.form.relaxed === forms.RELAX.length - 1) relaxed.push("any cadence bass");
+  else if (piece.form.relaxed === forms.RELAX.length - 2) relaxed.push("any cadence soprano");
   if (piece.form.overLimit) relaxed.push("quotes over the limit");
   if (relaxed.length) text += " (" + relaxed.join(", ") + ")";
   return text;
