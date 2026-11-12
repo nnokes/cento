@@ -13,7 +13,7 @@
 			160.0,
 			160.0,
 			520.0,
-			350.0
+			404.0
 		],
 		"openinpresentation": 1,
 		"default_fontsize": 12.0,
@@ -32,13 +32,13 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.extras: the more features window (Max version). Opened by the panel's more features button, through [pcontrol] in emi.host.max. Its inlet also takes key <0|1> (a restored original key).",
+					"text": "emi.extras: the more features window (Max version). Opened by the panel's more features button, through [pcontrol] in emi.host.max. Its inlet also takes key, form and sigs <0|1> (restored settings, shown on their switches).",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
 					"patching_rect": [
 						20.0,
-						640.0,
+						700.0,
 						600.0,
 						34.0
 					],
@@ -48,7 +48,7 @@
 			{
 				"box": {
 					"maxclass": "inlet",
-					"comment": "pcontrol: open; key <0|1>: show a restored original key",
+					"comment": "pcontrol: open; key|form|sigs <0|1>: show a restored setting",
 					"index": 1,
 					"numinlets": 0,
 					"numoutlets": 1,
@@ -67,13 +67,13 @@
 			{
 				"box": {
 					"maxclass": "outlet",
-					"comment": "to emi.engine: abtest, loadmidi, key, pattern, clear",
+					"comment": "to emi.engine: abtest, loadmidi, key, pattern, clear, form, sigs",
 					"index": 1,
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
 						20.0,
-						600.0,
+						660.0,
 						30.0,
 						30.0
 					],
@@ -849,21 +849,280 @@
 			},
 			{
 				"box": {
-					"maxclass": "newobj",
-					"text": "route key",
-					"numinlets": 2,
+					"maxclass": "live.text",
+					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
+						"",
+						""
+					],
+					"parameter_enable": 1,
+					"varname": "Form",
+					"mode": 1,
+					"text": "chorale form",
+					"texton": "chorale form",
+					"fontsize": 10.0,
+					"bgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"activebgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"bgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"activebgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Form",
+							"parameter_shortname": "Form",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								1
+							],
+							"parameter_initial_enable": 0
+						}
+					},
+					"patching_rect": [
+						20.0,
+						540.0,
+						100.0,
+						20.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						10.0,
+						178.0,
+						150.0,
+						22.0
+					],
+					"id": "obj-23",
+					"hint": "On (the default): each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan (the early milestones' composer). Remembered for next time.",
+					"annotation": "On (the default): each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan (the early milestones' composer). Remembered for next time.",
+					"annotation_name": "chorale form"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend form",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						20.0,
+						575.0,
+						90.0,
+						22.0
+					],
+					"id": "obj-24"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "live.text",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"parameter_enable": 1,
+					"varname": "Signatures",
+					"mode": 1,
+					"text": "signatures",
+					"texton": "signatures",
+					"fontsize": 10.0,
+					"bgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"activebgcolor": [
+						0.84,
+						0.82,
+						0.78,
+						1.0
+					],
+					"bgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"activebgoncolor": [
+						0.96,
+						0.7,
+						0.33,
+						1.0
+					],
+					"textcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextcolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"textoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"activetextoncolor": [
+						0.08,
+						0.08,
+						0.09,
+						1.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"off",
+								"on"
+							],
+							"parameter_longname": "Signatures",
+							"parameter_shortname": "Signatures",
+							"parameter_type": 2,
+							"parameter_mmax": 1,
+							"parameter_initial": [
+								1
+							],
+							"parameter_initial_enable": 0
+						}
+					},
+					"patching_rect": [
+						200.0,
+						540.0,
+						100.0,
+						20.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						166.0,
+						178.0,
+						160.0,
+						22.0
+					],
+					"id": "obj-25",
+					"hint": "On (the default): Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats. Remembered for next time.",
+					"annotation": "On (the default): Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats. Remembered for next time.",
+					"annotation_name": "signatures"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend sigs",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						200.0,
+						575.0,
+						90.0,
+						22.0
+					],
+					"id": "obj-26"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "comment",
+					"text": "The composer's own switches: a real chorale's form, and Bach's cadence formulas kept whole. Both on is how Cento is meant to run.",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"linecount": 2,
+					"fontsize": 10.0,
+					"presentation_linecount": 2,
+					"patching_rect": [
+						20.0,
+						610.0,
+						340.0,
+						34.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						10.0,
+						204.0,
+						340.0,
+						34.0
+					],
+					"id": "obj-27"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "route key form sigs",
+					"numinlets": 2,
+					"numoutlets": 4,
+					"outlettype": [
+						"",
+						"",
 						"",
 						""
 					],
 					"patching_rect": [
 						380.0,
 						20.0,
-						70.0,
+						120.0,
 						22.0
 					],
-					"id": "obj-23"
+					"id": "obj-28"
 				}
 			},
 			{
@@ -881,7 +1140,43 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-24"
+					"id": "obj-29"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend set",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						470.0,
+						55.0,
+						80.0,
+						22.0
+					],
+					"id": "obj-30"
+				}
+			},
+			{
+				"box": {
+					"maxclass": "newobj",
+					"text": "prepend set",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						560.0,
+						55.0,
+						80.0,
+						22.0
+					],
+					"id": "obj-31"
 				}
 			},
 			{
@@ -899,7 +1194,7 @@
 						70.0,
 						22.0
 					],
-					"id": "obj-25"
+					"id": "obj-32"
 				}
 			},
 			{
@@ -917,7 +1212,7 @@
 						200.0,
 						22.0
 					],
-					"id": "obj-26"
+					"id": "obj-33"
 				}
 			},
 			{
@@ -936,7 +1231,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-27"
+					"id": "obj-34"
 				}
 			}
 		],
@@ -1136,18 +1431,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-2",
-						0
-					],
-					"destination": [
-						"obj-23",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-23",
 						0
 					],
@@ -1164,7 +1447,7 @@
 						0
 					],
 					"destination": [
-						"obj-13",
+						"obj-3",
 						0
 					]
 				}
@@ -1188,7 +1471,115 @@
 						0
 					],
 					"destination": [
-						"obj-27",
+						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-2",
+						0
+					],
+					"destination": [
+						"obj-28",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-28",
+						0
+					],
+					"destination": [
+						"obj-29",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-29",
+						0
+					],
+					"destination": [
+						"obj-13",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-28",
+						1
+					],
+					"destination": [
+						"obj-30",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-30",
+						0
+					],
+					"destination": [
+						"obj-23",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-28",
+						2
+					],
+					"destination": [
+						"obj-31",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-31",
+						0
+					],
+					"destination": [
+						"obj-25",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-32",
+						0
+					],
+					"destination": [
+						"obj-33",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-33",
+						0
+					],
+					"destination": [
+						"obj-34",
 						0
 					]
 				}

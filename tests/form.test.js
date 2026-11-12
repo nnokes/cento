@@ -55,6 +55,70 @@ test("form: a template's slots carry metre, cadences with their bass, rests, fir
   assert.equal(form.templateBeats(db, db.templates[0]), 11);
 });
 
+// The cycle with a different soprano after its second I: up a fourth in u
+// (and its twin u2), down a semitone in d (and d2); and d ends on the
+// third, not the keynote.
+const IVup = [77, 69, 65, 53];
+const IVdown = [71, 65, 60, 53];
+const Ithird = [76, 67, 64, 48];
+const shaped = (chord, end) => [...phrase(I, IV, V, I, chord, V, I, IV, V), [...end, 2]];
+const contours = [
+  work("u", shaped(IVup, I), { fermataAt: [12] }),
+  work("u2", shaped(IVup, I), { fermataAt: [12] }),
+  work("d", shaped(IVdown, Ithird), { fermataAt: [12] }),
+  work("d2", shaped(IVdown, Ithird), { fermataAt: [12] }),
+];
+
+test("form: slots carry the template soprano's moves and its degree at each cadence (M1, M2)", () => {
+  const db = lexicon.build(contours);
+  const [u, , d] = db.templates;
+  const slots = form.slotsOf(db, u);
+  // I to IV: the soprano stays on C; IV to V: down a semitone; V to I: up one; I to IVup: up a fourth; and down a
+  // tritone. The final half note is two beats: the cadence (slot 9) and a held beat with nothing after it.
+  assert.deepEqual(slots.map((s) => s.contour), [0, -1, 1, 5, -6, 1, 0, -1, 1, 0, null]);
+  assert.equal(slots[9].soprano, 0, "the cadence's soprano sings C");
+  assert.equal(slots[9].sopranoHard, true);
+  assert.equal(slots[3].soprano, null, "only at cadences");
+  assert.equal(slots[10].soprano, null);
+  assert.equal(form.slotsOf(db, d)[9].soprano, 4, "E");
+  const soft = form.slotsOf(db, u, { cadenceSoprano: "prefer" });
+  assert.equal(soft[9].soprano, 0);
+  assert.equal(soft[9].sopranoHard, false);
+  assert.equal(form.slotsOf(db, u, { cadenceSoprano: false })[9].soprano, null);
+  assert.ok(form.slotsOf(db, u, { contour: false }).every((s) => s.contour === null));
+  // At the cadence, d's final beat sings E, not C.
+  const dCadence = db.groupings[d.start + 9];
+  const uCadence = db.groupings[u.start + 9];
+  assert.equal(form.fits(dCadence, slots[9]), false);
+  assert.equal(form.fits(uCadence, slots[9]), true);
+  assert.equal(form.fits(dCadence, soft[9]), true, "a preference, not a rule");
+  assert.equal(form.fits(dCadence, { ...slots[9], soprano: null }), true);
+  // The rules relax the soprano's degree before the cadence's bass.
+  assert.deepEqual(form.RELAX.map((r) => [r.cadenceBass, r.cadenceSoprano]), [[true, true], [true, true], [true, true], [true, "prefer"], [false, "prefer"]]);
+});
+
+test("form: a beat that moves its soprano the template's way scores higher, and the cadence keeps the template's degree", () => {
+  const db = lexicon.build(contours);
+  const at = (id, k) => db.templates.find((t) => t.work === id).start + k;
+  const [graph] = form.successors(db);
+  const u = db.templates[0];
+  const plan = form.feasible(db, form.slotsOf(db, u, { speac: false }), graph);
+  // Slot 3 is the I before the IV that differs: u2's goes up a fourth, as the template's does; d's goes down a semitone.
+  assert.ok(plan.best[3][at("u2", 3)] > plan.best[3][at("d", 3)], "the template's way scores higher");
+  assert.equal(plan.best[3][at("u2", 3)], plan.best[3][at("u", 3)]);
+  const flat = form.feasible(db, form.slotsOf(db, u, { speac: false, contour: false, cadenceSoprano: false }), graph);
+  assert.equal(flat.best[3][at("u2", 3)], flat.best[3][at("d", 3)], "without the contour score, alike");
+  // Composed in u's form, the soprano goes up there and the piece ends on C; in d's form, down and on E.
+  const sopranoAt = (piece, s) => piece.events.find((e) => e[3] === 1 && e[0] === piece.padTicks + s * Q)[1];
+  for (const [template, up, end] of [["u", true, 0], ["d", false, 4]]) {
+    const { ok, piece } = form.compose(db, { seed: 1, beats: 8, template });
+    assert.ok(ok, template);
+    checkForm(db, piece);
+    assert.equal(sopranoAt(piece, 4) > sopranoAt(piece, 3), up, `${template}: the soprano's move`);
+    assert.equal(sopranoAt(piece, 9) % 12, end, `${template}: the last note`);
+  }
+});
+
 test("form: a strict piece follows its template exactly, the same for the same seed", () => {
   const db = lexicon.build(same);
   const result = form.compose(db, { seed: 3, beats: 8 });

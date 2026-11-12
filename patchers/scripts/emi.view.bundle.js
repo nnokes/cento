@@ -54,6 +54,487 @@ exports.wrap = wrap;
 exports.drawHelp = drawHelp;
   };
 
+  // ---- emi-segment.js
+  factories["emi-segment"] = function (exports, module, require) {
+"use strict";
+// Cuts a work into beat-long *groupings*, the units EMI recombines.
+//
+// A note that crosses a beat line is split into pieces flagged tiedIn /
+// tiedOut, so the assembler can join them again. Each grouping records:
+//
+//   id, work, index           "bwv347:12", source work, beat number in the work
+//   beatInBar                 1-based (time 0 is a barline: export pads pickups)
+//   pieces                    [[on, pitch, dur, voice, vel, tiedIn, tiedOut]], on/dur within the beat
+//   entryKey                  what each voice sounds at the start of the beat:
+//                             "60" a new note, "~60" held over, "r" silent; joined by ","
+//   destKey                   the next grouping's entryKey (null at the end of the work):
+//                             where this beat's voices go next in the original
+//   newNotes                  how many notes start inside this beat (0: pure continuation)
+//   bass                      the lowest pitch sounding at the start of the beat (null if none)
+//   soprano                   the pitch the first voice sounds at the start of the beat (null if silent)
+//   opening, cadence, final   first sounding beat; a fermata starts here; last beat of the work
+//   restBefore                the beat before is silent (always true for the opening)
+//
+// Groupings are only made for beats with sound; silent beats are skipped (the
+// beat after one has restBefore set).
+
+function segment(work, beatTicks = work.ppq) {
+  const barTicks = (work.meter[0] * work.ppq * 4) / work.meter[1];
+  const beatsPerBar = Math.round(barTicks / beatTicks);
+  const beatCount = Math.ceil(work.lengthTicks / beatTicks);
+  const fermataBeats = new Set(work.fermatas.map((tick) => Math.floor(tick / beatTicks)));
+
+  const beats = [];
+  for (let b = 0; b < beatCount; b++) {
+    const start = b * beatTicks;
+    const end = start + beatTicks;
+    const pieces = [];
+    const entry = new Array(work.voices).fill("r");
+    let bass = null;
+    let soprano = null;
+    for (const [on, pitch, dur, voice, vel] of work.events) {
+      const off = on + dur;
+      if (off <= start || on >= end) continue;
+      const tiedIn = on < start;
+      const tiedOut = off > end;
+      const from = Math.max(on, start);
+      pieces.push([from - start, pitch, Math.min(off, end) - from, voice, vel, tiedIn ? 1 : 0, tiedOut ? 1 : 0]);
+      if (on <= start) {
+        entry[voice - 1] = (tiedIn ? "~" : "") + pitch;
+        bass = bass === null ? pitch : Math.min(bass, pitch);
+        if (voice === 1) soprano = pitch;
+      }
+    }
+    pieces.sort((a, b2) => a[0] - b2[0] || a[3] - b2[3]);
+    beats.push({
+      index: b,
+      beatInBar: (b % beatsPerBar) + 1,
+      pieces,
+      entryKey: entry.join(","),
+      newNotes: pieces.filter((p) => !p[5]).length,
+      bass,
+      soprano,
+    });
+  }
+
+  const sounding = beats.filter((beat) => beat.pieces.length > 0);
+  const last = sounding.length ? sounding[sounding.length - 1].index : -1;
+  return sounding.map((beat, i) => {
+    const next = beats[beat.index + 1];
+    return {
+      id: work.id + ":" + beat.index,
+      work: work.id,
+      index: beat.index,
+      beatInBar: beat.beatInBar,
+      pieces: beat.pieces,
+      entryKey: beat.entryKey,
+      destKey: next && next.pieces.length ? next.entryKey : null,
+      newNotes: beat.newNotes,
+      bass: beat.bass,
+      soprano: beat.soprano,
+      opening: i === 0,
+      restBefore: i === 0 || beats[beat.index - 1].pieces.length === 0,
+      cadence: fermataBeats.has(beat.index),
+      final: beat.index === last,
+    };
+  });
+}
+
+exports.segment = segment;
+  };
+
+  // ---- emi-tension.js
+  factories["emi-tension"] = function (exports, module, require) {
+"use strict";
+// M6: Cope's tension measure, the input to SPEAC (David Cope, Computer Models
+// of Musical Creativity, MIT Press 2006, ch. 7). Re-implemented from the
+// book's description; tests/speac.test.js checks it against the book's
+// published values.
+//
+// The tension of a beat is the sum of four parts:
+//   vertical  the chord's dissonance: every pitch class's interval above the
+//             bass (only its lowest octave counts), weighted (WEIGHTS) and
+//             summed. A beat with several chords (passing notes) takes the
+//             lowest sum.
+//   metric    the beat's place in the bar: (beat number x 0.1) / METRIC weight
+//   duration  0.1 x (the beat's length in whole notes) + 0.1 x vertical
+//   approach  how far the chord's root moved from the previous beat's root,
+//             weighted like an interval (0 for the first beat)
+//
+// Cope's code works in 32-bit floats and rounds in particular places;
+// copeWeights() follows it, so the book's numbers come out exactly.
+// Events in Cope's form: [ontime ms, pitch, duration ms, channel, velocity],
+// 1000 ms a quarter note.
+
+// Interval weights, by semitones mod 12 (unison/octave 0 ... major 7th .9).
+const WEIGHTS = [0, 1, 0.8, 0.225, 0.2, 0.55, 0.65, 0.1, 0.275, 0.25, 0.7, 0.9];
+const weight = (semitones) => WEIGHTS[((semitones % 12) + 12) % 12];
+
+// Metric weights per beat, by beats per bar.
+const METRIC = { 2: [2, 2], 3: [2, 2, 2], 4: [2, 2, 6, 2], 6: [2, 2, 2, 8, 4, 3], 9: [2, 2, 2, 8, 4, 3, 14, 8, 4] };
+
+// Root strength of each interval (mod 12), strongest first, and which of its
+// two notes is the root: the lower one ("low") or the upper one ("up").
+const ROOTS = [
+  [7, "low"], [5, "up"], [4, "low"], [8, "up"], [3, "low"], [9, "up"],
+  [2, "up"], [10, "low"], [1, "up"], [11, "low"], [0, "low"], [6, "up"],
+];
+
+const f32 = Math.fround;
+const mod12 = (n) => ((n % 12) + 12) % 12;
+
+// Round half to even, as Lisp and Python do.
+function roundEven(x) {
+  const r = Math.round(x);
+  return Math.abs(x % 1) === 0.5 && r % 2 !== 0 ? r - 1 : r;
+}
+
+const round2 = (x) => roundEven(x * 100) / 100;
+
+// The dissonance of one chord (a list of pitches).
+function vertical(pitches) {
+  const kept = [];
+  for (const p of [...pitches].sort((a, b) => a - b)) {
+    if (!kept.some((k) => mod12(k - p) === 0)) kept.push(p);
+  }
+  let sum = 0;
+  for (const p of kept.slice(1)) sum += weight(p - kept[0]);
+  return round2(sum);
+}
+
+// A beat made of several chords counts its least dissonant one.
+const beatVertical = (chords) => Math.min(...chords.map(vertical));
+
+function metric(beatInBar, beatsPerBar) {
+  const k = (METRIC[beatsPerBar] || METRIC[4])[beatInBar - 1];
+  return Number(((beatInBar * 0.1) / k).toPrecision(3));
+}
+
+// Metric tensions for `count` beats from beat `start` of the bar.
+function metricMap(start, count, beatsPerBar) {
+  const out = [];
+  for (let i = 0, beat = start; i < count; i++, beat = beat === beatsPerBar ? 1 : beat + 1) {
+    out.push(metric(beat, beatsPerBar));
+  }
+  return out;
+}
+
+// 0.1 x (length / a whole note) + 0.1 x vertical, rounded to hundredths.
+function duration(lengthMs, verticalTension) {
+  return f32(f32(0.01) * Math.round(lengthMs / 400 + verticalTension * 10 + 1e-9));
+}
+
+// Cope's root finder. `pitches`: the beat's distinct pitches, low to high.
+// It finds the strongest root interval among all the intervals in the chord,
+// then the first two notes forming it, scanning the chord's pairs in Cope's
+// order (including the joins between pairs, as his code does).
+function rootOf(pitches) {
+  if (pitches.length === 1) return pitches[0];
+  const intervals = new Set([0]);
+  for (let i = 0; i < pitches.length - 1; i++) {
+    for (let j = i; j < pitches.length; j++) intervals.add(mod12(pitches[j] - pitches[i]));
+  }
+  const [interval, which] = ROOTS.find(([iv]) => intervals.has(iv));
+  const pairs = [];
+  for (let i = 0; i < pitches.length - 1; i++) for (let j = i; j < pitches.length; j++) pairs.push(pitches[i], pitches[j]);
+  for (let k = 0; k < pairs.length - 1; k++) {
+    if (mod12(pairs[k + 1] - pairs[k]) === interval) {
+      const [low, high] = [pairs[k], pairs[k + 1]].sort((a, b) => a - b);
+      return which === "low" ? low : high;
+    }
+  }
+  return pitches[0];
+}
+
+// Root motion weights: 0 for the first beat, then the interval between roots.
+function approach(roots) {
+  return roots.map((root, i) => (i === 0 ? 0 : weight(Math.abs(root - roots[i - 1]))));
+}
+
+// ---- Cope's own beats (for checking against the book)
+
+// Splits events at every entrance and exit, and groups the resulting chords
+// into beats: a chord whose notes are held into the next one belongs with it.
+// Returns beats, each a list of chords, each a list of events (held ones
+// marked "*").
+function copeBeats(events) {
+  const lex = (a, b) => {
+    for (let i = 0; i < 5; i++) if (a[i] !== b[i]) return a[i] - b[i];
+    return 0;
+  };
+  // Cope's triplet fix: a note ending 1 ms before or after the next note in
+  // its channel is made to end exactly there.
+  let pending = [];
+  for (let channel = 1; channel <= 16; channel++) {
+    const notes = events.filter((e) => e[3] === channel).map((e) => e.slice(0, 5));
+    notes.forEach((e, i) => {
+      const next = notes[i + 1];
+      if (next && Math.abs(e[0] + e[2] - next[0]) === 1) e[2] -= e[0] + e[2] - next[0];
+    });
+    pending.push(...notes);
+  }
+  pending.sort(lex);
+
+  const chords = [];
+  while (pending.length) {
+    const start = pending[0][0];
+    const together = pending.filter((e) => e[0] === start);
+    const byChannel = together.map((e, i) => [e, i]).sort((a, b) => a[0][3] - b[0][3] || a[1] - b[1]).map(([e]) => e);
+    const next = pending.find((e) => e[0] !== start);
+    let until;
+    if (!chords.length) until = next ? next[0] : start + pending[0][2];
+    else {
+      const end = start + Math.min(...together.map((e) => e[2]));
+      until = !next ? end : Math.min(end, next[0]);
+    }
+    chords.push(byChannel.map((e) => (e[0] + e[2] > until ? [e[0], e[1], until - e[0], e[3], e[4], "*"] : e.slice())));
+    const rest = byChannel.map((e) => [until, e[1], e[2] - (until - e[0]), e[3], e[4]]).filter((e) => e[2] !== 0);
+    pending = pending.filter((e) => !together.includes(e)).concat(rest).sort(lex);
+  }
+
+  const beats = [];
+  chords.forEach((chord, i) => {
+    const held = i > 0 && chords[i - 1].some((e) => e.length === 6);
+    if (held) beats[beats.length - 1].push(chord);
+    else beats.push([chord]);
+  });
+  return beats;
+}
+
+// Cope's run-the-speac-weightings: one tension per beat of `events`.
+// startBeat: where the first beat falls in the bar; totalBeats: how many
+// metric beats to count (Cope lists the shorter of his beats and these).
+function copeWeights(events, startBeat, totalBeats, beatsPerBar) {
+  const beats = copeBeats(events);
+  const verticals = beats.map((beat) => beatVertical(beat.map((chord) => chord.map((e) => e[1]))));
+  const metrics = metricMap(startBeat, totalBeats, beatsPerBar);
+  const onsets = beats.map((beat) => beat[0][0][0]);
+  const lengths = onsets.length < 2 ? [0] : onsets.slice(1).map((t, i) => t - onsets[i]);
+  if (onsets.length >= 2) lengths.push(lengths[lengths.length - 1]);
+  const durations = lengths.map((length, i) => duration(length, verticals[i]));
+  const roots = beats.map((beat) => rootOf([...new Set(beat.flatMap((chord) => chord.map((e) => e[1])))].sort((a, b) => a - b)));
+  const approaches = approach(roots);
+  const n = Math.min(verticals.length, metrics.length, durations.length, approaches.length);
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(f32(f32(f32(f32(verticals[i]) + f32(metrics[i])) + f32(durations[i])) + f32(approaches[i])));
+  return out;
+}
+
+// ---- The engine's beats (emi-segment groupings)
+
+// Tension of each grouping of one work, in order. A grouping's chords are the
+// notes sounding at each moment a note starts within the beat.
+function tensionsOf(groupings, beatsPerBar, beatMs = 1000) {
+  let previousRoot = null;
+  return groupings.map((g) => {
+    const onsets = [...new Set(g.pieces.map((p) => p[0]))].sort((a, b) => a - b);
+    const chords = onsets.map((t) => g.pieces.filter((p) => p[0] <= t && t < p[0] + p[2]).map((p) => p[1]));
+    const v = beatVertical(chords);
+    const root = rootOf([...new Set(g.pieces.map((p) => p[1]))].sort((a, b) => a - b));
+    const a = previousRoot === null ? 0 : weight(Math.abs(root - previousRoot));
+    previousRoot = root;
+    const total = f32(f32(f32(f32(v) + f32(metric(g.beatInBar, beatsPerBar))) + duration(beatMs, v)) + f32(a));
+    return { tension: round2(total), vertical: v, root };
+  });
+}
+
+exports.WEIGHTS = WEIGHTS;
+exports.roundEven = roundEven;
+exports.round2 = round2;
+exports.vertical = vertical;
+exports.metric = metric;
+exports.metricMap = metricMap;
+exports.duration = duration;
+exports.rootOf = rootOf;
+exports.approach = approach;
+exports.copeBeats = copeBeats;
+exports.copeWeights = copeWeights;
+exports.tensionsOf = tensionsOf;
+  };
+
+  // ---- emi-perform.js
+  factories["emi-perform"] = function (exports, module, require) {
+"use strict";
+// A performance layer for playback (after v0.1.0: docs/review.md, A). As
+// written, a score plays every note at one velocity and holds a fermata
+// chord for exactly its written length. This shapes a score for the player
+// the way singers would, without changing the score itself (export and
+// clips stay as written):
+//
+//   fermatas      the chord under each fermata is held longer (as long again,
+//                 up to a beat more; the last chord of all as long again
+//                 outright), then a breath, an eighth rest, before the next
+//                 phrase. Everything after it moves later by as much.
+//   dynamics      each phrase swells and settles: a velocity from the beat's
+//                 place in its phrase (an arch) and from its harmonic tension
+//                 against the phrase's (the chord's dissonance and the root's
+//                 motion, from emi-tension; not its metric part, which rises
+//                 on weak beats), the soprano a little louder, the inner
+//                 voices softer, beat 1 accented.
+//   articulation  a note followed by the same pitch in its voice is lifted (a
+//                 16th shorter), so the repeat is heard as a new note.
+//
+//   perform(score, { stepsPerBeat, final, fermatas, dynamics, articulation })
+//     -> { score, holds }
+// score: the performed score (events moved and reshaped; fermatas and
+// lengthTicks moved with them). holds, in the score's own ticks, one per
+// held chord: [endTick, extraTicks, holdTicks]: where the chord ends as
+// written, by how much everything after it moves (the hold and the breath),
+// and by how much its own notes are held. final: the score's last fermata
+// is the end of the music (a whole piece), not a phrase of a stream.
+//
+//   stretch(holds, tick)        a written tick as performed (an onset)
+//   tickOf(holds, performed)    a performed tick as written: inside a hold,
+//                               the held chord's end (the piano roll's playhead)
+// The player's queue is a grid of 16ths (emi-queue), so every hold and
+// breath is a whole number of steps.
+
+const { segment } = require("emi-segment");
+const tension = require("emi-tension");
+
+const HOLD = 1; // a fermata chord is held longer by this share of its length...
+const MAX_HOLD_BEATS = 1; // ...but by at most this, except the last chord of all
+const BREATH_STEPS = 2; // an eighth note before the next phrase
+const BASE = 80; // velocity: the middle of a phrase's range
+const ARCH = 10; // added at the middle of a phrase, nothing at its ends
+const TENSION = 8; // added for the phrase's tensest beat, taken off for its calmest
+const ACCENT = 3; // added on beat 1
+const VOICE = [6, -3, -3, 2]; // soprano, alto, tenor, bass
+
+function perform(score, { stepsPerBeat = 4, final = true, fermatas = true, dynamics = true, articulation = true } = {}) {
+  const beat = score.ppq;
+  const tps = beat / stepsPerBeat;
+  const holds = fermatas ? holdsOf(score, tps, final) : [];
+  const vel = dynamics ? velocities(score) : null;
+  const events = score.events.map(([on, pitch, dur, voice, v]) => {
+    const velocity = vel ? clamp(Math.round((vel.get(Math.floor(on / beat)) || BASE) + (VOICE[voice - 1] || 0))) : v;
+    return [stretch(holds, on), pitch, stretchOff(holds, on + dur) - stretch(holds, on), voice, velocity];
+  });
+  if (articulation) lift(events, beat, tps);
+  events.sort((a, b) => a[0] - b[0] || a[3] - b[3] || a[1] - b[1]);
+  return {
+    score: {
+      ...score,
+      events,
+      fermatas: (score.fermatas || []).map((f) => stretch(holds, f)),
+      lengthTicks: stretchOff(holds, score.lengthTicks),
+    },
+    holds,
+  };
+}
+
+const clamp = (v) => Math.max(1, Math.min(127, v));
+
+// The held chords: for each fermata, the notes sounding in its beat make the
+// chord; it ends where the first of the next notes starts (or where its own
+// notes end, if that's sooner: a rest may follow).
+function holdsOf(score, tps, final) {
+  const beat = score.ppq;
+  const onsets = [...new Set(score.events.map((e) => e[0]))].sort((a, b) => a - b);
+  const fermatas = [...new Set(score.fermatas || [])].sort((a, b) => a - b);
+  const holds = [];
+  fermatas.forEach((f, k) => {
+    const sounding = score.events.filter((e) => e[0] < f + beat && e[0] + e[2] > f);
+    if (!sounding.length) return;
+    const next = onsets.find((t) => t >= f + beat);
+    let end = Math.max(...sounding.map((e) => e[0] + e[2]));
+    if (next !== undefined) end = Math.min(end, next);
+    if (holds.some((h) => h[0] === end)) return;
+    const last = final && k === fermatas.length - 1 && next === undefined;
+    let hold = Math.round(((end - f) * HOLD) / tps) * tps;
+    if (!last) hold = Math.min(hold, MAX_HOLD_BEATS * beat);
+    hold = Math.max(hold, tps);
+    const breath = last ? 0 : BREATH_STEPS * tps;
+    holds.push([end, hold + breath, hold]);
+  });
+  return holds;
+}
+
+// An onset, as performed: moved by every hold before it.
+function stretch(holds, tick) {
+  let moved = 0;
+  for (const [end, extra] of holds) if (end <= tick) moved += extra;
+  return tick + moved;
+}
+
+// A note-off, as performed: a note ending where a chord is held is held with
+// it (not through the breath); one ending later moves by the whole extra.
+function stretchOff(holds, tick) {
+  let moved = 0;
+  for (const [end, extra, hold] of holds) {
+    if (end < tick) moved += extra;
+    else if (end === tick) moved += hold;
+  }
+  return tick + moved;
+}
+
+// A performed tick, as written. Inside a hold or breath: the held chord's end.
+function tickOf(holds, performed) {
+  let moved = 0;
+  for (const [end, extra] of holds) {
+    if (performed < end + moved) break;
+    if (performed < end + moved + extra) return end;
+    moved += extra;
+  }
+  return performed - moved;
+}
+
+// A velocity per beat (before the voice offsets), from the beat's place in
+// its phrase and its harmonic tension against the phrase's. Phrases end at
+// fermatas.
+function velocities(score) {
+  const beat = score.ppq;
+  const beatsPerBar = Math.round((score.meter[0] * 4) / score.meter[1]);
+  const groupings = segment({ ...score, id: score.id || "score", fermatas: score.fermatas || [] }, beat);
+  const parts = tension.tensionsOf(groupings, beatsPerBar);
+  const approaches = tension.approach(parts.map((t) => t.root));
+  const tensions = parts.map((t, k) => t.vertical + approaches[k]);
+  const cadences = new Set((score.fermatas || []).map((f) => Math.floor(f / beat)));
+  const phrases = [];
+  let phrase = [];
+  groupings.forEach((g, k) => {
+    phrase.push(k);
+    if (cadences.has(g.index)) {
+      phrases.push(phrase);
+      phrase = [];
+    }
+  });
+  if (phrase.length) phrases.push(phrase);
+  const out = new Map();
+  for (const members of phrases) {
+    const mean = members.reduce((sum, k) => sum + tensions[k], 0) / members.length;
+    const spread = Math.max(0.1, ...members.map((k) => Math.abs(tensions[k] - mean)));
+    members.forEach((k, n) => {
+      const pos = members.length > 1 ? n / (members.length - 1) : 0.5;
+      const z = Math.max(-1, Math.min(1, (tensions[k] - mean) / spread));
+      out.set(groupings[k].index, BASE + ARCH * Math.sin(Math.PI * pos) + TENSION * z + (groupings[k].beatInBar === 1 ? ACCENT : 0));
+    });
+  }
+  return out;
+}
+
+// A note a quarter or longer that runs straight into the same pitch in its
+// voice ends a 16th early.
+function lift(events, beat, tps) {
+  for (let v = 1; v <= 4; v++) {
+    const line = events.filter((e) => e[3] === v).sort((a, b) => a[0] - b[0]);
+    for (let k = 0; k + 1 < line.length; k++) {
+      const [a, b] = [line[k], line[k + 1]];
+      if (a[0] + a[2] === b[0] && a[1] === b[1] && a[2] >= beat) a[2] -= tps;
+    }
+  }
+}
+
+exports.perform = perform;
+exports.holdsOf = holdsOf;
+exports.stretch = stretch;
+exports.stretchOff = stretchOff;
+exports.tickOf = tickOf;
+exports.velocities = velocities;
+exports.BASE = BASE;
+exports.VOICE = VOICE;
+  };
+
   var cache = {};
   function load(name) {
     if (!Object.prototype.hasOwnProperty.call(cache, name)) {
@@ -104,13 +585,18 @@ __emi_require.local = 1;
 //   done                                 (draw it)
 // and, at any time:
 //   highlight <from> <to> | highlight    (the selection, made in the other roll; or none)
-//   playhead <step>                      (where the player is, in 16ths from tick 0; -1: hidden)
+//   timemap <end> <extra>...             (the performance's held chords, emi-perform: where each
+//                                        ends, in the score's ticks, and by how much it moves what
+//                                        follows; the playhead is read back through them)
+//   playhead <step>                      (where the player is, in 16ths of the performed time
+//                                        from tick 0; -1: hidden)
 
 autowatch = 1;
 inlets = 1;
 outlets = 1;
 
 const hover = __emi_require("emi-hover");
+const { tickOf } = __emi_require("emi-perform");
 
 mgraphics.init();
 mgraphics.relative_coords = 0;
@@ -147,7 +633,7 @@ let playTick = null; // where the player is (a tick), or null when it isn't play
 let dragFrom = null; // the tick of the beat where a drag started
 
 function clear(endTick, low, high, barTicks, startTick, beatTicks) {
-  incoming = { selected: null, variants: [], start: startTick || 0, end: endTick, low, high, barTicks, beatTicks: beatTicks || barTicks / 4, notes: [], seams: [], cadences: [], labels: [], signatures: [], parallels: [], sources: [] };
+  incoming = { selected: null, variants: [], holds: [], start: startTick || 0, end: endTick, low, high, barTicks, beatTicks: beatTicks || barTicks / 4, notes: [], seams: [], cadences: [], labels: [], signatures: [], parallels: [], sources: [] };
 }
 
 function note(on, dur, pitch, color) {
@@ -186,10 +672,19 @@ function variant(tick, ...names) {
   if (incoming) incoming.variants.push([tick, names.join(" ")]);
 }
 
-// The playhead: a line where the player is. Redrawn only when it moves by a
-// pixel or more, so the roll isn't repainted needlessly.
+// The performance's held chords (emi-perform): where each ends, in the
+// score's ticks, and by how much it moves what follows.
+function timemap(...pairs) {
+  if (!incoming) return;
+  incoming.holds = [];
+  for (let i = 0; i + 1 < pairs.length; i += 2) incoming.holds.push([pairs[i], pairs[i + 1]]);
+}
+
+// The playhead: a line where the player is, read back from the performed
+// time through the holds. Redrawn only when it moves by a pixel or more, so
+// the roll isn't repainted needlessly.
 function playhead(step) {
-  const tick = step >= 0 && shown ? (step * beatOf(shown)) / 4 : null;
+  const tick = step >= 0 && shown ? tickOf(shown.holds || [], (step * beatOf(shown)) / 4) : null;
   if (tick === playTick) return;
   const [width] = size();
   const px = (t) => (t === null || !shown ? null : Math.round(((t - shown.start) / (shown.end - shown.start)) * width));

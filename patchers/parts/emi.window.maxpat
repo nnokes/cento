@@ -724,57 +724,57 @@
 						""
 					],
 					"parameter_enable": 1,
-					"varname": "Update Composition",
+					"varname": "Again",
 					"mode": 0,
-					"text": "update composition",
-					"texton": "update composition",
-					"fontsize": 11.0,
+					"text": "again",
+					"texton": "again",
+					"fontsize": 10.0,
 					"bgcolor": [
-						0.24,
-						0.44,
-						0.71,
+						0.8,
+						0.85,
+						0.93,
 						1.0
 					],
 					"activebgcolor": [
-						0.24,
-						0.44,
-						0.71,
+						0.8,
+						0.85,
+						0.93,
 						1.0
 					],
 					"bgoncolor": [
-						0.16,
-						0.31,
-						0.52,
+						0.6,
+						0.69,
+						0.84,
 						1.0
 					],
 					"activebgoncolor": [
-						0.16,
-						0.31,
-						0.52,
+						0.6,
+						0.69,
+						0.84,
 						1.0
 					],
 					"textcolor": [
-						1.0,
-						1.0,
-						1.0,
+						0.08,
+						0.08,
+						0.09,
 						1.0
 					],
 					"activetextcolor": [
-						1.0,
-						1.0,
-						1.0,
+						0.08,
+						0.08,
+						0.09,
 						1.0
 					],
 					"textoncolor": [
-						1.0,
-						1.0,
-						1.0,
+						0.08,
+						0.08,
+						0.09,
 						1.0
 					],
 					"activetextoncolor": [
-						1.0,
-						1.0,
-						1.0,
+						0.08,
+						0.08,
+						0.09,
 						1.0
 					],
 					"saved_attribute_attributes": {
@@ -783,8 +783,8 @@
 								"off",
 								"on"
 							],
-							"parameter_longname": "Update Composition",
-							"parameter_shortname": "update composition",
+							"parameter_longname": "Again",
+							"parameter_shortname": "again",
 							"parameter_type": 2,
 							"parameter_mmax": 1,
 							"parameter_initial": [
@@ -797,20 +797,20 @@
 					"patching_rect": [
 						260.0,
 						760.0,
-						120.0,
+						60.0,
 						24.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						256.0,
 						710.0,
-						120.0,
+						60.0,
 						24.0
 					],
 					"id": "obj-19",
-					"hint": "The same as the panel's update composition: compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
-					"annotation": "The same as the panel's update composition: compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
-					"annotation_name": "update composition"
+					"hint": "The same as the panel's again: compose this piece number again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
+					"annotation": "The same as the panel's again: compose this piece number again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again.",
+					"annotation_name": "again"
 				}
 			},
 			{
@@ -937,7 +937,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						386.0,
+						326.0,
 						710.0,
 						120.0,
 						24.0
@@ -1072,7 +1072,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						516.0,
+						456.0,
 						710.0,
 						95.0,
 						24.0
@@ -1226,7 +1226,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						617.0,
+						557.0,
 						710.0,
 						95.0,
 						24.0
@@ -1380,7 +1380,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						718.0,
+						658.0,
 						710.0,
 						60.0,
 						24.0
@@ -1515,7 +1515,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						788.0,
+						728.0,
 						710.0,
 						130.0,
 						24.0
@@ -1610,14 +1610,14 @@
 					"patching_rect": [
 						940.0,
 						900.0,
-						244.0,
+						304.0,
 						30.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						926.0,
+						866.0,
 						708.0,
-						244.0,
+						304.0,
 						30.0
 					],
 					"id": "obj-41"

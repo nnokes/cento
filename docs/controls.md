@@ -20,7 +20,8 @@ This page is written from the same table as the hover text (the patch generator)
 | **Output** | The MIDI port the four voices go to, one channel each: 1 soprano, 2 alto, 3 tenor, 4 bass. AU DLS Synth 1 is the Mac's own instruments. Remembered for next time. |
 | **plug-in instruments** | On: the voices play through four plug-in instruments inside Max (choose them with set up) instead of the MIDI port. Turn audio on (the speaker) to hear them. Remembered for next time. |
 | **set up** | Open the plug-in instruments window: choose the AU or VST3 instrument that plays each voice, and show its editor. |
-| **more features** | Open the more features window: the blind listening test, loading a single chorale, and the test phrase. |
+| **more features** | Open the more features window: the blind listening test, loading a single chorale, the test phrase, and the composer's own switches (chorale form, signatures). |
+| **performance** | On: the music is played as singers would: the chord under each fermata held longer, a breath before the next phrase, phrases that swell and settle. Off: as written, every note alike. Exported MIDI files are always as written. Remembered for next time. |
 
 ## Live version: clips and voices (left panel of the cento.brain device)
 
@@ -31,22 +32,21 @@ This page is written from the same table as the hover text (the patch generator)
 | **clips on compose** | On: every piece composed is also written as clips (as write clips does), so nothing you like is lost. |
 | **play through voices** | On: while Live plays, the piece plays through the cento.voice devices on the voice tracks. Turn it off to hear only clips you wrote (otherwise each note sounds twice). |
 | **all voices here** | On: all four voices also come out of this track, to hear the whole piece on this track's instrument. |
+| **performance** | On: the music is played as singers would: the chord under each fermata held longer, a breath before the next phrase, phrases that swell and settle. Off: as written, every note alike. Clips and exported MIDI files are always as written, on the grid. |
 
 ## Composing (both versions)
 
 | Control | What it does |
 | --- | --- |
-| **update composition** | Compose a piece with the seed shown, with the settings and Magdalena's taste as they are now (with stream on: start a stream). While playing, the new music starts at the next bar. The pop-up window has the same button. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
-| **seed** | The random seed: the same seed, chorales, settings and taste always give the same piece. Changing it composes at once (once chorales are loaded). |
-| **next** | Add 1 to the seed and compose: the quickest way to hear another piece. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
+| **new piece** | The next piece: adds 1 to the piece number and composes it. The quickest way to hear another piece. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
+| **piece #** | The piece's number: the same number, chorales, settings and taste always give the same piece. Changing it composes at once (once chorales are loaded). |
+| **again** | Compose this piece number again, with the settings and Magdalena's taste as they are now (with stream on: start a stream). While playing, the new music starts at the next bar. The pop-up window has the same button. Map it to a key or a MIDI note (Cmd+K or Cmd+M in Live). |
 | **export midi** | Save the current piece as a MIDI file. For a composed piece or stream, a .json of where every beat came from is saved next to it. |
 | **corpora** | Open the corpus window: the folders of chorales (MIDI files) to compose from, each switched on or off. Composing uses every folder that is on, as one corpus; they are loaded by themselves next time. |
-| **beats** | The shortest piece to compose, in beats (4 to 256). With chorale form on, only chorales at least this long lend their form. |
-| **chorale form** | On: each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan. |
-| **stream** | On: update composition starts a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: compose makes a whole piece. |
+| **bars** | The shortest piece to compose, in bars (1 to 64). With chorale form on (more features), only chorales at least this long lend their form. |
+| **stream** | On: new piece and again start a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: whole pieces. |
 | **phrases** | How many phrases a stream plays before it ends (0: endless). |
 | **transpose** | Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase. |
-| **signatures** | On: Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats. |
 | **Status** | What the engine just did, or what went wrong. |
 
 ## Magdalena: the user's taste (both versions)
@@ -87,6 +87,8 @@ This page is written from the same table as the hover text (the patch generator)
 | **original key** | On: a chorale you load (load a chorale) keeps its own key. Off: it is moved to C major or A minor (the default). Only for loaded chorales. |
 | **play the test phrase** | Play a built-in phrase (no chorales needed), to check that the voices sound. |
 | **stop and clear the queue** | What is playing stops at once, and nothing is left queued to play. |
+| **chorale form** | On (the default): each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan (the early milestones' composer). Remembered for next time. |
+| **signatures** | On (the default): Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats. Remembered for next time. |
 
 ## The pop-up window (both versions: Magdalena's panel, window)
 
@@ -98,7 +100,7 @@ This page is written from the same table as the hover text (the patch generator)
 | **dislike** | Tell Magdalena you don't like what you're hearing: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She learns to avoid its musical features. |
 | **keep** | Keep what you're hearing in Magdalena's notebook: the beats you selected in the piano roll, or else the stream phrase playing, or else the whole piece. She composes from it alongside Bach from then on (how much: mix, in the pop-up window's memory tab). |
 | **taste report** | Report Magdalena's taste: what she likes and dislikes most, in the Max window, and ten pieces composed with and without her taste, compared feature by feature. The pop-up window shows its progress (it composes a piece at a time, so you can go on playing) and the result. It changes nothing. |
-| **update composition** | The same as the panel's update composition: compose the seed shown again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again. |
+| **again** | The same as the panel's again: compose this piece number again, with Magdalena's taste, mix and novelty as they are now, to hear and see what your changes did. With stream on, the stream starts again. |
 | **release all pins** | Release every pinned weight: each goes back to what Magdalena learned from your ratings. |
 | **store taste** | Save Magdalena's whole taste (weights, pins, strength, ratings) to a file you choose. |
 | **recall taste** | Load a taste saved with store taste and make it hers. The taste it replaces is kept as a backup and as a snapshot. |

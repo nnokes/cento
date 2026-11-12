@@ -13,6 +13,7 @@
 //                             where this beat's voices go next in the original
 //   newNotes                  how many notes start inside this beat (0: pure continuation)
 //   bass                      the lowest pitch sounding at the start of the beat (null if none)
+//   soprano                   the pitch the first voice sounds at the start of the beat (null if silent)
 //   opening, cadence, final   first sounding beat; a fermata starts here; last beat of the work
 //   restBefore                the beat before is silent (always true for the opening)
 //
@@ -32,6 +33,7 @@ function segment(work, beatTicks = work.ppq) {
     const pieces = [];
     const entry = new Array(work.voices).fill("r");
     let bass = null;
+    let soprano = null;
     for (const [on, pitch, dur, voice, vel] of work.events) {
       const off = on + dur;
       if (off <= start || on >= end) continue;
@@ -42,6 +44,7 @@ function segment(work, beatTicks = work.ppq) {
       if (on <= start) {
         entry[voice - 1] = (tiedIn ? "~" : "") + pitch;
         bass = bass === null ? pitch : Math.min(bass, pitch);
+        if (voice === 1) soprano = pitch;
       }
     }
     pieces.sort((a, b2) => a[0] - b2[0] || a[3] - b2[3]);
@@ -52,6 +55,7 @@ function segment(work, beatTicks = work.ppq) {
       entryKey: entry.join(","),
       newNotes: pieces.filter((p) => !p[5]).length,
       bass,
+      soprano,
     });
   }
 
@@ -69,6 +73,7 @@ function segment(work, beatTicks = work.ppq) {
       destKey: next && next.pieces.length ? next.entryKey : null,
       newNotes: beat.newNotes,
       bass: beat.bass,
+      soprano: beat.soprano,
       opening: i === 0,
       restBefore: i === 0 || beats[beat.index - 1].pieces.length === 0,
       cadence: fermataBeats.has(beat.index),

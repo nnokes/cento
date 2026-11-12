@@ -238,6 +238,7 @@ release/      what the downloads carry besides the builds: Read me first.html,
               and the Cento folder's About this folder.txt
 corpus/       Cento's own chorales (CC BY 4.0: corpus/README.md)
 docs/         milestone checklists; controls.md: what every control does;
+              review.md: what to improve next (after v0.1.0);
               releasing.md: how to publish a version for others
 ```
 

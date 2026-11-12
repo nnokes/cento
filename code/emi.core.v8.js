@@ -38,7 +38,7 @@
 //   streamat <step>            -> the player: send "need" when this step is reached
 //   endat <step>               -> the player: send "ended" when this step (the last note-offs) is
 //                                 reached, each time (999999: never). The Max version then stops.
-//   view clear|note|seam|cadence|speac|signature|parallel|source|done -> the piano roll
+//   view clear|note|seam|cadence|speac|signature|parallel|source|timemap|done -> the piano roll
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
 //   meter <numerator> <denominator>                             -> the Max version's transport (M8)
@@ -64,15 +64,20 @@
 //   corpusrescan           read the folders again (after adding chorales to one)
 //   corpusbuild <id>       (from the engine itself, via later) build the corpus from the
 //                          folders that are on, then compose the seed shown
-//   beats <n>              shortest piece to compose (default 32)
+//   bars <n>               shortest piece to compose, in bars (default 8)
 //   form 1 | form 0        compose in the form of a chorale (M3, default) or freely (M2)
 //   sigs 1 | sigs 0        keep signatures at cadences (M7, default) or not
-//   seed <n>               set the seed; compose with it if a corpus is loaded
-//   compose [seed]         compose with the current seed (or this one)
-//   next                   add 1 to the seed and compose
+//                          (both in the Max version's more features window)
+//   seed <n>               set the seed (shown as the piece's number); compose with it if a corpus is loaded
+//   compose [seed]         compose with the current seed (or this one): "again" on the panel
+//   next                   add 1 to the seed and compose: "new piece" on the panel
 //   stream 1 | stream 0    compose phrase by phrase while playing (M5), or whole pieces
 //   phrases <n>            a stream ends after n phrases (0: endless)
 //   transpose <n>          semitones (-12..12): at once for a whole piece, from the next phrase in a stream
+//   perform 1 | perform 0  play as singers would (emi-perform: fermata chords held, a breath between
+//                          phrases, phrases that swell and settle; the default) or as written. Export
+//                          and clips are always as written. At once for a piece, from the next phrase
+//                          in a stream
 //   need                   (from the player) queue the stream's next phrase
 //   exportmidi <path>      write the current score as a MIDI file (and, for a composed
 //                          piece or stream, its provenance as a .json next to it)
@@ -138,6 +143,8 @@ const signatureNames = require("emi-signatures");
 const quality = require("emi-quality");
 const provenanceOf = require("emi-provenance");
 const abtests = require("emi-abtest");
+const performance = require("emi-perform");
+const keys = require("emi-key");
 const abtestPage = require("emi-abtest-page");
 const emily = require("emily-assoc");
 const variation = require("emily-vary");
@@ -153,7 +160,7 @@ const GRACE_MS = 1500; // a rating this soon after a stream phrase starts is for
 let loaded = null; // the last chorale read, in its written key
 let keyMode = "c";
 let db = null;
-let minBeats = 32;
+let minBars = 8; // the shortest piece, in bars (minBeats() in beats)
 let useForm = true;
 let useSignatures = true;
 let currentSeed = 1;
@@ -161,6 +168,8 @@ let autoClips = false;
 let streaming = false;
 let phrasesWanted = 8;
 let transposeBy = 0;
+let performing = true; // the performance layer for playback (emi-perform): fermatas held, dynamics
+let holds = []; // the current score's held chords (emi-perform), for the piano rolls' playhead
 let current = null; // { base (untransposed, or null for a stream), score, name, chorale }
 let flow = null; // the stream being queued: { state, steps, events, provenance, fermatas, name }
 let groupingsById = null; // { db, map }: the corpus's groupings by id, for the SPEAC lane
@@ -271,17 +280,24 @@ function changeCorpora(change) {
 }
 changeCorpora.local = 1;
 
-function beats(n) {
-  minBeats = Math.max(4, Math.min(256, Math.round(n)));
+function bars(n) {
+  minBars = Math.max(1, Math.min(64, Math.round(n)));
   save();
-  outlet(0, "status", "pieces", "of", minBeats + "+", "beats");
+  outlet(0, "status", "pieces", "of", minBars + "+", "bars");
 }
+
+// The shortest piece in beats: bars by the corpus's meter (4/4 until one is loaded).
+function minBeats() {
+  const meter = db ? db.meter : [4, 4];
+  return minBars * Math.round((meter[0] * 4) / meter[1]);
+}
+minBeats.local = 1;
 
 function form(on) {
   useForm = Boolean(on);
   save();
   if (useForm) outlet(0, "status", "pieces", "in", "the", "form", "of", "a", "chorale");
-  else outlet(0, "status", "free", "pieces", "(M2),", minBeats + "+", "beats");
+  else outlet(0, "status", "free", "pieces", "(M2),", minBars + "+", "bars");
 }
 
 function sigs(on) {
@@ -336,6 +352,16 @@ function transpose(n) {
   save();
   if (flow) outlet(0, "status", "transpose", signed(transposeBy), "from", "the", "next", "phrase");
   else if (current && current.base) show(current.base, current.name, current.chorale);
+}
+
+// The performance layer, on or off: a piece is queued again (from the next
+// bar), a stream from its next phrase.
+function perform(on) {
+  performing = Boolean(Number(on));
+  save();
+  if (flow) outlet(0, "status", "performance", performing ? "on" : "off", "from", "the", "next", "phrase");
+  else if (current && current.base) show(current.base, current.name, current.chorale);
+  else outlet(0, "status", "performance", performing ? "on" : "off");
 }
 
 function need() {
@@ -419,7 +445,7 @@ function exportmidi(path) {
       return;
     }
     const sidecar = target.replace(/\.midi?$/i, ".json");
-    const settings = { beats: minBeats, form: useForm, signatures: useSignatures, stream: Boolean(flow), transpose: transposeBy, temperature: temperatureValue, tasteRatings: memory.ratings };
+    const settings = { beats: minBeats(), form: useForm, signatures: useSignatures, stream: Boolean(flow), transpose: transposeBy, temperature: temperatureValue, tasteRatings: memory.ratings };
     files.writeText(sidecar, JSON.stringify(provenanceOf.record(db, current.score, settings), null, 1) + "\n");
     outlet(0, "status", "exported", files.fileName(target), "and", files.fileName(sidecar));
   });
@@ -674,7 +700,7 @@ function taste() {
     // so the patch stays responsive and the window shows the progress.
     comparing = {
       id: ++comparisons, first: currentSeed, k: 0, pairs: [], db, version: tasteVersion, taste: tasteNow(), temperature: temperatureValue,
-      options: { beats: minBeats, signatures: useSignatures }, likes, dislikes,
+      options: { beats: minBeats(), signatures: useSignatures }, likes, dislikes,
     };
     outlet(0, "emilyview", "comparing", 0, COMPARE_PAIRS);
     outlet(0, "status", ...`Magdalena: comparing ${COMPARE_PAIRS} pieces with her taste and without...`.split(" "));
@@ -918,7 +944,7 @@ function showCorpora(building) {
     const counted = (m) => bachDb.works.filter((w) => w.mode === m).length;
     const mode = bachDb.mode === "mixed" ? `${counted("major")} major, ${counted("minor")} minor` : bachDb.mode;
     const n = corpusReport.used.size;
-    summary = `In use: ${bachDb.works.length} chorales (${mode}) from ${n} ${n === 1 ? "folder" : "folders"}, in ${bachDb.meter.join("/")}: ${bachDb.groupings.length} beats, ${bachDb.signatures.length} signatures.`;
+    summary = `In use: ${bachDb.works.length} chorales (${mode}) from ${n} ${n === 1 ? "folder" : "folders"}, in ${bachDb.meter.join("/")}.`;
   }
   outlet(0, "corpusview", "footer", ...summary.split(" ")); // not "summary": see emi.corpora.v8ui.js
   outlet(0, "corpusview", "done");
@@ -1266,22 +1292,23 @@ function composeNow(atStartup) {
       startStream();
       return;
     }
-    const options = { seed: currentSeed, beats: minBeats, signatures: useSignatures };
+    const options = { seed: currentSeed, beats: minBeats(), signatures: useSignatures };
     const liked = useForm ? tasteNow() : null;
     const result = useForm ? forms.compose(db, { ...options, taste: liked, temperature: temperatureValue, mix: mixNow() }) : composer.compose(db, options);
     if (!result.ok) {
       if (useForm && !result.stats.tried.length) {
-        outlet(0, "error", "no", "chorale", "is", minBeats + "+", "beats", "long;", "lower", "beats");
+        outlet(0, "error", "no", "chorale", "is", minBars + "+", "bars", "long;", "lower", "bars");
       } else {
-        outlet(0, "error", "no", "piece", "for", "seed", currentSeed, "with", minBeats + "+", "beats;", "try", "another", "seed", "or", "more", "chorales");
+        outlet(0, "error", "no", "piece", "number", currentSeed, "of", minBars + "+", "bars;", "try", "another", "number", "or", "more", "chorales");
       }
       return;
     }
     const piece = varied(result.piece, currentSeed);
     show(piece, piece.id, false);
     let text = describePiece(piece);
-    if (autoClips && !atStartup) text += "; " + clips.writeScore(piece, piece.id);
+    if (autoClips && !atStartup) text += " \u00b7 " + clips.writeScore(piece, piece.id);
     outlet(0, "status", ...text.split(" "));
+    post(detailLine(piece) + "\n");
     for (const line of signatureLines(piece)) post(line + "\n");
     post(qualityLine(piece) + "\n");
     if (piece.variants && piece.variants.length) post(variantLine(piece) + "\n");
@@ -1301,6 +1328,8 @@ function startStream() {
     events: [],
     provenance: [],
     fermatas: [],
+    holds: [], // its held chords (emi-perform), in its written ticks
+    extra: 0, // the ticks those holds add before the next phrase
     name: "emi-" + currentSeed,
     playing: 1, // the phrase playing (M9: what "like" rates)
     since: Date.now(),
@@ -1334,8 +1363,16 @@ function appendPhrase() {
   const phrase = result.phrase;
   phrase.piece = varied(phrase.piece, (Math.imul(currentSeed, 1000) + number) >>> 0);
   const shown = transposed(ingest.quantize(phrase.piece).work, transposeBy);
+  // Queued as performed (emi-perform), after what the earlier phrases' holds
+  // added; drawn as written, with every hold so far.
+  const played = performing ? performance.perform(shown, { stepsPerBeat: STEPS_PER_BEAT, final: state.finished }) : { score: shown, holds: [] };
+  const before = flow.extra;
+  const queued = { ...played.score, events: played.score.events.map(([on, ...rest]) => [on + before, ...rest]) };
+  flow.holds.push(...played.holds);
+  flow.extra += played.holds.reduce((sum, [, extra]) => sum + extra, 0);
+  holds = flow.holds;
   const changed = [];
-  for (const { step, events } of queue.toSteps(shown, STEPS_PER_BEAT)) {
+  for (const { step, events } of queue.toSteps(queued, STEPS_PER_BEAT)) {
     flow.steps.set(step, mergeStep(flow.steps.get(step) || [], events));
     changed.push(step);
   }
@@ -1345,19 +1382,19 @@ function appendPhrase() {
   flow.fermatas.push(...shown.fermatas);
   current = { base: null, score: streamScore(shown, phrase.endTick), name: flow.name, chorale: false };
   const ticksPerStep = db.beatTicks / STEPS_PER_BEAT;
-  outlet(0, "streamat", state.finished ? NO_STEP : phrase.startTick / ticksPerStep);
+  outlet(0, "streamat", state.finished ? NO_STEP : (phrase.startTick + before) / ticksPerStep);
   if (state.finished) outlet(0, "endat", Math.max(...flow.steps.keys()));
   const from = state.phrases[Math.max(0, state.phrases.length - WINDOW)].startTick;
   draw(current.score, from, phrase.endTick);
-  let text = `${flow.name} stream: phrase ${number}${phrasesWanted ? " of " + phrasesWanted : ""} queued (${phrase.work} phrase ${phrase.index}`;
-  if (db.mode === "mixed") text += state.mode === "minor" ? ", A minor" : ", C major";
+  const parts = [`Stream ${currentSeed}`, `phrase ${number}${phrasesWanted ? " of " + phrasesWanted : ""}`];
+  parts.push(keyLine({ tonic: (state.mode || db.mode) === "minor" ? 9 : 0, mode: (state.mode || db.mode) === "minor" ? "minor" : "major" }));
+  parts.push(`from ${choraleName(phrase.work)}, phrase ${phrase.index}`);
   const names = blocksOf(phrase.piece.provenance, db.beatTicks).map((b) => b.name);
-  if (names.length) text += ", signature " + names.join(" and ");
-  if (phrase.fallback) text += ", after a breath";
-  if (phrase.piece.variants && phrase.piece.variants.length) text += ", varied: " + [...new Set(phrase.piece.variants.map((v) => v.op))].join(" and ");
-  if (phrase.final) text += ", the last";
-  if (transposeBy) text += ", transposed " + signed(transposeBy);
-  outlet(0, "status", ...(text + ")").split(" "));
+  if (names.length) parts.push("signature " + names.join(" and "));
+  if (phrase.fallback) parts.push("after a breath");
+  if (phrase.piece.variants && phrase.piece.variants.length) parts.push("varied: " + [...new Set(phrase.piece.variants.map((v) => v.op))].join(" and "));
+  if (phrase.final) parts.push("the last");
+  outlet(0, "status", ...parts.join(" \u00b7 ").split(" "));
   return phrase;
 }
 appendPhrase.local = 1;
@@ -1399,7 +1436,36 @@ function signed(n) {
 }
 signed.local = 1;
 
+// The status line, for listeners: "Piece 3 · A minor · 14 bars · in the
+// form of BWV 14.5 · from 24 chorales". The key is the music's as played
+// (transposed). The rest goes to the Max console (detailLine).
 function describePiece(piece) {
+  const s = composer.summary(piece);
+  const bars = Math.round(piece.lengthTicks / ((piece.meter[0] * piece.ppq * 4) / piece.meter[1]));
+  const parts = [`Piece ${piece.seed}`, keyLine(piece.key), `${bars} ${bars === 1 ? "bar" : "bars"}`];
+  parts.push(piece.form ? `in the form of ${choraleName(piece.form.template)}` : "free recombination");
+  parts.push(`from ${s.sources} ${s.sources === 1 ? "chorale" : "chorales"}`);
+  return parts.join(" \u00b7 ");
+}
+describePiece.local = 1;
+
+// "A minor", as played: the composed key moved by transpose.
+function keyLine(key) {
+  return keys.keyName({ tonic: (((key.tonic + transposeBy) % 12) + 12) % 12, mode: key.mode });
+}
+keyLine.local = 1;
+
+// "BWV 14.5" from the corpus's "bwv14.5"; any other id as it is.
+function choraleName(id) {
+  const m = /^bwv(\d.*)$/i.exec(String(id));
+  return m ? "BWV " + m[1] : String(id);
+}
+choraleName.local = 1;
+
+// The piece's details, for the Max console: its id (as exported), its
+// form's phrases and beats, SPEAC, signatures, variants, the notebook's
+// beats, and what had to give.
+function detailLine(piece) {
   const s = composer.summary(piece);
   if (!piece.form) return `${piece.id}: ${s.beats} beats from ${s.sources} chorales`;
   const phrases = piece.form.phrases + (piece.form.phrases === 1 ? " phrase" : " phrases");
@@ -1412,18 +1478,20 @@ function describePiece(piece) {
   if (own.beats) text += `, ${own.beats} ${own.beats === 1 ? "beat" : "beats"} from Magdalena's notebook` + (own.varied ? ` (${own.varied} with her variants)` : "");
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
-  if (piece.form.relaxed === 3) relaxed.push("any cadence bass");
+  if (piece.form.relaxed === forms.RELAX.length - 1) relaxed.push("any cadence bass");
+  else if (piece.form.relaxed === forms.RELAX.length - 2) relaxed.push("any cadence soprano");
   if (piece.form.overLimit) relaxed.push("quotes over the limit");
   if (relaxed.length) text += " (" + relaxed.join(", ") + ")";
   return text;
 }
-describePiece.local = 1;
+detailLine.local = 1;
 
 // Applies the saved settings to the engine and shows them on the controls
 // (Max version). Host settings go back to the host as they were remembered.
 function restore() {
   if (remembered.seed !== undefined) currentSeed = clampSeed(remembered.seed);
-  if (remembered.beats !== undefined) minBeats = Math.max(4, Math.min(256, Math.round(remembered.beats)));
+  if (remembered.bars !== undefined) minBars = Math.max(1, Math.min(64, Math.round(remembered.bars)));
+  else if (remembered.beats !== undefined) minBars = Math.max(1, Math.min(64, Math.round(remembered.beats / 4))); // before bars (v0.1.0)
   if (remembered.form !== undefined) useForm = Boolean(remembered.form);
   if (remembered.signatures !== undefined) useSignatures = Boolean(remembered.signatures);
   if (remembered.key !== undefined) keyMode = remembered.key ? "original" : "c";
@@ -1431,8 +1499,9 @@ function restore() {
   if (remembered.phrases !== undefined) phrasesWanted = Math.max(0, Math.min(64, Math.round(remembered.phrases)));
   if (remembered.transpose !== undefined) transposeBy = Math.max(-12, Math.min(12, Math.round(remembered.transpose)));
   if (remembered.temperature !== undefined) temperatureValue = Math.max(0, Math.min(3, Number(remembered.temperature) || 0));
+  if (remembered.perform !== undefined) performing = Boolean(remembered.perform);
   outlet(0, "setting", "seed", currentSeed);
-  outlet(0, "setting", "beats", minBeats);
+  outlet(0, "setting", "bars", minBars);
   outlet(0, "setting", "form", useForm ? 1 : 0);
   outlet(0, "setting", "sigs", useSignatures ? 1 : 0);
   outlet(0, "setting", "key", keyMode === "original" ? 1 : 0);
@@ -1440,6 +1509,7 @@ function restore() {
   outlet(0, "setting", "phrases", phrasesWanted);
   outlet(0, "setting", "transpose", transposeBy);
   outlet(0, "setting", "temperature", temperatureValue);
+  outlet(0, "setting", "perform", performing ? 1 : 0);
   for (const [name, values] of Object.entries(remembered.host || {})) {
     if (Array.isArray(values)) outlet(0, "setting", name, ...values);
   }
@@ -1451,7 +1521,8 @@ function save() {
   if (!settingsPath) return;
   remembered.corpora = folders.map((f) => ({ ...f }));
   remembered.seed = currentSeed;
-  remembered.beats = minBeats;
+  remembered.bars = minBars;
+  delete remembered.beats;
   remembered.form = useForm ? 1 : 0;
   remembered.signatures = useSignatures ? 1 : 0;
   remembered.key = keyMode === "original" ? 1 : 0;
@@ -1459,6 +1530,7 @@ function save() {
   remembered.phrases = phrasesWanted;
   remembered.transpose = transposeBy;
   remembered.temperature = temperatureValue;
+  remembered.perform = performing ? 1 : 0;
   try {
     settingsFile.write(settingsPath, remembered);
   } catch (e) {
@@ -1497,7 +1569,10 @@ function show(score, name, chorale) {
   outlet(0, "streamat", NO_STEP);
   followMeter(shown.meter);
   outlet(0, "coll", "clear");
-  const steps = queue.toSteps(shown, STEPS_PER_BEAT);
+  // Queued as performed (emi-perform); drawn as written, with the holds.
+  const played = performing ? performance.perform(shown, { stepsPerBeat: STEPS_PER_BEAT }) : { score: shown, holds: [] };
+  holds = played.holds;
+  const steps = queue.toSteps(played.score, STEPS_PER_BEAT);
   for (const { step, events } of steps) outlet(0, "coll", "store", step, ...events);
   outlet(0, "endat", steps.length ? Math.max(...steps.map(({ step }) => step)) : NO_STEP);
   draw(shown);
@@ -1655,6 +1730,7 @@ function draw(score, from = 0, to = score.lengthTicks) {
   const pitches = (events.length ? events : score.events).map((e) => e[1]);
   const barTicks = (score.meter[0] * score.ppq * 4) / score.meter[1];
   outlet(0, "view", "clear", to, Math.min(...pitches), Math.max(...pitches), barTicks, from, score.ppq);
+  if (holds.length) outlet(0, "view", "timemap", ...holds.flatMap(([end, extra]) => [end, extra]));
   const prov = score.provenance || null;
   const sources = prov ? [...new Set(prov.map((p) => p.work))] : [];
   const colorAt = (tick, voice) => {

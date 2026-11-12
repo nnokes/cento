@@ -113,7 +113,7 @@ test("corpus: pieces keep their chorale's form; under 5% dead ends", { skip }, (
   let deadEnds = 0;
   let relaxedSeams = 0;
   let labelsKept = 0;
-  const steps = [0, 0, 0, 0];
+  const steps = [0, 0, 0, 0, 0];
   for (let seed = 1; seed <= seeds; seed++) {
     const result = form.compose(db, { seed });
     if (result.stats.tried.length - result.stats.guarded > 1 || !result.ok) deadEnds++;
@@ -125,7 +125,7 @@ test("corpus: pieces keep their chorale's form; under 5% dead ends", { skip }, (
     checkForm(db, result.piece);
     assert.doesNotThrow(() => queue.toSteps(ingest.quantize(result.piece).work));
   }
-  t.diagnostic(`composed ${made} of ${seeds}; dead ends ${deadEnds}; strict ${steps[0]}, SPEAC preferred ${steps[1]}, octave moves ${steps[2]}, any cadence bass ${steps[3]}; ${(relaxedSeams / Math.max(1, made)).toFixed(1)} octave seams per piece; SPEAC labels kept ${Math.round((100 * labelsKept) / Math.max(1, made))}%`);
+  t.diagnostic(`composed ${made} of ${seeds}; dead ends ${deadEnds}; strict ${steps[0]}, SPEAC preferred ${steps[1]}, octave moves ${steps[2]}, any cadence soprano ${steps[3]}, any cadence bass ${steps[4]}; ${(relaxedSeams / Math.max(1, made)).toFixed(1)} octave seams per piece; SPEAC labels kept ${Math.round((100 * labelsKept) / Math.max(1, made))}%`);
   if (files.length >= 100) {
     assert.equal(made, seeds);
     assert.ok(deadEnds < 0.05 * seeds, `${deadEnds} dead ends in ${seeds} seeds`);

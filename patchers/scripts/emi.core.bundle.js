@@ -652,6 +652,7 @@ exports.barTicks = barTicks;
 //                             where this beat's voices go next in the original
 //   newNotes                  how many notes start inside this beat (0: pure continuation)
 //   bass                      the lowest pitch sounding at the start of the beat (null if none)
+//   soprano                   the pitch the first voice sounds at the start of the beat (null if silent)
 //   opening, cadence, final   first sounding beat; a fermata starts here; last beat of the work
 //   restBefore                the beat before is silent (always true for the opening)
 //
@@ -671,6 +672,7 @@ function segment(work, beatTicks = work.ppq) {
     const pieces = [];
     const entry = new Array(work.voices).fill("r");
     let bass = null;
+    let soprano = null;
     for (const [on, pitch, dur, voice, vel] of work.events) {
       const off = on + dur;
       if (off <= start || on >= end) continue;
@@ -681,6 +683,7 @@ function segment(work, beatTicks = work.ppq) {
       if (on <= start) {
         entry[voice - 1] = (tiedIn ? "~" : "") + pitch;
         bass = bass === null ? pitch : Math.min(bass, pitch);
+        if (voice === 1) soprano = pitch;
       }
     }
     pieces.sort((a, b2) => a[0] - b2[0] || a[3] - b2[3]);
@@ -691,6 +694,7 @@ function segment(work, beatTicks = work.ppq) {
       entryKey: entry.join(","),
       newNotes: pieces.filter((p) => !p[5]).length,
       bass,
+      soprano,
     });
   }
 
@@ -708,6 +712,7 @@ function segment(work, beatTicks = work.ppq) {
       destKey: next && next.pieces.length ? next.entryKey : null,
       newNotes: beat.newNotes,
       bass: beat.bass,
+      soprano: beat.soprano,
       opening: i === 0,
       restBefore: i === 0 || beats[beat.index - 1].pieces.length === 0,
       cadence: fermataBeats.has(beat.index),
@@ -1961,26 +1966,33 @@ const { assemble } = require("emi-compose");
 const STRONG = 0.5;
 
 const RELAX = [
-  { level: 0, speac: true, cadenceBass: true },
-  { level: 0, speac: "prefer", cadenceBass: true },
-  { level: 1, speac: "prefer", cadenceBass: true },
-  { level: 1, speac: "prefer", cadenceBass: false },
+  { level: 0, speac: true, cadenceBass: true, cadenceSoprano: true },
+  { level: 0, speac: "prefer", cadenceBass: true, cadenceSoprano: true },
+  { level: 1, speac: "prefer", cadenceBass: true, cadenceSoprano: true },
+  { level: 1, speac: "prefer", cadenceBass: true, cadenceSoprano: "prefer" },
+  { level: 1, speac: "prefer", cadenceBass: false, cadenceSoprano: "prefer" },
 ];
 
 // A template's slots, one per beat from its first sounding beat to its last:
 //   { rest: true }                                    a silent beat
-//   { beatInBar, cadence, bass, speac, first, afterRest, last, newNotes, mode }
+//   { beatInBar, cadence, bass, soprano, speac, contour, first, afterRest, last, newNotes, mode }
 // bass is the pitch class a cadence slot's chord must stand on (null
-// elsewhere, and everywhere when cadenceBass is false); speac is the beat
-// label a grouping must have (null when speac is false); mode is the
-// template's mode in a mixed corpus (null otherwise). newNotes is the
-// template's own beat's (0: a held chord); emi-stream splits phrases with it.
-// A slot may also be marked needsExit (emi-stream): its grouping must have
-// somewhere to go next.
-function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
+// elsewhere, and everywhere when cadenceBass is false); soprano is the pitch
+// class a cadence slot's soprano must sing, the template's degree at the
+// fermata (null elsewhere and when cadenceSoprano is false; a preference,
+// sopranoHard false, when it is "prefer"); speac is the beat label a grouping
+// must have (null when speac is false); contour is how the template's soprano
+// moves from this beat to the next, in semitones (null at the end, before a
+// rest, and when contour is false: feasible scores the direction and size of
+// the move); mode is the template's mode in a mixed corpus (null otherwise).
+// newNotes is the template's own beat's (0: a held chord); emi-stream splits
+// phrases with it. A slot may also be marked needsExit (emi-stream): its
+// grouping must have somewhere to go next.
+function slotsOf(db, template, { cadenceBass = true, speac = true, cadenceSoprano = true, contour = true } = {}) {
   const slots = [];
   const work = db.works.find((w) => w.id === template.work);
   const mode = db.mode === "mixed" && work ? work.mode : null;
+  const motion = sopranoOf(db).motion;
   // The template melody's range (M8): pieces keep their soprano within it.
   const sopranoRange = [Infinity, -Infinity];
   for (let k = 0; k < template.count; k++) {
@@ -2001,8 +2013,11 @@ function slotsOf(db, template, { cadenceBass = true, speac = true } = {}) {
       beatInBar: g.beatInBar,
       cadence: g.cadence,
       bass: cadenceBass && g.cadence && g.bass !== null ? g.bass % 12 : null,
+      soprano: cadenceSoprano && g.cadence && g.soprano !== null ? g.soprano % 12 : null,
+      sopranoHard: cadenceSoprano !== "prefer",
       speac: speac && g.speac ? g.speac.beat : null,
       speacHard: speac !== "prefer",
+      contour: contour && motion[template.start + k] !== NONE ? motion[template.start + k] : null,
       first: k === 0,
       afterRest: k > 0 && g.restBefore,
       last: k === template.count - 1,
@@ -2022,6 +2037,7 @@ function fits(g, slot, labels = true) {
   if (g.beatInBar !== slot.beatInBar || g.cadence !== slot.cadence) return false;
   if (slot.mode && g.mode !== slot.mode) return false;
   if (slot.bass !== null && (g.bass === null || g.bass % 12 !== slot.bass)) return false;
+  if (slot.soprano != null && slot.sopranoHard !== false && (g.soprano === null || g.soprano % 12 !== slot.soprano)) return false;
   if (labels && slot.speac && slot.speacHard !== false && (!g.speac || g.speac.beat !== slot.speac)) return false;
   if (slot.first && !g.opening) return false;
   if (slot.afterRest && !g.restBefore) return false;
@@ -2030,9 +2046,9 @@ function fits(g, slot, labels = true) {
 }
 
 // A repeated phrase's beat (M8) fits its slot as its original did: a literal
-// repeat, so labels, how phrases start and the cadence's bass don't count
-// (Bach sometimes harmonized a repeat afresh).
-const fitsRepeat = (g, slot) => fits(g, { ...slot, first: false, afterRest: false, bass: null }, false);
+// repeat, so labels, how phrases start and the cadence's bass and soprano
+// don't count (Bach sometimes harmonized a repeat afresh).
+const fitsRepeat = (g, slot) => fits(g, { ...slot, first: false, afterRest: false, bass: null, soprano: null }, false);
 
 const sourceOk = (from, to) => to.work !== from.work || to.newNotes === 0;
 
@@ -2133,29 +2149,40 @@ function pinsFor(db, slots, avoid = null) {
 // her music out of the corpus altogether.) Her forms move forward or back
 // in the same way when the form is chosen.
 const PIN = 1 << 20;
-const SCORE = { strong: 16, blockChance: 48, accidentals: 16, label: 4, tasteLabel: 8, range: 4, chance: 8 };
+const SCORE = { strong: 16, blockChance: 48, accidentals: 16, label: 4, tasteLabel: 8, range: 4, chance: 8, contour: 8, contourSize: 4, soprano: 16 };
 const TASTE_MAX = 64;
 const MIX_POINTS = 8;
 const mixPoints = (mix) => Math.max(-2 * MIX_POINTS, Math.min(2 * MIX_POINTS, Math.round((MIX_POINTS * (mix - 0.5)) / 0.25)));
 const clampTaste = (v) => Math.max(-TASTE_MAX, Math.min(TASTE_MAX, v));
 
-// Each grouping's lowest and highest soprano note (computed once per database).
+// Each grouping's lowest and highest soprano note, and how its soprano moves
+// on to the next beat (the destination's soprano less its own, in semitones;
+// NONE when either is silent or there is no next beat). Computed once per
+// database.
+const NONE = 999;
 const sopranoCache = new WeakMap();
 function sopranoOf(db) {
   if (!sopranoCache.has(db)) {
-    const low = new Int16Array(db.groupings.length).fill(999);
-    const high = new Int16Array(db.groupings.length).fill(-999);
+    const low = new Int16Array(db.groupings.length).fill(NONE);
+    const high = new Int16Array(db.groupings.length).fill(-NONE);
+    const motion = new Int16Array(db.groupings.length).fill(NONE);
     db.groupings.forEach((g, i) => {
       for (const p of g.pieces) {
         if (p[3] !== 1) continue;
         low[i] = Math.min(low[i], p[1]);
         high[i] = Math.max(high[i], p[1]);
       }
+      const from = lexicon.parseKey(g.entryKey)[0];
+      const to = g.destKey === null ? null : lexicon.parseKey(g.destKey)[0];
+      if (from && to) motion[i] = to.pitch - from.pitch;
     });
-    sopranoCache.set(db, { low, high });
+    sopranoCache.set(db, { low, high, motion });
   }
   return sopranoCache.get(db);
 }
+
+// A soprano move's shape: 0 the same note, 1 a step (up to a whole tone), 2 a leap.
+const shape = (semitones) => (semitones === 0 ? 0 : Math.abs(semitones) <= 2 ? 1 : 2);
 
 function feasible(db, slots, next, pins = null, noise = 0, { taste = null, temperature = 1, mix = null } = {}) {
   const n = db.groupings.length;
@@ -2196,6 +2223,17 @@ function feasible(db, slots, next, pins = null, noise = 0, { taste = null, tempe
     const label = slot.speac && slot.speacHard === false ? slot.speac : null;
     const labelPoints = beatTaste ? SCORE.tasteLabel : SCORE.label;
     const inRange = (i) => !range || (soprano.low[i] >= range[0] && soprano.high[i] <= range[1]);
+    // The template soprano's move from this beat (M1, after v0.1.0): points
+    // for a move the same way, more for one of the same shape (same note,
+    // step or leap). And its degree at a cadence (M2) when that is a
+    // preference rather than a rule (see fits).
+    const contour = slot.contour !== undefined ? slot.contour : null;
+    const contourPoints = (i) => {
+      const move = soprano.motion[i];
+      if (contour === null || move === NONE || Math.sign(move) !== Math.sign(contour)) return 0;
+      return SCORE.contour + (shape(move) === shape(contour) ? SCORE.contourSize : 0);
+    };
+    const degree = slot.soprano != null && slot.sopranoHard === false ? slot.soprano : null;
     // 0 to SCORE.chance - 1 at temperature 1.
     const chance = (i) => (noise ? Math.floor((((Math.imul(noise ^ Math.imul(s + 1, 0x9e3779b1), 0x85ebca6b) ^ Math.imul(i + 1, 0xc2b2ae35)) >>> 0) * SCORE.chance * temperature) / 4294967296) : 0);
     // Which block a cadence takes varies with the seed too.
@@ -2204,7 +2242,8 @@ function feasible(db, slots, next, pins = null, noise = 0, { taste = null, tempe
       const g = db.groupings[i];
       const liked = beatTaste ? TASTE_MAX + clampTaste(beatTaste[i]) : 0;
       const own = mix === null ? 0 : 2 * MIX_POINTS + (g.gen ? hers : 0);
-      return own + (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? labelPoints : 0) + (inRange(i) ? SCORE.range : 0) + chance(i) + liked;
+      const sings = degree !== null && g.soprano !== null && g.soprano % 12 === degree ? SCORE.soprano : 0;
+      return own + (color !== null && g.accidentals === color ? SCORE.accidentals : 0) + (label && g.speac && g.speac.beat === label ? labelPoints : 0) + (inRange(i) ? SCORE.range : 0) + contourPoints(i) + sings + chance(i) + liked;
     };
     const plus = (v, i) => (v < 0 ? -1 : v + reward(i));
     const free = new Int32Array(n).fill(-1);
@@ -2695,8 +2734,15 @@ function templateBeats(db, template) {
 // M9: taste (from emily-assoc's prepare, or null) and temperature (default
 // 1) are Emily's: they steer the search toward liked beats (see SCORE), and
 // the choice of form toward liked forms (byTaste).
-function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true, taste = null, temperature = 1, mix = null } = {}) {
+//
+// After v0.1.0 (docs/review.md, M1 and M2): contour scores each beat for
+// moving its soprano the way the template's does; cadenceSoprano keeps the
+// template's soprano degree at each fermata (a rule for the first three
+// relaxation steps, a preference for the last two; "prefer" makes it one
+// throughout; false drops it). Both default on.
+function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 20000, maxTemplates = 10, signatures = true, guard = true, template: only = null, repeats = true, taste = null, temperature = 1, mix = null, contour = true, cadenceSoprano = true } = {}) {
   const random = rng.create(seed);
+  const rules = (step) => ({ ...RELAX[step], contour, cadenceSoprano: cadenceSoprano === true ? RELAX[step].cadenceSoprano : cadenceSoprano });
   const prefs = taste || temperature !== 1 || mix !== null ? { taste, temperature, mix } : null;
   let templates = db.templates.filter((t) => (only ? t.work === only : templateBeats(db, t) >= beats));
   for (let i = templates.length - 1; i > 0; i--) {
@@ -2711,7 +2757,7 @@ function compose(db, { seed = 1, beats = 32, relax = RELAX.length - 1, budget = 
   const stats = (relaxed) => ({ tried, relaxed, steps: counters.steps, backtracks: counters.backtracks, guarded });
   for (const template of templates.slice(0, maxTemplates)) {
     tried.push(template.work);
-    const slotsAt = memo((step) => (repeats ? markRepeats(db, template, slotsOf(db, template, RELAX[step])) : slotsOf(db, template, RELAX[step])));
+    const slotsAt = memo((step) => (repeats ? markRepeats(db, template, slotsOf(db, template, rules(step))) : slotsOf(db, template, rules(step))));
     const pinsAt = memo((slots) => (signatures ? pinsFor(db, slots, template.work) : null));
     for (let step = 0; step <= relax; step++) {
       if (step < relax && labelsGiveWay(db, step, slotsAt, pinsAt, seed, prefs)) continue;
@@ -2790,6 +2836,8 @@ exports.pinsFor = pinsFor;
 exports.labelsGiveWay = labelsGiveWay;
 exports.memo = memo;
 exports.markRepeats = markRepeats;
+exports.sopranoOf = sopranoOf;
+exports.SCORE = SCORE;
   };
 
   // ---- emi-load.js
@@ -3422,8 +3470,8 @@ function choices(db, stream, random, last, prefs = null) {
 
 // The template's slots as this phrase needs them: silent beats for any gap,
 // how the first beat starts, and how the last one ends.
-function prepare(db, stream, choice, { last, cadenceBass, speac }) {
-  const slots = choice.slots.map((slot) => (slot.rest ? slot : { ...slot, bass: cadenceBass ? slot.bass : null, speac: speac ? slot.speac : null, speacHard: speac !== "prefer" }));
+function prepare(db, stream, choice, { last, cadenceBass, speac, cadenceSoprano = true }) {
+  const slots = choice.slots.map((slot) => (slot.rest ? slot : { ...slot, bass: cadenceBass ? slot.bass : null, soprano: cadenceSoprano ? slot.soprano : null, sopranoHard: cadenceSoprano !== "prefer", speac: speac ? slot.speac : null, speacHard: speac !== "prefer" }));
   const gap = gapBefore(db, stream, slots[0].beatInBar);
   const canHook = stream.last !== null && !stream.endsInRest && db.groupings[stream.last.index].destKey !== null;
   slots[0] = {
@@ -3706,6 +3754,189 @@ exports.build = build;
 exports.seal = seal;
 exports.unseal = unseal;
 exports.chance = chance;
+  };
+
+  // ---- emi-perform.js
+  factories["emi-perform"] = function (exports, module, require) {
+"use strict";
+// A performance layer for playback (after v0.1.0: docs/review.md, A). As
+// written, a score plays every note at one velocity and holds a fermata
+// chord for exactly its written length. This shapes a score for the player
+// the way singers would, without changing the score itself (export and
+// clips stay as written):
+//
+//   fermatas      the chord under each fermata is held longer (as long again,
+//                 up to a beat more; the last chord of all as long again
+//                 outright), then a breath, an eighth rest, before the next
+//                 phrase. Everything after it moves later by as much.
+//   dynamics      each phrase swells and settles: a velocity from the beat's
+//                 place in its phrase (an arch) and from its harmonic tension
+//                 against the phrase's (the chord's dissonance and the root's
+//                 motion, from emi-tension; not its metric part, which rises
+//                 on weak beats), the soprano a little louder, the inner
+//                 voices softer, beat 1 accented.
+//   articulation  a note followed by the same pitch in its voice is lifted (a
+//                 16th shorter), so the repeat is heard as a new note.
+//
+//   perform(score, { stepsPerBeat, final, fermatas, dynamics, articulation })
+//     -> { score, holds }
+// score: the performed score (events moved and reshaped; fermatas and
+// lengthTicks moved with them). holds, in the score's own ticks, one per
+// held chord: [endTick, extraTicks, holdTicks]: where the chord ends as
+// written, by how much everything after it moves (the hold and the breath),
+// and by how much its own notes are held. final: the score's last fermata
+// is the end of the music (a whole piece), not a phrase of a stream.
+//
+//   stretch(holds, tick)        a written tick as performed (an onset)
+//   tickOf(holds, performed)    a performed tick as written: inside a hold,
+//                               the held chord's end (the piano roll's playhead)
+// The player's queue is a grid of 16ths (emi-queue), so every hold and
+// breath is a whole number of steps.
+
+const { segment } = require("emi-segment");
+const tension = require("emi-tension");
+
+const HOLD = 1; // a fermata chord is held longer by this share of its length...
+const MAX_HOLD_BEATS = 1; // ...but by at most this, except the last chord of all
+const BREATH_STEPS = 2; // an eighth note before the next phrase
+const BASE = 80; // velocity: the middle of a phrase's range
+const ARCH = 10; // added at the middle of a phrase, nothing at its ends
+const TENSION = 8; // added for the phrase's tensest beat, taken off for its calmest
+const ACCENT = 3; // added on beat 1
+const VOICE = [6, -3, -3, 2]; // soprano, alto, tenor, bass
+
+function perform(score, { stepsPerBeat = 4, final = true, fermatas = true, dynamics = true, articulation = true } = {}) {
+  const beat = score.ppq;
+  const tps = beat / stepsPerBeat;
+  const holds = fermatas ? holdsOf(score, tps, final) : [];
+  const vel = dynamics ? velocities(score) : null;
+  const events = score.events.map(([on, pitch, dur, voice, v]) => {
+    const velocity = vel ? clamp(Math.round((vel.get(Math.floor(on / beat)) || BASE) + (VOICE[voice - 1] || 0))) : v;
+    return [stretch(holds, on), pitch, stretchOff(holds, on + dur) - stretch(holds, on), voice, velocity];
+  });
+  if (articulation) lift(events, beat, tps);
+  events.sort((a, b) => a[0] - b[0] || a[3] - b[3] || a[1] - b[1]);
+  return {
+    score: {
+      ...score,
+      events,
+      fermatas: (score.fermatas || []).map((f) => stretch(holds, f)),
+      lengthTicks: stretchOff(holds, score.lengthTicks),
+    },
+    holds,
+  };
+}
+
+const clamp = (v) => Math.max(1, Math.min(127, v));
+
+// The held chords: for each fermata, the notes sounding in its beat make the
+// chord; it ends where the first of the next notes starts (or where its own
+// notes end, if that's sooner: a rest may follow).
+function holdsOf(score, tps, final) {
+  const beat = score.ppq;
+  const onsets = [...new Set(score.events.map((e) => e[0]))].sort((a, b) => a - b);
+  const fermatas = [...new Set(score.fermatas || [])].sort((a, b) => a - b);
+  const holds = [];
+  fermatas.forEach((f, k) => {
+    const sounding = score.events.filter((e) => e[0] < f + beat && e[0] + e[2] > f);
+    if (!sounding.length) return;
+    const next = onsets.find((t) => t >= f + beat);
+    let end = Math.max(...sounding.map((e) => e[0] + e[2]));
+    if (next !== undefined) end = Math.min(end, next);
+    if (holds.some((h) => h[0] === end)) return;
+    const last = final && k === fermatas.length - 1 && next === undefined;
+    let hold = Math.round(((end - f) * HOLD) / tps) * tps;
+    if (!last) hold = Math.min(hold, MAX_HOLD_BEATS * beat);
+    hold = Math.max(hold, tps);
+    const breath = last ? 0 : BREATH_STEPS * tps;
+    holds.push([end, hold + breath, hold]);
+  });
+  return holds;
+}
+
+// An onset, as performed: moved by every hold before it.
+function stretch(holds, tick) {
+  let moved = 0;
+  for (const [end, extra] of holds) if (end <= tick) moved += extra;
+  return tick + moved;
+}
+
+// A note-off, as performed: a note ending where a chord is held is held with
+// it (not through the breath); one ending later moves by the whole extra.
+function stretchOff(holds, tick) {
+  let moved = 0;
+  for (const [end, extra, hold] of holds) {
+    if (end < tick) moved += extra;
+    else if (end === tick) moved += hold;
+  }
+  return tick + moved;
+}
+
+// A performed tick, as written. Inside a hold or breath: the held chord's end.
+function tickOf(holds, performed) {
+  let moved = 0;
+  for (const [end, extra] of holds) {
+    if (performed < end + moved) break;
+    if (performed < end + moved + extra) return end;
+    moved += extra;
+  }
+  return performed - moved;
+}
+
+// A velocity per beat (before the voice offsets), from the beat's place in
+// its phrase and its harmonic tension against the phrase's. Phrases end at
+// fermatas.
+function velocities(score) {
+  const beat = score.ppq;
+  const beatsPerBar = Math.round((score.meter[0] * 4) / score.meter[1]);
+  const groupings = segment({ ...score, id: score.id || "score", fermatas: score.fermatas || [] }, beat);
+  const parts = tension.tensionsOf(groupings, beatsPerBar);
+  const approaches = tension.approach(parts.map((t) => t.root));
+  const tensions = parts.map((t, k) => t.vertical + approaches[k]);
+  const cadences = new Set((score.fermatas || []).map((f) => Math.floor(f / beat)));
+  const phrases = [];
+  let phrase = [];
+  groupings.forEach((g, k) => {
+    phrase.push(k);
+    if (cadences.has(g.index)) {
+      phrases.push(phrase);
+      phrase = [];
+    }
+  });
+  if (phrase.length) phrases.push(phrase);
+  const out = new Map();
+  for (const members of phrases) {
+    const mean = members.reduce((sum, k) => sum + tensions[k], 0) / members.length;
+    const spread = Math.max(0.1, ...members.map((k) => Math.abs(tensions[k] - mean)));
+    members.forEach((k, n) => {
+      const pos = members.length > 1 ? n / (members.length - 1) : 0.5;
+      const z = Math.max(-1, Math.min(1, (tensions[k] - mean) / spread));
+      out.set(groupings[k].index, BASE + ARCH * Math.sin(Math.PI * pos) + TENSION * z + (groupings[k].beatInBar === 1 ? ACCENT : 0));
+    });
+  }
+  return out;
+}
+
+// A note a quarter or longer that runs straight into the same pitch in its
+// voice ends a 16th early.
+function lift(events, beat, tps) {
+  for (let v = 1; v <= 4; v++) {
+    const line = events.filter((e) => e[3] === v).sort((a, b) => a[0] - b[0]);
+    for (let k = 0; k + 1 < line.length; k++) {
+      const [a, b] = [line[k], line[k + 1]];
+      if (a[0] + a[2] === b[0] && a[1] === b[1] && a[2] >= beat) a[2] -= tps;
+    }
+  }
+}
+
+exports.perform = perform;
+exports.holdsOf = holdsOf;
+exports.stretch = stretch;
+exports.stretchOff = stretchOff;
+exports.tickOf = tickOf;
+exports.velocities = velocities;
+exports.BASE = BASE;
+exports.VOICE = VOICE;
   };
 
   // ---- emi-abtest-page.js
@@ -5562,7 +5793,7 @@ __emi_require.local = 1;
 //   streamat <step>            -> the player: send "need" when this step is reached
 //   endat <step>               -> the player: send "ended" when this step (the last note-offs) is
 //                                 reached, each time (999999: never). The Max version then stops.
-//   view clear|note|seam|cadence|speac|signature|parallel|source|done -> the piano roll
+//   view clear|note|seam|cadence|speac|signature|parallel|source|timemap|done -> the piano roll
 //   status <text...> | error <text...>                          -> the panel's status line
 //   setting <name> <value...>                                   -> a control to show a restored value
 //   meter <numerator> <denominator>                             -> the Max version's transport (M8)
@@ -5588,15 +5819,20 @@ __emi_require.local = 1;
 //   corpusrescan           read the folders again (after adding chorales to one)
 //   corpusbuild <id>       (from the engine itself, via later) build the corpus from the
 //                          folders that are on, then compose the seed shown
-//   beats <n>              shortest piece to compose (default 32)
+//   bars <n>               shortest piece to compose, in bars (default 8)
 //   form 1 | form 0        compose in the form of a chorale (M3, default) or freely (M2)
 //   sigs 1 | sigs 0        keep signatures at cadences (M7, default) or not
-//   seed <n>               set the seed; compose with it if a corpus is loaded
-//   compose [seed]         compose with the current seed (or this one)
-//   next                   add 1 to the seed and compose
+//                          (both in the Max version's more features window)
+//   seed <n>               set the seed (shown as the piece's number); compose with it if a corpus is loaded
+//   compose [seed]         compose with the current seed (or this one): "again" on the panel
+//   next                   add 1 to the seed and compose: "new piece" on the panel
 //   stream 1 | stream 0    compose phrase by phrase while playing (M5), or whole pieces
 //   phrases <n>            a stream ends after n phrases (0: endless)
 //   transpose <n>          semitones (-12..12): at once for a whole piece, from the next phrase in a stream
+//   perform 1 | perform 0  play as singers would (emi-perform: fermata chords held, a breath between
+//                          phrases, phrases that swell and settle; the default) or as written. Export
+//                          and clips are always as written. At once for a piece, from the next phrase
+//                          in a stream
 //   need                   (from the player) queue the stream's next phrase
 //   exportmidi <path>      write the current score as a MIDI file (and, for a composed
 //                          piece or stream, its provenance as a .json next to it)
@@ -5662,6 +5898,8 @@ const signatureNames = __emi_require("emi-signatures");
 const quality = __emi_require("emi-quality");
 const provenanceOf = __emi_require("emi-provenance");
 const abtests = __emi_require("emi-abtest");
+const performance = __emi_require("emi-perform");
+const keys = __emi_require("emi-key");
 const abtestPage = __emi_require("emi-abtest-page");
 const emily = __emi_require("emily-assoc");
 const variation = __emi_require("emily-vary");
@@ -5677,7 +5915,7 @@ const GRACE_MS = 1500; // a rating this soon after a stream phrase starts is for
 let loaded = null; // the last chorale read, in its written key
 let keyMode = "c";
 let db = null;
-let minBeats = 32;
+let minBars = 8; // the shortest piece, in bars (minBeats() in beats)
 let useForm = true;
 let useSignatures = true;
 let currentSeed = 1;
@@ -5685,6 +5923,8 @@ let autoClips = false;
 let streaming = false;
 let phrasesWanted = 8;
 let transposeBy = 0;
+let performing = true; // the performance layer for playback (emi-perform): fermatas held, dynamics
+let holds = []; // the current score's held chords (emi-perform), for the piano rolls' playhead
 let current = null; // { base (untransposed, or null for a stream), score, name, chorale }
 let flow = null; // the stream being queued: { state, steps, events, provenance, fermatas, name }
 let groupingsById = null; // { db, map }: the corpus's groupings by id, for the SPEAC lane
@@ -5795,17 +6035,24 @@ function changeCorpora(change) {
 }
 changeCorpora.local = 1;
 
-function beats(n) {
-  minBeats = Math.max(4, Math.min(256, Math.round(n)));
+function bars(n) {
+  minBars = Math.max(1, Math.min(64, Math.round(n)));
   save();
-  outlet(0, "status", "pieces", "of", minBeats + "+", "beats");
+  outlet(0, "status", "pieces", "of", minBars + "+", "bars");
 }
+
+// The shortest piece in beats: bars by the corpus's meter (4/4 until one is loaded).
+function minBeats() {
+  const meter = db ? db.meter : [4, 4];
+  return minBars * Math.round((meter[0] * 4) / meter[1]);
+}
+minBeats.local = 1;
 
 function form(on) {
   useForm = Boolean(on);
   save();
   if (useForm) outlet(0, "status", "pieces", "in", "the", "form", "of", "a", "chorale");
-  else outlet(0, "status", "free", "pieces", "(M2),", minBeats + "+", "beats");
+  else outlet(0, "status", "free", "pieces", "(M2),", minBars + "+", "bars");
 }
 
 function sigs(on) {
@@ -5860,6 +6107,16 @@ function transpose(n) {
   save();
   if (flow) outlet(0, "status", "transpose", signed(transposeBy), "from", "the", "next", "phrase");
   else if (current && current.base) show(current.base, current.name, current.chorale);
+}
+
+// The performance layer, on or off: a piece is queued again (from the next
+// bar), a stream from its next phrase.
+function perform(on) {
+  performing = Boolean(Number(on));
+  save();
+  if (flow) outlet(0, "status", "performance", performing ? "on" : "off", "from", "the", "next", "phrase");
+  else if (current && current.base) show(current.base, current.name, current.chorale);
+  else outlet(0, "status", "performance", performing ? "on" : "off");
 }
 
 function need() {
@@ -5943,7 +6200,7 @@ function exportmidi(path) {
       return;
     }
     const sidecar = target.replace(/\.midi?$/i, ".json");
-    const settings = { beats: minBeats, form: useForm, signatures: useSignatures, stream: Boolean(flow), transpose: transposeBy, temperature: temperatureValue, tasteRatings: memory.ratings };
+    const settings = { beats: minBeats(), form: useForm, signatures: useSignatures, stream: Boolean(flow), transpose: transposeBy, temperature: temperatureValue, tasteRatings: memory.ratings };
     files.writeText(sidecar, JSON.stringify(provenanceOf.record(db, current.score, settings), null, 1) + "\n");
     outlet(0, "status", "exported", files.fileName(target), "and", files.fileName(sidecar));
   });
@@ -6198,7 +6455,7 @@ function taste() {
     // so the patch stays responsive and the window shows the progress.
     comparing = {
       id: ++comparisons, first: currentSeed, k: 0, pairs: [], db, version: tasteVersion, taste: tasteNow(), temperature: temperatureValue,
-      options: { beats: minBeats, signatures: useSignatures }, likes, dislikes,
+      options: { beats: minBeats(), signatures: useSignatures }, likes, dislikes,
     };
     outlet(0, "emilyview", "comparing", 0, COMPARE_PAIRS);
     outlet(0, "status", ...`Magdalena: comparing ${COMPARE_PAIRS} pieces with her taste and without...`.split(" "));
@@ -6442,7 +6699,7 @@ function showCorpora(building) {
     const counted = (m) => bachDb.works.filter((w) => w.mode === m).length;
     const mode = bachDb.mode === "mixed" ? `${counted("major")} major, ${counted("minor")} minor` : bachDb.mode;
     const n = corpusReport.used.size;
-    summary = `In use: ${bachDb.works.length} chorales (${mode}) from ${n} ${n === 1 ? "folder" : "folders"}, in ${bachDb.meter.join("/")}: ${bachDb.groupings.length} beats, ${bachDb.signatures.length} signatures.`;
+    summary = `In use: ${bachDb.works.length} chorales (${mode}) from ${n} ${n === 1 ? "folder" : "folders"}, in ${bachDb.meter.join("/")}.`;
   }
   outlet(0, "corpusview", "footer", ...summary.split(" ")); // not "summary": see emi.corpora.v8ui.js
   outlet(0, "corpusview", "done");
@@ -6790,22 +7047,23 @@ function composeNow(atStartup) {
       startStream();
       return;
     }
-    const options = { seed: currentSeed, beats: minBeats, signatures: useSignatures };
+    const options = { seed: currentSeed, beats: minBeats(), signatures: useSignatures };
     const liked = useForm ? tasteNow() : null;
     const result = useForm ? forms.compose(db, { ...options, taste: liked, temperature: temperatureValue, mix: mixNow() }) : composer.compose(db, options);
     if (!result.ok) {
       if (useForm && !result.stats.tried.length) {
-        outlet(0, "error", "no", "chorale", "is", minBeats + "+", "beats", "long;", "lower", "beats");
+        outlet(0, "error", "no", "chorale", "is", minBars + "+", "bars", "long;", "lower", "bars");
       } else {
-        outlet(0, "error", "no", "piece", "for", "seed", currentSeed, "with", minBeats + "+", "beats;", "try", "another", "seed", "or", "more", "chorales");
+        outlet(0, "error", "no", "piece", "number", currentSeed, "of", minBars + "+", "bars;", "try", "another", "number", "or", "more", "chorales");
       }
       return;
     }
     const piece = varied(result.piece, currentSeed);
     show(piece, piece.id, false);
     let text = describePiece(piece);
-    if (autoClips && !atStartup) text += "; " + clips.writeScore(piece, piece.id);
+    if (autoClips && !atStartup) text += " \u00b7 " + clips.writeScore(piece, piece.id);
     outlet(0, "status", ...text.split(" "));
+    post(detailLine(piece) + "\n");
     for (const line of signatureLines(piece)) post(line + "\n");
     post(qualityLine(piece) + "\n");
     if (piece.variants && piece.variants.length) post(variantLine(piece) + "\n");
@@ -6825,6 +7083,8 @@ function startStream() {
     events: [],
     provenance: [],
     fermatas: [],
+    holds: [], // its held chords (emi-perform), in its written ticks
+    extra: 0, // the ticks those holds add before the next phrase
     name: "emi-" + currentSeed,
     playing: 1, // the phrase playing (M9: what "like" rates)
     since: Date.now(),
@@ -6858,8 +7118,16 @@ function appendPhrase() {
   const phrase = result.phrase;
   phrase.piece = varied(phrase.piece, (Math.imul(currentSeed, 1000) + number) >>> 0);
   const shown = transposed(ingest.quantize(phrase.piece).work, transposeBy);
+  // Queued as performed (emi-perform), after what the earlier phrases' holds
+  // added; drawn as written, with every hold so far.
+  const played = performing ? performance.perform(shown, { stepsPerBeat: STEPS_PER_BEAT, final: state.finished }) : { score: shown, holds: [] };
+  const before = flow.extra;
+  const queued = { ...played.score, events: played.score.events.map(([on, ...rest]) => [on + before, ...rest]) };
+  flow.holds.push(...played.holds);
+  flow.extra += played.holds.reduce((sum, [, extra]) => sum + extra, 0);
+  holds = flow.holds;
   const changed = [];
-  for (const { step, events } of queue.toSteps(shown, STEPS_PER_BEAT)) {
+  for (const { step, events } of queue.toSteps(queued, STEPS_PER_BEAT)) {
     flow.steps.set(step, mergeStep(flow.steps.get(step) || [], events));
     changed.push(step);
   }
@@ -6869,19 +7137,19 @@ function appendPhrase() {
   flow.fermatas.push(...shown.fermatas);
   current = { base: null, score: streamScore(shown, phrase.endTick), name: flow.name, chorale: false };
   const ticksPerStep = db.beatTicks / STEPS_PER_BEAT;
-  outlet(0, "streamat", state.finished ? NO_STEP : phrase.startTick / ticksPerStep);
+  outlet(0, "streamat", state.finished ? NO_STEP : (phrase.startTick + before) / ticksPerStep);
   if (state.finished) outlet(0, "endat", Math.max(...flow.steps.keys()));
   const from = state.phrases[Math.max(0, state.phrases.length - WINDOW)].startTick;
   draw(current.score, from, phrase.endTick);
-  let text = `${flow.name} stream: phrase ${number}${phrasesWanted ? " of " + phrasesWanted : ""} queued (${phrase.work} phrase ${phrase.index}`;
-  if (db.mode === "mixed") text += state.mode === "minor" ? ", A minor" : ", C major";
+  const parts = [`Stream ${currentSeed}`, `phrase ${number}${phrasesWanted ? " of " + phrasesWanted : ""}`];
+  parts.push(keyLine({ tonic: (state.mode || db.mode) === "minor" ? 9 : 0, mode: (state.mode || db.mode) === "minor" ? "minor" : "major" }));
+  parts.push(`from ${choraleName(phrase.work)}, phrase ${phrase.index}`);
   const names = blocksOf(phrase.piece.provenance, db.beatTicks).map((b) => b.name);
-  if (names.length) text += ", signature " + names.join(" and ");
-  if (phrase.fallback) text += ", after a breath";
-  if (phrase.piece.variants && phrase.piece.variants.length) text += ", varied: " + [...new Set(phrase.piece.variants.map((v) => v.op))].join(" and ");
-  if (phrase.final) text += ", the last";
-  if (transposeBy) text += ", transposed " + signed(transposeBy);
-  outlet(0, "status", ...(text + ")").split(" "));
+  if (names.length) parts.push("signature " + names.join(" and "));
+  if (phrase.fallback) parts.push("after a breath");
+  if (phrase.piece.variants && phrase.piece.variants.length) parts.push("varied: " + [...new Set(phrase.piece.variants.map((v) => v.op))].join(" and "));
+  if (phrase.final) parts.push("the last");
+  outlet(0, "status", ...parts.join(" \u00b7 ").split(" "));
   return phrase;
 }
 appendPhrase.local = 1;
@@ -6923,7 +7191,36 @@ function signed(n) {
 }
 signed.local = 1;
 
+// The status line, for listeners: "Piece 3 · A minor · 14 bars · in the
+// form of BWV 14.5 · from 24 chorales". The key is the music's as played
+// (transposed). The rest goes to the Max console (detailLine).
 function describePiece(piece) {
+  const s = composer.summary(piece);
+  const bars = Math.round(piece.lengthTicks / ((piece.meter[0] * piece.ppq * 4) / piece.meter[1]));
+  const parts = [`Piece ${piece.seed}`, keyLine(piece.key), `${bars} ${bars === 1 ? "bar" : "bars"}`];
+  parts.push(piece.form ? `in the form of ${choraleName(piece.form.template)}` : "free recombination");
+  parts.push(`from ${s.sources} ${s.sources === 1 ? "chorale" : "chorales"}`);
+  return parts.join(" \u00b7 ");
+}
+describePiece.local = 1;
+
+// "A minor", as played: the composed key moved by transpose.
+function keyLine(key) {
+  return keys.keyName({ tonic: (((key.tonic + transposeBy) % 12) + 12) % 12, mode: key.mode });
+}
+keyLine.local = 1;
+
+// "BWV 14.5" from the corpus's "bwv14.5"; any other id as it is.
+function choraleName(id) {
+  const m = /^bwv(\d.*)$/i.exec(String(id));
+  return m ? "BWV " + m[1] : String(id);
+}
+choraleName.local = 1;
+
+// The piece's details, for the Max console: its id (as exported), its
+// form's phrases and beats, SPEAC, signatures, variants, the notebook's
+// beats, and what had to give.
+function detailLine(piece) {
   const s = composer.summary(piece);
   if (!piece.form) return `${piece.id}: ${s.beats} beats from ${s.sources} chorales`;
   const phrases = piece.form.phrases + (piece.form.phrases === 1 ? " phrase" : " phrases");
@@ -6936,18 +7233,20 @@ function describePiece(piece) {
   if (own.beats) text += `, ${own.beats} ${own.beats === 1 ? "beat" : "beats"} from Magdalena's notebook` + (own.varied ? ` (${own.varied} with her variants)` : "");
   const relaxed = [];
   if (s.relaxed) relaxed.push(s.relaxed + (s.relaxed === 1 ? " octave move" : " octave moves"));
-  if (piece.form.relaxed === 3) relaxed.push("any cadence bass");
+  if (piece.form.relaxed === forms.RELAX.length - 1) relaxed.push("any cadence bass");
+  else if (piece.form.relaxed === forms.RELAX.length - 2) relaxed.push("any cadence soprano");
   if (piece.form.overLimit) relaxed.push("quotes over the limit");
   if (relaxed.length) text += " (" + relaxed.join(", ") + ")";
   return text;
 }
-describePiece.local = 1;
+detailLine.local = 1;
 
 // Applies the saved settings to the engine and shows them on the controls
 // (Max version). Host settings go back to the host as they were remembered.
 function restore() {
   if (remembered.seed !== undefined) currentSeed = clampSeed(remembered.seed);
-  if (remembered.beats !== undefined) minBeats = Math.max(4, Math.min(256, Math.round(remembered.beats)));
+  if (remembered.bars !== undefined) minBars = Math.max(1, Math.min(64, Math.round(remembered.bars)));
+  else if (remembered.beats !== undefined) minBars = Math.max(1, Math.min(64, Math.round(remembered.beats / 4))); // before bars (v0.1.0)
   if (remembered.form !== undefined) useForm = Boolean(remembered.form);
   if (remembered.signatures !== undefined) useSignatures = Boolean(remembered.signatures);
   if (remembered.key !== undefined) keyMode = remembered.key ? "original" : "c";
@@ -6955,8 +7254,9 @@ function restore() {
   if (remembered.phrases !== undefined) phrasesWanted = Math.max(0, Math.min(64, Math.round(remembered.phrases)));
   if (remembered.transpose !== undefined) transposeBy = Math.max(-12, Math.min(12, Math.round(remembered.transpose)));
   if (remembered.temperature !== undefined) temperatureValue = Math.max(0, Math.min(3, Number(remembered.temperature) || 0));
+  if (remembered.perform !== undefined) performing = Boolean(remembered.perform);
   outlet(0, "setting", "seed", currentSeed);
-  outlet(0, "setting", "beats", minBeats);
+  outlet(0, "setting", "bars", minBars);
   outlet(0, "setting", "form", useForm ? 1 : 0);
   outlet(0, "setting", "sigs", useSignatures ? 1 : 0);
   outlet(0, "setting", "key", keyMode === "original" ? 1 : 0);
@@ -6964,6 +7264,7 @@ function restore() {
   outlet(0, "setting", "phrases", phrasesWanted);
   outlet(0, "setting", "transpose", transposeBy);
   outlet(0, "setting", "temperature", temperatureValue);
+  outlet(0, "setting", "perform", performing ? 1 : 0);
   for (const [name, values] of Object.entries(remembered.host || {})) {
     if (Array.isArray(values)) outlet(0, "setting", name, ...values);
   }
@@ -6975,7 +7276,8 @@ function save() {
   if (!settingsPath) return;
   remembered.corpora = folders.map((f) => ({ ...f }));
   remembered.seed = currentSeed;
-  remembered.beats = minBeats;
+  remembered.bars = minBars;
+  delete remembered.beats;
   remembered.form = useForm ? 1 : 0;
   remembered.signatures = useSignatures ? 1 : 0;
   remembered.key = keyMode === "original" ? 1 : 0;
@@ -6983,6 +7285,7 @@ function save() {
   remembered.phrases = phrasesWanted;
   remembered.transpose = transposeBy;
   remembered.temperature = temperatureValue;
+  remembered.perform = performing ? 1 : 0;
   try {
     settingsFile.write(settingsPath, remembered);
   } catch (e) {
@@ -7021,7 +7324,10 @@ function show(score, name, chorale) {
   outlet(0, "streamat", NO_STEP);
   followMeter(shown.meter);
   outlet(0, "coll", "clear");
-  const steps = queue.toSteps(shown, STEPS_PER_BEAT);
+  // Queued as performed (emi-perform); drawn as written, with the holds.
+  const played = performing ? performance.perform(shown, { stepsPerBeat: STEPS_PER_BEAT }) : { score: shown, holds: [] };
+  holds = played.holds;
+  const steps = queue.toSteps(played.score, STEPS_PER_BEAT);
   for (const { step, events } of steps) outlet(0, "coll", "store", step, ...events);
   outlet(0, "endat", steps.length ? Math.max(...steps.map(({ step }) => step)) : NO_STEP);
   draw(shown);
@@ -7179,6 +7485,7 @@ function draw(score, from = 0, to = score.lengthTicks) {
   const pitches = (events.length ? events : score.events).map((e) => e[1]);
   const barTicks = (score.meter[0] * score.ppq * 4) / score.meter[1];
   outlet(0, "view", "clear", to, Math.min(...pitches), Math.max(...pitches), barTicks, from, score.ppq);
+  if (holds.length) outlet(0, "view", "timemap", ...holds.flatMap(([end, extra]) => [end, extra]));
   const prov = score.provenance || null;
   const sources = prov ? [...new Set(prov.map((p) => p.work))] : [];
   const colorAt = (tick, voice) => {
