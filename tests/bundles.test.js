@@ -108,7 +108,7 @@ test("each bundle exposes exactly its documented messages", () => {
   assert.deepEqual(loadBundle("emi.core").handlers(), [
     "abtest", "accept", "autoclips", "bars", "clear", "compose", "corpus", "corpusadd", "corpusbuild", "corpuson", "corpusonly", "corpusremove", "corpusrescan", "dislike", "exportmidi", "forget", "form", "key", "like", "loadmidi",
     "mix", "need", "next", "novelty", "pattern", "perform", "phrases", "pin", "recalltaste", "remember", "rollback", "seed", "select", "sigs", "snapshot", "startup", "storetaste", "stream",
-    "strength", "taste", "tastestep", "temperature", "testclip", "transpose", "unaccept", "unpin", "writeclips",
+    "strength", "taste", "tastestep", "temperature", "testclip", "unaccept", "unpin", "writeclips",
   ]);
   assert.deepEqual(loadBundle("emi.view").handlers(), [
     "cadence", "clear", "done", "highlight", "note", "onclick", "ondrag", "onidle", "onidleout", "onresize", "paint", "parallel", "playhead", "seam", "selection", "signature", "source", "speac", "timemap", "variant",
@@ -187,17 +187,25 @@ test("core: 'pattern' queues every step, draws it, and reports (as written, with
   assert.deepEqual(lastStatus(out), ["status", "test-cadence", "queued"]);
 });
 
-test("core: 'loadmidi' queues a chorale in C; 'key original' requeues it as written", () => {
+test("core: 'loadmidi' queues a chorale as written; 'key' moves it to a key signature and back (M5)", () => {
   const core = loadBundle("emi.core");
   core.send("perform", 0); // as written: every velocity 90
   const out = core.send("loadmidi", writeAMajorChorale());
   const stores = select(out, "coll").filter(([kind]) => kind === "store");
-  assert.deepEqual(stores[0], ["store", 12, 1, 79, 90, 2, 76, 90, 3, 72, 90, 4, 60, 90]); // +3: A -> C
-  assert.deepEqual(lastStatus(out), ["status", "bwv000", "A", "major", "->", "C", "major", "(+3)", "4/4", "2", "bars", "1", "phrases", "queued"]);
+  assert.deepEqual(stores[0], ["store", 12, 1, 76, 90, 2, 73, 90, 3, 69, 90, 4, 57, 90], "in its own key");
+  assert.deepEqual(lastStatus(out), ["status", "bwv000", "A", "major", "as", "written", "4/4", "2", "bars", "1", "phrases", "queued"]);
 
-  const original = core.send("key", "original");
-  assert.deepEqual(select(original, "coll")[1], ["store", 12, 1, 76, 90, 2, 73, 90, 3, 69, 90, 4, 57, 90]);
+  const inC = core.send("key", 1); // the menu's second item: C major / A minor
+  assert.deepEqual(select(inC, "coll")[1], ["store", 12, 1, 79, 90, 2, 76, 90, 3, 72, 90, 4, 60, 90]); // +3: A -> C
+  assert.deepEqual(lastStatus(inC), ["status", "bwv000", "A", "major", "->", "C", "major", "(+3)", "4/4", "2", "bars", "1", "phrases", "queued"]);
+  // Every key is reached from C major / A minor (the key music is composed in) by the shorter way, so a
+  // chorale and a piece in the same key share a register: Eb is up a minor third from C.
+  const inEb = core.send("key", "Eb");
+  assert.deepEqual(select(inEb, "coll")[1], ["store", 12, 1, 82, 90, 2, 79, 90, 3, 75, 90, 4, 63, 90]);
+  assert.deepEqual(lastStatus(inEb).slice(0, 8), ["status", "bwv000", "A", "major", "->", "Eb", "major", "(+6)"]);
+  assert.deepEqual(select(core.send("key", "chorale"), "coll")[1], ["store", 12, 1, 76, 90, 2, 73, 90, 3, 69, 90, 4, 57, 90], "as written again");
   assert.equal(lastStatus(core.send("key", "sideways"))[0], "error");
+  assert.equal(lastStatus(core.send("key", 13))[0], "error");
 });
 
 test("core: a missing file is an error, not a crash", () => {
@@ -315,7 +323,11 @@ test("core: 'seed' sets the seed, and composes once a corpus is loaded", () => {
   core.send("bars", 2);
   assert.deepEqual(lastStatus(core.send("compose")).slice(0, 3), ["status", "Piece", "7"]);
   assert.deepEqual(lastStatus(core.send("seed", 9)).slice(0, 3), ["status", "Piece", "9"]);
-  assert.deepEqual(core.send("key", 1), [], "0/1 from a toggle work too (quiet: no chorale is current)");
+  // The key: the piece is queued again, in D major (the test chorales are in C).
+  const inD = core.send("key", "D");
+  assert.deepEqual(inD[0], [0, "restart"]);
+  assert.deepEqual(lastStatus(inD).slice(0, 6), ["status", "Piece", "9", "\u00b7", "D", "major"]);
+  assert.deepEqual(lastStatus(core.send("key", 0)).slice(0, 6), ["status", "Piece", "9", "\u00b7", "C", "major"], "the chorale's key: C");
   assert.equal(lastStatus(core.send("key", "sideways"))[0], "error");
 });
 
@@ -393,7 +405,7 @@ test("core: 'exportmidi' writes the current score as a MIDI file, and a piece's 
   const record = JSON.parse(fs.readFileSync(target + ".json", "utf8"));
   assert.equal(record.piece, "emi-3");
   assert.equal(record.seed, 3);
-  assert.deepEqual(record.settings, { beats: 8, form: true, signatures: true, stream: false, transpose: 0, temperature: 1, tasteRatings: 0 });
+  assert.deepEqual(record.settings, { beats: 8, form: true, signatures: true, stream: false, key: "chorale", temperature: 1, tasteRatings: 0 });
   assert.equal(record.beats.length, 11, "one entry per beat");
   for (const beat of record.beats) {
     assert.match(beat.grouping, /^[abc]:\d+$/);
@@ -513,7 +525,7 @@ test("stream: phrase joins keep note-offs before note-ons, endlessly", () => {
   assertPlaysCleanly(queueOf(...outputs));
 });
 
-test("stream: transpose is heard from the next phrase; whole pieces are requeued at once", () => {
+test("stream: a new key is heard from the next phrase; whole pieces are requeued at once", () => {
   const plain = loadBundle("emi.core");
   const moved = loadBundle("emi.core");
   for (const core of [plain, moved]) {
@@ -522,17 +534,18 @@ test("stream: transpose is heard from the next phrase; whole pieces are requeued
     core.send("phrases", 0);
     core.send("compose", 3);
   }
-  assert.deepEqual(lastStatus(moved.send("transpose", 2)), ["status", "transpose", "+2", "from", "the", "next", "phrase"]);
+  assert.deepEqual(lastStatus(moved.send("key", "D")), ["status", "key:", "D", "major", "/", "B", "minor", "from", "the", "next", "phrase"]);
   const pitches = (out) => select(out, "coll").flatMap(([, , ...events]) => events.filter((_, i) => i % 3 === 1));
   const a = pitches(plain.send("need"));
   const b = pitches(moved.send("need"));
   assert.deepEqual(b, a.map((p) => p + 2));
+  assert.ok(lastStatus(moved.send("need")).join(" ").includes("\u00b7 D major \u00b7"), "the status line says where it plays");
 
   const whole = loadBundle("emi.core");
   whole.send("corpus", writeCorpus());
   whole.send("bars", 2);
   const before = pitches(whole.send("compose", 3));
-  const after = whole.send("transpose", -1);
+  const after = whole.send("key", "B"); // by the shorter way: down a semitone
   assert.deepEqual(after[0], [0, "restart"]);
   assert.deepEqual(pitches(after), before.map((p) => p - 1));
 });
@@ -589,18 +602,18 @@ test("settings: the Max version restores every setting, reloads the corpus and c
   first.send("seed", 5);
   first.send("bars", 2);
   first.send("form", 0);
-  first.send("key", "original");
+  first.send("key", "Eb");
   first.send("remember", "bpm", 120);
   first.send("remember", "output", 2);
   assert.deepEqual(settingsIn(folder), {
     corpora: [{ path: corpusDir, on: true, works: 3, meter: "4/4", modes: "major" }],
-    corpus: corpusDir, seed: 5, bars: 2, form: 0, signatures: 1, key: 1, stream: 0, phrases: 8, transpose: 0, temperature: 1, perform: 1, host: { bpm: [120], output: [2] },
+    corpus: corpusDir, seed: 5, bars: 2, form: 0, signatures: 1, key: "Eb", stream: 0, phrases: 8, temperature: 1, perform: 1, host: { bpm: [120], output: [2] },
   });
 
   const second = engineIn(folder);
   const out = second.send("startup", "all");
   assert.deepEqual(select(out, "setting"), [
-    ["seed", 5], ["bars", 2], ["form", 0], ["sigs", 1], ["key", 1], ["stream", 0], ["phrases", 8], ["transpose", 0], ["temperature", 1], ["perform", 1], ["bpm", 120], ["output", 2],
+    ["seed", 5], ["bars", 2], ["form", 0], ["sigs", 1], ["key", 4], ["stream", 0], ["phrases", 8], ["temperature", 1], ["perform", 1], ["bpm", 120], ["output", 2],
   ]);
   const status = lastStatus(out);
   assert.deepEqual(status.slice(1, 3), ["Piece", "5"], "composed piece 5");
@@ -1087,11 +1100,11 @@ test("core: 'writeclips' needs a current score", () => {
   assert.deepEqual(live.calls, []);
 });
 
-test("core: 'writeclips' writes the loaded chorale in C, one clip per voice track", () => {
+test("core: 'writeclips' writes the loaded chorale as written, one clip per voice track", () => {
   const live = fakeLive({ trackNames: ["EMI", "Soprano", "Alto", "Tenor", "Bass"], filled: ["2:0"] });
   const core = loadBundle("emi.core", live);
   core.send("loadmidi", writeAMajorChorale());
-  assert.deepEqual(lastStatus(core.send("writeclips")), ["status", "wrote", "bwv000", "in", "C", "to", "4", "voice", "tracks"]);
+  assert.deepEqual(lastStatus(core.send("writeclips")), ["status", "wrote", "bwv000", "to", "4", "voice", "tracks"]);
   const creates = live.calls.filter(([, name]) => name === "create_clip").map(([where]) => where);
   assert.deepEqual(creates, [
     "live_set tracks 1 clip_slots 0",
@@ -1101,7 +1114,7 @@ test("core: 'writeclips' writes the loaded chorale in C, one clip per voice trac
   ]);
   // Array.from: arrays made inside the simulated [v8] belong to another realm.
   const bass = live.calls.filter(([, name]) => name === "add_new_notes")[3][2].notes;
-  assert.deepEqual(Array.from(bass, (n) => n.pitch), [60, 55, 60]);
+  assert.deepEqual(Array.from(bass, (n) => n.pitch), [57, 52, 57], "in A major, as written");
 });
 
 test("core: with 'autoclips 1', every compose also writes clips", () => {

@@ -1627,8 +1627,9 @@ playback only), a leaner GUI (*built*: the composer's switches in more
 features, new piece / piece # / again, a listener's status line, length in
 bars), and composer changes aimed at the listening test (*built*: the
 soprano's contour scored against the template's, and its degree kept at
-each cadence, with a fifth relaxation step before any cadence bass; still
-open: chord function, the template's key).
+each cadence, with a fifth relaxation step before any cadence bass; music
+played in its chorale's key, or a key signature from the **key** menu, in
+place of transpose; still open: chord function).
 
 **Later, if it's wanted**: a standalone app for the Max version (signed and
 notarized, so it opens with no warning); a Live Pack (one file that installs

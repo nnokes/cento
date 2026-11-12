@@ -5784,7 +5784,7 @@ __emi_require.local = 1;
 // Streaming (M5): with "stream 1", compose starts a stream of phrases. Two
 // phrases are queued; when the player reaches the start of the last queued
 // phrase it sends "need", and the next phrase is composed and queued. Changes
-// to transpose, phrases and seed are heard from the next phrase composed.
+// to the key, phrases and seed are heard from the next phrase composed.
 //
 // One inlet, one outlet; every output starts with a selector:
 //   coll clear | coll store <step> <voice pitch velocity>...   -> [coll ---emi.queue]
@@ -5809,7 +5809,13 @@ __emi_require.local = 1;
 //
 // Messages:
 //   loadmidi <path>        read a chorale (+ its .json) and make it current
-//   key c|original|0|1     chorales in C major / A minor (default) or as written
+//   key chorale|<note>|<n> where the music plays (after v0.1.0: docs/review.md, M5). chorale (the
+//                          default): in its chorale's key: a piece in the key of the chorale whose
+//                          form it takes, a stream in its first chorale's, a loaded chorale as
+//                          written. A note name (C, Db, F#...): that key signature: major pieces in
+//                          its major, minor ones in its relative minor. <n> as the panel's menu
+//                          counts: 0 chorale, 1 C / A minor ... 12 B / G# minor. A piece moves at
+//                          once, a stream from its next phrase
 //   corpus <folder>        read every chorale in a folder and build the lexicon from it
 //                          alone (M11: the folder joins the list of corpora, the only one on)
 //   corpusadd <folder>     M11, from the corpus window: add a folder (switched on)
@@ -5828,7 +5834,6 @@ __emi_require.local = 1;
 //   next                   add 1 to the seed and compose: "new piece" on the panel
 //   stream 1 | stream 0    compose phrase by phrase while playing (M5), or whole pieces
 //   phrases <n>            a stream ends after n phrases (0: endless)
-//   transpose <n>          semitones (-12..12): at once for a whole piece, from the next phrase in a stream
 //   perform 1 | perform 0  play as singers would (emi-perform: fermata chords held, a breath between
 //                          phrases, phrases that swell and settle; the default) or as written. Export
 //                          and clips are always as written. At once for a piece, from the next phrase
@@ -5913,7 +5918,7 @@ const WINDOW = 4; // phrases of a stream shown in the piano roll
 const GRACE_MS = 1500; // a rating this soon after a stream phrase starts is for the one before
 
 let loaded = null; // the last chorale read, in its written key
-let keyMode = "c";
+let keyChoice = "chorale"; // where the music plays: "chorale" (its chorale's key) or 0..11, a key signature (the major key's tonic)
 let db = null;
 let minBars = 8; // the shortest piece, in bars (minBeats() in beats)
 let useForm = true;
@@ -5922,10 +5927,9 @@ let currentSeed = 1;
 let autoClips = false;
 let streaming = false;
 let phrasesWanted = 8;
-let transposeBy = 0;
 let performing = true; // the performance layer for playback (emi-perform): fermatas held, dynamics
 let holds = []; // the current score's held chords (emi-perform), for the piano rolls' playhead
-let current = null; // { base (untransposed, or null for a stream), score, name, chorale }
+let current = null; // { base (as composed, or null for a stream), score (as played), shift (semitones between them), name, chorale }
 let flow = null; // the stream being queued: { state, steps, events, provenance, fermatas, name }
 let groupingsById = null; // { db, map }: the corpus's groupings by id, for the SPEAC lane
 let signaturesById = null; // { db, map }: the corpus's signatures by id, for their names
@@ -5970,16 +5974,75 @@ function loadmidi(path) {
   });
 }
 
-function key(mode) {
-  if (mode === 0 || mode === "c") keyMode = "c";
-  else if (mode === 1 || mode === "original") keyMode = "original";
-  else {
-    outlet(0, "error", "key", "must", "be", "c", "or", "original");
+function key(choice) {
+  const parsed = parseKeyChoice(choice);
+  if (parsed === null) {
+    outlet(0, "error", "key", "must", "be", "chorale,", "a", "note", "name", "(C,", "Db,", "F#...)", "or", "a", "number", "0..12");
     return;
   }
+  keyChoice = parsed;
   save();
-  if (loaded && current && current.chorale) showChorale();
+  if (flow) outlet(0, "status", "key:", ...keyChoiceName().split(" "), "from", "the", "next", "phrase");
+  else if (current && current.chorale) showChorale();
+  else if (current && current.base) {
+    show(current.base, current.name, false);
+    outlet(0, "status", ...describePiece(current.base).split(" "));
+  } else outlet(0, "status", "key:", ...keyChoiceName().split(" "));
 }
+
+// "chorale", "original" (v0.1.0) -> "chorale"; a note name -> its pitch
+// class; a number as the panel's menu counts (0: chorale, 1..12: C..B).
+// null for anything else.
+function parseKeyChoice(choice) {
+  if (choice === "chorale" || choice === "original") return "chorale";
+  if (typeof choice === "number") return choice === 0 ? "chorale" : choice >= 1 && choice <= 12 ? Math.round(choice) - 1 : null;
+  try {
+    return keys.tonicFromName(choice);
+  } catch (e) {
+    return null;
+  }
+}
+parseKeyChoice.local = 1;
+
+// The menu's index for the current choice: 0 chorale, 1..12 C..B.
+function keyChoiceIndex() {
+  return keyChoice === "chorale" ? 0 : keyChoice + 1;
+}
+keyChoiceIndex.local = 1;
+
+// "chorale's key" or "Eb major / C minor".
+function keyChoiceName() {
+  if (keyChoice === "chorale") return "chorale's key";
+  return keys.keyName({ tonic: keyChoice, mode: "major" }) + " / " + keys.keyName({ tonic: (keyChoice + 9) % 12, mode: "minor" });
+}
+keyChoiceName.local = 1;
+
+// Semitones that take music in key (as composed: C major or A minor) to
+// where it should play: its chorale's key (home, as read; null when it has
+// none: it stays) or the chosen key signature, by the shorter way.
+function shiftFor(key, home) {
+  if (!key) return 0;
+  let tonic;
+  if (keyChoice === "chorale") {
+    if (!home) return 0;
+    tonic = home.tonic;
+  } else tonic = key.mode === "minor" ? (keyChoice + 9) % 12 : keyChoice;
+  const up = (((tonic - key.tonic) % 12) + 12) % 12;
+  return up >= 6 ? up - 12 : up;
+}
+shiftFor.local = 1;
+
+// The key a score was read in: a composed piece's template chorale's (null
+// with chorale form off), a loaded chorale's own.
+function homeKeyOf(score, chorale) {
+  if (chorale) return loaded ? loaded.key : null;
+  if (score.form && score.form.template && db) {
+    const work = db.works.find((w) => w.id === score.form.template);
+    return work && work.key ? work.key : null;
+  }
+  return null;
+}
+homeKeyOf.local = 1;
 
 function corpus(folder) {
   attempt(() => {
@@ -6102,13 +6165,6 @@ function phrases(n) {
   else outlet(0, "status", "streams", "are", "endless");
 }
 
-function transpose(n) {
-  transposeBy = Math.max(-12, Math.min(12, Math.round(n)));
-  save();
-  if (flow) outlet(0, "status", "transpose", signed(transposeBy), "from", "the", "next", "phrase");
-  else if (current && current.base) show(current.base, current.name, current.chorale);
-}
-
 // The performance layer, on or off: a piece is queued again (from the next
 // bar), a stream from its next phrase.
 function perform(on) {
@@ -6200,7 +6256,7 @@ function exportmidi(path) {
       return;
     }
     const sidecar = target.replace(/\.midi?$/i, ".json");
-    const settings = { beats: minBeats(), form: useForm, signatures: useSignatures, stream: Boolean(flow), transpose: transposeBy, temperature: temperatureValue, tasteRatings: memory.ratings };
+    const settings = { beats: minBeats(), form: useForm, signatures: useSignatures, stream: Boolean(flow), key: keyChoice === "chorale" ? "chorale" : keys.PC_NAMES[keyChoice], temperature: temperatureValue, tasteRatings: memory.ratings };
     files.writeText(sidecar, JSON.stringify(provenanceOf.record(db, current.score, settings), null, 1) + "\n");
     outlet(0, "status", "exported", files.fileName(target), "and", files.fileName(sidecar));
   });
@@ -7085,6 +7141,7 @@ function startStream() {
     fermatas: [],
     holds: [], // its held chords (emi-perform), in its written ticks
     extra: 0, // the ticks those holds add before the next phrase
+    home: null, // the key of the chorale its first phrase came from (as read)
     name: "emi-" + currentSeed,
     playing: 1, // the phrase playing (M9: what "like" rates)
     since: Date.now(),
@@ -7117,7 +7174,15 @@ function appendPhrase() {
   }
   const phrase = result.phrase;
   phrase.piece = varied(phrase.piece, (Math.imul(currentSeed, 1000) + number) >>> 0);
-  const shown = transposed(ingest.quantize(phrase.piece).work, transposeBy);
+  // The stream plays in the key of the chorale its first phrase came from
+  // (keyChoice "chorale") or the chosen one; a change is heard from here on.
+  const phraseKey = { tonic: (state.mode || db.mode) === "minor" ? 9 : 0, mode: (state.mode || db.mode) === "minor" ? "minor" : "major" };
+  if (!flow.home) {
+    const work = db.works.find((w) => w.id === phrase.work);
+    flow.home = work && work.key ? work.key : null;
+  }
+  const shift = shiftFor(phraseKey, flow.home);
+  const shown = transposed(ingest.quantize(phrase.piece).work, shift);
   // Queued as performed (emi-perform), after what the earlier phrases' holds
   // added; drawn as written, with every hold so far.
   const played = performing ? performance.perform(shown, { stepsPerBeat: STEPS_PER_BEAT, final: state.finished }) : { score: shown, holds: [] };
@@ -7135,14 +7200,14 @@ function appendPhrase() {
   flow.events.push(...shown.events);
   flow.provenance.push(...shown.provenance);
   flow.fermatas.push(...shown.fermatas);
-  current = { base: null, score: streamScore(shown, phrase.endTick), name: flow.name, chorale: false };
+  current = { base: null, score: streamScore(shown, phrase.endTick), shift, name: flow.name, chorale: false };
   const ticksPerStep = db.beatTicks / STEPS_PER_BEAT;
   outlet(0, "streamat", state.finished ? NO_STEP : (phrase.startTick + before) / ticksPerStep);
   if (state.finished) outlet(0, "endat", Math.max(...flow.steps.keys()));
   const from = state.phrases[Math.max(0, state.phrases.length - WINDOW)].startTick;
   draw(current.score, from, phrase.endTick);
   const parts = [`Stream ${currentSeed}`, `phrase ${number}${phrasesWanted ? " of " + phrasesWanted : ""}`];
-  parts.push(keyLine({ tonic: (state.mode || db.mode) === "minor" ? 9 : 0, mode: (state.mode || db.mode) === "minor" ? "minor" : "major" }));
+  parts.push(keyLine(phraseKey, shift));
   parts.push(`from ${choraleName(phrase.work)}, phrase ${phrase.index}`);
   const names = blocksOf(phrase.piece.provenance, db.beatTicks).map((b) => b.name);
   if (names.length) parts.push("signature " + names.join(" and "));
@@ -7191,22 +7256,23 @@ function signed(n) {
 }
 signed.local = 1;
 
-// The status line, for listeners: "Piece 3 · A minor · 14 bars · in the
+// The status line, for listeners: "Piece 3 · E minor · 14 bars · in the
 // form of BWV 14.5 · from 24 chorales". The key is the music's as played
-// (transposed). The rest goes to the Max console (detailLine).
+// (the piece's, moved to where it plays: see key). The rest goes to the Max
+// console (detailLine).
 function describePiece(piece) {
   const s = composer.summary(piece);
   const bars = Math.round(piece.lengthTicks / ((piece.meter[0] * piece.ppq * 4) / piece.meter[1]));
-  const parts = [`Piece ${piece.seed}`, keyLine(piece.key), `${bars} ${bars === 1 ? "bar" : "bars"}`];
+  const parts = [`Piece ${piece.seed}`, keyLine(piece.key, shiftFor(piece.key, homeKeyOf(piece, false))), `${bars} ${bars === 1 ? "bar" : "bars"}`];
   parts.push(piece.form ? `in the form of ${choraleName(piece.form.template)}` : "free recombination");
   parts.push(`from ${s.sources} ${s.sources === 1 ? "chorale" : "chorales"}`);
   return parts.join(" \u00b7 ");
 }
 describePiece.local = 1;
 
-// "A minor", as played: the composed key moved by transpose.
-function keyLine(key) {
-  return keys.keyName({ tonic: (((key.tonic + transposeBy) % 12) + 12) % 12, mode: key.mode });
+// "E minor", as played: the composed key moved by shift semitones.
+function keyLine(key, shift) {
+  return keys.keyName({ tonic: (((key.tonic + shift) % 12) + 12) % 12, mode: key.mode });
 }
 keyLine.local = 1;
 
@@ -7249,20 +7315,18 @@ function restore() {
   else if (remembered.beats !== undefined) minBars = Math.max(1, Math.min(64, Math.round(remembered.beats / 4))); // before bars (v0.1.0)
   if (remembered.form !== undefined) useForm = Boolean(remembered.form);
   if (remembered.signatures !== undefined) useSignatures = Boolean(remembered.signatures);
-  if (remembered.key !== undefined) keyMode = remembered.key ? "original" : "c";
+  if (typeof remembered.key === "string") keyChoice = parseKeyChoice(remembered.key) === null ? "chorale" : parseKeyChoice(remembered.key); // a number is v0.1.0's original key switch: the default now
   if (remembered.stream !== undefined) streaming = Boolean(remembered.stream);
   if (remembered.phrases !== undefined) phrasesWanted = Math.max(0, Math.min(64, Math.round(remembered.phrases)));
-  if (remembered.transpose !== undefined) transposeBy = Math.max(-12, Math.min(12, Math.round(remembered.transpose)));
   if (remembered.temperature !== undefined) temperatureValue = Math.max(0, Math.min(3, Number(remembered.temperature) || 0));
   if (remembered.perform !== undefined) performing = Boolean(remembered.perform);
   outlet(0, "setting", "seed", currentSeed);
   outlet(0, "setting", "bars", minBars);
   outlet(0, "setting", "form", useForm ? 1 : 0);
   outlet(0, "setting", "sigs", useSignatures ? 1 : 0);
-  outlet(0, "setting", "key", keyMode === "original" ? 1 : 0);
+  outlet(0, "setting", "key", keyChoiceIndex());
   outlet(0, "setting", "stream", streaming ? 1 : 0);
   outlet(0, "setting", "phrases", phrasesWanted);
-  outlet(0, "setting", "transpose", transposeBy);
   outlet(0, "setting", "temperature", temperatureValue);
   outlet(0, "setting", "perform", performing ? 1 : 0);
   for (const [name, values] of Object.entries(remembered.host || {})) {
@@ -7280,10 +7344,10 @@ function save() {
   delete remembered.beats;
   remembered.form = useForm ? 1 : 0;
   remembered.signatures = useSignatures ? 1 : 0;
-  remembered.key = keyMode === "original" ? 1 : 0;
+  remembered.key = keyChoice === "chorale" ? "chorale" : keys.PC_NAMES[keyChoice];
   remembered.stream = streaming ? 1 : 0;
   remembered.phrases = phrasesWanted;
-  remembered.transpose = transposeBy;
+  delete remembered.transpose; // v0.1.0: semitones; key says where the music plays now
   remembered.temperature = temperatureValue;
   remembered.perform = performing ? 1 : 0;
   try {
@@ -7305,9 +7369,17 @@ function attempt(action) {
 attempt.local = 1;
 
 function showChorale() {
-  const work = files.inKey(loaded, keyMode);
-  show(work, work.id + (work.transposedBy ? " in C" : ""), true);
-  outlet(0, "status", ...ingest.describe(work).split(" "), "queued");
+  const work = files.inKey(loaded, "c"); // as composed: C major or A minor
+  const shift = shiftFor(work.key, loaded.key);
+  const played = keyLine(work.key, shift);
+  const written = keys.keyName(loaded.key);
+  show(work, work.id + (played === written ? "" : " in " + played), true);
+  const parts = [loaded.id, written];
+  if (played === written) parts.push("as written");
+  else parts.push("->", played, "(" + signed(work.transposedBy + shift) + ")");
+  const bars = work.lengthTicks / ((work.meter[0] * work.ppq * 4) / work.meter[1]);
+  parts.push(work.meter.join("/"), bars + " bars", work.fermatas.length + " phrases", "queued");
+  outlet(0, "status", ...parts.join(" ").split(" "));
 }
 showChorale.local = 1;
 
@@ -7318,8 +7390,9 @@ function show(score, name, chorale) {
   flow = null;
   selection = null;
   const { work } = ingest.quantize(score);
-  const shown = transposed(work, transposeBy);
-  current = { base: work, score: shown, name, chorale };
+  const shift = shiftFor(work.key, homeKeyOf(work, chorale));
+  const shown = transposed(work, shift);
+  current = { base: work, score: shown, shift, name, chorale };
   outlet(0, "restart");
   outlet(0, "streamat", NO_STEP);
   followMeter(shown.meter);

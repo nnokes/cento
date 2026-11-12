@@ -46,7 +46,7 @@ This page is written from the same table as the hover text (the patch generator)
 | **bars** | The shortest piece to compose, in bars (1 to 64). With chorale form on (more features), only chorales at least this long lend their form. |
 | **stream** | On: new piece and again start a stream, composed a phrase at a time while it plays, for as many phrases as phrases says. Off: whole pieces. |
 | **phrases** | How many phrases a stream plays before it ends (0: endless). |
-| **transpose** | Transpose the music by semitones (-12 to 12): a piece at once, a stream from its next phrase. |
+| **key** | Where the music plays. chorale's key (the default): a piece in the key of the chorale whose form it takes, a stream in its first chorale's, a loaded chorale as written. Or a key signature: pieces in major play in its major key, pieces in minor in its relative minor. A piece moves at once, a stream from its next phrase. |
 | **Status** | What the engine just did, or what went wrong. |
 
 ## Magdalena: the user's taste (both versions)
@@ -83,8 +83,7 @@ This page is written from the same table as the hover text (the patch generator)
 | Control | What it does |
 | --- | --- |
 | **listening test** | Write a blind listening test: a web page of 10 pairs, each a Bach chorale and a piece composed in its form, in random order. Can listeners tell which is Bach? |
-| **load a chorale** | Load one chorale (a MIDI file): it plays as written and is drawn in the piano roll, in C major or A minor, or in its own key with original key on. |
-| **original key** | On: a chorale you load (load a chorale) keeps its own key. Off: it is moved to C major or A minor (the default). Only for loaded chorales. |
+| **load a chorale** | Load one chorale (a MIDI file): it plays and is drawn in the piano roll, as written or in the key the composing panel's key menu says. |
 | **play the test phrase** | Play a built-in phrase (no chorales needed), to check that the voices sound. |
 | **stop and clear the queue** | What is playing stops at once, and nothing is left queued to play. |
 | **chorale form** | On (the default): each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan (the early milestones' composer). Remembered for next time. |

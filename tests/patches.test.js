@@ -197,11 +197,11 @@ test("live.* parameters: named, and unique within each product", () => {
     const longnames = params.map((p) => p.longname);
     assert.deepEqual([...new Set(longnames)], longnames, `${product}: duplicate parameter names`);
   }
-  assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Bars", "Compose", "Corpora", "Export MIDI", "Next", "Phrases", "Seed", "Stream", "Transpose"]);
+  assert.deepEqual(liveParameters("emi.panel.maxpat").map((p) => p.longname).sort(), ["Bars", "Compose", "Corpora", "Export MIDI", "Key", "Next", "Phrases", "Seed", "Stream"]);
   assert.deepEqual(liveParameters("emi.host.live.maxpat").map((p) => p.longname).sort(), ["All Voices Here", "Clips On Compose", "Performance", "Play Through Voices", "Test Clips", "Write Clips"]);
   assert.deepEqual(liveParameters("emily.panel.maxpat").map((p) => p.longname).sort(), ["Accept", "Dislike", "Like", "Temperature"]);
   assert.deepEqual(liveParameters("emi.host.max.maxpat").map((p) => p.longname).sort(), ["More Features", "Performance", "Play", "Plug-in Instruments", "Set Up"]);
-  assert.deepEqual(liveParameters("emi.extras.maxpat").map((p) => p.longname).sort(), ["Clear Queue", "Form", "Listening Test", "Load A Chorale", "Original Key", "Signatures", "Test Phrase"]);
+  assert.deepEqual(liveParameters("emi.extras.maxpat").map((p) => p.longname).sort(), ["Clear Queue", "Form", "Listening Test", "Load A Chorale", "Signatures", "Test Phrase"]);
 });
 
 test("buttons: all in Live's look (live.text); in Live, the ones worth mapping show, the rest are hidden", () => {
@@ -280,10 +280,10 @@ test("emily.panel (M9): like and dislike are mappable buttons; temperature is sa
 test("emi.panel: each saved control sends its message, and shows restored values without sending", () => {
   const p = patchFile("emi.panel.maxpat");
   const [outlet] = p.find("outlet");
-  const [settings] = p.find("route seed bars stream phrases transpose");
-  ["Seed", "Bars", "Stream", "Phrases", "Transpose"].forEach((name, k) => {
+  const [settings] = p.find("route seed bars stream phrases key");
+  ["Seed", "Bars", "Stream", "Phrases", "Key"].forEach((name, k) => {
     const control = [...p.boxes.values()].find((b) => b.varname === name);
-    const message = { Seed: "seed", Bars: "bars", Stream: "stream", Phrases: "phrases", Transpose: "transpose" }[name];
+    const message = { Seed: "seed", Bars: "bars", Stream: "stream", Phrases: "phrases", Key: "key" }[name];
     const [[pre]] = p.from(control.id, 0);
     assert.equal(pre.text, `prepend ${message}`, name);
     assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id], `${name} goes to the engine`);
@@ -1001,7 +1001,7 @@ test("layout: the composing panel starts with new piece, the main action; the na
 
 test("more features (Max version): the listening test and the less-used tools, in a window of their own", () => {
   const panel = patchFile("emi.panel.maxpat");
-  for (const gone of ["Tools", "Original Key", "Listening Test", "Form", "Signatures", "Beats"]) assert.equal(named(panel, gone), undefined, `${gone} isn't on the composing panel`);
+  for (const gone of ["Tools", "Original Key", "Listening Test", "Form", "Signatures", "Beats", "Transpose"]) assert.equal(named(panel, gone), undefined, `${gone} isn't on the composing panel`);
   assert.deepEqual(panel.find("umenu"), []);
   const live = patchFile("emi.brain.maxpat");
   assert.deepEqual(live.find("emi.extras"), [], "not in Live");
@@ -1015,14 +1015,15 @@ test("more features (Max version): the listening test and the less-used tools, i
   const [[win]] = host.from(pcontrol.id);
   assert.equal(win.text, "emi.extras");
   assert.deepEqual(host.from(win.id).map(([b]) => b.id), [hostOutlet.id]);
-  // Restored settings reach their switches: original key, chorale form, signatures.
-  const [restore] = host.find("route bpm output vst key perform form sigs");
+  // Restored settings reach their switches: chorale form, signatures.
+  const [restore] = host.find("route bpm output vst perform form sigs");
   const w = patchFile("emi.extras.maxpat");
+  assert.equal(named(w, "Original Key"), undefined, "the key menu on the composing panel does it now");
   const [inlet] = w.find("inlet");
   const [outlet] = w.find("outlet");
   const [[route]] = w.from(inlet.id);
-  assert.equal(route.text, "route key form sigs");
-  [["key", "Original Key", 3], ["form", "Form", 5], ["sigs", "Signatures", 6]].forEach(([message, name, hostOutlet], k) => {
+  assert.equal(route.text, "route form sigs");
+  [["form", "Form", 4], ["sigs", "Signatures", 5]].forEach(([message, name, hostOutlet], k) => {
     const [[toWindow]] = host.from(restore.id, hostOutlet);
     assert.equal(toWindow.text, `prepend ${message}`);
     assert.deepEqual(host.from(toWindow.id).map(([b, inlet]) => [b.id, inlet]), [[win.id, 0]], message);
@@ -1033,8 +1034,8 @@ test("more features (Max version): the listening test and the less-used tools, i
     const [[pre]] = w.from(control.id);
     assert.equal(pre.text, `prepend ${message}`);
     assert.deepEqual(w.from(pre.id).map(([b]) => b.id), [outlet.id], name);
-    // Form and signatures start on and are restored by the engine (nothing sent at load); original key starts off.
-    assert.deepEqual([control.saved_attribute_attributes.valueof.parameter_initial_enable, control.text], [message === "key" ? 1 : 0, { key: "original key", form: "chorale form", sigs: "signatures" }[message]]);
+    // Form and signatures start on and are restored by the engine (nothing sent at load).
+    assert.deepEqual([control.saved_attribute_attributes.valueof.parameter_initial_enable, control.text], [0, { form: "chorale form", sigs: "signatures" }[message]]);
   });
   // Each button: its dialog or its word, to the engine.
   for (const [name, dialog, message] of [["Listening Test", "savedialog", "prepend abtest"], ["Load A Chorale", "opendialog", "prepend loadmidi"]]) {
@@ -1209,10 +1210,28 @@ test("performance: a switch in each host panel sends perform to the engine; the 
     assert.deepEqual(p.from(pre.id).map(([b]) => b.id), [outlet.id], file);
   }
   const host = patchFile("emi.host.max.maxpat");
-  const [restore] = host.find("route bpm output vst key perform form sigs");
-  const [[set]] = host.from(restore.id, 4);
+  const [restore] = host.find("route bpm output vst perform form sigs");
+  const [[set]] = host.from(restore.id, 3);
   assert.equal(set.text, "prepend set");
   assert.deepEqual(host.from(set.id).map(([b]) => b.id), [named(host, "Performance").id]);
+});
+
+// M5 (after v0.1.0): the key menu on the composing panel, in place of transpose.
+test("key: a menu on the composing panel: the chorale's key, or one of twelve key signatures", () => {
+  const p = patchFile("emi.panel.maxpat");
+  const menu = named(p, "Key");
+  assert.equal(menu.maxclass, "live.menu");
+  const valueof = menu.saved_attribute_attributes.valueof;
+  assert.equal(valueof.parameter_enum.length, 13);
+  assert.equal(valueof.parameter_enum[0], "chorale's key");
+  assert.deepEqual(valueof.parameter_enum.slice(1, 4), ["C / A minor", "Db / Bb minor", "D / B minor"]);
+  assert.equal(valueof.parameter_enum[12], "B / G# minor");
+  assert.deepEqual([valueof.parameter_type, valueof.parameter_mmax, valueof.parameter_initial], [2, 12, [0]], "an enum, the chorale's key at first");
+  const [[pre]] = p.from(menu.id, 0);
+  assert.equal(pre.text, "prepend key", "the item's index goes to the engine");
+  const [label] = [...p.boxes.values()].filter((b) => b.maxclass === "comment" && b.text === "key");
+  assert.ok(label && label.presentation_rect[0] < menu.presentation_rect[0], "labeled on its left");
+  assert.ok(menu.presentation_rect[0] + menu.presentation_rect[2] <= 300 - 6, "inside the panel");
 });
 
 test("sections: each part of the strip sits on a solid color of its own, with light text on it", () => {

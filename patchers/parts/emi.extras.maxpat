@@ -32,7 +32,7 @@
 			{
 				"box": {
 					"maxclass": "comment",
-					"text": "emi.extras: the more features window (Max version). Opened by the panel's more features button, through [pcontrol] in emi.host.max. Its inlet also takes key, form and sigs <0|1> (restored settings, shown on their switches).",
+					"text": "emi.extras: the more features window (Max version). Opened by the panel's more features button, through [pcontrol] in emi.host.max. Its inlet also takes form and sigs <0|1> (restored settings, shown on their switches).",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -48,7 +48,7 @@
 			{
 				"box": {
 					"maxclass": "inlet",
-					"comment": "pcontrol: open; key|form|sigs <0|1>: show a restored setting",
+					"comment": "pcontrol: open; form|sigs <0|1>: show a restored setting",
 					"index": 1,
 					"numinlets": 0,
 					"numoutlets": 1,
@@ -67,7 +67,7 @@
 			{
 				"box": {
 					"maxclass": "outlet",
-					"comment": "to emi.engine: abtest, loadmidi, key, pattern, clear, form, sigs",
+					"comment": "to emi.engine: abtest, loadmidi, pattern, clear, form, sigs",
 					"index": 1,
 					"numinlets": 1,
 					"numoutlets": 0,
@@ -353,8 +353,8 @@
 						22.0
 					],
 					"id": "obj-9",
-					"hint": "Load one chorale (a MIDI file): it plays as written and is drawn in the piano roll, in C major or A minor, or in its own key with original key on.",
-					"annotation": "Load one chorale (a MIDI file): it plays as written and is drawn in the piano roll, in C major or A minor, or in its own key with original key on.",
+					"hint": "Load one chorale (a MIDI file): it plays and is drawn in the piano roll, as written or in the key the composing panel's key menu says.",
+					"annotation": "Load one chorale (a MIDI file): it plays and is drawn in the piano roll, as written or in the key the composing panel's key menu says.",
 					"annotation_name": "load a chorale"
 				}
 			},
@@ -415,124 +415,8 @@
 			},
 			{
 				"box": {
-					"maxclass": "live.text",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"parameter_enable": 1,
-					"varname": "Original Key",
-					"mode": 1,
-					"text": "original key",
-					"texton": "original key",
-					"fontsize": 10.0,
-					"bgcolor": [
-						0.84,
-						0.82,
-						0.78,
-						1.0
-					],
-					"activebgcolor": [
-						0.84,
-						0.82,
-						0.78,
-						1.0
-					],
-					"bgoncolor": [
-						0.96,
-						0.7,
-						0.33,
-						1.0
-					],
-					"activebgoncolor": [
-						0.96,
-						0.7,
-						0.33,
-						1.0
-					],
-					"textcolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"activetextcolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"textoncolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"activetextoncolor": [
-						0.08,
-						0.08,
-						0.09,
-						1.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_enum": [
-								"off",
-								"on"
-							],
-							"parameter_longname": "Original Key",
-							"parameter_shortname": "Original Key",
-							"parameter_type": 2,
-							"parameter_mmax": 1,
-							"parameter_initial": [
-								0
-							],
-							"parameter_initial_enable": 1
-						}
-					},
-					"patching_rect": [
-						380.0,
-						200.0,
-						100.0,
-						20.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						166.0,
-						56.0,
-						100.0,
-						22.0
-					],
-					"id": "obj-13",
-					"hint": "On: a chorale you load (load a chorale) keeps its own key. Off: it is moved to C major or A minor (the default). Only for loaded chorales.",
-					"annotation": "On: a chorale you load (load a chorale) keeps its own key. Off: it is moved to C major or A minor (the default). Only for loaded chorales.",
-					"annotation_name": "original key"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend key",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						380.0,
-						235.0,
-						80.0,
-						22.0
-					],
-					"id": "obj-14"
-				}
-			},
-			{
-				"box": {
 					"maxclass": "comment",
-					"text": "One chorale plays as written, in C major or A minor, or in its own key with original key on.",
+					"text": "One chorale plays as written, or in the key the composing panel's key menu says.",
 					"numinlets": 1,
 					"numoutlets": 0,
 					"linecount": 2,
@@ -551,7 +435,7 @@
 						340.0,
 						34.0
 					],
-					"id": "obj-15"
+					"id": "obj-13"
 				}
 			},
 			{
@@ -647,7 +531,7 @@
 						150.0,
 						22.0
 					],
-					"id": "obj-16",
+					"id": "obj-14",
 					"hint": "Play a built-in phrase (no chorales needed), to check that the voices sound.",
 					"annotation": "Play a built-in phrase (no chorales needed), to check that the voices sound.",
 					"annotation_name": "play the test phrase"
@@ -668,7 +552,7 @@
 						35.0,
 						22.0
 					],
-					"id": "obj-17"
+					"id": "obj-15"
 				}
 			},
 			{
@@ -686,7 +570,7 @@
 						65.0,
 						22.0
 					],
-					"id": "obj-18"
+					"id": "obj-16"
 				}
 			},
 			{
@@ -782,7 +666,7 @@
 						160.0,
 						22.0
 					],
-					"id": "obj-19",
+					"id": "obj-17",
 					"hint": "What is playing stops at once, and nothing is left queued to play.",
 					"annotation": "What is playing stops at once, and nothing is left queued to play.",
 					"annotation_name": "stop and clear the queue"
@@ -803,7 +687,7 @@
 						35.0,
 						22.0
 					],
-					"id": "obj-20"
+					"id": "obj-18"
 				}
 			},
 			{
@@ -821,7 +705,7 @@
 						51.0,
 						22.0
 					],
-					"id": "obj-21"
+					"id": "obj-19"
 				}
 			},
 			{
@@ -844,7 +728,7 @@
 						340.0,
 						20.0
 					],
-					"id": "obj-22"
+					"id": "obj-20"
 				}
 			},
 			{
@@ -939,7 +823,7 @@
 						150.0,
 						22.0
 					],
-					"id": "obj-23",
+					"id": "obj-21",
 					"hint": "On (the default): each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan (the early milestones' composer). Remembered for next time.",
 					"annotation": "On (the default): each piece takes the form of a real chorale: its phrases and cadences fall in the same places. Off: beats are joined freely, with no phrase plan (the early milestones' composer). Remembered for next time.",
 					"annotation_name": "chorale form"
@@ -960,7 +844,7 @@
 						90.0,
 						22.0
 					],
-					"id": "obj-24"
+					"id": "obj-22"
 				}
 			},
 			{
@@ -1055,7 +939,7 @@
 						160.0,
 						22.0
 					],
-					"id": "obj-25",
+					"id": "obj-23",
 					"hint": "On (the default): Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats. Remembered for next time.",
 					"annotation": "On (the default): Bach's signatures (cadence formulas found in several chorales) are kept whole at cadences, shown as gold bands in the piano roll. Off: cadences are recombined like any other beats. Remembered for next time.",
 					"annotation_name": "signatures"
@@ -1076,7 +960,7 @@
 						90.0,
 						22.0
 					],
-					"id": "obj-26"
+					"id": "obj-24"
 				}
 			},
 			{
@@ -1101,17 +985,16 @@
 						340.0,
 						34.0
 					],
-					"id": "obj-27"
+					"id": "obj-25"
 				}
 			},
 			{
 				"box": {
 					"maxclass": "newobj",
-					"text": "route key form sigs",
+					"text": "route form sigs",
 					"numinlets": 2,
-					"numoutlets": 4,
+					"numoutlets": 3,
 					"outlettype": [
-						"",
 						"",
 						"",
 						""
@@ -1119,10 +1002,10 @@
 					"patching_rect": [
 						380.0,
 						20.0,
-						120.0,
+						100.0,
 						22.0
 					],
-					"id": "obj-28"
+					"id": "obj-26"
 				}
 			},
 			{
@@ -1140,7 +1023,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-29"
+					"id": "obj-27"
 				}
 			},
 			{
@@ -1158,25 +1041,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-30"
-				}
-			},
-			{
-				"box": {
-					"maxclass": "newobj",
-					"text": "prepend set",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						560.0,
-						55.0,
-						80.0,
-						22.0
-					],
-					"id": "obj-31"
+					"id": "obj-28"
 				}
 			},
 			{
@@ -1194,7 +1059,7 @@
 						70.0,
 						22.0
 					],
-					"id": "obj-32"
+					"id": "obj-29"
 				}
 			},
 			{
@@ -1212,7 +1077,7 @@
 						200.0,
 						22.0
 					],
-					"id": "obj-33"
+					"id": "obj-30"
 				}
 			},
 			{
@@ -1231,7 +1096,7 @@
 						80.0,
 						22.0
 					],
-					"id": "obj-34"
+					"id": "obj-31"
 				}
 			}
 		],
@@ -1335,11 +1200,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-13",
+						"obj-14",
 						0
 					],
 					"destination": [
-						"obj-14",
+						"obj-15",
 						0
 					]
 				}
@@ -1347,11 +1212,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-14",
+						"obj-15",
 						0
 					],
 					"destination": [
-						"obj-3",
+						"obj-16",
 						0
 					]
 				}
@@ -1363,31 +1228,31 @@
 						0
 					],
 					"destination": [
-						"obj-17",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-17",
-						0
-					],
-					"destination": [
-						"obj-18",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-18",
-						0
-					],
-					"destination": [
 						"obj-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						0
+					],
+					"destination": [
+						"obj-18",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-18",
+						0
+					],
+					"destination": [
+						"obj-19",
 						0
 					]
 				}
@@ -1399,7 +1264,7 @@
 						0
 					],
 					"destination": [
-						"obj-20",
+						"obj-3",
 						0
 					]
 				}
@@ -1407,11 +1272,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-20",
+						"obj-21",
 						0
 					],
 					"destination": [
-						"obj-21",
+						"obj-22",
 						0
 					]
 				}
@@ -1419,7 +1284,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-21",
+						"obj-22",
 						0
 					],
 					"destination": [
@@ -1444,30 +1309,6 @@
 				"patchline": {
 					"source": [
 						"obj-24",
-						0
-					],
-					"destination": [
-						"obj-3",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-25",
-						0
-					],
-					"destination": [
-						"obj-26",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-26",
 						0
 					],
 					"destination": [
@@ -1483,7 +1324,7 @@
 						0
 					],
 					"destination": [
-						"obj-28",
+						"obj-26",
 						0
 					]
 				}
@@ -1491,11 +1332,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-28",
+						"obj-26",
 						0
 					],
 					"destination": [
-						"obj-29",
+						"obj-27",
 						0
 					]
 				}
@@ -1503,11 +1344,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-29",
+						"obj-27",
 						0
 					],
 					"destination": [
-						"obj-13",
+						"obj-21",
 						0
 					]
 				}
@@ -1515,11 +1356,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-28",
+						"obj-26",
 						1
 					],
 					"destination": [
-						"obj-30",
+						"obj-28",
 						0
 					]
 				}
@@ -1527,7 +1368,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-30",
+						"obj-28",
 						0
 					],
 					"destination": [
@@ -1539,47 +1380,23 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-28",
-						2
+						"obj-29",
+						0
+					],
+					"destination": [
+						"obj-30",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-30",
+						0
 					],
 					"destination": [
 						"obj-31",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-31",
-						0
-					],
-					"destination": [
-						"obj-25",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-32",
-						0
-					],
-					"destination": [
-						"obj-33",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-33",
-						0
-					],
-					"destination": [
-						"obj-34",
 						0
 					]
 				}
